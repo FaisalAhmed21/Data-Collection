@@ -218,43 +218,47 @@ class BiometricDataCollector {
         }
     }
     
-    // ENHANCED CHARACTER DETECTION - GUARANTEED TO CAPTURE EXACT TYPED CHARACTERS
+    // UPDATED: Return the actual key pressed by the user, including special keys by name
     getActualTypedCharacter(e) {
-        // PRIORITY 1: Direct event.key - most reliable for printable characters
-        if (e.key && e.key.length === 1 && e.key !== 'Unidentified' && e.key !== 'undefined') {
-            // Return the exact character as typed (preserves case)
+        // Directly return special keys by name
+        const specialKeys = [
+            'Backspace', 'Tab', 'Enter', 'Shift', 'Control', 'Alt', 'CapsLock', 'Escape',
+            'ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown', 'Insert', 'Delete', 'Home', 'End',
+            'PageUp', 'PageDown', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10',
+            'F11', 'F12', 'NumLock', 'ScrollLock', 'Pause', 'Meta', 'ContextMenu'
+        ];
+        
+        if (specialKeys.includes(e.key)) {
             return e.key;
         }
         
-        // PRIORITY 2: Handle special keys
-        if (e.key === 'Backspace') return 'Backspace';
-        if (e.key === 'Enter') return 'Enter';
-        if (e.key === 'Tab') return 'Tab';
-        if (e.key === ' ') return ' ';
-        
-        // PRIORITY 3: Fallback for letter keys with EXACT case preservation
-        if (e.keyCode >= 65 && e.keyCode <= 90) {
-            const upperChar = String.fromCharCode(e.keyCode);
-            
-            // Check actual case state
-            if (e.shiftKey) {
-                return upperChar; // Shift pressed = uppercase
-            } else {
-                return upperChar.toLowerCase(); // No shift = lowercase
-            }
+        // Handle space key explicitly
+        if (e.key === ' ') {
+            return 'Space';
         }
         
-        // PRIORITY 4: Number keys (0-9)
+        // Return single character keys directly
+        if (e.key && e.key.length === 1) {
+            return e.key;
+        }
+        
+        // Handle number keys with shift modifiers
         if (e.keyCode >= 48 && e.keyCode <= 57) {
             if (e.shiftKey) {
-                // Shift + number = symbol
                 const symbols = [')', '!', '@', '#', '$', '%', '^', '&', '*', '('];
                 return symbols[e.keyCode - 48];
             }
             return String.fromCharCode(e.keyCode);
         }
         
-        // PRIORITY 5: Common punctuation
+        // Handle letter keys with correct case
+        if (e.keyCode >= 65 && e.keyCode <= 90) {
+            return e.shiftKey ? 
+                String.fromCharCode(e.keyCode) : 
+                String.fromCharCode(e.keyCode).toLowerCase();
+        }
+        
+        // Handle punctuation keys
         const punctuation = {
             188: e.shiftKey ? '<' : ',',
             190: e.shiftKey ? '>' : '.',
@@ -273,8 +277,8 @@ class BiometricDataCollector {
             return punctuation[e.keyCode];
         }
         
-        // FINAL: Return the key or unknown
-        return e.key || 'Unknown';
+        // Fallback to key name or key code
+        return e.key || `KeyCode${e.keyCode}`;
     }
     
     handleKeydown(e) {
