@@ -58,7 +58,10 @@ class BiometricDataCollector {
             isSpreading: false,
             pressureStart: null,
             pressureFingers: 0,
-            initialDistance: 0
+            initialDistance: 0,
+            // Rotation tracking
+            initialAngle: null,
+            totalRotation: 0  // in radians
         };
         
         // Gallery images
@@ -570,18 +573,51 @@ class BiometricDataCollector {
                 
             case 'rotate':
                 if (phase === 'start' && touches.length === 2) {
+                    // Calculate initial angle between touches
+                    const dx = touches[1].clientX - touches[0].clientX;
+                    const dy = touches[1].clientY - touches[0].clientY;
+                    this.crystalState.initialAngle = Math.atan2(dy, dx); // radians
+                    this.crystalState.totalRotation = 0; // reset
                     this.crystalState.isRotating = true;
                     this.crystalState.rotationStart = performance.now();
                     crystal.classList.add('rotation-feedback');
                     crystal.classList.add('active');
-                } else if (phase === 'move' && this.crystalState.isRotating && touches.length === 2) {
-                    const elapsed = performance.now() - this.crystalState.rotationStart;
-                    this.updateStepProgress(`${Math.floor(elapsed / 1000)}s / ${step.target / 1000}s`);
+                } 
+                else if (phase === 'move' && this.crystalState.isRotating && touches.length === 2) {
+                    // Calculate current angle between touches
+                    const dx = touches[1].clientX - touches[0].clientX;
+                    const dy = touches[1].clientY - touches[0].clientY;
+                    const currentAngle = Math.atan2(dy, dx);
                     
-                    if (elapsed >= step.target) {
+                    // Calculate angle difference
+                    let angleDiff = currentAngle - this.crystalState.initialAngle;
+                    
+                    // Normalize angle difference to [-π, π] to avoid jumps when crossing PI
+                    if (angleDiff > Math.PI) {
+                        angleDiff -= 2 * Math.PI;
+                    } else if (angleDiff < -Math.PI) {
+                        angleDiff += 2 * Math.PI;
+                    }
+                    
+                    // Only count clockwise rotation (positive in screen coordinates)
+                    if (angleDiff > 0) {
+                        this.crystalState.totalRotation += angleDiff;
+                    }
+                    
+                    // Update for next calculation
+                    this.crystalState.initialAngle = currentAngle;
+                    
+                    const elapsed = performance.now() - this.crystalState.rotationStart;
+                    const rotationDeg = Math.round(this.crystalState.totalRotation * 180 / Math.PI);
+                    
+                    this.updateStepProgress(`${rotationDeg}° | ${Math.floor(elapsed/1000)}s / ${step.target/1000}s`);
+                    
+                    // Complete only after both time and rotation requirements are met
+                    if (elapsed >= step.target && this.crystalState.totalRotation >= (2 * Math.PI)) {
                         this.completeStep();
                     }
-                } else if (phase === 'end' && touches.length < 2) {
+                } 
+                else if (phase === 'end' && touches.length < 2) {
                     this.crystalState.isRotating = false;
                     crystal.classList.remove('rotation-feedback');
                     crystal.classList.remove('active');
@@ -756,7 +792,10 @@ class BiometricDataCollector {
             isSpreading: false,
             pressureStart: null,
             pressureFingers: 0,
-            initialDistance: 0
+            initialDistance: 0,
+            // Rotation tracking
+            initialAngle: null,
+            totalRotation: 0
         };
         
         const crystal = document.getElementById('crystal');
@@ -795,7 +834,7 @@ class BiometricDataCollector {
     getInitialProgress(type) {
         const progress = {
             'tap': '0/3',
-            'rotate': '0s / 5s',
+            'rotate': '0° | 0s / 5s',
             'pinch': '100% → 50%',
             'spread': '100% → 150%',
             'pressure': '0s / 3s'
