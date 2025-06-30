@@ -18,6 +18,10 @@ class BiometricDataCollector {
             y: window.innerHeight / 2
         };
         
+        // Composition state for mobile IME handling
+        this.compositionActive = false;
+        this.lastInputLength = 0;
+        
         // Enhanced gallery zoom state with pinch support
         this.galleryZoom = {
             scale: 1,
@@ -150,40 +154,28 @@ class BiometricDataCollector {
             this.startTypingTask();
         });
         
-        // Typing task
+        // Typing task - FIXED: Proper mobile-friendly event handling
         const typingInput = document.getElementById('typing-input');
-
-        let compositionActive = false;
-    
+        
+        // Composition events for mobile IME handling
         typingInput.addEventListener('compositionstart', (e) => {
-            compositionActive = true;
+            this.compositionActive = true;
             console.log('Composition started');
         });
         
         typingInput.addEventListener('compositionupdate', (e) => {
-            if (e.data) {
-                // Record composition data
-                this.recordKeystroke({
-                    timestamp: performance.now(),
-                    actualChar: e.data,
-                    keyCode: null,
-                    type: 'composition',
-                    sentence: this.currentSentence,
-                    position: e.target.selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-            }
+            // Track composition updates but don't record as final keystrokes
+            console.log('Composition update:', e.data);
         });
         
         typingInput.addEventListener('compositionend', (e) => {
-            compositionActive = false;
+            this.compositionActive = false;
             if (e.data) {
-                // Final composition result
+                // Record final composition result
                 this.recordKeystroke({
                     timestamp: performance.now(),
                     actualChar: e.data,
-                    keyCode: null,
+                    keyCode: e.data.charCodeAt(0),
                     type: 'compositionend',
                     sentence: this.currentSentence,
                     position: e.target.selectionStart || 0,
@@ -191,17 +183,22 @@ class BiometricDataCollector {
                     clientY: this.pointerTracking.y
                 });
             }
+            console.log('Composition ended:', e.data);
         });
         
-        // CRITICAL FIX: Simplified and more reliable character detection
+        // FIXED: Use input event with inputType for reliable character detection
+        typingInput.addEventListener('input', (e) => {
+            this.handleTypingInput(e);
+        });
+        
+        // Keydown for additional handling (non-composition events)
         typingInput.addEventListener('keydown', (e) => {
-            if (compositionActive || e.keyCode === 229) {
+            if (this.compositionActive || e.keyCode === 229) {
                 // Skip processing during composition
                 return;
             }
             this.handleKeydown(e);
         });
-        typingInput.addEventListener('input', (e) => this.handleTypingInput(e));
         
         // Update pointer coordinates when typing
         typingInput.addEventListener('focus', (e) => {
@@ -255,18 +252,78 @@ class BiometricDataCollector {
         }
     }
     
-    // FIXED: Return the actual key pressed by the user with improved character detection
+    // FIXED: Enhanced mobile-friendly keystroke detection using inputType
+    handleTypingInput(e) {
+        const { inputType, data } = e;
+        const inputEl = e.target;
+        const value = inputEl.value;
+        const pos = inputEl.selectionStart || value.length;
+        const timestamp = performance.now();
+
+        // Handle deletion events (backspace, delete)
+        if (inputType && inputType.startsWith('delete')) {
+            // Only record if there's actually content to delete
+            if (pos > 0 || value.length < this.lastInputLength) {
+                this.recordKeystroke({
+                    timestamp,
+                    actualChar: 'backspace',
+                    keyCode: 8,
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+            }
+        }
+        // Handle text insertion
+        else if (inputType === 'insertText' && data) {
+            // Handle each character in the inserted text
+            for (let i = 0; i < data.length; i++) {
+                this.recordKeystroke({
+                    timestamp: timestamp + i, // Slight offset for multiple chars
+                    actualChar: data[i],
+                    keyCode: data.charCodeAt(i),
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos - data.length + i,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+            }
+        }
+        // Handle other input types like paste, cut, etc.
+        else if (inputType && data) {
+            this.recordKeystroke({
+                timestamp,
+                actualChar: data,
+                keyCode: data.charCodeAt(0),
+                type: inputType,
+                sentence: this.currentSentence,
+                position: pos - 1,
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y
+            });
+        }
+
+        // Update last input length for next comparison
+        this.lastInputLength = value.length;
+        
+        this.calculateAccuracy();
+        this.checkSentenceCompletion();
+    }
+    
+    // FIXED: Enhanced character detection with better mobile support
     getActualTypedCharacter(e, inputValue = '') {
-    // 1. Handle mobile IME / virtual keyboard composition events
-    //    Browsers report keyCode 229 or key === 'Unidentified' for in-progress IME input.
-        if (e.keyCode === 229 || e.key === 'Unidentified') {
-            // If the input already contains a new character, return the last one
-            if (inputValue.length > 0) {
+        // 1. Handle mobile IME / virtual keyboard composition events
+        if (e.keyCode === 229 || e.key === 'Unidentified' || e.key === 'Process') {
+            // For mobile IME, try to get character from input value change
+            if (inputValue.length > this.lastInputLength) {
                 return inputValue.slice(-1);
             }
-            return 'Unidentified';
+            return null; // Don't record unidentified characters
         }
-    
+
         // 2. Handle well-known special keys
         const specialKeys = {
             'Backspace':    'backspace',
@@ -277,17 +334,23 @@ class BiometricDataCollector {
             'ArrowLeft':    'arrowleft',
             'ArrowRight':   'arrowright',
             'ArrowUp':      'arrowup',
-            'ArrowDown':    'arrowdown'
+            'ArrowDown':    'arrowdown',
+            'Delete':       'delete',
+            'Home':         'home',
+            'End':          'end'
         };
+        
         if (e.key && specialKeys.hasOwnProperty(e.key)) {
             return specialKeys[e.key];
         }
+        
+        // 3. Handle printable characters
         if (e.key && e.key.length === 1) {
             // Regular printable character (e.g., 'a', '1', ',', etc.)
             return e.key;
         }
-    
-        // 3. Fallback for older browsers or rare keys
+
+        // 4. Fallback for older browsers or rare keys
         if (e.keyCode && !isNaN(e.keyCode)) {
             // Convert keyCode to a character if possible
             const char = String.fromCharCode(e.keyCode);
@@ -295,9 +358,9 @@ class BiometricDataCollector {
                 return char;
             }
         }
-    
-        // 4. If all else fails, return the raw key or code
-        return e.key || (`KeyCode_${e.keyCode}`) || 'Unidentified';
+
+        // 5. Return null for unidentifiable keys (don't record them)
+        return null;
     }
     
     handleKeydown(e) {
@@ -311,78 +374,37 @@ class BiometricDataCollector {
         }
         
         // Block copy-paste
-        if (e.ctrlKey && ['v', 'x'].includes(e.key.toLowerCase())) {
+        if (e.ctrlKey && ['v', 'x', 'c'].includes(e.key.toLowerCase())) {
             e.preventDefault();
             return;
         }
         
-        // Get the actual typed character with exact case
-        const actualCharacter = this.getActualTypedCharacter(e);
+        // Get the actual typed character
+        const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
         
-        // Debug logging
-        console.log('Key pressed:', e.key, 'KeyCode:', e.keyCode, 'Shift:', e.shiftKey, 'Detected:', actualCharacter);
-        
-        this.recordKeystroke({
-            timestamp,
-            actualChar: actualCharacter,
-            keyCode: e.keyCode,
-            type: 'keydown',
-            shiftKey: e.shiftKey,
-            ctrlKey: e.ctrlKey,
-            altKey: e.altKey,
-            sentence: this.currentSentence,
-            position: e.target.selectionStart || 0,
-            clientX: this.pointerTracking.x,
-            clientY: this.pointerTracking.y
-        });
-    }
-    
-    // Enhanced mobile-friendly keystroke detection
-    handleTypingInput(e) {
-        const input = e.target;
-        const currentValue = input.value;
-        const timestamp = performance.now();
-        
-        // Detect what changed
-        const lastChar = currentValue.slice(-1);
-        const isBackspace = currentValue.length < this.lastInputLength;
-        
-        if (isBackspace) {
-            // Handle backspace
+        // Only record if we have a valid character
+        if (actualCharacter) {
+            console.log('Key pressed:', e.key, 'KeyCode:', e.keyCode, 'Detected:', actualCharacter);
+            
             this.recordKeystroke({
-                timestamp: timestamp,
-                actualChar: 'backspace',
-                keyCode: 8,
+                timestamp,
+                actualChar: actualCharacter,
+                keyCode: e.keyCode,
                 type: 'keydown',
+                shiftKey: e.shiftKey,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
                 sentence: this.currentSentence,
-                position: currentValue.length,
-                clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y
-            });
-        } else if (lastChar && !isBackspace) {
-            // Handle character input
-            this.recordKeystroke({
-                timestamp: timestamp,
-                actualChar: lastChar,
-                keyCode: lastChar.charCodeAt(0),
-                type: 'keydown',
-                sentence: this.currentSentence,
-                position: currentValue.length - 1,
+                position: e.target.selectionStart || 0,
                 clientX: this.pointerTracking.x,
                 clientY: this.pointerTracking.y
             });
         }
-        
-        // Store length for next comparison
-        this.lastInputLength = currentValue.length;
-        
-        this.calculateAccuracy();
-        this.checkSentenceCompletion();
     }
-  
     
     startTypingTask() {
         this.currentSentence = 0;
+        this.lastInputLength = 0; // FIXED: Reset at task start
         this.displayCurrentSentence();
         this.updateTypingProgress();
     }
@@ -395,6 +417,9 @@ class BiometricDataCollector {
         document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
         this.calculateAccuracy();
         document.getElementById('next-sentence-btn').disabled = true;
+        
+        // FIXED: Reset lastInputLength when starting new sentence
+        this.lastInputLength = 0;
     }
     
     calculateAccuracy() {
@@ -623,7 +648,6 @@ class BiometricDataCollector {
                 
             case 'rotate':
                 if (phase === 'start' && touches.length === 2) {
-                    // Same as original: initialize rotation tracking
                     const dx = touches[1].clientX - touches[0].clientX;
                     const dy = touches[1].clientY - touches[0].clientY;
                     this.crystalState.initialAngle = Math.atan2(dy, dx);
@@ -633,12 +657,10 @@ class BiometricDataCollector {
                     crystal.classList.add('rotation-feedback', 'active');
                 } 
                 else if (phase === 'move' && this.crystalState.isRotating && touches.length === 2) {
-                    // Same as original: calculate current angle
                     const dx = touches[1].clientX - touches[0].clientX;
                     const dy = touches[1].clientY - touches[0].clientY;
                     const currentAngle = Math.atan2(dy, dx);
                     
-                    // Same as original: calculate and normalize angle difference
                     let angleDiff = currentAngle - this.crystalState.initialAngle;
                     if (angleDiff > Math.PI) {
                         angleDiff -= 2 * Math.PI;
@@ -646,7 +668,6 @@ class BiometricDataCollector {
                         angleDiff += 2 * Math.PI;
                     }
                     
-                    // Only count clockwise rotation (positive differences)
                     if (angleDiff > 0) {
                         this.crystalState.totalRotation += angleDiff;
                     }
@@ -657,14 +678,12 @@ class BiometricDataCollector {
                     
                     this.updateStepProgress(`${rotationDeg}° | ${Math.floor(elapsed/1000)}s / ${step.target/1000}s`);
                     
-                    // UPDATED: Require only 10 degrees (converted to radians) instead of 360
-                    const requiredRadians = 10 * Math.PI / 180; // 10° in radians
+                    const requiredRadians = 10 * Math.PI / 180;
                     if (elapsed >= step.target && this.crystalState.totalRotation >= requiredRadians) {
                         this.completeStep();
                     }
                 } 
                 else if (phase === 'end' && touches.length < 2) {
-                    // Same as original: clean up state
                     this.crystalState.isRotating = false;
                     crystal.classList.remove('rotation-feedback', 'active');
                 }
@@ -839,7 +858,6 @@ class BiometricDataCollector {
             pressureStart: null,
             pressureFingers: 0,
             initialDistance: 0,
-            // Rotation tracking
             initialAngle: null,
             totalRotation: 0
         };
@@ -942,18 +960,14 @@ class BiometricDataCollector {
     handleGalleryTouchStart(e) {
         const timestamp = performance.now();
         
-        // Store touch information for pinch detection
         if (e.touches.length === 1) {
             this.galleryTouchStart.x = e.touches[0].clientX;
             this.galleryTouchStart.y = e.touches[0].clientY;
             this.galleryZoom.touches = [e.touches[0]];
         } else if (e.touches.length === 2) {
-            // Two-finger pinch start
             this.galleryZoom.isPinching = true;
             this.galleryZoom.initialDistance = this.getDistance(e.touches[0], e.touches[1]);
             this.galleryZoom.touches = [e.touches[0], e.touches[1]];
-            
-            // Prevent default swipe behavior during pinch
             e.preventDefault();
         }
         
@@ -975,7 +989,6 @@ class BiometricDataCollector {
         e.preventDefault();
         const timestamp = performance.now();
         
-        // Handle two-finger pinch zoom
         if (e.touches.length === 2 && this.galleryZoom.isPinching) {
             const currentDistance = this.getDistance(e.touches[0], e.touches[1]);
             const scaleChange = currentDistance / this.galleryZoom.initialDistance;
@@ -1005,12 +1018,10 @@ class BiometricDataCollector {
     handleGalleryTouchEnd(e) {
         const timestamp = performance.now();
         
-        // Handle single-finger swipe navigation (only when not pinching)
         if (!this.galleryZoom.isPinching && e.changedTouches.length === 1) {
             const endX = e.changedTouches[0].clientX;
             const diffX = this.galleryTouchStart.x - endX;
             
-            // Only navigate if the swipe is significant and we're not zoomed in
             if (Math.abs(diffX) > 50 && this.galleryZoom.scale <= 1.1) {
                 if (diffX > 0) {
                     this.nextGalleryImage();
@@ -1020,7 +1031,6 @@ class BiometricDataCollector {
             }
         }
         
-        // Reset pinch state when fingers are lifted
         if (e.touches.length < 2) {
             this.galleryZoom.isPinching = false;
         }
@@ -1078,18 +1088,15 @@ class BiometricDataCollector {
         
         document.body.appendChild(popup);
         
-        // Bind popup controls
         popup.querySelector('.close-popup').addEventListener('click', () => this.closeImagePopup());
         popup.querySelector('.popup-overlay').addEventListener('click', () => this.closeImagePopup());
         popup.querySelector('.popup-prev').addEventListener('click', () => this.prevGalleryImage());
         popup.querySelector('.popup-next').addEventListener('click', () => this.nextGalleryImage());
         
-        // Zoom controls
         popup.querySelector('.zoom-in').addEventListener('click', () => this.zoomIn());
         popup.querySelector('.zoom-out').addEventListener('click', () => this.zoomOut());
         popup.querySelector('.zoom-reset').addEventListener('click', () => this.resetZoom());
         
-        // Mouse wheel zoom support
         const imageContainer = popup.querySelector('.popup-image-container');
         imageContainer.addEventListener('wheel', (e) => {
             e.preventDefault();
@@ -1100,7 +1107,6 @@ class BiometricDataCollector {
             }
         });
         
-        // Pan support when zoomed
         let isPanning = false;
         imageContainer.addEventListener('mousedown', (e) => {
             if (this.galleryZoom.scale > 1) {
@@ -1126,7 +1132,6 @@ class BiometricDataCollector {
             }
         });
         
-        // Keyboard controls
         document.addEventListener('keydown', (e) => {
             if (popup.classList.contains('active')) {
                 if (e.key === 'Escape') this.closeImagePopup();
@@ -1139,7 +1144,6 @@ class BiometricDataCollector {
         });
     }
     
-    // Zoom functionality
     zoomIn() {
         this.galleryZoom.scale = Math.min(this.galleryZoom.scale * 1.2, 3.0);
         this.updateImageTransform();
@@ -1235,33 +1239,34 @@ class BiometricDataCollector {
         this.downloadCSV(csv, filename);
         
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '15';
+        document.getElementById('touch-features').textContent = '12';
     }
     
-    // FIXED: Keystroke feature extraction with removed non-authentic touch properties
+    // FIXED: Enhanced keystroke feature extraction with proper character handling
     extractKeystrokeFeatures() {
         const features = [];
         
-        // Process each keystroke directly
         this.keystrokeData.forEach((keystroke, index) => {
-            if (keystroke.type === 'keydown') {
-                // Use the actualChar directly
-                const refChar = keystroke.actualChar;
-                
-                // Calculate flight time
+            // Process all recorded keystrokes (input events, keydown, composition)
+            if (keystroke.type === 'keydown' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete')) {
+                // Calculate flight time (time between keystrokes)
                 const flightTime = index > 0 ? 
                     Math.round(keystroke.timestamp - this.keystrokeData[index - 1].timestamp) : 
                     0;
                 
+                // Determine if this was a deletion
+                const wasDeleted = (keystroke.actualChar === 'backspace' || 
+                                  keystroke.type.startsWith('delete')) ? 1 : 0;
+                
                 features.push({
                     participant_id: this.participantId,
-                    task_id: 1,
+                    task_id: 1, // Typing task
                     trial_id: keystroke.sentence + 1,
                     timestamp_ms: Math.round(keystroke.timestamp),
-                    ref_char: refChar,
-                    touch_x: Math.round(keystroke.clientX || 100),
-                    touch_y: Math.round(keystroke.clientY || 100),
-                    was_deleted: keystroke.actualChar === 'Backspace' ? 1 : 0,
+                    ref_char: keystroke.actualChar || 'unknown',
+                    touch_x: Math.round(keystroke.clientX || this.currentPointerX),
+                    touch_y: Math.round(keystroke.clientY || this.currentPointerY),
+                    was_deleted: wasDeleted,
                     flight_time_ms: flightTime
                 });
             }
@@ -1270,12 +1275,12 @@ class BiometricDataCollector {
         return features;
     }
     
-    // FIXED: Touch feature extraction with removed non-authentic touch properties
+    // FIXED: Enhanced touch feature extraction
     extractTouchFeatures() {
         const features = [];
         
         this.touchData.forEach((touch, index) => {
-            const pressure = touch.touches.reduce((sum, t) => sum + t.force, 0) / touch.touches.length;
+            const pressure = touch.touches.reduce((sum, t) => sum + (t.force || 0.5), 0) / touch.touches.length;
             const velocity = this.calculateVelocity(touch, index);
             const acceleration = this.calculateAcceleration(touch, index);
             
