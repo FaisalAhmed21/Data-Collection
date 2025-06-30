@@ -211,77 +211,55 @@ class BiometricDataCollector {
     
     // FIXED: Return the actual key pressed by the user with improved character detection
     getActualTypedCharacter(e) {
-        // Handle special keys by name
+    if (e.key && e.key !== 'Unidentified') {
+        // Normalize special keys to lowercase if desired
         const specialKeys = {
-            8: 'Backspace',
-            9: 'Tab',
-            13: 'Enter',
-            16: 'Shift',
-            17: 'Control',
-            18: 'Alt',
-            20: 'CapsLock',
-            27: 'Escape',
-            32: 'Space',
-            37: 'ArrowLeft',
-            38: 'ArrowUp',
-            39: 'ArrowRight',
-            40: 'ArrowDown',
-            46: 'Delete',
+            'Backspace': 'backspace',
+            'Enter': 'enter',
+            'Tab': 'tab',
+            ' ': 'space'
         };
-
-        // Return special key name if exists
-        if (specialKeys[e.keyCode]) {
-            return specialKeys[e.keyCode];
-        }
-
-        // Handle space key explicitly
-        if (e.key === ' ' || e.keyCode === 32) {
-            return 'Space';
-        }
-
-        // Handle single character keys
-        if (e.key && e.key.length === 1) {
-            return e.key;
-        }
-
-        // Handle number keys with shift modifiers
-        if (e.keyCode >= 48 && e.keyCode <= 57) {
-            if (e.shiftKey) {
-                const symbols = [')', '!', '@', '#', '$', '%', '^', '&', '*', '('];
-                return symbols[e.keyCode - 48];
-            }
-            return String.fromCharCode(e.keyCode);
-        }
-
-        // Handle letter keys with correct case
-        if (e.keyCode >= 65 && e.keyCode <= 90) {
-            return e.shiftKey ? 
-                String.fromCharCode(e.keyCode) : 
-                String.fromCharCode(e.keyCode).toLowerCase();
-        }
-
-        // Handle punctuation keys
-        const punctuation = {
-            188: e.shiftKey ? '<' : ',',
-            190: e.shiftKey ? '>' : '.',
-            191: e.shiftKey ? '?' : '/',
-            186: e.shiftKey ? ':' : ';',
-            222: e.shiftKey ? '"' : "'",
-            219: e.shiftKey ? '{' : '[',
-            221: e.shiftKey ? '}' : ']',
-            220: e.shiftKey ? '|' : '\\',
-            189: e.shiftKey ? '_' : '-',
-            187: e.shiftKey ? '+' : '=',
-            192: e.shiftKey ? '~' : '`'
-        };
-
-        if (punctuation[e.keyCode]) {
-            return punctuation[e.keyCode];
-        }
-
-        // Final fallback to key name
-        return e.key || `KeyCode_${e.keyCode}`;
+        return specialKeys[e.key] || e.key;
     }
+
+    // Fallbacks for older Android keyCode behavior
+    const shift = e.shiftKey;
+    const keyCode = e.keyCode;
+
+    // A-Z
+    if (keyCode >= 65 && keyCode <= 90) {
+        const char = String.fromCharCode(keyCode);
+        return shift ? char : char.toLowerCase();
+    }
+
+    // Numbers (0-9) and shifted symbols (!@#$...)
+    if (keyCode >= 48 && keyCode <= 57) {
+        const symbols = {
+            48: ')', 49: '!', 50: '@', 51: '#', 52: '$',
+            53: '%', 54: '^', 55: '&', 56: '*', 57: '('
+        };
+        return shift ? symbols[keyCode] : String.fromCharCode(keyCode);
+    }
+
+    // Common punctuation keys
+    const keyMap = {
+        188: shift ? '<' : ',',
+        190: shift ? '>' : '.',
+        191: shift ? '?' : '/',
+        186: shift ? ':' : ';',
+        222: shift ? '"' : "'",
+        219: shift ? '{' : '[',
+        221: shift ? '}' : ']',
+        220: shift ? '|' : '\\',
+        189: shift ? '_' : '-',
+        187: shift ? '+' : '=',
+        192: shift ? '~' : '`'
+    };
+    if (keyMap[keyCode]) return keyMap[keyCode];
+
+    return 'Unknown';
+}
+
     
     handleKeydown(e) {
         const timestamp = performance.now();
@@ -320,58 +298,67 @@ class BiometricDataCollector {
         });
     }
     
+    // ✅ FINAL PATCHED MOBILE-FRIENDLY KEYSTROKE COLLECTION (FOR app.js)
+
+// Place this in your BiometricDataCollector class
     handleTypingInput(e) {
-    const input = e.target;
-    const typedChar = input.value.slice(-1); // Get last typed char
-
-    // Check if last keystroke was captured — if not, fallback
-    const lastEvent = this.keystrokeData[this.keystrokeData.length - 1];
-    const recentTime = performance.now();
-    const timeDiff = lastEvent ? recentTime - lastEvent.timestamp : Infinity;
-
-    if (!lastEvent || timeDiff > 100 || !['keydown', 'keyup'].includes(lastEvent.type)) {
-        // Fallback when no keydown/keyup detected
-        console.warn('Fallback input detected:', typedChar);
-
+        const input = e.target;
+        const value = input.value;
+        const typedChar = value.slice(-1); // Last typed character
+        const timestamp = performance.now();
+    
+        if (!typedChar) return;
+    
         // Simulate keydown
         this.recordKeystroke({
-            timestamp: recentTime,
-            actualChar: typedChar || 'Unknown',
+            timestamp: timestamp,
+            actualChar: typedChar,
             keyCode: null,
             type: 'keydown',
             sentence: this.currentSentence,
+            position: value.length - 1,
             clientX: this.pointerTracking.x,
             clientY: this.pointerTracking.y,
             touchMajor: this.pointerTracking.major,
             touchMinor: this.pointerTracking.minor,
             touchOrientation: this.pointerTracking.orientation
         });
-
+    
         // Simulate keyup
         this.recordKeystroke({
-            timestamp: recentTime + 20,
-            actualChar: typedChar || 'Unknown',
+            timestamp: timestamp + 20,
+            actualChar: typedChar,
             keyCode: null,
             type: 'keyup',
             sentence: this.currentSentence,
+            position: value.length - 1,
             clientX: this.pointerTracking.x,
             clientY: this.pointerTracking.y,
             touchMajor: this.pointerTracking.major,
             touchMinor: this.pointerTracking.minor,
             touchOrientation: this.pointerTracking.orientation
         });
+    
+        // Keep cursor at end
+        setTimeout(() => {
+            const length = input.value.length;
+            input.setSelectionRange(length, length);
+        }, 0);
+    
+        this.calculateAccuracy();
+        this.checkSentenceCompletion();
+        }
+    
+        // Maintain your existing cursor locking and accuracy
+        setTimeout(() => {
+            const length = input.value.length;
+            input.setSelectionRange(length, length);
+        }, 0);
+    
+        this.calculateAccuracy();
+        this.checkSentenceCompletion();
     }
-
-    // Maintain your existing cursor locking and accuracy
-    setTimeout(() => {
-        const length = input.value.length;
-        input.setSelectionRange(length, length);
-    }, 0);
-
-    this.calculateAccuracy();
-    this.checkSentenceCompletion();
-    }
-
+    
 
     
     startTypingTask() {
