@@ -322,21 +322,56 @@ class BiometricDataCollector {
     
     handleTypingInput(e) {
     const input = e.target;
-    const typedChar = input.value.slice(-1); // Last typed character
-    console.log('Fallback input:', typedChar);
+    const typedChar = input.value.slice(-1); // Get last typed char
 
-    this.recordKeystroke({
-        timestamp: performance.now(),
-        actualChar: typedChar || 'Unknown',
-        type: 'input',
-        sentence: this.currentSentence,
-        clientX: this.pointerTracking.x,
-        clientY: this.pointerTracking.y,
-        touchMajor: this.pointerTracking.major,
-        touchMinor: this.pointerTracking.minor,
-        touchOrientation: this.pointerTracking.orientation
-    });
+    // Check if last keystroke was captured — if not, fallback
+    const lastEvent = this.keystrokeData[this.keystrokeData.length - 1];
+    const recentTime = performance.now();
+    const timeDiff = lastEvent ? recentTime - lastEvent.timestamp : Infinity;
+
+    if (!lastEvent || timeDiff > 100 || !['keydown', 'keyup'].includes(lastEvent.type)) {
+        // Fallback when no keydown/keyup detected
+        console.warn('Fallback input detected:', typedChar);
+
+        // Simulate keydown
+        this.recordKeystroke({
+            timestamp: recentTime,
+            actualChar: typedChar || 'Unknown',
+            keyCode: null,
+            type: 'keydown',
+            sentence: this.currentSentence,
+            clientX: this.pointerTracking.x,
+            clientY: this.pointerTracking.y,
+            touchMajor: this.pointerTracking.major,
+            touchMinor: this.pointerTracking.minor,
+            touchOrientation: this.pointerTracking.orientation
+        });
+
+        // Simulate keyup
+        this.recordKeystroke({
+            timestamp: recentTime + 20,
+            actualChar: typedChar || 'Unknown',
+            keyCode: null,
+            type: 'keyup',
+            sentence: this.currentSentence,
+            clientX: this.pointerTracking.x,
+            clientY: this.pointerTracking.y,
+            touchMajor: this.pointerTracking.major,
+            touchMinor: this.pointerTracking.minor,
+            touchOrientation: this.pointerTracking.orientation
+        });
     }
+
+    // Maintain your existing cursor locking and accuracy
+    setTimeout(() => {
+        const length = input.value.length;
+        input.setSelectionRange(length, length);
+    }, 0);
+
+    this.calculateAccuracy();
+    this.checkSentenceCompletion();
+    }
+
 
     
     startTypingTask() {
