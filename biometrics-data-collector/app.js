@@ -573,54 +573,50 @@ class BiometricDataCollector {
                 
             case 'rotate':
                 if (phase === 'start' && touches.length === 2) {
-                    // Calculate initial angle between touches
+                    // Same as original: initialize rotation tracking
                     const dx = touches[1].clientX - touches[0].clientX;
                     const dy = touches[1].clientY - touches[0].clientY;
-                    this.crystalState.initialAngle = Math.atan2(dy, dx); // radians
-                    this.crystalState.totalRotation = 0; // reset
+                    this.crystalState.initialAngle = Math.atan2(dy, dx);
+                    this.crystalState.totalRotation = 0;
                     this.crystalState.isRotating = true;
                     this.crystalState.rotationStart = performance.now();
-                    crystal.classList.add('rotation-feedback');
-                    crystal.classList.add('active');
+                    crystal.classList.add('rotation-feedback', 'active');
                 } 
                 else if (phase === 'move' && this.crystalState.isRotating && touches.length === 2) {
-                    // Calculate current angle between touches
+                    // Same as original: calculate current angle
                     const dx = touches[1].clientX - touches[0].clientX;
                     const dy = touches[1].clientY - touches[0].clientY;
                     const currentAngle = Math.atan2(dy, dx);
                     
-                    // Calculate angle difference
+                    // Same as original: calculate and normalize angle difference
                     let angleDiff = currentAngle - this.crystalState.initialAngle;
-                    
-                    // Normalize angle difference to [-π, π] to avoid jumps when crossing PI
                     if (angleDiff > Math.PI) {
                         angleDiff -= 2 * Math.PI;
                     } else if (angleDiff < -Math.PI) {
                         angleDiff += 2 * Math.PI;
                     }
                     
-                    // Only count clockwise rotation (positive in screen coordinates)
+                    // Only count clockwise rotation (positive differences)
                     if (angleDiff > 0) {
                         this.crystalState.totalRotation += angleDiff;
                     }
                     
-                    // Update for next calculation
                     this.crystalState.initialAngle = currentAngle;
-                    
                     const elapsed = performance.now() - this.crystalState.rotationStart;
                     const rotationDeg = Math.round(this.crystalState.totalRotation * 180 / Math.PI);
                     
                     this.updateStepProgress(`${rotationDeg}° | ${Math.floor(elapsed/1000)}s / ${step.target/1000}s`);
                     
-                    // Complete only after both time and rotation requirements are met
-                    if (elapsed >= step.target && this.crystalState.totalRotation >= (2 * Math.PI)) {
+                    // UPDATED: Require only 10 degrees (converted to radians) instead of 360
+                    const requiredRadians = 10 * Math.PI / 180; // 10° in radians
+                    if (elapsed >= step.target && this.crystalState.totalRotation >= requiredRadians) {
                         this.completeStep();
                     }
                 } 
                 else if (phase === 'end' && touches.length < 2) {
+                    // Same as original: clean up state
                     this.crystalState.isRotating = false;
-                    crystal.classList.remove('rotation-feedback');
-                    crystal.classList.remove('active');
+                    crystal.classList.remove('rotation-feedback', 'active');
                 }
                 break;
                 
