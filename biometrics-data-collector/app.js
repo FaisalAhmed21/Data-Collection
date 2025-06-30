@@ -218,30 +218,41 @@ class BiometricDataCollector {
         }
     }
     
-    // UPDATED: Return the actual key pressed by the user, including special keys by name
+    // FIXED: Return the actual key pressed by the user with improved character detection
     getActualTypedCharacter(e) {
-        // Directly return special keys by name
-        const specialKeys = [
-            'Backspace', 'Tab', 'Enter', 'Shift', 'Control', 'Alt', 'CapsLock', 'Escape',
-            'ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown', 'Insert', 'Delete', 'Home', 'End',
-            'PageUp', 'PageDown', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10',
-            'F11', 'F12', 'NumLock', 'ScrollLock', 'Pause', 'Meta', 'ContextMenu'
-        ];
-        
-        if (specialKeys.includes(e.key)) {
-            return e.key;
+        // Handle special keys by name
+        const specialKeys = {
+            8: 'Backspace',
+            9: 'Tab',
+            13: 'Enter',
+            16: 'Shift',
+            17: 'Control',
+            18: 'Alt',
+            20: 'CapsLock',
+            27: 'Escape',
+            32: 'Space',
+            37: 'ArrowLeft',
+            38: 'ArrowUp',
+            39: 'ArrowRight',
+            40: 'ArrowDown',
+            46: 'Delete',
+        };
+
+        // Return special key name if exists
+        if (specialKeys[e.keyCode]) {
+            return specialKeys[e.keyCode];
         }
-        
+
         // Handle space key explicitly
-        if (e.key === ' ') {
+        if (e.key === ' ' || e.keyCode === 32) {
             return 'Space';
         }
-        
-        // Return single character keys directly
+
+        // Handle single character keys
         if (e.key && e.key.length === 1) {
             return e.key;
         }
-        
+
         // Handle number keys with shift modifiers
         if (e.keyCode >= 48 && e.keyCode <= 57) {
             if (e.shiftKey) {
@@ -250,14 +261,14 @@ class BiometricDataCollector {
             }
             return String.fromCharCode(e.keyCode);
         }
-        
+
         // Handle letter keys with correct case
         if (e.keyCode >= 65 && e.keyCode <= 90) {
             return e.shiftKey ? 
                 String.fromCharCode(e.keyCode) : 
                 String.fromCharCode(e.keyCode).toLowerCase();
         }
-        
+
         // Handle punctuation keys
         const punctuation = {
             188: e.shiftKey ? '<' : ',',
@@ -272,13 +283,13 @@ class BiometricDataCollector {
             187: e.shiftKey ? '+' : '=',
             192: e.shiftKey ? '~' : '`'
         };
-        
+
         if (punctuation[e.keyCode]) {
             return punctuation[e.keyCode];
         }
-        
-        // Fallback to key name or key code
-        return e.key || `KeyCode${e.keyCode}`;
+
+        // Final fallback to key name
+        return e.key || `KeyCode_${e.keyCode}`;
     }
     
     handleKeydown(e) {
@@ -407,7 +418,7 @@ class BiometricDataCollector {
         this.keystrokeData.push(data);
     }
     
-    // Crystal Game Methods (unchanged)
+    // Crystal Game Methods
     startCrystalGame() {
         this.currentCrystalStep = 1;
         this.resetCrystalState();
@@ -815,7 +826,7 @@ class BiometricDataCollector {
         this.touchData.push(data);
     }
     
-    // ENHANCED GALLERY METHODS WITH TWO-FINGER PINCH ZOOM
+    // Enhanced Gallery Methods
     initializeGallery() {
         const grid = document.getElementById('gallery-grid');
         grid.innerHTML = '';
@@ -837,7 +848,6 @@ class BiometricDataCollector {
     }
     
     bindGalleryEvents() {
-        // ENHANCED: Two-finger pinch zoom support
         document.addEventListener('touchstart', (e) => {
             if (document.querySelector('.image-popup.active')) {
                 this.handleGalleryTouchStart(e);
@@ -1137,7 +1147,7 @@ class BiometricDataCollector {
         }
     }
     
-    // Export Methods with FIXED character extraction and removed random columns
+    // Export Methods
     exportKeystrokeData() {
         const features = this.extractKeystrokeFeatures();
         const csv = this.convertToCSV(features);
@@ -1158,14 +1168,14 @@ class BiometricDataCollector {
         document.getElementById('touch-features').textContent = '17';
     }
     
-    // FIXED: Keystroke feature extraction with direct character use and removed random columns
+    // FIXED: Keystroke feature extraction
     extractKeystrokeFeatures() {
         const features = [];
         
         // Process each keystroke directly
         this.keystrokeData.forEach((keystroke, index) => {
             if (keystroke.type === 'keydown') {
-                // Use the actualChar directly - it now contains the correct character
+                // Use the actualChar directly
                 const refChar = keystroke.actualChar;
                 
                 // Calculate flight time
@@ -1193,7 +1203,6 @@ class BiometricDataCollector {
         return features;
     }
     
-    // FIXED: Touch feature extraction with removed random columns
     extractTouchFeatures() {
         const features = [];
         
