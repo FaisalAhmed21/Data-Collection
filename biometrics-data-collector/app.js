@@ -15,10 +15,7 @@ class BiometricDataCollector {
         this.currentPointerY = window.innerHeight / 2;
         this.pointerTracking = {
             x: window.innerWidth / 2,
-            y: window.innerHeight / 2,
-            major: 10,
-            minor: 10,
-            orientation: 0
+            y: window.innerHeight / 2
         };
         
         // Enhanced gallery zoom state with pinch support
@@ -105,10 +102,7 @@ class BiometricDataCollector {
             this.currentPointerY = e.clientY;
             this.pointerTracking = {
                 x: e.clientX,
-                y: e.clientY,
-                major: 10,
-                minor: 10,
-                orientation: 0
+                y: e.clientY
             };
         });
         
@@ -120,10 +114,7 @@ class BiometricDataCollector {
                 this.currentPointerY = touch.clientY;
                 this.pointerTracking = {
                     x: touch.clientX,
-                    y: touch.clientY,
-                    major: touch.radiusX ? touch.radiusX * 2 : 10,
-                    minor: touch.radiusY ? touch.radiusY * 2 : 10,
-                    orientation: touch.rotationAngle || 0
+                    y: touch.clientY
                 };
             }
         });
@@ -136,10 +127,7 @@ class BiometricDataCollector {
                 this.currentPointerY = touch.clientY;
                 this.pointerTracking = {
                     x: touch.clientX,
-                    y: touch.clientY,
-                    major: touch.radiusX ? touch.radiusX * 2 : 10,
-                    minor: touch.radiusY ? touch.radiusY * 2 : 10,
-                    orientation: touch.rotationAngle || 0
+                    y: touch.clientY
                 };
             }
         });
@@ -325,10 +313,7 @@ class BiometricDataCollector {
             sentence: this.currentSentence,
             position: e.target.selectionStart || 0,
             clientX: this.pointerTracking.x,
-            clientY: this.pointerTracking.y,
-            touchMajor: this.pointerTracking.major,
-            touchMinor: this.pointerTracking.minor,
-            touchOrientation: this.pointerTracking.orientation
+            clientY: this.pointerTracking.y
         });
     }
     
@@ -1155,7 +1140,7 @@ class BiometricDataCollector {
         this.downloadCSV(csv, filename);
         
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '12';
+        document.getElementById('keystroke-features').textContent = '9';
     }
     
     exportTouchData() {
@@ -1165,10 +1150,10 @@ class BiometricDataCollector {
         this.downloadCSV(csv, filename);
         
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '17';
+        document.getElementById('touch-features').textContent = '15';
     }
     
-    // FIXED: Keystroke feature extraction
+    // FIXED: Keystroke feature extraction with removed non-authentic touch properties
     extractKeystrokeFeatures() {
         const features = [];
         
@@ -1189,11 +1174,8 @@ class BiometricDataCollector {
                     trial_id: keystroke.sentence + 1,
                     timestamp_ms: Math.round(keystroke.timestamp),
                     ref_char: refChar,
-                    first_frame_touch_x: Math.round(keystroke.clientX || 100),
-                    first_frame_touch_y: Math.round(keystroke.clientY || 100),
-                    first_frame_touch_major: Math.round(keystroke.touchMajor || 10),
-                    first_frame_touch_minor: Math.round(keystroke.touchMinor || 10),
-                    first_frame_touch_orientation: Math.round(keystroke.touchOrientation || 0),
+                    touch_x: Math.round(keystroke.clientX || 100),
+                    touch_y: Math.round(keystroke.clientY || 100),
                     was_deleted: keystroke.actualChar === 'Backspace' ? 1 : 0,
                     flight_time_ms: flightTime
                 });
@@ -1203,6 +1185,7 @@ class BiometricDataCollector {
         return features;
     }
     
+    // FIXED: Touch feature extraction with removed non-authentic touch properties
     extractTouchFeatures() {
         const features = [];
         
@@ -1219,13 +1202,8 @@ class BiometricDataCollector {
                 touch_x: Math.round(touch.touches[0]?.clientX || 0),
                 touch_y: Math.round(touch.touches[0]?.clientY || 0),
                 btn_touch_state: touch.type,
-                touch_major: 10,
-                touch_minor: 10,
-                orientation: 0,
                 tracking_id: touch.touches[0]?.identifier || 0,
                 pressure: Math.round(pressure * 100) / 100,
-                finger_id: 1,
-                hand_id: 1,
                 velocity: Math.round(velocity * 100) / 100,
                 acceleration: Math.round(acceleration * 100) / 100,
                 touch_area: Math.round(this.calculateTouchArea(touch.touches)),
