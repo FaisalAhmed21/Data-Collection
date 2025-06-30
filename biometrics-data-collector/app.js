@@ -321,15 +321,23 @@ class BiometricDataCollector {
     }
     
     handleTypingInput(e) {
-        const input = e.target;
-        setTimeout(() => {
-            const length = input.value.length;
-            input.setSelectionRange(length, length);
-        }, 0);
-        
-        this.calculateAccuracy();
-        this.checkSentenceCompletion();
+    const input = e.target;
+    const typedChar = input.value.slice(-1); // Last typed character
+    console.log('Fallback input:', typedChar);
+
+    this.recordKeystroke({
+        timestamp: performance.now(),
+        actualChar: typedChar || 'Unknown',
+        type: 'input',
+        sentence: this.currentSentence,
+        clientX: this.pointerTracking.x,
+        clientY: this.pointerTracking.y,
+        touchMajor: this.pointerTracking.major,
+        touchMinor: this.pointerTracking.minor,
+        touchOrientation: this.pointerTracking.orientation
+    });
     }
+
     
     startTypingTask() {
         this.currentSentence = 0;
