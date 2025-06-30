@@ -152,9 +152,55 @@ class BiometricDataCollector {
         
         // Typing task
         const typingInput = document.getElementById('typing-input');
+
+        let compositionActive = false;
+    
+        typingInput.addEventListener('compositionstart', (e) => {
+            compositionActive = true;
+            console.log('Composition started');
+        });
+        
+        typingInput.addEventListener('compositionupdate', (e) => {
+            if (e.data) {
+                // Record composition data
+                this.recordKeystroke({
+                    timestamp: performance.now(),
+                    actualChar: e.data,
+                    keyCode: null,
+                    type: 'composition',
+                    sentence: this.currentSentence,
+                    position: e.target.selectionStart || 0,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+            }
+        });
+        
+        typingInput.addEventListener('compositionend', (e) => {
+            compositionActive = false;
+            if (e.data) {
+                // Final composition result
+                this.recordKeystroke({
+                    timestamp: performance.now(),
+                    actualChar: e.data,
+                    keyCode: null,
+                    type: 'compositionend',
+                    sentence: this.currentSentence,
+                    position: e.target.selectionStart || 0,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+            }
+        });
         
         // CRITICAL FIX: Simplified and more reliable character detection
-        typingInput.addEventListener('keydown', (e) => this.handleKeydown(e));
+        typingInput.addEventListener('keydown', (e) => {
+            if (compositionActive || e.keyCode === 229) {
+                // Skip processing during composition
+                return;
+            }
+            this.handleKeydown(e);
+        });
         typingInput.addEventListener('input', (e) => this.handleTypingInput(e));
         
         // Update pointer coordinates when typing
@@ -210,56 +256,49 @@ class BiometricDataCollector {
     }
     
     // FIXED: Return the actual key pressed by the user with improved character detection
-    getActualTypedCharacter(e) {
-    if (e.key && e.key !== 'Unidentified') {
-        // Normalize special keys to lowercase if desired
+    getActualTypedCharacter(e, inputValue = '') {
+    // 1. Handle mobile IME / virtual keyboard composition events
+    //    Browsers report keyCode 229 or key === 'Unidentified' for in-progress IME input.
+        if (e.keyCode === 229 || e.key === 'Unidentified') {
+            // If the input already contains a new character, return the last one
+            if (inputValue.length > 0) {
+                return inputValue.slice(-1);
+            }
+            return 'Unidentified';
+        }
+    
+        // 2. Handle well-known special keys
         const specialKeys = {
-            'Backspace': 'backspace',
-            'Enter': 'enter',
-            'Tab': 'tab',
-            ' ': 'space'
+            'Backspace':    'backspace',
+            'Enter':        'enter',
+            'Tab':          'tab',
+            ' ':            'space',
+            'Escape':       'escape',
+            'ArrowLeft':    'arrowleft',
+            'ArrowRight':   'arrowright',
+            'ArrowUp':      'arrowup',
+            'ArrowDown':    'arrowdown'
         };
-        return specialKeys[e.key] || e.key;
+        if (e.key && specialKeys.hasOwnProperty(e.key)) {
+            return specialKeys[e.key];
+        }
+        if (e.key && e.key.length === 1) {
+            // Regular printable character (e.g., 'a', '1', ',', etc.)
+            return e.key;
+        }
+    
+        // 3. Fallback for older browsers or rare keys
+        if (e.keyCode && !isNaN(e.keyCode)) {
+            // Convert keyCode to a character if possible
+            const char = String.fromCharCode(e.keyCode);
+            if (char && /\S/.test(char)) {
+                return char;
+            }
+        }
+    
+        // 4. If all else fails, return the raw key or code
+        return e.key || (`KeyCode_${e.keyCode}`) || 'Unidentified';
     }
-
-    // Fallbacks for older Android keyCode behavior
-    const shift = e.shiftKey;
-    const keyCode = e.keyCode;
-
-    // A-Z
-    if (keyCode >= 65 && keyCode <= 90) {
-        const char = String.fromCharCode(keyCode);
-        return shift ? char : char.toLowerCase();
-    }
-
-    // Numbers (0-9) and shifted symbols (!@#$...)
-    if (keyCode >= 48 && keyCode <= 57) {
-        const symbols = {
-            48: ')', 49: '!', 50: '@', 51: '#', 52: '$',
-            53: '%', 54: '^', 55: '&', 56: '*', 57: '('
-        };
-        return shift ? symbols[keyCode] : String.fromCharCode(keyCode);
-    }
-
-    // Common punctuation keys
-    const keyMap = {
-        188: shift ? '<' : ',',
-        190: shift ? '>' : '.',
-        191: shift ? '?' : '/',
-        186: shift ? ':' : ';',
-        222: shift ? '"' : "'",
-        219: shift ? '{' : '[',
-        221: shift ? '}' : ']',
-        220: shift ? '|' : '\\',
-        189: shift ? '_' : '-',
-        187: shift ? '+' : '=',
-        192: shift ? '~' : '`'
-    };
-    if (keyMap[keyCode]) return keyMap[keyCode];
-
-    return 'Unknown';
-}
-
     
     handleKeydown(e) {
         const timestamp = performance.now();
@@ -298,68 +337,49 @@ class BiometricDataCollector {
         });
     }
     
-    // ✅ FINAL PATCHED MOBILE-FRIENDLY KEYSTROKE COLLECTION (FOR app.js)
-
-// Place this in your BiometricDataCollector class
+    // Enhanced mobile-friendly keystroke detection
     handleTypingInput(e) {
         const input = e.target;
-        const value = input.value;
-        const typedChar = value.slice(-1); // Last typed character
+        const currentValue = input.value;
         const timestamp = performance.now();
-    
-        if (!typedChar) return;
-    
-        // Simulate keydown
-        this.recordKeystroke({
-            timestamp: timestamp,
-            actualChar: typedChar,
-            keyCode: null,
-            type: 'keydown',
-            sentence: this.currentSentence,
-            position: value.length - 1,
-            clientX: this.pointerTracking.x,
-            clientY: this.pointerTracking.y,
-            touchMajor: this.pointerTracking.major,
-            touchMinor: this.pointerTracking.minor,
-            touchOrientation: this.pointerTracking.orientation
-        });
-    
-        // Simulate keyup
-        this.recordKeystroke({
-            timestamp: timestamp + 20,
-            actualChar: typedChar,
-            keyCode: null,
-            type: 'keyup',
-            sentence: this.currentSentence,
-            position: value.length - 1,
-            clientX: this.pointerTracking.x,
-            clientY: this.pointerTracking.y,
-            touchMajor: this.pointerTracking.major,
-            touchMinor: this.pointerTracking.minor,
-            touchOrientation: this.pointerTracking.orientation
-        });
-    
-        // Keep cursor at end
-        setTimeout(() => {
-            const length = input.value.length;
-            input.setSelectionRange(length, length);
-        }, 0);
-    
-        this.calculateAccuracy();
-        this.checkSentenceCompletion();
+        
+        // Detect what changed
+        const lastChar = currentValue.slice(-1);
+        const isBackspace = currentValue.length < this.lastInputLength;
+        
+        if (isBackspace) {
+            // Handle backspace
+            this.recordKeystroke({
+                timestamp: timestamp,
+                actualChar: 'backspace',
+                keyCode: 8,
+                type: 'keydown',
+                sentence: this.currentSentence,
+                position: currentValue.length,
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y
+            });
+        } else if (lastChar && !isBackspace) {
+            // Handle character input
+            this.recordKeystroke({
+                timestamp: timestamp,
+                actualChar: lastChar,
+                keyCode: lastChar.charCodeAt(0),
+                type: 'keydown',
+                sentence: this.currentSentence,
+                position: currentValue.length - 1,
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y
+            });
         }
-    
-        // Maintain your existing cursor locking and accuracy
-        setTimeout(() => {
-            const length = input.value.length;
-            input.setSelectionRange(length, length);
-        }, 0);
-    
+        
+        // Store length for next comparison
+        this.lastInputLength = currentValue.length;
+        
         this.calculateAccuracy();
         this.checkSentenceCompletion();
     }
-    
-
+  
     
     startTypingTask() {
         this.currentSentence = 0;
