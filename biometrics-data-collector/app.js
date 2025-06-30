@@ -1137,7 +1137,7 @@ class BiometricDataCollector {
         }
     }
     
-    // Export Methods with FIXED character extraction
+    // Export Methods with FIXED character extraction and removed random columns
     exportKeystrokeData() {
         const features = this.extractKeystrokeFeatures();
         const csv = this.convertToCSV(features);
@@ -1145,7 +1145,7 @@ class BiometricDataCollector {
         this.downloadCSV(csv, filename);
         
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '16';
+        document.getElementById('keystroke-features').textContent = '12';
     }
     
     exportTouchData() {
@@ -1155,39 +1155,37 @@ class BiometricDataCollector {
         this.downloadCSV(csv, filename);
         
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '19';
+        document.getElementById('touch-features').textContent = '17';
     }
     
-    // CRITICAL FIX: Simplified keystroke feature extraction with direct character use
+    // FIXED: Keystroke feature extraction with direct character use and removed random columns
     extractKeystrokeFeatures() {
         const features = [];
         
-        // Process each keystroke directly (no pairing needed)
+        // Process each keystroke directly
         this.keystrokeData.forEach((keystroke, index) => {
             if (keystroke.type === 'keydown') {
                 // Use the actualChar directly - it now contains the correct character
                 const refChar = keystroke.actualChar;
                 
-                // Debug logging to verify
-                console.log('Exporting keystroke:', refChar, 'from actualChar:', keystroke.actualChar);
+                // Calculate flight time
+                const flightTime = index > 0 ? 
+                    Math.round(keystroke.timestamp - this.keystrokeData[index - 1].timestamp) : 
+                    0;
                 
                 features.push({
                     participant_id: this.participantId,
                     task_id: 1,
                     trial_id: keystroke.sentence + 1,
                     timestamp_ms: Math.round(keystroke.timestamp),
-                    ref_char: refChar, // Direct use of actualChar
+                    ref_char: refChar,
                     first_frame_touch_x: Math.round(keystroke.clientX || 100),
                     first_frame_touch_y: Math.round(keystroke.clientY || 100),
                     first_frame_touch_major: Math.round(keystroke.touchMajor || 10),
                     first_frame_touch_minor: Math.round(keystroke.touchMinor || 10),
                     first_frame_touch_orientation: Math.round(keystroke.touchOrientation || 0),
-                    first_frame_touch_heatmap: Math.round(Math.random() * 100),
-                    first_frame_heatmap_overlap_vector: Math.round(Math.random() * 50),
                     was_deleted: keystroke.actualChar === 'Backspace' ? 1 : 0,
-                    lm_score: Math.round((Math.random() * 0.5 + 0.5) * 100) / 100,
-                    dwell_time_ms: Math.round(Math.random() * 100 + 80),
-                    flight_time_ms: index > 0 ? Math.round(keystroke.timestamp - this.keystrokeData[index - 1].timestamp) : 0
+                    flight_time_ms: flightTime
                 });
             }
         });
@@ -1195,6 +1193,7 @@ class BiometricDataCollector {
         return features;
     }
     
+    // FIXED: Touch feature extraction with removed random columns
     extractTouchFeatures() {
         const features = [];
         
@@ -1220,7 +1219,6 @@ class BiometricDataCollector {
                 hand_id: 1,
                 velocity: Math.round(velocity * 100) / 100,
                 acceleration: Math.round(acceleration * 100) / 100,
-                jerk: Math.round(this.calculateJerk(touch, index) * 100) / 100,
                 touch_area: Math.round(this.calculateTouchArea(touch.touches)),
                 inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0
             });
@@ -1251,16 +1249,6 @@ class BiometricDataCollector {
         const dt = touch.timestamp - this.touchData[index - 1].timestamp;
         
         return dt > 0 ? (curr - prev) / dt : 0;
-    }
-    
-    calculateJerk(touch, index) {
-        if (index < 3) return 0;
-        
-        const a1 = this.calculateAcceleration(this.touchData[index - 1], index - 1);
-        const a2 = this.calculateAcceleration(touch, index);
-        const dt = touch.timestamp - this.touchData[index - 1].timestamp;
-        
-        return dt > 0 ? (a2 - a1) / dt : 0;
     }
     
     calculateTouchArea(touches) {
