@@ -1376,15 +1376,6 @@ select.form-control {
   -webkit-touch-callout: none; /* Disable iOS long-press menu */ 
 }
 
-.sentence-canvas {
-  display: block;
-  user-select: none;            /* Standard */
-  -webkit-user-select: none;    /* Chrome/Safari */
-  -ms-user-select: none;        /* IE10+ */
-  -webkit-touch-callout: none;  /* iOS long-press */
-}
-
-
 
 .typing-area {
     margin: var(--space-24) 0;
