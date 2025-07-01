@@ -1226,23 +1226,25 @@ class BiometricDataCollector {
         const features = this.extractKeystrokeFeatures();
         const csv = this.convertToCSV(features);
         const filename = `keystroke_data_${this.participantId}.csv`;
+    
         this.uploadCSVToGoogleDrive(csv, filename);
-
-        
+    
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
         document.getElementById('keystroke-features').textContent = '9';
     }
+
     
     exportTouchData() {
         const features = this.extractTouchFeatures();
         const csv = this.convertToCSV(features);
         const filename = `touch_data_${this.participantId}.csv`;
+    
         this.uploadCSVToGoogleDrive(csv, filename);
-
-        
+    
         document.getElementById('touch-count').textContent = this.touchData.length;
         document.getElementById('touch-features').textContent = '12';
     }
+
     
     // FIXED: Enhanced keystroke feature extraction with proper character handling
     extractKeystrokeFeatures() {
@@ -1360,31 +1362,31 @@ class BiometricDataCollector {
         
         return csvContent;
     }
-    
+
+    // https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec
+
     uploadCSVToGoogleDrive(content, filename) {
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec'; // <-- Replace with your web app URL
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec'; // 🔁 Replace with your actual Apps Script Web App URL
     
-        const formData = new FormData();
-        formData.append('filename', filename);
-        formData.append('file', new Blob([content], { type: 'text/csv' }));
-    
-        fetch(scriptURL, {
+        fetch(`${scriptURL}?filename=${encodeURIComponent(filename)}`, {
             method: 'POST',
-            body: new URLSearchParams({
-                filename: filename,
-                content: content
-            })
+            headers: {
+                'Content-Type': 'text/plain'
+            },
+            body: content
         })
         .then(res => res.text())
         .then(response => {
-            console.log('Success:', response);
-            alert(`✅ CSV uploaded to your Google Drive: ${filename}`);
+            console.log(`✅ ${filename} uploaded:`, response);
+            alert(`✅ ${filename} uploaded to your Google Drive.`);
         })
         .catch(error => {
-            console.error('Error uploading to Drive:', error);
-            alert('❌ Upload failed: ' + error);
+            console.error(`❌ Upload failed:`, error);
+            alert(`❌ Upload failed for ${filename}: ` + error.message);
         });
     }
+
+
 
 }
 
