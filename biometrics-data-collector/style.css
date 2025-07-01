@@ -946,18 +946,6 @@ pre code {
   padding: 0;
 }
 
-#typing-input {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-
-  /* Prevent long press menu */
-  -webkit-touch-callout: none;
-  touch-action: manipulation;
-}
-
-
 /* Buttons */
 .btn {
   display: inline-flex;
@@ -1380,6 +1368,14 @@ select.form-control {
     margin: 0;
     font-family: var(--font-family-mono);
 }
+
+.instruction-text {
+  -webkit-user-select: none;   /* Safari/Chrome[iOS] */
+  -ms-user-select: none;       /* IE10+ */
+  user-select: none;           /* Standard */
+  -webkit-touch-callout: none; /* Disable iOS long-press menu */ 
+}
+
 
 .typing-area {
     margin: var(--space-24) 0;
