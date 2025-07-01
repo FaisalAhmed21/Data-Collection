@@ -218,6 +218,13 @@ class BiometricDataCollector {
         
         // Prevent paste operations
         typingInput.addEventListener('paste', (e) => e.preventDefault());
+
+        // Inside bindEvents(), after `typingInput.addEventListener('paste', …)`
+        typingInput.addEventListener('copy',   e => e.preventDefault());   // Disable Copy[6]
+        typingInput.addEventListener('cut',    e => e.preventDefault());   // Disable Cut[6]
+        typingInput.addEventListener('drop',   e => e.preventDefault());   // Disable Drag-and-Drop paste
+        typingInput.addEventListener('contextmenu', e => e.preventDefault()); // Disable Right-Click menu[4]
+
         
         // Cursor restrictions
         typingInput.addEventListener('mousedown', (e) => {
