@@ -43,7 +43,7 @@ class BiometricDataCollector {
             "Human-computer interaction studies optimize user experience and interface design."
         ];
         
-        // Crystal game variables - 5 steps
+        // Crystal game variables - 5 steps only
         this.crystalSteps = [
             { name: "Pressure-Sensitive Tapping", instruction: "Tap the crystal exactly 3 times with varying pressure levels", requiredTaps: 3, type: "tap" },
             { name: "Multi-Touch Scaling", instruction: "Use two fingers to resize the crystal 3 times", requiredGestures: 3, type: "pinch" },
@@ -99,49 +99,120 @@ class BiometricDataCollector {
         this.generateParticipantId();
         this.initializeGallery();
         this.setupPointerTracking();
-        this.setupCopyPasteProhibition(); // NEW: Setup copy/paste restrictions
+        this.setupStrictCopyPasteProhibition(); // ENHANCED: Comprehensive copy/paste blocking
     }
     
-    // NEW: Enhanced copy/paste prohibition setup
-    setupCopyPasteProhibition() {
-        // Prevent copying the step instruction text
+    // ENHANCED: Complete copy/paste prohibition system
+    setupStrictCopyPasteProhibition() {
+        // Block copy/paste on crystal forge instructions
         const instructionEl = document.getElementById('step-instruction');
         if (instructionEl) {
+            // Multiple browser compatibility for selection blocking
             instructionEl.style.userSelect = 'none';
             instructionEl.style.webkitUserSelect = 'none';
             instructionEl.style.mozUserSelect = 'none';
             instructionEl.style.msUserSelect = 'none';
+            instructionEl.style.webkitTouchCallout = 'none';
+            instructionEl.style.khtmlUserSelect = 'none';
             
-            instructionEl.addEventListener('copy', (e) => e.preventDefault());
-            instructionEl.addEventListener('cut', (e) => e.preventDefault());
-            instructionEl.addEventListener('contextmenu', (e) => e.preventDefault());
-            instructionEl.addEventListener('selectstart', (e) => e.preventDefault());
-            instructionEl.addEventListener('dragstart', (e) => e.preventDefault());
+            // Block all copy-related events
+            ['copy', 'cut', 'paste', 'contextmenu', 'selectstart', 'dragstart', 'drag', 'dragover'].forEach(event => {
+                instructionEl.addEventListener(event, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                });
+            });
         }
-        
-        // Prevent copying step titles and other crystal game elements
+
+        // Block copy/paste on crystal step title
         const stepTitle = document.getElementById('step-title');
         if (stepTitle) {
             stepTitle.style.userSelect = 'none';
-            stepTitle.addEventListener('copy', (e) => e.preventDefault());
-            stepTitle.addEventListener('contextmenu', (e) => e.preventDefault());
-        }
-        
-        // Add global copy prevention for sensitive areas
-        document.addEventListener('copy', (e) => {
-            const target = e.target;
-            if (target.closest('.crystal-screen') || target.closest('.typing-screen')) {
-                // Allow copy only for specific elements if needed
-                if (!target.closest('#typing-input')) {
+            stepTitle.style.webkitUserSelect = 'none';
+            stepTitle.style.mozUserSelect = 'none';
+            stepTitle.style.msUserSelect = 'none';
+            
+            ['copy', 'cut', 'contextmenu', 'selectstart', 'dragstart'].forEach(event => {
+                stepTitle.addEventListener(event, (e) => {
                     e.preventDefault();
-                }
+                    e.stopPropagation();
+                    return false;
+                });
+            });
+        }
+
+        // Block copy/paste on crystal status and progress
+        ['step-status', 'step-progress', 'current-step'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.userSelect = 'none';
+                ['copy', 'cut', 'contextmenu', 'selectstart'].forEach(event => {
+                    el.addEventListener(event, (e) => e.preventDefault());
+                });
             }
         });
-        
-        // Prevent drag and drop that could be used to copy content
-        document.addEventListener('dragstart', (e) => {
-            if (e.target.closest('.crystal-screen')) {
+
+        // Global copy prevention for crystal screen
+        document.addEventListener('copy', (e) => {
+            if (e.target.closest('.crystal-screen') || e.target.closest('#crystal-screen')) {
                 e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        });
+
+        // Global cut prevention for crystal screen
+        document.addEventListener('cut', (e) => {
+            if (e.target.closest('.crystal-screen') || e.target.closest('#crystal-screen')) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        });
+
+        // Enhanced typing input restrictions
+        const typingInput = document.getElementById('typing-input');
+        if (typingInput) {
+            // Block copy, cut, paste completely
+            ['copy', 'cut', 'paste'].forEach(event => {
+                typingInput.addEventListener(event, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                });
+            });
+
+            // Block context menu
+            typingInput.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                return false;
+            });
+
+            // Block drag operations
+            typingInput.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+                return false;
+            });
+        }
+
+        // Prevent text selection in crystal area
+        const crystalArea = document.getElementById('crystal-area');
+        if (crystalArea) {
+            crystalArea.style.userSelect = 'none';
+            crystalArea.style.webkitUserSelect = 'none';
+            crystalArea.style.mozUserSelect = 'none';
+        }
+
+        // Block keyboard shortcuts globally
+        document.addEventListener('keydown', (e) => {
+            // Block Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X in crystal screen
+            if (document.querySelector('#crystal-screen.active')) {
+                if (e.ctrlKey && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
             }
         });
     }
@@ -254,12 +325,7 @@ class BiometricDataCollector {
             this.pointerTracking.y = e.clientY;
         });
         
-        // ENHANCED: Strict paste/copy prevention for typing input
-        typingInput.addEventListener('paste', (e) => e.preventDefault());
-        typingInput.addEventListener('copy', (e) => e.preventDefault());
-        typingInput.addEventListener('cut', (e) => e.preventDefault());
-        
-        // Cursor restrictions
+        // Cursor restrictions - force cursor to end
         typingInput.addEventListener('mousedown', (e) => {
             setTimeout(() => {
                 const length = typingInput.value.length;
@@ -876,7 +942,7 @@ class BiometricDataCollector {
         this.touchData.push(data);
     }
     
-    // Enhanced Gallery Methods
+    // FIXED: Enhanced Gallery Methods with proper popup navigation
     initializeGallery() {
         const grid = document.getElementById('gallery-grid');
         grid.innerHTML = '';
@@ -1024,7 +1090,7 @@ class BiometricDataCollector {
         document.body.style.overflow = 'hidden';
     }
     
-    // UPDATED: Enhanced gallery popup with boundary navigation
+    // FIXED: Complete gallery popup creation with proper boundary navigation
     createImagePopup() {
         const popup = document.createElement('div');
         popup.className = 'image-popup';
@@ -1051,33 +1117,41 @@ class BiometricDataCollector {
         
         document.body.appendChild(popup);
         
-        // ENHANCED: Close button always closes popup
-        popup.querySelector('.close-popup').addEventListener('click', () => this.closeImagePopup());
-        popup.querySelector('.popup-overlay').addEventListener('click', () => this.closeImagePopup());
+        // FIXED: Close button - always closes popup and returns to gallery
+        popup.querySelector('.close-popup').addEventListener('click', () => {
+            this.closeImagePopup();
+        });
         
-        // ENHANCED: Prev/Next buttons with boundary handling
+        popup.querySelector('.popup-overlay').addEventListener('click', () => {
+            this.closeImagePopup();
+        });
+        
+        // FIXED: Prev button with boundary handling
         popup.querySelector('.popup-prev').addEventListener('click', () => {
             if (this.currentGalleryImage > 0) {
                 this.prevGalleryImage();
             } else {
-                // FIXED: Close popup when at first image and clicking prev
+                // FIXED: Close popup when at first image
                 this.closeImagePopup();
             }
         });
         
+        // FIXED: Next button with boundary handling  
         popup.querySelector('.popup-next').addEventListener('click', () => {
             if (this.currentGalleryImage < this.galleryImages.length - 1) {
                 this.nextGalleryImage();
             } else {
-                // FIXED: Close popup when at last image and clicking next
+                // FIXED: Close popup when at last image
                 this.closeImagePopup();
             }
         });
         
+        // Zoom controls
         popup.querySelector('.zoom-in').addEventListener('click', () => this.zoomIn());
         popup.querySelector('.zoom-out').addEventListener('click', () => this.zoomOut());
         popup.querySelector('.zoom-reset').addEventListener('click', () => this.resetZoom());
         
+        // Mouse wheel zoom
         const imageContainer = popup.querySelector('.popup-image-container');
         imageContainer.addEventListener('wheel', (e) => {
             e.preventDefault();
@@ -1088,6 +1162,7 @@ class BiometricDataCollector {
             }
         });
         
+        // Mouse panning
         let isPanning = false;
         imageContainer.addEventListener('mousedown', (e) => {
             if (this.galleryZoom.scale > 1) {
@@ -1113,22 +1188,24 @@ class BiometricDataCollector {
             }
         });
         
-        // ENHANCED: Keyboard navigation with boundary handling
+        // FIXED: Keyboard navigation with boundary handling
         document.addEventListener('keydown', (e) => {
             if (popup.classList.contains('active')) {
-                if (e.key === 'Escape') this.closeImagePopup();
+                if (e.key === 'Escape') {
+                    this.closeImagePopup();
+                }
                 if (e.key === 'ArrowLeft') {
                     if (this.currentGalleryImage > 0) {
                         this.prevGalleryImage();
                     } else {
-                        this.closeImagePopup();
+                        this.closeImagePopup(); // FIXED: Close when at first image
                     }
                 }
                 if (e.key === 'ArrowRight') {
                     if (this.currentGalleryImage < this.galleryImages.length - 1) {
                         this.nextGalleryImage();
                     } else {
-                        this.closeImagePopup();
+                        this.closeImagePopup(); // FIXED: Close when at last image
                     }
                 }
                 if (e.key === '+' || e.key === '=') this.zoomIn();
@@ -1206,7 +1283,7 @@ class BiometricDataCollector {
         }
     }
     
-    // ENHANCED: Improved close popup function
+    // FIXED: Properly close popup and return to gallery
     closeImagePopup() {
         const popup = document.querySelector('.image-popup');
         if (popup) {
