@@ -1226,7 +1226,8 @@ class BiometricDataCollector {
         const features = this.extractKeystrokeFeatures();
         const csv = this.convertToCSV(features);
         const filename = `keystroke_data_${this.participantId}.csv`;
-        this.downloadCSV(csv, filename);
+        this.uploadCSVToGoogleDrive(csv, filename);
+
         
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
         document.getElementById('keystroke-features').textContent = '9';
@@ -1236,7 +1237,8 @@ class BiometricDataCollector {
         const features = this.extractTouchFeatures();
         const csv = this.convertToCSV(features);
         const filename = `touch_data_${this.participantId}.csv`;
-        this.downloadCSV(csv, filename);
+        this.uploadCSVToGoogleDrive(csv, filename);
+
         
         document.getElementById('touch-count').textContent = this.touchData.length;
         document.getElementById('touch-features').textContent = '12';
@@ -1359,30 +1361,31 @@ class BiometricDataCollector {
         return csvContent;
     }
     
-    downloadCSV(content, filename) {
-        try {
-            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                
-                alert(`${filename} downloaded successfully!`);
-            } else {
-                alert('Download not supported in this browser');
-            }
-        } catch (error) {
-            console.error('Download error:', error);
-            alert(`Error downloading ${filename}: ${error.message}`);
-        }
+    uploadCSVToGoogleDrive(content, filename) {
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec'; // <-- Replace with your web app URL
+    
+        const formData = new FormData();
+        formData.append('filename', filename);
+        formData.append('file', new Blob([content], { type: 'text/csv' }));
+    
+        fetch(scriptURL, {
+            method: 'POST',
+            body: new URLSearchParams({
+                filename: filename,
+                content: content
+            })
+        })
+        .then(res => res.text())
+        .then(response => {
+            console.log('Success:', response);
+            alert(`✅ CSV uploaded to your Google Drive: ${filename}`);
+        })
+        .catch(error => {
+            console.error('Error uploading to Drive:', error);
+            alert('❌ Upload failed: ' + error);
+        });
     }
+
 }
 
 // Initialize the application
