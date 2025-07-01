@@ -1,150 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Behavioral Biometrics Study</title>
-
-    <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behavioral Biometrics Data Collection</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container">
+    <div class="container">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen active">
+            <div class="welcome-content">
+                <h1>Behavioral Biometrics Study</h1>
+                <p>This application collects keystroke dynamics and touch gesture data for research purposes.</p>
+                <div class="participant-info">
+                    <p>Participant ID: <span id="participant-id">-</span></p>
+                </div>
+                <button id="start-btn" class="btn btn--primary btn--lg">START STUDY</button>
+            </div>
+        </div>
 
-    <!-- ── Welcome ──────────────────────────────────────────────── -->
-    <div id="welcome-screen" class="screen active">
-        <h1>Behavioral Biometrics Study</h1>
-        <p class="welcome-text">
-            You will complete three tasks analysing your typing, touch, and navigation behaviour.
-        </p>
-        <p>Your Participant ID: <strong id="participant-id">Loading…</strong></p>
-        <button id="start-btn" class="btn btn--primary">Start Study</button>
+        <!-- Typing Task Screen -->
+        <div id="typing-screen" class="screen">
+            <div class="typing-content">
+                <h2>Typing Task</h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="typing-progress"></div>
+                </div>
+                <p class="task-instruction">Type the following sentence exactly as shown. Use only backspace to correct mistakes - cursor movement is disabled.</p>
+                
+                <div class="sentence-display">
+                    <p id="target-sentence"></p>
+                </div>
+                
+                <div class="typing-area">
+                    <textarea id="typing-input" class="form-control" rows="3" placeholder="Start typing here..." spellcheck="false" autocomplete="off"></textarea>
+                </div>
+                
+                <div class="typing-stats">
+                    <div class="stat">
+                        <span class="stat-label">Accuracy:</span>
+                        <span id="accuracy" class="stat-value">100%</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Progress:</span>
+                        <span id="sentence-progress" class="stat-value">1/4</span>
+                    </div>
+                </div>
+                
+                <button id="next-sentence-btn" class="btn btn--primary" disabled>Next Sentence</button>
+            </div>
+        </div>
+
+        <!-- Crystal Forge Game Screen -->
+        <div id="crystal-screen" class="screen">
+            <div class="crystal-content">
+                <h2>Crystal Forge Game</h2>
+                <div class="crystal-step-info">
+                    <h3 id="step-title">Step 1: Index Finger Tapping</h3>
+                    <p id="step-instruction">Tap the crystal exactly 3 times with your index finger</p>
+                </div>
+                
+                <div class="crystal-container">
+                    <div class="crystal-area" id="crystal-area">
+                        <div class="crystal" id="crystal">
+                            <div class="crystal-inner"></div>
+                            <div class="crystal-glow"></div>
+                        </div>
+                        <div class="size-indicator" id="size-indicator">100%</div>
+                    </div>
+                </div>
+                
+                <div class="crystal-feedback">
+                    <div class="feedback-item">
+                        <span class="feedback-label">Current Step:</span>
+                        <span id="current-step" class="feedback-value">1/5</span>
+                    </div>
+                    <div class="feedback-item">
+                        <span class="feedback-label">Status:</span>
+                        <span id="step-status" class="feedback-value">Ready</span>
+                    </div>
+                    <div class="feedback-item">
+                        <span class="feedback-label">Progress:</span>
+                        <span id="step-progress" class="feedback-value">0/3</span>
+                    </div>
+                </div>
+                
+                <div class="crystal-controls">
+                    <button id="reset-step-btn" class="btn btn--secondary">Reset Step</button>
+                    <button id="next-crystal-btn" class="btn btn--primary" disabled>Next Step</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gallery Screen -->
+        <div id="gallery-screen" class="screen">
+            <div class="gallery-content">
+                <h2>Image Gallery</h2>
+                <p class="gallery-instruction">Click on images to view them. In full-screen: swipe right for next image, swipe left for previous image. Use zoom controls to zoom in/out.</p>
+                
+                <div class="gallery-container">
+                    <div class="gallery-grid" id="gallery-grid">
+                        <!-- Images will be dynamically generated -->
+                    </div>
+                </div>
+                
+                <button id="finish-gallery-btn" class="btn btn--primary">Complete Gallery</button>
+            </div>
+        </div>
+
+        <!-- Export Screen -->
+        <div id="export-screen" class="screen">
+            <div class="export-content">
+                <h2>Data Export</h2>
+                <p>Your behavioral biometric data has been collected successfully.</p>
+                
+                <div class="export-stats">
+                    <div class="stat-card">
+                        <h4>Keystroke Data</h4>
+                        <p><span id="keystroke-count">0</span> keystrokes recorded</p>
+                        <p><span id="keystroke-features">9</span> features extracted</p>
+                        <p>ref_char now shows actual typed characters (A, B, C, space, etc.)</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Touch Data (Combined)</h4>
+                        <p><span id="touch-count">0</span> touch events recorded</p>
+                        <p><span id="touch-features">12</span> features extracted</p>
+                        <p>Includes Crystal Forge game + Gallery interactions</p>
+                    </div>
+                </div>
+                
+                <div class="export-actions">
+                    <button id="export-keystroke-btn" class="btn btn--primary">Export Keystroke Data</button>
+                    <button id="export-touch-btn" class="btn btn--primary">Export Touch Data</button>
+                </div>
+                
+                <div class="completion-message">
+                    <p>Thank you for participating in this behavioral biometrics study!</p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- ── Typing Task ──────────────────────────────────────────── -->
-    <div id="typing-screen" class="screen">
-        <h2>Typing Task</h2>
-        <p id="task-instruction" class="task-instruction">
-            Type the sentence exactly as shown. Cursor movement, copy, and paste are disabled.
-        </p>
-
-        <div class="sentence-display"><p id="target-sentence"></p></div>
-        <div class="sentence-progress"><span id="sentence-progress">1/4</span></div>
-
-        <textarea id="typing-input" class="form-control" rows="4"
-                  placeholder="Start typing…"></textarea>
-
-        <div class="typing-stats">
-            <span>Accuracy: <strong id="accuracy">100%</strong></span>
-            <span>WPM: <strong id="wpm">0</strong></span>
-        </div>
-        <div class="typing-progress-bar">
-            <div id="typing-progress" class="progress-fill"></div>
-        </div>
-
-        <button id="next-sentence-btn" class="btn btn--secondary" disabled>
-            Next Sentence
-        </button>
-    </div>
-
-    <!-- ── Crystal Forge Game ───────────────────────────────────── -->
-    <div id="crystal-screen" class="screen">
-        <h2>Crystal Forge Game</h2>
-
-        <div class="crystal-step-info">
-            <h3 id="step-title">Step 1: Pressure-Sensitive Tapping</h3>
-            <p id="step-instruction">
-                Tap the crystal exactly 3 times with varying pressure levels
-            </p>
-            <div class="crystal-metrics">
-                <span>Step <span id="current-step">1/5</span></span>
-                <span>Status: <span id="step-status">Ready</span></span>
-                <span>Progress: <span id="step-progress">0/3</span></span>
-            </div>
-        </div>
-
-        <div id="crystal-area" class="crystal-area">
-            <div id="crystal" class="crystal"></div>
-            <div id="size-indicator" class="size-indicator">100%</div>
-            <div class="pressure-indicator">
-                <div id="pressure-fill" class="pressure-fill"></div>
-                <div id="pressure-reading" class="pressure-label">0%</div>
-            </div>
-        </div>
-
-        <div class="crystal-controls">
-            <button id="reset-step-btn" class="btn btn--secondary">Reset Step</button>
-            <button id="next-crystal-btn" class="btn btn--primary" disabled>
-                Next Step
-            </button>
-        </div>
-    </div>
-
-    <!-- ── Gallery Task ─────────────────────────────────────────── -->
-    <div id="gallery-screen" class="screen">
-        <h2>Gallery Task</h2>
-        <p id="gallery-instruction">
-            Navigate the gallery with swipes or keys; zoom and pan on images.
-        </p>
-
-        <div id="gallery-grid" class="gallery-grid"><!-- populated by JS --></div>
-        <button id="finish-gallery-btn" class="btn btn--primary">
-            Finish Gallery
-        </button>
-    </div>
-
-    <!-- ── Image Popup ──────────────────────────────────────────── -->
-    <div id="image-popup" class="image-popup">
-        <div class="popup-overlay"></div>
-        <div class="popup-content">
-            <button id="close-popup" class="close-popup">&times;</button>
-
-            <div class="popup-image-container">
-                <img id="popup-image" class="popup-image" alt="Gallery" />
-            </div>
-
-            <div id="popup-counter" class="popup-counter">1 of 20</div>
-
-            <div class="popup-nav">
-                <button id="popup-prev" class="popup-prev">❮</button>
-                <button id="popup-next" class="popup-next">❯</button>
-            </div>
-
-            <div class="zoom-controls">
-                <button id="zoom-out"  class="zoom-out">−</button>
-                <span   id="zoom-level" class="zoom-level">100%</span>
-                <button id="zoom-in"   class="zoom-in">+</button>
-                <button id="zoom-reset" class="zoom-reset">Reset</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── Export ───────────────────────────────────────────────── -->
-    <div id="export-screen" class="screen">
-        <h2>Data Export</h2>
-        <p>Your data have been captured; click to export any file.</p>
-
-        <div class="export-stats">
-            <div class="stat-card">
-                <h3>Keystrokes</h3>
-                <p>Events: <span id="keystroke-count">0</span></p>
-                <button id="export-keystroke-btn" class="btn btn--secondary">
-                    Export CSV
-                </button>
-            </div>
-            <div class="stat-card">
-                <h3>Touch</h3>
-                <p>Events: <span id="touch-count">0</span></p>
-                <button id="export-touch-btn" class="btn btn--secondary">
-                    Export CSV
-                </button>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<!-- Script -->
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
