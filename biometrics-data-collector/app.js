@@ -34,6 +34,8 @@ class BiometricDataCollector {
             initialDistance: 0,
             touches: []
         };
+
+        
         
         // Typing task data
         this.sentences = [
@@ -43,6 +45,34 @@ class BiometricDataCollector {
             "Human-computer interaction studies optimize user experience and interface design."
         ];
         
+        function renderInstruction(sentence) {
+            const canvas = document.getElementById('instruction-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Configure font and styling
+            const fontSizePx = 24;
+            ctx.font = `${fontSizePx}px var(--font-family-mono)`;
+            ctx.fillStyle = 'var(--color-text)';
+          
+            // Measure text width and set canvas dimensions
+            const metrics = ctx.measureText(sentence);
+            const padding = 16;
+            canvas.width = metrics.width + padding * 2;
+            canvas.height = fontSizePx + padding * 2;
+          
+            // Draw a background if desired
+            ctx.fillStyle = 'var(--color-surface)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+            // Draw the sentence
+            ctx.fillStyle = 'var(--color-text)';
+            ctx.textBaseline = 'top';
+            ctx.fillText(sentence, padding, padding);
+          }
+
+        // Example usage, called when loading a new sentence:
+        renderInstruction('Type this sentence exactly as shown…');
+
         // Crystal game state
         this.crystalSteps = [
             { id: 1, instruction: "Tap the crystal exactly 3 times with your index finger", target: 3, type: 'tap' },
