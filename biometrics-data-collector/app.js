@@ -1,1396 +1,1176 @@
-class BiometricDataCollector {
+class EnhancedBehavioralBiometricsCollector {
     constructor() {
-        this.participantId = '';
-        this.currentScreen = 'welcome';
-        this.currentSentence = 0;
-        this.currentCrystalStep = 1;
-        this.currentGalleryImage = 0;
+        this.participantId = this.generateParticipantId();
+        this.sessionStartTime = performance.now();
         
-        // Data collection
+        // Data storage arrays
         this.keystrokeData = [];
         this.touchData = [];
+        this.scrollData = [];
+        this.motionData = [];
+        this.orientationData = [];
+        this.galleryData = [];
+        this.crystalData = [];
         
-        // Enhanced pointer tracking
-        this.currentPointerX = window.innerWidth / 2;
-        this.currentPointerY = window.innerHeight / 2;
-        this.pointerTracking = {
-            x: window.innerWidth / 2,
-            y: window.innerHeight / 2
-        };
+        // Enhanced tracking variables
+        this.lastScrollTime = 0;
+        this.lastScrollY = 0;
+        this.scrollVelocity = 0;
+        this.lastScrollVelocity = 0;
+        this.typingStartTime = null;
+        this.lastKeystroke = null;
+        this.errorCount = 0;
+        this.totalKeystrokes = 0;
         
-        // Composition state for mobile IME handling
-        this.compositionActive = false;
-        this.lastInputLength = 0;
+        // Touch tracking
+        this.activeTouches = new Map();
+        this.touchSequence = [];
         
-        // Enhanced gallery zoom state with pinch support
-        this.galleryZoom = {
-            scale: 1,
-            isPanning: false,
-            isPinching: false,
-            startX: 0,
-            startY: 0,
-            translateX: 0,
-            translateY: 0,
-            initialDistance: 0,
-            touches: []
-        };
+        // Motion sensor support
+        this.motionSupported = false;
+        this.orientationSupported = false;
         
-        // Typing task data
+        // Typing task variables
         this.sentences = [
-            "The quick brown fox jumps over the lazy dog with 123 numbers!",
-            "Artificial Intelligence transforms healthcare through machine learning algorithms.",
-            "Behavioral biometrics analyze typing patterns for secure authentication systems.",
-            "Human-computer interaction studies optimize user experience and interface design."
+            "The quick brown fox jumps over the lazy dog with remarkable agility and grace.",
+            "Technology advances rapidly in our modern world, changing how we communicate and work.",
+            "Artificial intelligence and machine learning are transforming various industries today.",
+            "Behavioral biometrics provide unique insights into human interaction patterns and security."
         ];
+        this.currentSentenceIndex = 0;
+        this.typingComplete = false;
         
-        // Crystal game state
+        // Crystal game variables
         this.crystalSteps = [
-            { id: 1, instruction: "Tap the crystal exactly 3 times with your index finger", target: 3, type: 'tap' },
-            { id: 2, instruction: "Rotate the crystal clockwise using two fingers for 5 seconds", target: 5000, type: 'rotate' },
-            { id: 3, instruction: "Pinch to shrink the crystal to 50% size", target: 0.5, type: 'pinch' },
-            { id: 4, instruction: "Spread fingers to grow crystal to 150% size", target: 1.5, type: 'spread' },
-            { id: 5, instruction: "Apply pressure with 3 fingers simultaneously for 3 seconds", target: 3000, type: 'pressure' }
+            { name: "Pressure-Sensitive Tapping", instruction: "Tap the crystal exactly 3 times with varying pressure levels", requiredTaps: 3, type: "tap" },
+            { name: "Multi-Touch Scaling", instruction: "Use two fingers to resize the crystal 3 times", requiredGestures: 3, type: "pinch" },
+            { name: "Swipe Patterns", instruction: "Swipe across the crystal in different directions 4 times", requiredSwipes: 4, type: "swipe" },
+            { name: "Hold and Release", instruction: "Press and hold the crystal for 2 seconds, then release (3 times)", requiredHolds: 3, type: "hold" },
+            { name: "Rapid Tapping", instruction: "Tap the crystal as quickly as possible 10 times", requiredTaps: 10, type: "rapid" },
+            { name: "Gentle Touch", instruction: "Touch the crystal very gently 5 times", requiredTaps: 5, type: "gentle" }
         ];
+        this.currentStepIndex = 0;
+        this.stepProgress = 0;
+        this.crystalScale = 1;
         
-        this.crystalState = {
-            tapCount: 0,
-            rotationTime: 0,
-            rotationStart: null,
-            currentSize: 1.0,
-            isRotating: false,
-            isPinching: false,
-            isSpreading: false,
-            pressureStart: null,
-            pressureFingers: 0,
-            initialDistance: 0,
-            // Rotation tracking
-            initialAngle: null,
-            totalRotation: 0  // in radians
-        };
-        
-        // Gallery images
-        this.galleryImages = [
-            'https://picsum.photos/800/600?random=1',
-            'https://picsum.photos/800/600?random=2',
-            'https://picsum.photos/800/600?random=3',
-            'https://picsum.photos/800/600?random=4',
-            'https://picsum.photos/800/600?random=5',
-            'https://picsum.photos/800/600?random=6',
-            'https://picsum.photos/800/600?random=7',
-            'https://picsum.photos/800/600?random=8',
-            'https://picsum.photos/800/600?random=9',
-            'https://picsum.photos/800/600?random=10',
-            'https://picsum.photos/800/600?random=11',
-            'https://picsum.photos/800/600?random=12',
-            'https://picsum.photos/800/600?random=13',
-            'https://picsum.photos/800/600?random=14',
-            'https://picsum.photos/800/600?random=15',
-            'https://picsum.photos/800/600?random=16',
-            'https://picsum.photos/800/600?random=17',
-            'https://picsum.photos/800/600?random=18',
-            'https://picsum.photos/800/600?random=19',
-            'https://picsum.photos/800/600?random=20'
-        ];
+        // Gallery variables
+        this.galleryImages = [];
+        this.currentImageIndex = 0;
+        this.zoomLevel = 1;
+        this.panX = 0;
+        this.panY = 0;
         
         this.init();
     }
-    
-    init() {
-        this.bindEvents();
-        this.generateParticipantId();
-        this.initializeGallery();
-        this.setupPointerTracking();
-    }
-    
-    setupPointerTracking() {
-        // Track mouse movement
-        document.addEventListener('mousemove', (e) => {
-            this.currentPointerX = e.clientX;
-            this.currentPointerY = e.clientY;
-            this.pointerTracking = {
-                x: e.clientX,
-                y: e.clientY
-            };
-        });
-        
-        // Track touch movement
-        document.addEventListener('touchmove', (e) => {
-            if (e.touches.length > 0) {
-                const touch = e.touches[0];
-                this.currentPointerX = touch.clientX;
-                this.currentPointerY = touch.clientY;
-                this.pointerTracking = {
-                    x: touch.clientX,
-                    y: touch.clientY
-                };
-            }
-        });
-        
-        // Track touch start
-        document.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 0) {
-                const touch = e.touches[0];
-                this.currentPointerX = touch.clientX;
-                this.currentPointerY = touch.clientY;
-                this.pointerTracking = {
-                    x: touch.clientX,
-                    y: touch.clientY
-                };
-            }
-        });
-    }
-    
+
     generateParticipantId() {
-        const timestamp = Date.now();
-        const random = Math.floor(Math.random() * 1000);
-        this.participantId = `P${timestamp}${random}`;
+        return 'P' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.setupMotionSensors();
+        this.setupScrollTracking();
+        this.initializeGallery();
+        this.showScreen('welcome-screen');
         document.getElementById('participant-id').textContent = this.participantId;
     }
-    
-    bindEvents() {
+
+    setupEventListeners() {
         // Welcome screen
         document.getElementById('start-btn').addEventListener('click', () => {
-            this.switchScreen('typing');
-            this.startTypingTask();
+            this.startStudy();
         });
-        
-        // Typing task - FIXED: Proper mobile-friendly event handling
-        const typingInput = document.getElementById('typing-input');
-        
-        // Composition events for mobile IME handling
-        typingInput.addEventListener('compositionstart', (e) => {
-            this.compositionActive = true;
-            console.log('Composition started');
-        });
-        
-        typingInput.addEventListener('compositionupdate', (e) => {
-            // Track composition updates but don't record as final keystrokes
-            console.log('Composition update:', e.data);
-        });
-        
-        typingInput.addEventListener('compositionend', (e) => {
-            this.compositionActive = false;
-            if (e.data) {
-                // Record final composition result
-                this.recordKeystroke({
-                    timestamp: performance.now(),
-                    actualChar: e.data,
-                    keyCode: e.data.charCodeAt(0),
-                    type: 'compositionend',
-                    sentence: this.currentSentence,
-                    position: e.target.selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-            }
-            console.log('Composition ended:', e.data);
-        });
-        
-        // FIXED: Use input event with inputType for reliable character detection
-        typingInput.addEventListener('input', (e) => {
-            this.handleTypingInput(e);
-        });
-        
-        // Keydown for additional handling (non-composition events)
-        typingInput.addEventListener('keydown', (e) => {
-            if (this.compositionActive || e.keyCode === 229) {
-                // Skip processing during composition
-                return;
-            }
-            this.handleKeydown(e);
-        });
-        
-        // Update pointer coordinates when typing
-        typingInput.addEventListener('focus', (e) => {
-            const rect = e.target.getBoundingClientRect();
-            this.currentPointerX = rect.left + rect.width / 2;
-            this.currentPointerY = rect.top + rect.height / 2;
-            this.pointerTracking.x = this.currentPointerX;
-            this.pointerTracking.y = this.currentPointerY;
-        });
-        
-        typingInput.addEventListener('click', (e) => {
-            this.currentPointerX = e.clientX;
-            this.currentPointerY = e.clientY;
-            this.pointerTracking.x = e.clientX;
-            this.pointerTracking.y = e.clientY;
-        });
-        
-        // Prevent paste operations
-        typingInput.addEventListener('paste', (e) => e.preventDefault());
-        
-        // Cursor restrictions
-        typingInput.addEventListener('mousedown', (e) => {
-            setTimeout(() => {
-                const length = typingInput.value.length;
-                typingInput.setSelectionRange(length, length);
-            }, 0);
-        });
-        
-        document.getElementById('next-sentence-btn').addEventListener('click', () => this.nextSentence());
-        
-        // Crystal game
-        this.bindCrystalEvents();
-        document.getElementById('reset-step-btn').addEventListener('click', () => this.resetCrystalStep());
-        document.getElementById('next-crystal-btn').addEventListener('click', () => this.nextCrystalStep());
-        
-        // Gallery
-        this.bindGalleryEvents();
-        document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
-        
-        // Export
-        document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
-        document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
-    }
-    
-    switchScreen(screenName) {
-        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-        const targetScreen = document.getElementById(`${screenName}-screen`);
-        if (targetScreen) {
-            targetScreen.classList.add('active');
-            this.currentScreen = screenName;
-        }
-    }
-    
-    // FIXED: Enhanced mobile-friendly keystroke detection using inputType
-    handleTypingInput(e) {
-        const { inputType, data } = e;
-        const inputEl = e.target;
-        const value = inputEl.value;
-        const pos = inputEl.selectionStart || value.length;
-        const timestamp = performance.now();
 
-        // Handle deletion events (backspace, delete)
-        if (inputType && inputType.startsWith('delete')) {
-            // Only record if there's actually content to delete
-            if (pos > 0 || value.length < this.lastInputLength) {
-                this.recordKeystroke({
-                    timestamp,
-                    actualChar: 'backspace',
-                    keyCode: 8,
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
+        // Typing screen
+        document.getElementById('typing-input').addEventListener('keydown', (e) => {
+            this.handleKeyDown(e);
+        });
+        
+        document.getElementById('typing-input').addEventListener('keyup', (e) => {
+            this.handleKeyUp(e);
+        });
+        
+        document.getElementById('typing-input').addEventListener('input', (e) => {
+            this.handleInput(e);
+        });
+
+        document.getElementById('next-sentence-btn').addEventListener('click', () => {
+            this.nextSentence();
+        });
+
+        // Scroll screen
+        document.getElementById('finish-scroll-btn').addEventListener('click', () => {
+            this.finishScrollTask();
+        });
+
+        // Crystal screen
+        document.getElementById('crystal-area').addEventListener('touchstart', (e) => {
+            this.handleCrystalTouch(e);
+        });
+        
+        document.getElementById('crystal-area').addEventListener('touchmove', (e) => {
+            this.handleCrystalTouch(e);
+        });
+        
+        document.getElementById('crystal-area').addEventListener('touchend', (e) => {
+            this.handleCrystalTouch(e);
+        });
+
+        document.getElementById('reset-step-btn').addEventListener('click', () => {
+            this.resetCrystalStep();
+        });
+        
+        document.getElementById('next-crystal-btn').addEventListener('click', () => {
+            this.nextCrystalStep();
+        });
+
+        // Gallery screen
+        document.getElementById('finish-gallery-btn').addEventListener('click', () => {
+            this.finishGalleryTask();
+        });
+
+        // Export screen
+        document.getElementById('export-keystroke-btn').addEventListener('click', () => {
+            this.exportKeystrokeData();
+        });
+        
+        document.getElementById('export-touch-btn').addEventListener('click', () => {
+            this.exportTouchData();
+        });
+        
+        document.getElementById('export-scroll-btn').addEventListener('click', () => {
+            this.exportScrollData();
+        });
+        
+        document.getElementById('export-motion-btn').addEventListener('click', () => {
+            this.exportMotionData();
+        });
+        
+        document.getElementById('export-all-btn').addEventListener('click', () => {
+            this.exportAllData();
+        });
+
+        // Prevent cursor movement in typing input
+        document.getElementById('typing-input').addEventListener('keydown', (e) => {
+            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) {
+                e.preventDefault();
             }
+        });
+
+        // Prevent copy/paste
+        document.getElementById('typing-input').addEventListener('paste', (e) => {
+            e.preventDefault();
+        });
+        
+        document.getElementById('typing-input').addEventListener('copy', (e) => {
+            e.preventDefault();
+        });
+        
+        document.getElementById('typing-input').addEventListener('cut', (e) => {
+            e.preventDefault();
+        });
+    }
+
+    setupMotionSensors() {
+        // Request motion sensor permissions
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            DeviceMotionEvent.requestPermission()
+                .then(permissionState => {
+                    if (permissionState === 'granted') {
+                        this.initMotionSensors();
+                    }
+                })
+                .catch(console.error);
+        } else {
+            this.initMotionSensors();
         }
-        // Handle text insertion
-        else if (inputType === 'insertText' && data) {
-            // Handle each character in the inserted text
-            for (let i = 0; i < data.length; i++) {
-                this.recordKeystroke({
-                    timestamp: timestamp + i, // Slight offset for multiple chars
-                    actualChar: data[i],
-                    keyCode: data.charCodeAt(i),
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos - data.length + i,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-            }
-        }
-        // Handle other input types like paste, cut, etc.
-        else if (inputType && data) {
-            this.recordKeystroke({
-                timestamp,
-                actualChar: data,
-                keyCode: data.charCodeAt(0),
-                type: inputType,
-                sentence: this.currentSentence,
-                position: pos - 1,
-                clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y
+    }
+
+    initMotionSensors() {
+        // Device motion (accelerometer + gyroscope)
+        window.addEventListener('devicemotion', (e) => {
+            this.recordMotionEvent({
+                timestamp: performance.now(),
+                acceleration: {
+                    x: e.acceleration?.x || 0,
+                    y: e.acceleration?.y || 0,
+                    z: e.acceleration?.z || 0
+                },
+                accelerationIncludingGravity: {
+                    x: e.accelerationIncludingGravity?.x || 0,
+                    y: e.accelerationIncludingGravity?.y || 0,
+                    z: e.accelerationIncludingGravity?.z || 0
+                },
+                rotationRate: {
+                    alpha: e.rotationRate?.alpha || 0,
+                    beta: e.rotationRate?.beta || 0,
+                    gamma: e.rotationRate?.gamma || 0
+                },
+                interval: e.interval || 16
             });
-        }
+            this.motionSupported = true;
+        });
 
-        // Update last input length for next comparison
-        this.lastInputLength = value.length;
-        
-        this.calculateAccuracy();
-        this.checkSentenceCompletion();
+        // Device orientation
+        window.addEventListener('deviceorientation', (e) => {
+            this.recordOrientationEvent({
+                timestamp: performance.now(),
+                alpha: e.alpha || 0,
+                beta: e.beta || 0,
+                gamma: e.gamma || 0,
+                absolute: e.absolute || false
+            });
+            this.orientationSupported = true;
+        });
     }
-    
-    // FIXED: Enhanced character detection with better mobile support
-    getActualTypedCharacter(e, inputValue = '') {
-        // 1. Handle mobile IME / virtual keyboard composition events
-        if (e.keyCode === 229 || e.key === 'Unidentified' || e.key === 'Process') {
-            // For mobile IME, try to get character from input value change
-            if (inputValue.length > this.lastInputLength) {
-                return inputValue.slice(-1);
-            }
-            return null; // Don't record unidentified characters
-        }
 
-        // 2. Handle well-known special keys
-        const specialKeys = {
-            'Backspace':    'backspace',
-            'Enter':        'enter',
-            'Tab':          'tab',
-            ' ':            'space',
-            'Escape':       'escape',
-            'ArrowLeft':    'arrowleft',
-            'ArrowRight':   'arrowright',
-            'ArrowUp':      'arrowup',
-            'ArrowDown':    'arrowdown',
-            'Delete':       'delete',
-            'Home':         'home',
-            'End':          'end'
+    setupScrollTracking() {
+        const scrollableContent = document.getElementById('scrollable-content');
+        
+        scrollableContent.addEventListener('scroll', (e) => {
+            this.handleScroll(e);
+        });
+        
+        // Track scroll wheel events
+        scrollableContent.addEventListener('wheel', (e) => {
+            this.handleWheelScroll(e);
+        });
+    }
+
+    handleScroll(e) {
+        const currentTime = performance.now();
+        const scrollY = e.target.scrollTop;
+        const maxScroll = e.target.scrollHeight - e.target.clientHeight;
+        const scrollDepth = (scrollY / maxScroll) * 100;
+        
+        const timeDelta = currentTime - this.lastScrollTime;
+        
+        if (timeDelta > 0 && this.lastScrollTime > 0) {
+            const newVelocity = (scrollY - this.lastScrollY) / timeDelta;
+            const acceleration = (newVelocity - this.scrollVelocity) / timeDelta;
+            
+            this.recordScrollEvent({
+                timestamp: currentTime,
+                scrollY: scrollY,
+                scrollDepth: scrollDepth,
+                velocity: newVelocity,
+                acceleration: acceleration,
+                direction: Math.sign(newVelocity),
+                timeBetweenScrolls: timeDelta,
+                rhythmScore: this.calculateScrollRhythm()
+            });
+            
+            // Update UI
+            document.getElementById('scroll-velocity').textContent = Math.abs(newVelocity).toFixed(1) + ' px/s';
+            document.getElementById('scroll-depth').textContent = scrollDepth.toFixed(1) + '%';
+            
+            this.scrollVelocity = newVelocity;
+        }
+        
+        this.lastScrollTime = currentTime;
+        this.lastScrollY = scrollY;
+    }
+
+    handleWheelScroll(e) {
+        this.recordScrollEvent({
+            timestamp: performance.now(),
+            type: 'wheel',
+            deltaX: e.deltaX,
+            deltaY: e.deltaY,
+            deltaZ: e.deltaZ,
+            deltaMode: e.deltaMode
+        });
+    }
+
+    calculateScrollRhythm() {
+        if (this.scrollData.length < 5) return 1.0;
+        
+        const recentScrolls = this.scrollData.slice(-5);
+        const intervals = [];
+        
+        for (let i = 1; i < recentScrolls.length; i++) {
+            intervals.push(recentScrolls[i].timeBetweenScrolls);
+        }
+        
+        const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        const variance = intervals.reduce((sum, interval) => sum + Math.pow(interval - avgInterval, 2), 0) / intervals.length;
+        const standardDeviation = Math.sqrt(variance);
+        
+        return Math.max(0, 1 - (standardDeviation / avgInterval));
+    }
+
+    handleKeyDown(e) {
+        const timestamp = performance.now();
+        
+        if (!this.typingStartTime) {
+            this.typingStartTime = timestamp;
+        }
+        
+        const keystrokeEvent = {
+            timestamp: timestamp,
+            keyDownTime: timestamp,
+            keyCode: e.keyCode,
+            key: e.key,
+            actualChar: e.key,
+            pressure: e.pressure || 0.5,
+            location: e.location,
+            repeat: e.repeat,
+            shiftKey: e.shiftKey,
+            ctrlKey: e.ctrlKey,
+            altKey: e.altKey,
+            metaKey: e.metaKey
         };
         
-        if (e.key && specialKeys.hasOwnProperty(e.key)) {
-            return specialKeys[e.key];
+        this.lastKeystroke = keystrokeEvent;
+        this.totalKeystrokes++;
+    }
+
+    handleKeyUp(e) {
+        if (!this.lastKeystroke || this.lastKeystroke.keyCode !== e.keyCode) return;
+        
+        const timestamp = performance.now();
+        const keyUpTime = timestamp;
+        const dwellTime = keyUpTime - this.lastKeystroke.keyDownTime;
+        
+        // Calculate flight time if there's a previous keystroke
+        let flightTime = 0;
+        if (this.keystrokeData.length > 0) {
+            const previousKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
+            flightTime = this.lastKeystroke.keyDownTime - previousKeystroke.keyUpTime;
         }
         
-        // 3. Handle printable characters
-        if (e.key && e.key.length === 1) {
-            // Regular printable character (e.g., 'a', '1', ',', etc.)
-            return e.key;
-        }
+        // Enhanced keystroke data
+        const enhancedKeystroke = {
+            ...this.lastKeystroke,
+            keyUpTime: keyUpTime,
+            dwellTime: dwellTime,
+            flightTime: flightTime,
+            typingVelocity: this.calculateTypingVelocity(),
+            digraph: this.getDigraph(),
+            errorType: this.detectErrorType(e.key),
+            correctionLatency: this.calculateCorrectionLatency(),
+            typingCadence: this.calculateTypingCadence(),
+            participantId: this.participantId
+        };
+        
+        this.keystrokeData.push(enhancedKeystroke);
+        this.updateTypingStats();
+        
+        this.lastKeystroke = null;
+    }
 
-        // 4. Fallback for older browsers or rare keys
-        if (e.keyCode && !isNaN(e.keyCode)) {
-            // Convert keyCode to a character if possible
-            const char = String.fromCharCode(e.keyCode);
-            if (char && /\S/.test(char)) {
-                return char;
+    calculateTypingVelocity() {
+        if (this.keystrokeData.length < 2) return 0;
+        
+        const recentKeystrokes = this.keystrokeData.slice(-5);
+        const timeSpan = recentKeystrokes[recentKeystrokes.length - 1].timestamp - recentKeystrokes[0].timestamp;
+        
+        return timeSpan > 0 ? (recentKeystrokes.length / timeSpan) * 1000 : 0;
+    }
+
+    getDigraph() {
+        if (this.keystrokeData.length === 0) return '';
+        
+        const previousKey = this.keystrokeData[this.keystrokeData.length - 1].actualChar;
+        const currentKey = this.lastKeystroke ? this.lastKeystroke.actualChar : '';
+        
+        return previousKey + currentKey;
+    }
+
+    detectErrorType(key) {
+        if (key === 'Backspace') {
+            this.errorCount++;
+            return 'correction';
+        }
+        
+        const targetSentence = this.sentences[this.currentSentenceIndex];
+        const currentInput = document.getElementById('typing-input').value;
+        
+        if (currentInput.length <= targetSentence.length) {
+            const expectedChar = targetSentence[currentInput.length - 1];
+            if (key !== expectedChar) {
+                return 'substitution';
             }
         }
+        
+        return 'none';
+    }
 
-        // 5. Return null for unidentifiable keys (don't record them)
-        return null;
+    calculateCorrectionLatency() {
+        if (this.keystrokeData.length < 2) return 0;
+        
+        for (let i = this.keystrokeData.length - 1; i >= 0; i--) {
+            if (this.keystrokeData[i].errorType === 'substitution') {
+                return this.lastKeystroke.timestamp - this.keystrokeData[i].timestamp;
+            }
+        }
+        
+        return 0;
     }
-    
-    handleKeydown(e) {
-        const timestamp = performance.now();
+
+    calculateTypingCadence() {
+        if (this.keystrokeData.length < 3) return 0;
         
-        // Block navigation keys
-        const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-        if (restrictedKeys.includes(e.key)) {
-            e.preventDefault();
-            return;
+        const recentKeystrokes = this.keystrokeData.slice(-3);
+        const intervals = [];
+        
+        for (let i = 1; i < recentKeystrokes.length; i++) {
+            intervals.push(recentKeystrokes[i].timestamp - recentKeystrokes[i - 1].timestamp);
         }
         
-        // Block copy-paste
-        if (e.ctrlKey && ['v', 'x', 'c'].includes(e.key.toLowerCase())) {
-            e.preventDefault();
-            return;
-        }
-        
-        // Get the actual typed character
-        const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
-        
-        // Only record if we have a valid character
-        if (actualCharacter) {
-            console.log('Key pressed:', e.key, 'KeyCode:', e.keyCode, 'Detected:', actualCharacter);
-            
-            this.recordKeystroke({
-                timestamp,
-                actualChar: actualCharacter,
-                keyCode: e.keyCode,
-                type: 'keydown',
-                shiftKey: e.shiftKey,
-                ctrlKey: e.ctrlKey,
-                altKey: e.altKey,
-                sentence: this.currentSentence,
-                position: e.target.selectionStart || 0,
-                clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y
-            });
-        }
+        const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        return 60000 / avgInterval; // Convert to beats per minute
     }
-    
-    startTypingTask() {
-        this.currentSentence = 0;
-        this.lastInputLength = 0; // FIXED: Reset at task start
-        this.displayCurrentSentence();
+
+    handleInput(e) {
         this.updateTypingProgress();
     }
-    
-    displayCurrentSentence() {
-        document.getElementById('target-sentence').textContent = this.sentences[this.currentSentence];
-        const input = document.getElementById('typing-input');
-        input.value = '';
-        input.focus();
-        document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
-        this.calculateAccuracy();
-        document.getElementById('next-sentence-btn').disabled = true;
+
+    updateTypingStats() {
+        const currentInput = document.getElementById('typing-input').value;
+        const targetSentence = this.sentences[this.currentSentenceIndex];
         
-        // FIXED: Reset lastInputLength when starting new sentence
-        this.lastInputLength = 0;
-    }
-    
-    calculateAccuracy() {
-        const typed = document.getElementById('typing-input').value;
-        const target = this.sentences[this.currentSentence];
-        
-        if (typed.length === 0) {
-            document.getElementById('accuracy').textContent = '100%';
-            return;
-        }
-        
-        let correct = 0;
-        const minLength = Math.min(typed.length, target.length);
-        
-        for (let i = 0; i < minLength; i++) {
-            if (typed[i] === target[i]) {
-                correct++;
+        // Calculate accuracy
+        let correctChars = 0;
+        for (let i = 0; i < Math.min(currentInput.length, targetSentence.length); i++) {
+            if (currentInput[i] === targetSentence[i]) {
+                correctChars++;
             }
         }
         
-        const accuracy = Math.round((correct / target.length) * 100);
-        document.getElementById('accuracy').textContent = `${accuracy}%`;
-    }
-    
-    checkSentenceCompletion() {
-        const typed = document.getElementById('typing-input').value.trim();
-        const target = this.sentences[this.currentSentence].trim();
+        const accuracy = currentInput.length > 0 ? (correctChars / currentInput.length) * 100 : 100;
+        document.getElementById('accuracy').textContent = accuracy.toFixed(1) + '%';
         
-        const nextBtn = document.getElementById('next-sentence-btn');
-        if (typed === target) {
-            nextBtn.disabled = false;
-            nextBtn.style.backgroundColor = 'var(--color-primary)';
-            nextBtn.style.opacity = '1';
-        } else {
-            nextBtn.disabled = true;
-            nextBtn.style.backgroundColor = 'var(--color-secondary)';
-            nextBtn.style.opacity = '0.5';
+        // Calculate WPM
+        const timeElapsed = (performance.now() - this.typingStartTime) / 1000 / 60; // minutes
+        const wordsTyped = currentInput.split(' ').length;
+        const wpm = timeElapsed > 0 ? Math.round(wordsTyped / timeElapsed) : 0;
+        document.getElementById('wpm').textContent = wpm;
+        
+        // Update error count
+        document.getElementById('error-count').textContent = this.errorCount;
+        
+        // Update advanced metrics
+        this.updateAdvancedMetrics();
+    }
+
+    updateAdvancedMetrics() {
+        if (this.keystrokeData.length > 0) {
+            const avgDwell = this.keystrokeData.reduce((sum, k) => sum + k.dwellTime, 0) / this.keystrokeData.length;
+            const avgFlight = this.keystrokeData.filter(k => k.flightTime > 0).reduce((sum, k) => sum + k.flightTime, 0) / Math.max(1, this.keystrokeData.filter(k => k.flightTime > 0).length);
+            
+            document.getElementById('avg-dwell').textContent = avgDwell.toFixed(0) + 'ms';
+            document.getElementById('avg-flight').textContent = avgFlight.toFixed(0) + 'ms';
+            
+            const rhythmScore = this.calculateTypingRhythm();
+            document.getElementById('rhythm-score').textContent = rhythmScore > 0.8 ? 'Stable' : rhythmScore > 0.6 ? 'Moderate' : 'Variable';
         }
     }
-    
-    nextSentence() {
-        this.currentSentence++;
+
+    calculateTypingRhythm() {
+        if (this.keystrokeData.length < 5) return 1.0;
         
-        if (this.currentSentence >= this.sentences.length) {
-            this.switchScreen('crystal');
-            this.startCrystalGame();
-        } else {
-            this.displayCurrentSentence();
-            this.updateTypingProgress();
+        const recentKeystrokes = this.keystrokeData.slice(-10);
+        const intervals = [];
+        
+        for (let i = 1; i < recentKeystrokes.length; i++) {
+            intervals.push(recentKeystrokes[i].timestamp - recentKeystrokes[i - 1].timestamp);
         }
+        
+        const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        const variance = intervals.reduce((sum, interval) => sum + Math.pow(interval - avgInterval, 2), 0) / intervals.length;
+        const standardDeviation = Math.sqrt(variance);
+        
+        return Math.max(0, 1 - (standardDeviation / avgInterval));
     }
-    
+
     updateTypingProgress() {
-        const progress = ((this.currentSentence) / this.sentences.length) * 100;
-        document.getElementById('typing-progress').style.width = `${progress}%`;
-    }
-    
-    recordKeystroke(data) {
-        this.keystrokeData.push(data);
-    }
-    
-    // Crystal Game Methods
-    startCrystalGame() {
-        this.currentCrystalStep = 1;
-        this.resetCrystalState();
-        this.updateCrystalDisplay();
-    }
-    
-    bindCrystalEvents() {
-        const crystalArea = document.getElementById('crystal-area');
+        const currentInput = document.getElementById('typing-input').value;
+        const targetSentence = this.sentences[this.currentSentenceIndex];
+        const progress = (currentInput.length / targetSentence.length) * 100;
         
-        crystalArea.addEventListener('touchstart', (e) => this.handleCrystalTouchStart(e));
-        crystalArea.addEventListener('touchmove', (e) => this.handleCrystalTouchMove(e));
-        crystalArea.addEventListener('touchend', (e) => this.handleCrystalTouchEnd(e));
-        crystalArea.addEventListener('mousedown', (e) => this.handleCrystalMouseDown(e));
-        crystalArea.addEventListener('mousemove', (e) => this.handleCrystalMouseMove(e));
-        crystalArea.addEventListener('mouseup', (e) => this.handleCrystalMouseUp(e));
-        crystalArea.addEventListener('contextmenu', (e) => e.preventDefault());
-    }
-    
-    handleCrystalTouchStart(e) {
-        e.preventDefault();
-        const timestamp = performance.now();
-        const touches = Array.from(e.touches);
+        document.getElementById('typing-progress').style.width = Math.min(progress, 100) + '%';
         
-        this.recordTouchEvent({
-            timestamp,
-            type: 'touchstart',
-            touches: touches.map(t => ({
-                identifier: t.identifier,
-                clientX: t.clientX,
-                clientY: t.clientY,
-                force: t.force || 0.5
-            })),
-            step: this.currentCrystalStep,
-            taskId: 2
-        });
-        
-        this.processCrystalInteraction('start', touches);
-    }
-    
-    handleCrystalTouchMove(e) {
-        e.preventDefault();
-        const timestamp = performance.now();
-        const touches = Array.from(e.touches);
-        
-        this.recordTouchEvent({
-            timestamp,
-            type: 'touchmove',
-            touches: touches.map(t => ({
-                identifier: t.identifier,
-                clientX: t.clientX,
-                clientY: t.clientY,
-                force: t.force || 0.5
-            })),
-            step: this.currentCrystalStep,
-            taskId: 2
-        });
-        
-        this.processCrystalInteraction('move', touches);
-    }
-    
-    handleCrystalTouchEnd(e) {
-        e.preventDefault();
-        const timestamp = performance.now();
-        const touches = Array.from(e.changedTouches);
-        
-        this.recordTouchEvent({
-            timestamp,
-            type: 'touchend',
-            touches: touches.map(t => ({
-                identifier: t.identifier,
-                clientX: t.clientX,
-                clientY: t.clientY,
-                force: t.force || 0.5
-            })),
-            step: this.currentCrystalStep,
-            taskId: 2
-        });
-        
-        this.processCrystalInteraction('end', touches);
-    }
-    
-    handleCrystalMouseDown(e) {
-        const timestamp = performance.now();
-        
-        this.recordTouchEvent({
-            timestamp,
-            type: 'mousedown',
-            touches: [{
-                identifier: 0,
-                clientX: e.clientX,
-                clientY: e.clientY,
-                force: 0.5
-            }],
-            step: this.currentCrystalStep,
-            taskId: 2
-        });
-        
-        this.processCrystalInteraction('start', [{ clientX: e.clientX, clientY: e.clientY }]);
-    }
-    
-    handleCrystalMouseMove(e) {
-        if (e.buttons === 1) {
-            const timestamp = performance.now();
-            
-            this.recordTouchEvent({
-                timestamp,
-                type: 'mousemove',
-                touches: [{
-                    identifier: 0,
-                    clientX: e.clientX,
-                    clientY: e.clientY,
-                    force: 0.5
-                }],
-                step: this.currentCrystalStep,
-                taskId: 2
-            });
-            
-            this.processCrystalInteraction('move', [{ clientX: e.clientX, clientY: e.clientY }]);
+        if (currentInput.trim() === targetSentence.trim()) {
+            document.getElementById('next-sentence-btn').disabled = false;
         }
     }
-    
-    handleCrystalMouseUp(e) {
-        const timestamp = performance.now();
+
+    nextSentence() {
+        this.currentSentenceIndex++;
         
-        this.recordTouchEvent({
-            timestamp,
-            type: 'mouseup',
-            touches: [{
-                identifier: 0,
-                clientX: e.clientX,
-                clientY: e.clientY,
-                force: 0.5
-            }],
-            step: this.currentCrystalStep,
-            taskId: 2
-        });
+        if (this.currentSentenceIndex >= this.sentences.length) {
+            this.finishTypingTask();
+            return;
+        }
         
-        this.processCrystalInteraction('end', [{ clientX: e.clientX, clientY: e.clientY }]);
+        document.getElementById('typing-input').value = '';
+        document.getElementById('target-sentence').textContent = this.sentences[this.currentSentenceIndex];
+        document.getElementById('sentence-progress').textContent = `${this.currentSentenceIndex + 1}/${this.sentences.length}`;
+        document.getElementById('next-sentence-btn').disabled = true;
+        document.getElementById('typing-progress').style.width = '0%';
+        
+        // Reset typing stats for new sentence
+        this.typingStartTime = null;
+        this.errorCount = 0;
     }
-    
-    processCrystalInteraction(phase, touches) {
-        const step = this.crystalSteps[this.currentCrystalStep - 1];
-        const crystal = document.getElementById('crystal');
+
+    finishTypingTask() {
+        this.showScreen('scroll-screen');
+    }
+
+    finishScrollTask() {
+        this.showScreen('crystal-screen');
+        this.initializeCrystalGame();
+    }
+
+    initializeCrystalGame() {
+        this.updateCrystalStep();
+    }
+
+    updateCrystalStep() {
+        const step = this.crystalSteps[this.currentStepIndex];
+        document.getElementById('step-title').textContent = `Step ${this.currentStepIndex + 1}: ${step.name}`;
+        document.getElementById('step-instruction').textContent = step.instruction;
+        document.getElementById('current-step').textContent = `${this.currentStepIndex + 1}/6`;
+        document.getElementById('step-status').textContent = 'Ready';
+        document.getElementById('step-progress').textContent = `0/${step.requiredTaps || step.requiredGestures || step.requiredSwipes || step.requiredHolds}`;
         
+        this.stepProgress = 0;
+        document.getElementById('next-crystal-btn').disabled = true;
+    }
+
+    handleCrystalTouch(e) {
+        e.preventDefault();
+        
+        const timestamp = performance.now();
+        const step = this.crystalSteps[this.currentStepIndex];
+        
+        // Enhanced touch data collection
+        const touches = Array.from(e.touches || []);
+        const changedTouches = Array.from(e.changedTouches || []);
+        
+        const enhancedTouchData = touches.map(touch => ({
+            identifier: touch.identifier,
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            pageX: touch.pageX,
+            pageY: touch.pageY,
+            screenX: touch.screenX,
+            screenY: touch.screenY,
+            radiusX: touch.radiusX || 1,
+            radiusY: touch.radiusY || 1,
+            rotationAngle: touch.rotationAngle || 0,
+            force: touch.force || 0.5,
+            touchArea: Math.PI * (touch.radiusX || 1) * (touch.radiusY || 1),
+            eccentricity: this.calculateTouchEccentricity(touch)
+        }));
+        
+        const touchEvent = {
+            timestamp: timestamp,
+            type: e.type,
+            touches: enhancedTouchData,
+            changedTouches: changedTouches.map(touch => ({
+                identifier: touch.identifier,
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                force: touch.force || 0.5,
+                radiusX: touch.radiusX || 1,
+                radiusY: touch.radiusY || 1
+            })),
+            touchCount: touches.length,
+            centroid: this.calculateCentroid(touches),
+            spread: this.calculateTouchSpread(touches),
+            stepType: step.type,
+            stepIndex: this.currentStepIndex,
+            participantId: this.participantId
+        };
+        
+        this.touchData.push(touchEvent);
+        this.crystalData.push(touchEvent);
+        
+        // Update pressure indicator
+        if (touches.length > 0) {
+            const avgPressure = touches.reduce((sum, touch) => sum + (touch.force || 0.5), 0) / touches.length;
+            const pressurePercent = avgPressure * 100;
+            document.getElementById('pressure-fill').style.width = pressurePercent + '%';
+            document.getElementById('pressure-reading').textContent = pressurePercent.toFixed(1) + '%';
+            
+            // Update touch area display
+            const avgArea = enhancedTouchData.reduce((sum, touch) => sum + touch.touchArea, 0) / enhancedTouchData.length;
+            document.getElementById('touch-area').textContent = avgArea.toFixed(0) + ' px²';
+        }
+        
+        // Handle step-specific logic
+        this.processCrystalStep(e, step);
+    }
+
+    calculateTouchEccentricity(touch) {
+        if (!touch.radiusX || !touch.radiusY) return 0;
+        
+        const a = Math.max(touch.radiusX, touch.radiusY);
+        const b = Math.min(touch.radiusX, touch.radiusY);
+        
+        return Math.sqrt(1 - Math.pow(b / a, 2));
+    }
+
+    calculateCentroid(touches) {
+        if (touches.length === 0) return { x: 0, y: 0 };
+        
+        const sumX = touches.reduce((sum, touch) => sum + touch.clientX, 0);
+        const sumY = touches.reduce((sum, touch) => sum + touch.clientY, 0);
+        
+        return {
+            x: sumX / touches.length,
+            y: sumY / touches.length
+        };
+    }
+
+    calculateTouchSpread(touches) {
+        if (touches.length < 2) return 0;
+        
+        const centroid = this.calculateCentroid(touches);
+        const distances = touches.map(touch => 
+            Math.sqrt(Math.pow(touch.clientX - centroid.x, 2) + Math.pow(touch.clientY - centroid.y, 2))
+        );
+        
+        return Math.max(...distances);
+    }
+
+    processCrystalStep(e, step) {
         switch (step.type) {
             case 'tap':
-                if (phase === 'end' && touches.length === 1) {
-                    this.crystalState.tapCount++;
-                    crystal.classList.add('tap-feedback');
-                    crystal.classList.add('active');
-                    
-                    setTimeout(() => {
-                        crystal.classList.remove('tap-feedback');
-                        crystal.classList.remove('active');
-                    }, 200);
-                    
-                    this.updateStepProgress(`${this.crystalState.tapCount}/${step.target}`);
-                    
-                    if (this.crystalState.tapCount >= step.target) {
-                        this.completeStep();
-                    }
-                }
-                break;
-                
-            case 'rotate':
-                if (phase === 'start' && touches.length === 2) {
-                    const dx = touches[1].clientX - touches[0].clientX;
-                    const dy = touches[1].clientY - touches[0].clientY;
-                    this.crystalState.initialAngle = Math.atan2(dy, dx);
-                    this.crystalState.totalRotation = 0;
-                    this.crystalState.isRotating = true;
-                    this.crystalState.rotationStart = performance.now();
-                    crystal.classList.add('rotation-feedback', 'active');
-                } 
-                else if (phase === 'move' && this.crystalState.isRotating && touches.length === 2) {
-                    const dx = touches[1].clientX - touches[0].clientX;
-                    const dy = touches[1].clientY - touches[0].clientY;
-                    const currentAngle = Math.atan2(dy, dx);
-                    
-                    let angleDiff = currentAngle - this.crystalState.initialAngle;
-                    if (angleDiff > Math.PI) {
-                        angleDiff -= 2 * Math.PI;
-                    } else if (angleDiff < -Math.PI) {
-                        angleDiff += 2 * Math.PI;
-                    }
-                    
-                    if (angleDiff > 0) {
-                        this.crystalState.totalRotation += angleDiff;
-                    }
-                    
-                    this.crystalState.initialAngle = currentAngle;
-                    const elapsed = performance.now() - this.crystalState.rotationStart;
-                    const rotationDeg = Math.round(this.crystalState.totalRotation * 180 / Math.PI);
-                    
-                    this.updateStepProgress(`${rotationDeg}° | ${Math.floor(elapsed/1000)}s / ${step.target/1000}s`);
-                    
-                    const requiredRadians = 10 * Math.PI / 180;
-                    if (elapsed >= step.target && this.crystalState.totalRotation >= requiredRadians) {
-                        this.completeStep();
-                    }
-                } 
-                else if (phase === 'end' && touches.length < 2) {
-                    this.crystalState.isRotating = false;
-                    crystal.classList.remove('rotation-feedback', 'active');
+                if (e.type === 'touchend') {
+                    this.stepProgress++;
+                    this.updateStepProgress(step);
                 }
                 break;
                 
             case 'pinch':
-            case 'spread':
-                if (touches.length === 2) {
-                    if (phase === 'start') {
-                        this.crystalState.isPinching = step.type === 'pinch';
-                        this.crystalState.isSpreading = step.type === 'spread';
-                        this.crystalState.initialDistance = this.getDistance(touches[0], touches[1]);
-                        crystal.classList.add('active');
-                    } else if (phase === 'move' && (this.crystalState.isPinching || this.crystalState.isSpreading)) {
-                        const currentDistance = this.getDistance(touches[0], touches[1]);
-                        const scale = currentDistance / this.crystalState.initialDistance;
-                        const newSize = Math.max(0.3, Math.min(2.0, scale));
-                        
-                        this.updateCrystalSize(newSize);
-                        this.updateStepProgress(`${Math.round(newSize * 100)}%`);
-                        
-                        if (Math.abs(newSize - step.target) < 0.1) {
-                            this.completeStep();
-                        }
-                    }
-                } else if (phase === 'end') {
-                    this.crystalState.isPinching = false;
-                    this.crystalState.isSpreading = false;
-                    crystal.classList.remove('active');
+                if (e.touches && e.touches.length === 2) {
+                    const distance = this.calculateTouchDistance(e.touches[0], e.touches[1]);
+                    this.updateCrystalScale(distance);
+                }
+                if (e.type === 'touchend' && this.stepProgress < step.requiredGestures) {
+                    this.stepProgress++;
+                    this.updateStepProgress(step);
                 }
                 break;
                 
-            case 'pressure':
-                if (touches.length === 3) {
-                    if (phase === 'start') {
-                        this.crystalState.pressureStart = performance.now();
-                        this.crystalState.pressureFingers = touches.length;
-                        crystal.classList.add('active');
-                        this.showPressureIndicator();
-                    } else if (phase === 'move' && this.crystalState.pressureStart) {
-                        const elapsed = performance.now() - this.crystalState.pressureStart;
-                        this.updatePressureIndicator(elapsed / step.target);
-                        this.updateStepProgress(`${Math.floor(elapsed / 1000)}s / ${step.target / 1000}s`);
-                        
-                        if (elapsed >= step.target) {
-                            this.completeStep();
-                        }
+            case 'swipe':
+                if (e.type === 'touchend') {
+                    this.stepProgress++;
+                    this.updateStepProgress(step);
+                }
+                break;
+                
+            case 'hold':
+                if (e.type === 'touchstart') {
+                    this.holdStartTime = performance.now();
+                }
+                if (e.type === 'touchend' && this.holdStartTime) {
+                    const holdDuration = performance.now() - this.holdStartTime;
+                    if (holdDuration >= 2000) {
+                        this.stepProgress++;
+                        this.updateStepProgress(step);
                     }
-                } else if (phase === 'end') {
-                    this.crystalState.pressureStart = null;
-                    this.crystalState.pressureFingers = 0;
-                    crystal.classList.remove('active');
-                    this.hidePressureIndicator();
+                }
+                break;
+                
+            case 'rapid':
+                if (e.type === 'touchend') {
+                    this.stepProgress++;
+                    this.updateStepProgress(step);
+                }
+                break;
+                
+            case 'gentle':
+                if (e.type === 'touchend') {
+                    const touches = Array.from(e.changedTouches || []);
+                    const avgPressure = touches.reduce((sum, touch) => sum + (touch.force || 0.5), 0) / touches.length;
+                    if (avgPressure < 0.3) {
+                        this.stepProgress++;
+                        this.updateStepProgress(step);
+                    }
                 }
                 break;
         }
     }
-    
-    updateCrystalSize(size) {
-        const crystal = document.getElementById('crystal');
-        const sizeIndicator = document.getElementById('size-indicator');
+
+    calculateTouchDistance(touch1, touch2) {
+        return Math.sqrt(
+            Math.pow(touch1.clientX - touch2.clientX, 2) +
+            Math.pow(touch1.clientY - touch2.clientY, 2)
+        );
+    }
+
+    updateCrystalScale(distance) {
+        this.crystalScale = Math.max(0.5, Math.min(2.0, distance / 100));
+        document.getElementById('crystal').style.transform = `scale(${this.crystalScale})`;
+        document.getElementById('size-indicator').textContent = Math.round(this.crystalScale * 100) + '%';
+    }
+
+    updateStepProgress(step) {
+        const required = step.requiredTaps || step.requiredGestures || step.requiredSwipes || step.requiredHolds;
+        document.getElementById('step-progress').textContent = `${this.stepProgress}/${required}`;
         
-        this.crystalState.currentSize = size;
-        crystal.style.transform = `scale(${size})`;
-        crystal.style.setProperty('--current-scale', size);
-        
-        const percentage = Math.round(size * 100);
-        sizeIndicator.textContent = `${percentage}%`;
-        
-        if (size <= 0.6) {
-            crystal.classList.add('shrinking');
-            sizeIndicator.classList.add('shrink-highlight');
-            setTimeout(() => {
-                crystal.classList.remove('shrinking');
-                sizeIndicator.classList.remove('shrink-highlight');
-            }, 500);
-        } else if (size >= 1.4) {
-            crystal.classList.add('enlarging');
-            sizeIndicator.classList.add('enlarge-highlight');
-            setTimeout(() => {
-                crystal.classList.remove('enlarging');
-                sizeIndicator.classList.remove('enlarge-highlight');
-            }, 500);
-        }
-        
-        if (size < 0.7) {
-            crystal.style.filter = 'hue-rotate(180deg) brightness(0.8)';
-        } else if (size > 1.3) {
-            crystal.style.filter = 'hue-rotate(60deg) brightness(1.3)';
-        } else {
-            crystal.style.filter = 'none';
+        if (this.stepProgress >= required) {
+            document.getElementById('step-status').textContent = 'Complete';
+            document.getElementById('next-crystal-btn').disabled = false;
         }
     }
-    
-    getDistance(touch1, touch2) {
-        const dx = touch1.clientX - touch2.clientX;
-        const dy = touch1.clientY - touch2.clientY;
-        return Math.sqrt(dx * dx + dy * dy);
-    }
-    
-    showPressureIndicator() {
-        const crystalArea = document.getElementById('crystal-area');
-        if (!crystalArea.querySelector('.pressure-indicator')) {
-            const indicator = document.createElement('div');
-            indicator.className = 'pressure-indicator';
-            indicator.innerHTML = '<div class="pressure-fill"></div>';
-            crystalArea.appendChild(indicator);
-        }
-    }
-    
-    updatePressureIndicator(progress) {
-        const fill = document.querySelector('.pressure-fill');
-        if (fill) {
-            fill.style.width = `${Math.min(progress * 100, 100)}%`;
-        }
-    }
-    
-    hidePressureIndicator() {
-        const indicator = document.querySelector('.pressure-indicator');
-        if (indicator) {
-            indicator.remove();
-        }
-    }
-    
-    completeStep() {
-        const crystal = document.getElementById('crystal');
-        crystal.classList.add('success');
-        
-        setTimeout(() => {
-            crystal.classList.remove('success');
-        }, 600);
-        
-        document.getElementById('step-status').textContent = 'Completed';
-        document.getElementById('next-crystal-btn').disabled = false;
-        
-        const sizeIndicator = document.getElementById('size-indicator');
-        sizeIndicator.classList.add('completion-highlight');
-        setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
-    }
-    
-    nextCrystalStep() {
-        if (this.currentCrystalStep >= this.crystalSteps.length) {
-            this.switchScreen('gallery');
-            return;
-        }
-        
-        this.currentCrystalStep++;
-        
-        if (this.currentCrystalStep > this.crystalSteps.length) {
-            this.switchScreen('gallery');
-            return;
-        }
-        
-        this.resetCrystalState();
-        this.updateCrystalDisplay();
-    }
-    
+
     resetCrystalStep() {
-        this.resetCrystalState();
-        this.updateCrystalDisplay();
+        this.stepProgress = 0;
+        this.updateCrystalStep();
     }
-    
-    resetCrystalState() {
-        this.crystalState = {
-            tapCount: 0,
-            rotationTime: 0,
-            rotationStart: null,
-            currentSize: 1.0,
-            isRotating: false,
-            isPinching: false,
-            isSpreading: false,
-            pressureStart: null,
-            pressureFingers: 0,
-            initialDistance: 0,
-            initialAngle: null,
-            totalRotation: 0
-        };
+
+    nextCrystalStep() {
+        this.currentStepIndex++;
         
-        const crystal = document.getElementById('crystal');
-        crystal.style.transform = 'scale(1)';
-        crystal.style.setProperty('--current-scale', 1);
-        crystal.style.filter = 'none';
-        crystal.classList.remove('active', 'shrinking', 'enlarging', 'success', 'tap-feedback', 'rotation-feedback');
+        if (this.currentStepIndex >= this.crystalSteps.length) {
+            this.finishCrystalTask();
+            return;
+        }
         
-        document.getElementById('size-indicator').textContent = '100%';
-        document.getElementById('size-indicator').classList.remove('shrink-highlight', 'enlarge-highlight', 'completion-highlight');
-        this.hidePressureIndicator();
+        this.updateCrystalStep();
     }
-    
-    updateCrystalDisplay() {
-        const step = this.crystalSteps[this.currentCrystalStep - 1];
-        
-        document.getElementById('step-title').textContent = `Step ${this.currentCrystalStep}: ${this.getStepTitle(step.type)}`;
-        document.getElementById('step-instruction').textContent = step.instruction;
-        document.getElementById('current-step').textContent = `${this.currentCrystalStep}/5`;
-        document.getElementById('step-status').textContent = 'Ready';
-        document.getElementById('step-progress').textContent = this.getInitialProgress(step.type);
-        document.getElementById('next-crystal-btn').disabled = true;
+
+    finishCrystalTask() {
+        this.showScreen('gallery-screen');
+        this.initializeGallery();
     }
-    
-    getStepTitle(type) {
-        const titles = {
-            'tap': 'Index Finger Tapping',
-            'rotate': 'Two-Finger Rotation',
-            'pinch': 'Pinch to Shrink',
-            'spread': 'Spread to Enlarge',
-            'pressure': 'Three-Finger Pressure'
-        };
-        return titles[type] || 'Unknown';
-    }
-    
-    getInitialProgress(type) {
-        const progress = {
-            'tap': '0/3',
-            'rotate': '0° | 0s / 5s',
-            'pinch': '100% → 50%',
-            'spread': '100% → 150%',
-            'pressure': '0s / 3s'
-        };
-        return progress[type] || '0/0';
-    }
-    
-    updateStepProgress(progress) {
-        document.getElementById('step-progress').textContent = progress;
-    }
-    
-    recordTouchEvent(data) {
-        this.touchData.push(data);
-    }
-    
-    // Enhanced Gallery Methods
+
     initializeGallery() {
-        const grid = document.getElementById('gallery-grid');
-        grid.innerHTML = '';
+        const galleryGrid = document.getElementById('gallery-grid');
+        galleryGrid.innerHTML = '';
         
-        this.galleryImages.forEach((url, index) => {
-            const imageContainer = document.createElement('div');
-            imageContainer.className = 'gallery-item';
+        // Generate placeholder images
+        this.galleryImages = [];
+        for (let i = 1; i <= 12; i++) {
+            const imageData = {
+                id: i,
+                src: `https://picsum.photos/400/300?random=${i}`,
+                alt: `Gallery Image ${i}`
+            };
+            this.galleryImages.push(imageData);
             
-            const img = document.createElement('img');
-            img.src = url;
-            img.alt = `Gallery image ${index + 1}`;
-            img.loading = 'lazy';
+            const imageElement = document.createElement('div');
+            imageElement.className = 'gallery-item';
+            imageElement.innerHTML = `
+                <img src="${imageData.src}" alt="${imageData.alt}" loading="lazy">
+                <div class="image-overlay">
+                    <span class="image-number">${i}</span>
+                </div>
+            `;
             
-            imageContainer.appendChild(img);
-            imageContainer.addEventListener('click', () => this.openImagePopup(index));
+            imageElement.addEventListener('click', () => {
+                this.openImagePopup(i - 1);
+            });
             
-            grid.appendChild(imageContainer);
-        });
+            // Add touch tracking to gallery items
+            imageElement.addEventListener('touchstart', (e) => this.handleGalleryTouch(e, i));
+            imageElement.addEventListener('touchmove', (e) => this.handleGalleryTouch(e, i));
+            imageElement.addEventListener('touchend', (e) => this.handleGalleryTouch(e, i));
+            
+            galleryGrid.appendChild(imageElement);
+        }
+        
+        this.setupImagePopup();
     }
-    
-    bindGalleryEvents() {
-        document.addEventListener('touchstart', (e) => {
-            if (document.querySelector('.image-popup.active')) {
-                this.handleGalleryTouchStart(e);
-            }
-        });
-        
-        document.addEventListener('touchmove', (e) => {
-            if (document.querySelector('.image-popup.active')) {
-                this.handleGalleryTouchMove(e);
-            }
-        });
-        
-        document.addEventListener('touchend', (e) => {
-            if (document.querySelector('.image-popup.active')) {
-                this.handleGalleryTouchEnd(e);
-            }
-        });
-        
-        this.galleryTouchStart = { x: 0, y: 0 };
-    }
-    
-    handleGalleryTouchStart(e) {
+
+    handleGalleryTouch(e, imageId) {
         const timestamp = performance.now();
+        const touches = Array.from(e.touches || []);
         
-        if (e.touches.length === 1) {
-            this.galleryTouchStart.x = e.touches[0].clientX;
-            this.galleryTouchStart.y = e.touches[0].clientY;
-            this.galleryZoom.touches = [e.touches[0]];
-        } else if (e.touches.length === 2) {
-            this.galleryZoom.isPinching = true;
-            this.galleryZoom.initialDistance = this.getDistance(e.touches[0], e.touches[1]);
-            this.galleryZoom.touches = [e.touches[0], e.touches[1]];
-            e.preventDefault();
-        }
-        
-        this.recordTouchEvent({
-            timestamp,
-            type: 'touchstart',
-            touches: Array.from(e.touches).map(t => ({
-                identifier: t.identifier,
-                clientX: t.clientX,
-                clientY: t.clientY,
-                force: t.force || 0.5
+        const galleryTouchEvent = {
+            timestamp: timestamp,
+            type: e.type,
+            imageId: imageId,
+            touches: touches.map(touch => ({
+                identifier: touch.identifier,
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                force: touch.force || 0.5,
+                radiusX: touch.radiusX || 1,
+                radiusY: touch.radiusY || 1
             })),
-            step: this.currentGalleryImage + 1,
-            taskId: 3
-        });
-    }
-    
-    handleGalleryTouchMove(e) {
-        e.preventDefault();
-        const timestamp = performance.now();
+            touchCount: touches.length,
+            participantId: this.participantId
+        };
         
-        if (e.touches.length === 2 && this.galleryZoom.isPinching) {
-            const currentDistance = this.getDistance(e.touches[0], e.touches[1]);
-            const scaleChange = currentDistance / this.galleryZoom.initialDistance;
-            const newScale = Math.max(0.5, Math.min(3.0, this.galleryZoom.scale * scaleChange));
-            
-            this.galleryZoom.scale = newScale;
-            this.galleryZoom.initialDistance = currentDistance;
-            
-            this.updateImageTransform();
-            this.updateZoomLevel();
-        }
+        this.galleryData.push(galleryTouchEvent);
         
-        this.recordTouchEvent({
-            timestamp,
-            type: 'touchmove',
-            touches: Array.from(e.touches).map(t => ({
-                identifier: t.identifier,
-                clientX: t.clientX,
-                clientY: t.clientY,
-                force: t.force || 0.5
-            })),
-            step: this.currentGalleryImage + 1,
-            taskId: 3
-        });
-    }
-    
-    handleGalleryTouchEnd(e) {
-        const timestamp = performance.now();
-        
-        if (!this.galleryZoom.isPinching && e.changedTouches.length === 1) {
-            const endX = e.changedTouches[0].clientX;
-            const diffX = this.galleryTouchStart.x - endX;
+        // Calculate and display swipe velocity
+        if (e.type === 'touchmove' && this.lastGalleryTouch) {
+            const timeDelta = timestamp - this.lastGalleryTouch.timestamp;
+            const touch = touches[0];
+            const lastTouch = this.lastGalleryTouch.touches[0];
             
-            if (Math.abs(diffX) > 50 && this.galleryZoom.scale <= 1.1) {
-                if (diffX > 0) {
-                    this.nextGalleryImage();
-                } else {
-                    this.prevGalleryImage();
-                }
+            if (touch && lastTouch && timeDelta > 0) {
+                const distance = Math.sqrt(
+                    Math.pow(touch.clientX - lastTouch.clientX, 2) +
+                    Math.pow(touch.clientY - lastTouch.clientY, 2)
+                );
+                const velocity = distance / timeDelta;
+                
+                document.getElementById('swipe-velocity').textContent = velocity.toFixed(1) + ' px/ms';
             }
         }
         
-        if (e.touches.length < 2) {
-            this.galleryZoom.isPinching = false;
-        }
-        
-        this.recordTouchEvent({
-            timestamp,
-            type: 'touchend',
-            touches: Array.from(e.changedTouches).map(t => ({
-                identifier: t.identifier,
-                clientX: t.clientX,
-                clientY: t.clientY,
-                force: t.force || 0.5
-            })),
-            step: this.currentGalleryImage + 1,
-            taskId: 3
-        });
+        this.lastGalleryTouch = galleryTouchEvent;
     }
-    
+
+    setupImagePopup() {
+        const popup = document.getElementById('image-popup');
+        const popupImage = document.getElementById('popup-image');
+        const closeBtn = document.getElementById('close-popup');
+        const prevBtn = document.getElementById('popup-prev');
+        const nextBtn = document.getElementById('popup-next');
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const zoomResetBtn = document.getElementById('zoom-reset');
+        
+        closeBtn.addEventListener('click', () => this.closeImagePopup());
+        prevBtn.addEventListener('click', () => this.previousImage());
+        nextBtn.addEventListener('click', () => this.nextImage());
+        zoomInBtn.addEventListener('click', () => this.zoomImage(1.2));
+        zoomOutBtn.addEventListener('click', () => this.zoomImage(0.8));
+        zoomResetBtn.addEventListener('click', () => this.resetZoom());
+        
+        // Touch events for popup
+        popupImage.addEventListener('touchstart', (e) => this.handlePopupTouch(e));
+        popupImage.addEventListener('touchmove', (e) => this.handlePopupTouch(e));
+        popupImage.addEventListener('touchend', (e) => this.handlePopupTouch(e));
+    }
+
     openImagePopup(index) {
-        this.currentGalleryImage = index;
+        this.currentImageIndex = index;
+        const popup = document.getElementById('image-popup');
+        const popupImage = document.getElementById('popup-image');
+        const counter = document.getElementById('popup-counter');
         
-        if (!document.querySelector('.image-popup')) {
-            this.createImagePopup();
-        }
+        popupImage.src = this.galleryImages[index].src;
+        counter.textContent = `${index + 1} / ${this.galleryImages.length}`;
+        popup.classList.add('active');
         
         this.resetZoom();
-        this.updatePopupImage();
-        document.querySelector('.image-popup').classList.add('active');
-        document.body.style.overflow = 'hidden';
     }
-    
-    createImagePopup() {
-        const popup = document.createElement('div');
-        popup.className = 'image-popup';
-        popup.innerHTML = `
-            <div class="popup-overlay"></div>
-            <div class="popup-content">
-                <button class="close-popup">&times;</button>
-                <div class="popup-image-container">
-                    <img class="popup-image" src="" alt="">
-                </div>
-                <div class="popup-counter"></div>
-                <div class="popup-nav">
-                    <button class="popup-prev">❮</button>
-                    <button class="popup-next">❯</button>
-                </div>
-                <div class="zoom-controls">
-                    <button class="zoom-out">−</button>
-                    <span class="zoom-level">100%</span>
-                    <button class="zoom-in">+</button>
-                    <button class="zoom-reset">Reset</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(popup);
-        
-        popup.querySelector('.close-popup').addEventListener('click', () => this.closeImagePopup());
-        popup.querySelector('.popup-overlay').addEventListener('click', () => this.closeImagePopup());
-        popup.querySelector('.popup-prev').addEventListener('click', () => this.prevGalleryImage());
-        popup.querySelector('.popup-next').addEventListener('click', () => this.nextGalleryImage());
-        
-        popup.querySelector('.zoom-in').addEventListener('click', () => this.zoomIn());
-        popup.querySelector('.zoom-out').addEventListener('click', () => this.zoomOut());
-        popup.querySelector('.zoom-reset').addEventListener('click', () => this.resetZoom());
-        
-        const imageContainer = popup.querySelector('.popup-image-container');
-        imageContainer.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            if (e.deltaY < 0) {
-                this.zoomIn();
-            } else {
-                this.zoomOut();
-            }
-        });
-        
-        let isPanning = false;
-        imageContainer.addEventListener('mousedown', (e) => {
-            if (this.galleryZoom.scale > 1) {
-                isPanning = true;
-                this.galleryZoom.startX = e.clientX - this.galleryZoom.translateX;
-                this.galleryZoom.startY = e.clientY - this.galleryZoom.translateY;
-                imageContainer.style.cursor = 'grabbing';
-            }
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (isPanning && this.galleryZoom.scale > 1) {
-                this.galleryZoom.translateX = e.clientX - this.galleryZoom.startX;
-                this.galleryZoom.translateY = e.clientY - this.galleryZoom.startY;
-                this.updateImageTransform();
-            }
-        });
-        
-        document.addEventListener('mouseup', () => {
-            if (isPanning) {
-                isPanning = false;
-                imageContainer.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
-            }
-        });
-        
-        document.addEventListener('keydown', (e) => {
-            if (popup.classList.contains('active')) {
-                if (e.key === 'Escape') this.closeImagePopup();
-                if (e.key === 'ArrowLeft') this.prevGalleryImage();
-                if (e.key === 'ArrowRight') this.nextGalleryImage();
-                if (e.key === '+' || e.key === '=') this.zoomIn();
-                if (e.key === '-') this.zoomOut();
-                if (e.key === '0') this.resetZoom();
-            }
-        });
-    }
-    
-    zoomIn() {
-        this.galleryZoom.scale = Math.min(this.galleryZoom.scale * 1.2, 3.0);
-        this.updateImageTransform();
-        this.updateZoomLevel();
-    }
-    
-    zoomOut() {
-        this.galleryZoom.scale = Math.max(this.galleryZoom.scale / 1.2, 0.5);
-        this.updateImageTransform();
-        this.updateZoomLevel();
-        
-        if (this.galleryZoom.scale <= 1) {
-            this.galleryZoom.translateX = 0;
-            this.galleryZoom.translateY = 0;
-        }
-    }
-    
-    resetZoom() {
-        this.galleryZoom.scale = 1;
-        this.galleryZoom.translateX = 0;
-        this.galleryZoom.translateY = 0;
-        this.galleryZoom.isPinching = false;
-        this.updateImageTransform();
-        this.updateZoomLevel();
-    }
-    
-    updateImageTransform() {
-        const img = document.querySelector('.popup-image');
-        const container = document.querySelector('.popup-image-container');
-        
-        if (img) {
-            img.style.transform = `scale(${this.galleryZoom.scale}) translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px)`;
-            container.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
-        }
-    }
-    
-    updateZoomLevel() {
-        const zoomLevelSpan = document.querySelector('.zoom-level');
-        if (zoomLevelSpan) {
-            zoomLevelSpan.textContent = `${Math.round(this.galleryZoom.scale * 100)}%`;
-        }
-    }
-    
-    updatePopupImage() {
-        const popup = document.querySelector('.image-popup');
-        if (popup) {
-            popup.querySelector('.popup-image').src = this.galleryImages[this.currentGalleryImage];
-            popup.querySelector('.popup-counter').textContent = `${this.currentGalleryImage + 1} of 20`;
-            this.updateZoomLevel();
-        }
-    }
-    
-    nextGalleryImage() {
-        if (this.currentGalleryImage < this.galleryImages.length - 1) {
-            this.currentGalleryImage++;
-            this.resetZoom();
-            this.updatePopupImage();
-        }
-    }
-    
-    prevGalleryImage() {
-        if (this.currentGalleryImage > 0) {
-            this.currentGalleryImage--;
-            this.resetZoom();
-            this.updatePopupImage();
-        }
-    }
-    
+
     closeImagePopup() {
-        const popup = document.querySelector('.image-popup');
-        if (popup) {
-            popup.classList.remove('active');
-            document.body.style.overflow = '';
-            this.resetZoom();
+        document.getElementById('image-popup').classList.remove('active');
+    }
+
+    previousImage() {
+        this.currentImageIndex = (this.currentImageIndex - 1 + this.galleryImages.length) % this.galleryImages.length;
+        this.updatePopupImage();
+    }
+
+    nextImage() {
+        this.currentImageIndex = (this.currentImageIndex + 1) % this.galleryImages.length;
+        this.updatePopupImage();
+    }
+
+    updatePopupImage() {
+        const popupImage = document.getElementById('popup-image');
+        const counter = document.getElementById('popup-counter');
+        
+        popupImage.src = this.galleryImages[this.currentImageIndex].src;
+        counter.textContent = `${this.currentImageIndex + 1} / ${this.galleryImages.length}`;
+        
+        this.resetZoom();
+    }
+
+    zoomImage(factor) {
+        this.zoomLevel *= factor;
+        this.zoomLevel = Math.max(0.5, Math.min(3, this.zoomLevel));
+        this.updateImageTransform();
+        
+        document.getElementById('popup-zoom-level').textContent = Math.round(this.zoomLevel * 100) + '%';
+        document.getElementById('zoom-level').textContent = Math.round(this.zoomLevel * 100) + '%';
+    }
+
+    resetZoom() {
+        this.zoomLevel = 1;
+        this.panX = 0;
+        this.panY = 0;
+        this.updateImageTransform();
+        
+        document.getElementById('popup-zoom-level').textContent = '100%';
+        document.getElementById('zoom-level').textContent = '100%';
+    }
+
+    updateImageTransform() {
+        const popupImage = document.getElementById('popup-image');
+        popupImage.style.transform = `scale(${this.zoomLevel}) translate(${this.panX}px, ${this.panY}px)`;
+    }
+
+    handlePopupTouch(e) {
+        e.preventDefault();
+        
+        const timestamp = performance.now();
+        const touches = Array.from(e.touches || []);
+        
+        const popupTouchEvent = {
+            timestamp: timestamp,
+            type: e.type,
+            imageIndex: this.currentImageIndex,
+            zoomLevel: this.zoomLevel,
+            panX: this.panX,
+            panY: this.panY,
+            touches: touches.map(touch => ({
+                identifier: touch.identifier,
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                force: touch.force || 0.5
+            })),
+            participantId: this.participantId
+        };
+        
+        this.galleryData.push(popupTouchEvent);
+        
+        // Handle pinch-to-zoom
+        if (touches.length === 2) {
+            const distance = this.calculateTouchDistance(touches[0], touches[1]);
+            
+            if (e.type === 'touchstart') {
+                this.initialPinchDistance = distance;
+                this.initialZoomLevel = this.zoomLevel;
+            } else if (e.type === 'touchmove' && this.initialPinchDistance) {
+                const scale = distance / this.initialPinchDistance;
+                this.zoomLevel = this.initialZoomLevel * scale;
+                this.zoomLevel = Math.max(0.5, Math.min(3, this.zoomLevel));
+                this.updateImageTransform();
+                
+                document.getElementById('popup-zoom-level').textContent = Math.round(this.zoomLevel * 100) + '%';
+                document.getElementById('zoom-level').textContent = Math.round(this.zoomLevel * 100) + '%';
+            }
         }
     }
-    
-    // Export Methods
-    exportKeystrokeData() {
-        const features = this.extractKeystrokeFeatures();
-        const csv = this.convertToCSV(features);
-        const filename = `keystroke_data_${this.participantId}.csv`;
-    
-        this.uploadCSVToGoogleDrive(csv, filename);
-    
+
+    finishGalleryTask() {
+        this.showScreen('export-screen');
+        this.updateExportStats();
+    }
+
+    updateExportStats() {
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '9';
-    }
-
-    
-    exportTouchData() {
-        const features = this.extractTouchFeatures();
-        const csv = this.convertToCSV(features);
-        const filename = `touch_data_${this.participantId}.csv`;
-    
-        this.uploadCSVToGoogleDrive(csv, filename);
-    
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '12';
+        document.getElementById('scroll-count').textContent = this.scrollData.length;
+        document.getElementById('motion-count').textContent = this.motionData.length;
+        
+        const totalFeatures = 23 + 18 + 12 + 15; // Keystroke + Touch + Scroll + Motion features
+        document.getElementById('total-features').textContent = totalFeatures;
     }
 
-    
-    // FIXED: Enhanced keystroke feature extraction with proper character handling
-    extractKeystrokeFeatures() {
-        const features = [];
+    // Data recording methods
+    recordMotionEvent(data) {
+        this.motionData.push({
+            ...data,
+            participantId: this.participantId
+        });
+    }
+
+    recordOrientationEvent(data) {
+        this.orientationData.push({
+            ...data,
+            participantId: this.participantId
+        });
+    }
+
+    recordScrollEvent(data) {
+        this.scrollData.push({
+            ...data,
+            participantId: this.participantId
+        });
+    }
+
+    // Export methods
+    exportKeystrokeData() {
+        const csvData = this.convertToCSV(this.keystrokeData, 'keystroke');
+        this.downloadCSV(csvData, `keystroke_data_${this.participantId}.csv`);
+    }
+
+    exportTouchData() {
+        const csvData = this.convertToCSV(this.touchData, 'touch');
+        this.downloadCSV(csvData, `touch_data_${this.participantId}.csv`);
+    }
+
+    exportScrollData() {
+        const csvData = this.convertToCSV(this.scrollData, 'scroll');
+        this.downloadCSV(csvData, `scroll_data_${this.participantId}.csv`);
+    }
+
+    exportMotionData() {
+        const combinedMotionData = [
+            ...this.motionData.map(d => ({ ...d, type: 'motion' })),
+            ...this.orientationData.map(d => ({ ...d, type: 'orientation' }))
+        ];
+        const csvData = this.convertToCSV(combinedMotionData, 'motion');
+        this.downloadCSV(csvData, `motion_data_${this.participantId}.csv`);
+    }
+
+    exportAllData() {
+        const allData = {
+            keystroke: this.keystrokeData,
+            touch: this.touchData,
+            scroll: this.scrollData,
+            motion: this.motionData,
+            orientation: this.orientationData,
+            gallery: this.galleryData,
+            crystal: this.crystalData
+        };
         
-        this.keystrokeData.forEach((keystroke, index) => {
-            // Process all recorded keystrokes (input events, keydown, composition)
-            if (keystroke.type === 'keydown' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete')) {
-                // Calculate flight time (time between keystrokes)
-                const flightTime = index > 0 ? 
-                    Math.round(keystroke.timestamp - this.keystrokeData[index - 1].timestamp) : 
-                    0;
+        const jsonData = JSON.stringify(allData, null, 2);
+        this.downloadJSON(jsonData, `complete_biometric_data_${this.participantId}.json`);
+        
+        // Also export individual CSV files
+        this.exportKeystrokeData();
+        this.exportTouchData();
+        this.exportScrollData();
+        this.exportMotionData();
+    }
+
+    convertToCSV(data, type) {
+        if (data.length === 0) return '';
+        
+        let headers = [];
+        let rows = [];
+        
+        switch (type) {
+            case 'keystroke':
+                headers = [
+                    'participant_id', 'timestamp', 'key_code', 'key', 'actual_char',
+                    'dwell_time', 'flight_time', 'pressure', 'typing_velocity',
+                    'digraph', 'error_type', 'correction_latency', 'typing_cadence',
+                    'shift_key', 'ctrl_key', 'alt_key', 'meta_key', 'repeat',
+                    'location', 'key_down_time', 'key_up_time'
+                ];
                 
-                // Determine if this was a deletion
-                const wasDeleted = (keystroke.actualChar === 'backspace' || 
-                                  keystroke.type.startsWith('delete')) ? 1 : 0;
+                rows = data.map(item => [
+                    item.participantId, item.timestamp, item.keyCode, item.key,
+                    item.actualChar, item.dwellTime, item.flightTime, item.pressure,
+                    item.typingVelocity, item.digraph, item.errorType,
+                    item.correctionLatency, item.typingCadence, item.shiftKey,
+                    item.ctrlKey, item.altKey, item.metaKey, item.repeat,
+                    item.location, item.keyDownTime, item.keyUpTime
+                ]);
+                break;
                 
-                features.push({
-                    participant_id: this.participantId,
-                    task_id: 1, // Typing task
-                    trial_id: keystroke.sentence + 1,
-                    timestamp_ms: Math.round(keystroke.timestamp),
-                    ref_char: keystroke.actualChar || 'unknown',
-                    touch_x: Math.round(keystroke.clientX || this.currentPointerX),
-                    touch_y: Math.round(keystroke.clientY || this.currentPointerY),
-                    was_deleted: wasDeleted,
-                    flight_time_ms: flightTime
+            case 'touch':
+                headers = [
+                    'participant_id', 'timestamp', 'type', 'touch_count',
+                    'centroid_x', 'centroid_y', 'spread', 'step_type', 'step_index',
+                    'touch_id', 'client_x', 'client_y', 'page_x', 'page_y',
+                    'screen_x', 'screen_y', 'radius_x', 'radius_y',
+                    'rotation_angle', 'force', 'touch_area', 'eccentricity'
+                ];
+                
+                rows = [];
+                data.forEach(event => {
+                    if (event.touches && event.touches.length > 0) {
+                        event.touches.forEach(touch => {
+                            rows.push([
+                                event.participantId, event.timestamp, event.type,
+                                event.touchCount, event.centroid?.x || 0, event.centroid?.y || 0,
+                                event.spread || 0, event.stepType || '', event.stepIndex || 0,
+                                touch.identifier, touch.clientX, touch.clientY,
+                                touch.pageX || touch.clientX, touch.pageY || touch.clientY,
+                                touch.screenX || touch.clientX, touch.screenY || touch.clientY,
+                                touch.radiusX, touch.radiusY, touch.rotationAngle,
+                                touch.force, touch.touchArea, touch.eccentricity
+                            ]);
+                        });
+                    }
                 });
-            }
-        });
+                break;
+                
+            case 'scroll':
+                headers = [
+                    'participant_id', 'timestamp', 'scroll_y', 'scroll_depth',
+                    'velocity', 'acceleration', 'direction', 'time_between_scrolls',
+                    'rhythm_score', 'type', 'delta_x', 'delta_y', 'delta_z', 'delta_mode'
+                ];
+                
+                rows = data.map(item => [
+                    item.participantId, item.timestamp, item.scrollY || 0,
+                    item.scrollDepth || 0, item.velocity || 0, item.acceleration || 0,
+                    item.direction || 0, item.timeBetweenScrolls || 0,
+                    item.rhythmScore || 0, item.type || 'scroll',
+                    item.deltaX || 0, item.deltaY || 0, item.deltaZ || 0, item.deltaMode || 0
+                ]);
+                break;
+                
+            case 'motion':
+                headers = [
+                    'participant_id', 'timestamp', 'type', 'accel_x', 'accel_y', 'accel_z',
+                    'accel_gravity_x', 'accel_gravity_y', 'accel_gravity_z',
+                    'rotation_alpha', 'rotation_beta', 'rotation_gamma',
+                    'interval', 'orientation_alpha', 'orientation_beta',
+                    'orientation_gamma', 'absolute'
+                ];
+                
+                rows = data.map(item => [
+                    item.participantId, item.timestamp, item.type || 'motion',
+                    item.acceleration?.x || 0, item.acceleration?.y || 0, item.acceleration?.z || 0,
+                    item.accelerationIncludingGravity?.x || 0, item.accelerationIncludingGravity?.y || 0,
+                    item.accelerationIncludingGravity?.z || 0, item.rotationRate?.alpha || item.alpha || 0,
+                    item.rotationRate?.beta || item.beta || 0, item.rotationRate?.gamma || item.gamma || 0,
+                    item.interval || 0, item.alpha || 0, item.beta || 0, item.gamma || 0, item.absolute || false
+                ]);
+                break;
+        }
         
-        return features;
-    }
-    
-    // FIXED: Enhanced touch feature extraction
-    extractTouchFeatures() {
-        const features = [];
-        
-        this.touchData.forEach((touch, index) => {
-            const pressure = touch.touches.reduce((sum, t) => sum + (t.force || 0.5), 0) / touch.touches.length;
-            const velocity = this.calculateVelocity(touch, index);
-            const acceleration = this.calculateAcceleration(touch, index);
-            
-            features.push({
-                participant_id: this.participantId,
-                task_id: touch.taskId,
-                trial_id: touch.step,
-                timestamp_ms: Math.round(touch.timestamp),
-                touch_x: Math.round(touch.touches[0]?.clientX || 0),
-                touch_y: Math.round(touch.touches[0]?.clientY || 0),
-                btn_touch_state: touch.type,
-                tracking_id: touch.touches[0]?.identifier || 0,
-                pressure: Math.round(pressure * 100) / 100,
-                velocity: Math.round(velocity * 100) / 100,
-                acceleration: Math.round(acceleration * 100) / 100,
-                touch_area: Math.round(this.calculateTouchArea(touch.touches)),
-                inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0
-            });
-        });
-        
-        return features;
-    }
-    
-    calculateVelocity(touch, index) {
-        if (index === 0 || !this.touchData[index - 1]) return 0;
-        
-        const prev = this.touchData[index - 1];
-        const dt = touch.timestamp - prev.timestamp;
-        
-        if (dt === 0 || !touch.touches[0] || !prev.touches[0]) return 0;
-        
-        const dx = touch.touches[0].clientX - prev.touches[0].clientX;
-        const dy = touch.touches[0].clientY - prev.touches[0].clientY;
-        
-        return Math.sqrt(dx * dx + dy * dy) / dt;
-    }
-    
-    calculateAcceleration(touch, index) {
-        if (index < 2) return 0;
-        
-        const curr = this.calculateVelocity(touch, index);
-        const prev = this.calculateVelocity(this.touchData[index - 1], index - 1);
-        const dt = touch.timestamp - this.touchData[index - 1].timestamp;
-        
-        return dt > 0 ? (curr - prev) / dt : 0;
-    }
-    
-    calculateTouchArea(touches) {
-        if (touches.length === 1) return 1;
-        
-        let minX = touches[0].clientX, maxX = touches[0].clientX;
-        let minY = touches[0].clientY, maxY = touches[0].clientY;
-        
-        touches.forEach(touch => {
-            minX = Math.min(minX, touch.clientX);
-            maxX = Math.max(maxX, touch.clientX);
-            minY = Math.min(minY, touch.clientY);
-            maxY = Math.max(maxY, touch.clientY);
-        });
-        
-        return (maxX - minX) * (maxY - minY);
-    }
-    
-    convertToCSV(data) {
-        if (data.length === 0) return 'No data available';
-        
-        const headers = Object.keys(data[0]);
-        const csvContent = [
-            headers.join(','),
-            ...data.map(row => headers.map(header => {
-                const value = row[header];
-                return typeof value === 'string' ? `"${value}"` : value;
-            }).join(','))
-        ].join('\n');
-        
+        const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
         return csvContent;
     }
 
-    // https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec
-
-    uploadCSVToGoogleDrive(content, filename) {
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec'; // 🔁 Replace with your actual Apps Script Web App URL
-    
-        fetch(`${scriptURL}?filename=${encodeURIComponent(filename)}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain'
-            },
-            body: content
-        })
-        .then(res => res.text())
-        .then(response => {
-            console.log(`✅ ${filename} uploaded:`, response);
-            alert(`✅ ${filename} uploaded to your Google Drive.`);
-        })
-        .catch(error => {
-            console.error(`❌ Upload failed:`, error);
-            alert(`❌ Upload failed for ${filename}: ` + error.message);
-        });
+    downloadCSV(csvContent, filename) {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     }
 
+    downloadJSON(jsonContent, filename) {
+        const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+        const link = document.createElement('a');
+        
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
 
+    showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.classList.remove('active');
+        });
+        document.getElementById(screenId).classList.add('active');
+    }
 
+    startStudy() {
+        this.showScreen('typing-screen');
+        document.getElementById('target-sentence').textContent = this.sentences[0];
+        document.getElementById('typing-input').focus();
+    }
 }
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-    new BiometricDataCollector();
+    new EnhancedBehavioralBiometricsCollector();
 });
