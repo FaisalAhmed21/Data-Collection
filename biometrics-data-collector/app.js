@@ -40,14 +40,13 @@ class EnhancedBehavioralBiometricsCollector {
         this.currentSentenceIndex = 0;
         this.typingComplete = false;
         
-        // Crystal game variables
+        // Crystal game variables - UPDATED: Removed step 6 (Gentle Touch) - now only 5 steps
         this.crystalSteps = [
             { name: "Pressure-Sensitive Tapping", instruction: "Tap the crystal exactly 3 times with varying pressure levels", requiredTaps: 3, type: "tap" },
             { name: "Multi-Touch Scaling", instruction: "Use two fingers to resize the crystal 3 times", requiredGestures: 3, type: "pinch" },
             { name: "Swipe Patterns", instruction: "Swipe across the crystal in different directions 4 times", requiredSwipes: 4, type: "swipe" },
             { name: "Hold and Release", instruction: "Press and hold the crystal for 2 seconds, then release (3 times)", requiredHolds: 3, type: "hold" },
-            { name: "Rapid Tapping", instruction: "Tap the crystal as quickly as possible 10 times", requiredTaps: 10, type: "rapid" },
-            { name: "Gentle Touch", instruction: "Touch the crystal very gently 5 times", requiredTaps: 5, type: "gentle" }
+            { name: "Rapid Tapping", instruction: "Tap the crystal as quickly as possible 10 times", requiredTaps: 10, type: "rapid" }
         ];
         this.currentStepIndex = 0;
         this.stepProgress = 0;
@@ -82,8 +81,33 @@ class EnhancedBehavioralBiometricsCollector {
             this.startStudy();
         });
 
-        // Typing screen
+        // Typing screen with enhanced restrictions
         document.getElementById('typing-input').addEventListener('keydown', (e) => {
+            // ENHANCED: Block navigation keys
+            const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'];
+            if (restrictedKeys.includes(e.key)) {
+                e.preventDefault();
+                return;
+            }
+            
+            // ENHANCED: Block copy-paste operations
+            if (e.ctrlKey && ['v', 'x', 'c', 'a'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+                return;
+            }
+            
+            // Block other selection shortcuts
+            if (e.shiftKey && restrictedKeys.includes(e.key)) {
+                e.preventDefault();
+                return;
+            }
+            
+            // Block F-keys that might interfere
+            if (e.key.startsWith('F') && e.key.length > 1) {
+                e.preventDefault();
+                return;
+            }
+            
             this.handleKeyDown(e);
         });
         
@@ -93,6 +117,27 @@ class EnhancedBehavioralBiometricsCollector {
         
         document.getElementById('typing-input').addEventListener('input', (e) => {
             this.handleInput(e);
+        });
+
+        // Additional protection for typing input
+        document.getElementById('typing-input').addEventListener('paste', (e) => {
+            e.preventDefault();
+        });
+        
+        document.getElementById('typing-input').addEventListener('copy', (e) => {
+            e.preventDefault();
+        });
+        
+        document.getElementById('typing-input').addEventListener('cut', (e) => {
+            e.preventDefault();
+        });
+        
+        document.getElementById('typing-input').addEventListener('selectstart', (e) => {
+            e.preventDefault();
+        });
+        
+        document.getElementById('typing-input').addEventListener('contextmenu', (e) => {
+            e.preventDefault();
         });
 
         document.getElementById('next-sentence-btn').addEventListener('click', () => {
@@ -149,26 +194,6 @@ class EnhancedBehavioralBiometricsCollector {
         
         document.getElementById('export-all-btn').addEventListener('click', () => {
             this.exportAllData();
-        });
-
-        // Prevent cursor movement in typing input
-        document.getElementById('typing-input').addEventListener('keydown', (e) => {
-            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) {
-                e.preventDefault();
-            }
-        });
-
-        // Prevent copy/paste
-        document.getElementById('typing-input').addEventListener('paste', (e) => {
-            e.preventDefault();
-        });
-        
-        document.getElementById('typing-input').addEventListener('copy', (e) => {
-            e.preventDefault();
-        });
-        
-        document.getElementById('typing-input').addEventListener('cut', (e) => {
-            e.preventDefault();
         });
     }
 
@@ -533,7 +558,7 @@ class EnhancedBehavioralBiometricsCollector {
         const step = this.crystalSteps[this.currentStepIndex];
         document.getElementById('step-title').textContent = `Step ${this.currentStepIndex + 1}: ${step.name}`;
         document.getElementById('step-instruction').textContent = step.instruction;
-        document.getElementById('current-step').textContent = `${this.currentStepIndex + 1}/6`;
+        document.getElementById('current-step').textContent = `${this.currentStepIndex + 1}/5`; // UPDATED: Changed from /6 to /5
         document.getElementById('step-status').textContent = 'Ready';
         document.getElementById('step-progress').textContent = `0/${step.requiredTaps || step.requiredGestures || step.requiredSwipes || step.requiredHolds}`;
         
@@ -685,16 +710,7 @@ class EnhancedBehavioralBiometricsCollector {
                 }
                 break;
                 
-            case 'gentle':
-                if (e.type === 'touchend') {
-                    const touches = Array.from(e.changedTouches || []);
-                    const avgPressure = touches.reduce((sum, touch) => sum + (touch.force || 0.5), 0) / touches.length;
-                    if (avgPressure < 0.3) {
-                        this.stepProgress++;
-                        this.updateStepProgress(step);
-                    }
-                }
-                break;
+            // REMOVED: 'gentle' case - Step 6 has been removed
         }
     }
 
