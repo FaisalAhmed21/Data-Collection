@@ -82,7 +82,9 @@ class EnhancedBehavioralBiometricsCollector {
         });
 
         // Typing screen with enhanced restrictions
-        document.getElementById('typing-input').addEventListener('keydown', (e) => {
+        const typingInput = document.getElementById('typing-input');
+        
+        typingInput.addEventListener('keydown', (e) => {
             // ENHANCED: Block navigation keys
             const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'];
             if (restrictedKeys.includes(e.key)) {
@@ -111,32 +113,38 @@ class EnhancedBehavioralBiometricsCollector {
             this.handleKeyDown(e);
         });
         
-        document.getElementById('typing-input').addEventListener('keyup', (e) => {
+        typingInput.addEventListener('keyup', (e) => {
             this.handleKeyUp(e);
         });
         
-        document.getElementById('typing-input').addEventListener('input', (e) => {
+        typingInput.addEventListener('input', (e) => {
             this.handleInput(e);
         });
 
-        // Additional protection for typing input
-        document.getElementById('typing-input').addEventListener('paste', (e) => {
+        // NEW: Cursor movement restriction
+        typingInput.addEventListener('mousedown', (e) => {
+            setTimeout(() => {
+                const length = typingInput.value.length;
+                typingInput.setSelectionRange(length, length);
+            }, 0);
+        });
+
+        // Enhanced paste prevention
+        typingInput.addEventListener('paste', (e) => e.preventDefault());
+        
+        typingInput.addEventListener('copy', (e) => {
             e.preventDefault();
         });
         
-        document.getElementById('typing-input').addEventListener('copy', (e) => {
+        typingInput.addEventListener('cut', (e) => {
             e.preventDefault();
         });
         
-        document.getElementById('typing-input').addEventListener('cut', (e) => {
+        typingInput.addEventListener('selectstart', (e) => {
             e.preventDefault();
         });
         
-        document.getElementById('typing-input').addEventListener('selectstart', (e) => {
-            e.preventDefault();
-        });
-        
-        document.getElementById('typing-input').addEventListener('contextmenu', (e) => {
+        typingInput.addEventListener('contextmenu', (e) => {
             e.preventDefault();
         });
 
