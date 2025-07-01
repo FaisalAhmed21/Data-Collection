@@ -1,290 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Behavioral Biometrics Data Collection</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Behavioral Biometrics Study</title>
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="container">
-        <!-- Welcome Screen -->
-        <div id="welcome-screen" class="screen active">
-            <div class="welcome-content">
-                <h1>Advanced Behavioral Biometrics Study</h1>
-                <p>This application collects comprehensive behavioral biometric data including keystroke dynamics, touch patterns, scroll behavior, and motion sensors for research purposes.</p>
-                <div class="participant-info">
-                    <p>Participant ID: <span id="participant-id">-</span></p>
-                </div>
-                <button id="start-btn" class="btn btn--primary btn--lg">START ENHANCED STUDY</button>
+<div class="container">
+
+    <!-- ── Welcome ──────────────────────────────────────────────── -->
+    <div id="welcome-screen" class="screen active">
+        <h1>Behavioral Biometrics Study</h1>
+        <p class="welcome-text">
+            You will complete three tasks analysing your typing, touch, and navigation behaviour.
+        </p>
+        <p>Your Participant ID: <strong id="participant-id">Loading…</strong></p>
+        <button id="start-btn" class="btn btn--primary">Start Study</button>
+    </div>
+
+    <!-- ── Typing Task ──────────────────────────────────────────── -->
+    <div id="typing-screen" class="screen">
+        <h2>Typing Task</h2>
+        <p id="task-instruction" class="task-instruction">
+            Type the sentence exactly as shown. Cursor movement, copy, and paste are disabled.
+        </p>
+
+        <div class="sentence-display"><p id="target-sentence"></p></div>
+        <div class="sentence-progress"><span id="sentence-progress">1/4</span></div>
+
+        <textarea id="typing-input" class="form-control" rows="4"
+                  placeholder="Start typing…"></textarea>
+
+        <div class="typing-stats">
+            <span>Accuracy: <strong id="accuracy">100%</strong></span>
+            <span>WPM: <strong id="wpm">0</strong></span>
+        </div>
+        <div class="typing-progress-bar">
+            <div id="typing-progress" class="progress-fill"></div>
+        </div>
+
+        <button id="next-sentence-btn" class="btn btn--secondary" disabled>
+            Next Sentence
+        </button>
+    </div>
+
+    <!-- ── Crystal Forge Game ───────────────────────────────────── -->
+    <div id="crystal-screen" class="screen">
+        <h2>Crystal Forge Game</h2>
+
+        <div class="crystal-step-info">
+            <h3 id="step-title">Step 1: Pressure-Sensitive Tapping</h3>
+            <p id="step-instruction">
+                Tap the crystal exactly 3 times with varying pressure levels
+            </p>
+            <div class="crystal-metrics">
+                <span>Step <span id="current-step">1/5</span></span>
+                <span>Status: <span id="step-status">Ready</span></span>
+                <span>Progress: <span id="step-progress">0/3</span></span>
             </div>
         </div>
 
-        <!-- Typing Task Screen -->
-        <div id="typing-screen" class="screen">
-            <div class="typing-content">
-                <h2>Enhanced Typing Task</h2>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="typing-progress"></div>
-                </div>
-                <p class="task-instruction">Type the following sentence exactly as shown. Use only backspace to correct mistakes - cursor movement is disabled.</p>
-                
-                <div class="sentence-display">
-                    <p id="target-sentence"></p>
-                </div>
-                
-                <div class="typing-area">
-                    <textarea id="typing-input" class="form-control" rows="3" placeholder="Start typing here..." spellcheck="false" autocomplete="off"></textarea>
-                </div>
-                
-                <div class="typing-stats">
-                    <div class="stat">
-                        <span class="stat-label">Accuracy:</span>
-                        <span id="accuracy" class="stat-value">100%</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">Progress:</span>
-                        <span id="sentence-progress" class="stat-value">1/4</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">WPM:</span>
-                        <span id="wpm" class="stat-value">0</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">Errors:</span>
-                        <span id="error-count" class="stat-value">0</span>
-                    </div>
-                </div>
-                
-                <div class="advanced-metrics">
-                    <div class="metric">
-                        <span class="metric-label">Avg Dwell Time:</span>
-                        <span id="avg-dwell" class="metric-value">0ms</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Avg Flight Time:</span>
-                        <span id="avg-flight" class="metric-value">0ms</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Typing Rhythm:</span>
-                        <span id="rhythm-score" class="metric-value">Stable</span>
-                    </div>
-                </div>
-                
-                <button id="next-sentence-btn" class="btn btn--primary" disabled>Next Sentence</button>
+        <div id="crystal-area" class="crystal-area">
+            <div id="crystal" class="crystal"></div>
+            <div id="size-indicator" class="size-indicator">100%</div>
+            <div class="pressure-indicator">
+                <div id="pressure-fill" class="pressure-fill"></div>
+                <div id="pressure-reading" class="pressure-label">0%</div>
             </div>
         </div>
 
-        <!-- Scroll Behavior Analysis Screen -->
-        <div id="scroll-screen" class="screen">
-            <div class="scroll-content">
-                <h2>Scroll Behavior Analysis</h2>
-                <p class="scroll-instruction">Scroll through this content naturally. Your scrolling patterns, velocity, and rhythm will be analyzed.</p>
-                
-                <div class="scroll-metrics">
-                    <div class="metric">
-                        <span class="metric-label">Scroll Velocity:</span>
-                        <span id="scroll-velocity" class="metric-value">0 px/s</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Scroll Depth:</span>
-                        <span id="scroll-depth" class="metric-value">0%</span>
-                    </div>
-                </div>
-                
-                <div class="scrollable-content" id="scrollable-content">
-                    <div class="content-section">
-                        <h3>Section 1: Introduction to Behavioral Biometrics</h3>
-                        <p>Behavioral biometrics refers to the measurement and analysis of uniquely identifiable and measurable patterns in human activities. Unlike traditional biometrics, which rely on static physical characteristics, behavioral biometrics assess an individual's actions in real-time.</p>
-                        <p>This field encompasses several modalities, including keystroke dynamics, touch gestures, scrolling patterns, and gait analysis. Each of these modalities provides unique insights into user behavior and can be used for continuous authentication.</p>
-                    </div>
-                    
-                    <div class="content-section">
-                        <h3>Section 2: Keystroke Dynamics</h3>
-                        <p>Keystroke dynamics, also known as typing biometrics, analyzes the rhythm and timing of keystrokes. Key features include dwell time (how long a key is held down) and flight time (the time between consecutive keystrokes).</p>
-                        <p>Research has shown that keystroke patterns are highly individual and can achieve accuracy rates exceeding 95% in user authentication scenarios. The temporal patterns of typing are influenced by factors such as hand anatomy, muscle memory, and cognitive processing.</p>
-                    </div>
-                    
-                    <div class="content-section">
-                        <h3>Section 3: Touch Pattern Analysis</h3>
-                        <p>Touch pattern analysis examines how users interact with touchscreen devices. This includes pressure application, touch area, finger positioning, and gesture velocity. Modern devices can measure touch force and contact area with high precision.</p>
-                        <p>Advanced touch analytics can distinguish between different fingers, detect hand orientation, and even identify users based on their unique touch signatures. These patterns remain relatively stable over time while being difficult to replicate.</p>
-                    </div>
-                    
-                    <div class="content-section">
-                        <h3>Section 4: Scroll Behavior Patterns</h3>
-                        <p>Scroll behavior analysis focuses on how users navigate through content. This includes scroll velocity, acceleration patterns, pause durations, and engagement depth. Users develop consistent scrolling habits that can be used for identification.</p>
-                        <p>Studies have shown that scroll patterns vary significantly between individuals and can be influenced by content type, device orientation, and user attention levels. These patterns provide valuable insights for both security and user experience optimization.</p>
-                    </div>
-                    
-                    <div class="content-section">
-                        <h3>Section 5: Motion and Gait Analysis</h3>
-                        <p>Motion sensors in mobile devices can capture gait patterns, device holding styles, and movement characteristics. Accelerometer and gyroscope data provide rich information about user behavior and physical characteristics.</p>
-                        <p>Gait analysis through mobile devices has shown promising results for continuous authentication. The way a person walks, holds their device, and moves through space creates unique biometric signatures that are difficult to replicate.</p>
-                    </div>
-                    
-                    <div class="content-section">
-                        <h3>Section 6: Future Directions</h3>
-                        <p>The future of behavioral biometrics lies in multi-modal fusion, where multiple behavioral characteristics are combined to create more robust authentication systems. Machine learning and deep learning techniques are advancing the field significantly.</p>
-                        <p>Privacy-preserving techniques and federated learning approaches are becoming increasingly important as behavioral biometrics are deployed at scale. The balance between security and user privacy continues to be a key research challenge.</p>
-                    </div>
-                </div>
-                
-                <button id="finish-scroll-btn" class="btn btn--primary">Complete Scroll Analysis</button>
-            </div>
-        </div>
-
-        <!-- Crystal Forge Game Screen -->
-        <div id="crystal-screen" class="screen">
-            <div class="crystal-content">
-                <h2>Enhanced Crystal Forge Game</h2>
-                <div class="crystal-step-info">
-                    <h3 id="step-title">Step 1: Pressure-Sensitive Tapping</h3>
-                    <p id="step-instruction">Tap the crystal exactly 3 times with varying pressure levels</p>
-                </div>
-                
-                <div class="crystal-container">
-                    <div class="crystal-area" id="crystal-area">
-                        <div class="crystal" id="crystal">
-                            <div class="crystal-inner"></div>
-                            <div class="crystal-glow"></div>
-                        </div>
-                        <div class="size-indicator" id="size-indicator">100%</div>
-                        <div class="pressure-indicator" id="pressure-indicator">
-                            <div class="pressure-fill" id="pressure-fill"></div>
-                            <span class="pressure-label">Touch Pressure</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="crystal-feedback">
-                    <div class="feedback-item">
-                        <span class="feedback-label">Current Step:</span>
-                        <span id="current-step" class="feedback-value">1/6</span>
-                    </div>
-                    <div class="feedback-item">
-                        <span class="feedback-label">Status:</span>
-                        <span id="step-status" class="feedback-value">Ready</span>
-                    </div>
-                    <div class="feedback-item">
-                        <span class="feedback-label">Progress:</span>
-                        <span id="step-progress" class="feedback-value">0/3</span>
-                    </div>
-                    <div class="feedback-item">
-                        <span class="feedback-label">Pressure:</span>
-                        <span id="pressure-reading" class="feedback-value">0%</span>
-                    </div>
-                </div>
-                
-                <div class="crystal-controls">
-                    <button id="reset-step-btn" class="btn btn--secondary">Reset Step</button>
-                    <button id="next-crystal-btn" class="btn btn--primary" disabled>Next Step</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Gallery Screen -->
-        <div id="gallery-screen" class="screen">
-            <div class="gallery-content">
-                <h2>Enhanced Image Gallery</h2>
-                <p class="gallery-instruction">Navigate through images using touch gestures. Your swipe patterns, zoom behavior, and interaction style will be analyzed.</p>
-                
-                <div class="gallery-container">
-                    <div class="gallery-grid" id="gallery-grid">
-                        <!-- Images will be dynamically generated -->
-                    </div>
-                </div>
-                
-                <div class="gallery-metrics">
-                    <div class="metric">
-                        <span class="metric-label">Swipe Velocity:</span>
-                        <span id="swipe-velocity" class="metric-value">0 px/s</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Zoom Level:</span>
-                        <span id="zoom-level" class="metric-value">100%</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Touch Area:</span>
-                        <span id="touch-area" class="metric-value">0 px²</span>
-                    </div>
-                </div>
-                
-                <button id="finish-gallery-btn" class="btn btn--primary">Complete Gallery</button>
-            </div>
-        </div>
-
-        <!-- Export Screen -->
-        <div id="export-screen" class="screen">
-            <div class="export-content">
-                <h2>Enhanced Data Export</h2>
-                <p>Your comprehensive behavioral biometric data has been collected successfully.</p>
-                
-                <div class="export-stats">
-                    <div class="stat-card">
-                        <h4>Keystroke Data</h4>
-                        <p><span id="keystroke-count">0</span> keystrokes recorded</p>
-                        <p><span id="keystroke-features">23</span> features extracted</p>
-                        <p>Includes dwell time, flight time, digraph analysis, error patterns</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Touch Data</h4>
-                        <p><span id="touch-count">0</span> touch events recorded</p>
-                        <p><span id="touch-features">18</span> features extracted</p>
-                        <p>Includes pressure, area, velocity, multi-touch patterns</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Scroll Data</h4>
-                        <p><span id="scroll-count">0</span> scroll events recorded</p>
-                        <p><span id="scroll-features">12</span> features extracted</p>
-                        <p>Includes velocity, rhythm, depth, engagement patterns</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Motion Data</h4>
-                        <p><span id="motion-count">0</span> motion events recorded</p>
-                        <p><span id="motion-features">15</span> features extracted</p>
-                        <p>Includes accelerometer, gyroscope, orientation data</p>
-                    </div>
-                </div>
-                
-                <div class="export-actions">
-                    <button id="export-keystroke-btn" class="btn btn--primary">Export Keystroke Data</button>
-                    <button id="export-touch-btn" class="btn btn--primary">Export Touch Data</button>
-                    <button id="export-scroll-btn" class="btn btn--primary">Export Scroll Data</button>
-                    <button id="export-motion-btn" class="btn btn--primary">Export Motion Data</button>
-                    <button id="export-all-btn" class="btn btn--primary btn--lg">Export All Data</button>
-                </div>
-                
-                <div class="completion-message">
-                    <p>Thank you for participating in this advanced behavioral biometrics study!</p>
-                    <p>Total features collected: <span id="total-features">68</span></p>
-                </div>
-            </div>
+        <div class="crystal-controls">
+            <button id="reset-step-btn" class="btn btn--secondary">Reset Step</button>
+            <button id="next-crystal-btn" class="btn btn--primary" disabled>
+                Next Step
+            </button>
         </div>
     </div>
 
-    <!-- Image Popup -->
-    <div class="image-popup" id="image-popup">
+    <!-- ── Gallery Task ─────────────────────────────────────────── -->
+    <div id="gallery-screen" class="screen">
+        <h2>Gallery Task</h2>
+        <p id="gallery-instruction">
+            Navigate the gallery with swipes or keys; zoom and pan on images.
+        </p>
+
+        <div id="gallery-grid" class="gallery-grid"><!-- populated by JS --></div>
+        <button id="finish-gallery-btn" class="btn btn--primary">
+            Finish Gallery
+        </button>
+    </div>
+
+    <!-- ── Image Popup ──────────────────────────────────────────── -->
+    <div id="image-popup" class="image-popup">
         <div class="popup-overlay"></div>
         <div class="popup-content">
-            <button class="close-popup" id="close-popup">&times;</button>
+            <button id="close-popup" class="close-popup">&times;</button>
+
             <div class="popup-image-container">
-                <img class="popup-image" id="popup-image" src="" alt="">
+                <img id="popup-image" class="popup-image" alt="Gallery" />
             </div>
-            <div class="popup-counter" id="popup-counter">1 / 6</div>
-            <div class="zoom-controls">
-                <button class="zoom-out" id="zoom-out">-</button>
-                <span class="zoom-level" id="popup-zoom-level">100%</span>
-                <button class="zoom-in" id="zoom-in">+</button>
-                <button class="zoom-reset" id="zoom-reset">Reset</button>
-            </div>
+
+            <div id="popup-counter" class="popup-counter">1 of 20</div>
+
             <div class="popup-nav">
-                <button class="popup-prev" id="popup-prev">‹</button>
-                <button class="popup-next" id="popup-next">›</button>
+                <button id="popup-prev" class="popup-prev">❮</button>
+                <button id="popup-next" class="popup-next">❯</button>
+            </div>
+
+            <div class="zoom-controls">
+                <button id="zoom-out"  class="zoom-out">−</button>
+                <span   id="zoom-level" class="zoom-level">100%</span>
+                <button id="zoom-in"   class="zoom-in">+</button>
+                <button id="zoom-reset" class="zoom-reset">Reset</button>
             </div>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- ── Export ───────────────────────────────────────────────── -->
+    <div id="export-screen" class="screen">
+        <h2>Data Export</h2>
+        <p>Your data have been captured; click to export any file.</p>
+
+        <div class="export-stats">
+            <div class="stat-card">
+                <h3>Keystrokes</h3>
+                <p>Events: <span id="keystroke-count">0</span></p>
+                <button id="export-keystroke-btn" class="btn btn--secondary">
+                    Export CSV
+                </button>
+            </div>
+            <div class="stat-card">
+                <h3>Touch</h3>
+                <p>Events: <span id="touch-count">0</span></p>
+                <button id="export-touch-btn" class="btn btn--secondary">
+                    Export CSV
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Script -->
+<script src="app.js"></script>
 </body>
 </html>
