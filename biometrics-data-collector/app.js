@@ -97,9 +97,7 @@ class BiometricDataCollector {
     
     init() {
         this.bindEvents();
-        requestAnimationFrame(() => {
         this.generateParticipantId();
-    });;
         this.initializeGallery();
         this.setupPointerTracking();
     }
@@ -145,23 +143,19 @@ class BiometricDataCollector {
     generateParticipantId() {
         const now = new Date();
         const pad = n => n.toString().padStart(2, '0');
-        const year = now.getFullYear();
-        const month = pad(now.getMonth() + 1);
-        const day = pad(now.getDate());
-        const hour = pad(now.getHours());
-        const minute = pad(now.getMinutes());
-        const second = pad(now.getSeconds());
-        const timePart = `${year}${month}${day}-${hour}${minute}${second}`;
-        const randomPart = Math.random().toString(36).substring(2, 5);
-
-        this.participantId = `P${timePart}-${randomPart}`;
     
-        const idElement = document.getElementById('participant-id');
-        if (idElement) {
-            idElement.textContent = this.participantId;
-        } else {
-            console.warn('⚠️ participant-id element not found when setting ID.');
-        }
+        const year = now.getFullYear();                // e.g. 2025
+        const month = pad(now.getMonth() + 1);         // 01–12
+        const day = pad(now.getDate());                // 01–31
+        const hour = pad(now.getHours());              // 00–23
+        const minute = pad(now.getMinutes());          // 00–59
+        const second = pad(now.getSeconds());          // 00–59
+    
+        const timePart = `${year}${month}${day}-${hour}${minute}${second}`;
+        const randomPart = Math.random().toString(36).substring(2, 5); // 3 random chars
+    
+        this.participantId = `P${timePart}-${randomPart}`;
+        document.getElementById('participant-id').textContent = this.participantId;
     }
 
 
@@ -390,15 +384,6 @@ class BiometricDataCollector {
         return null;
     }
     
-    
-    
-    startTypingTask() {
-        this.currentSentence = 0;
-        this.lastInputLength = 0; // FIXED: Reset at task start
-        eys (don't record them)
-        return null;
-    }
-    
     handleKeydown(e) {
         const timestamp = performance.now();
         
@@ -439,7 +424,14 @@ class BiometricDataCollector {
     }
     
     startTypingTask() {
-        this.currentSentence =      document.getElementById('target-sentence').textContent = this.sentences[this.currentSentence];
+        this.currentSentence = 0;
+        this.lastInputLength = 0; // FIXED: Reset at task start
+        this.displayCurrentSentence();
+        this.updateTypingProgress();
+    }
+    
+    displayCurrentSentence() {
+        document.getElementById('target-sentence').textContent = this.sentences[this.currentSentence];
         const input = document.getElementById('typing-input');
         input.value = '';
         input.focus();
@@ -1442,9 +1434,7 @@ class BiometricDataCollector {
 
 }
 
-// Initialize the application (safely delayed to ensure DOM is fully ready)
+// Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-    requestAnimationFrame(() => {
-        new BiometricDataCollector();
-    });
+    new BiometricDataCollector();
 });
