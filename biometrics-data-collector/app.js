@@ -37,10 +37,10 @@ class BiometricDataCollector {
         
         // Typing task data
         this.sentences = [
-            "The quick brown fox jumps over the lazy dog with 123 numbers!",
-            "Artificial Intelligence transforms healthcare through machine learning algorithms.",
-            "Behavioral biometrics analyze typing patterns for secure authentication systems.",
-            "Human-computer interaction studies optimize user experience and interface design."
+            "Despite the quick, brown fox easily clearing the lazy dog's fence, its owner, Professor J. Quinn, still marveled at the animal's agility, frequently remarking, 'That creature moves like a phantom!",
+            "When the flight's unexpected delay meant missing his London connection, Mr. V. Baker, a devoted father returning from a project in New York, managed to arrange a private jet for his family, ensuring they arrived by noon.",
+            "The ancient manuscript, discovered near the river Thames in July 2023, contained cryptic markings and a unique cipher, leading many historians to question its true origin and purposeful message.",
+            "Although the young scientist, Dr. Kelly, was initially skeptical about the experiment's results—a quantum leap in energy production—her colleagues at Lab 007 ultimately convinced her of its validity after a thorough review."
         ];
         
         // Crystal game state
