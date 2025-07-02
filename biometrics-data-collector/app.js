@@ -37,10 +37,10 @@ class BiometricDataCollector {
         
         // Typing task data
         this.sentences = [
-            "Dr. Smith's Lab-42 discovered H2O molecules can freeze at -5°C under pressure.",
-            "The CEO's Q3 report showed $2.8M profit & 15% growth across all divisions.",
+            "Dr. Smith's Lab-42 discovered H2O molecules can freeze at -5 degree Celsius under pressure.",
+            "The CEO's Q3 report showed $2.8M profit and 15% growth across all divisions.",
             "Agent X-007 decoded the message: 'Meet @ Pier 9 on July 4th at 3:30 PM.'",
-            "Tesla's Model S hit 0-60 mph in 2.1 seconds—breaking the previous record!"
+            "Tesla's Model S hit 0-60 mph in 2.1 seconds - breaking the previous record!"
         ];
         
         // Crystal game state
