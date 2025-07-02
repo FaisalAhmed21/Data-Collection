@@ -5,6 +5,9 @@ class BiometricDataCollector {
         this.currentSentence = 0;
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
+        this.galleryPanStart = { x: 0, y: 0 };
+        this.galleryPanOffset = { x: 0, y: 0 };
+
         
         // Data collection
         this.keystrokeData = [];
@@ -974,6 +977,9 @@ class BiometricDataCollector {
         const timestamp = performance.now();
         
         if (e.touches.length === 1) {
+            this.galleryPanStart.x = e.touches[0].clientX;
+            this.galleryPanStart.y = e.touches[0].clientY;
+
             this.galleryTouchStart.x = e.touches[0].clientX;
             this.galleryTouchStart.y = e.touches[0].clientY;
             this.galleryZoom.touches = [e.touches[0]];
@@ -1001,6 +1007,17 @@ class BiometricDataCollector {
     handleGalleryTouchMove(e) {
         e.preventDefault();
         const timestamp = performance.now();
+
+        if (e.touches.length === 1 && this.galleryZoom.scale > 1.1) {
+            const moveX = e.touches[0].clientX - this.galleryPanStart.x;
+            const moveY = e.touches[0].clientY - this.galleryPanStart.y;
+            
+            this.galleryPanOffset.x = moveX;
+            this.galleryPanOffset.y = moveY;
+            
+            this.updateImageTransform();  // This function already updates the transform
+
+        }
         
         if (e.touches.length === 2 && this.galleryZoom.isPinching) {
             const currentDistance = this.getDistance(e.touches[0], e.touches[1]);
@@ -1047,6 +1064,25 @@ class BiometricDataCollector {
         if (e.touches.length < 2) {
             this.galleryZoom.isPinching = false;
         }
+        if (this.galleryZoom.scale <= 1.1) {
+            const endX = e.changedTouches[0].clientX;
+            const diffX = this.galleryTouchStart.x - endX;
+        
+            if (Math.abs(diffX) > 50) {
+                if (diffX > 0) {
+                    this.nextGalleryImage();
+                } else {
+                    this.prevGalleryImage();
+                }
+            }
+        } else {
+            // Reset pan offset so user must swipe again
+            this.galleryZoom.translateX += this.galleryPanOffset.x;
+            this.galleryZoom.translateY += this.galleryPanOffset.y;
+            this.galleryPanOffset = { x: 0, y: 0 };
+            this.updateImageTransform();
+        }
+
         
         this.recordTouchEvent({
             timestamp,
@@ -1211,8 +1247,13 @@ class BiometricDataCollector {
         const container = document.querySelector('.popup-image-container');
         
         if (img) {
-            img.style.transform = `scale(${this.galleryZoom.scale}) translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px)`;
-            container.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
+            const totalX = this.galleryZoom.translateX + (this.galleryPanOffset?.x || 0);
+            const totalY = this.galleryZoom.translateY + (this.galleryPanOffset?.y || 0);
+
+            img.style.transform = `scale(${this.galleryZoom.scale}) translate(${totalX}px, ${totalY}px)`;
+
+            // img.style.transform = `scale(${this.galleryZoom.scale}) translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px)`;
+            container.style.cursor = this.galleryZoom.scale > 1.1? 'grab' : 'default';
         }
     }
     
