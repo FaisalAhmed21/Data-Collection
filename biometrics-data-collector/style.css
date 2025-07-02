@@ -948,7 +948,7 @@ select.form-control {
 
 .size-indicator {
   position: absolute;
-  top: -60px;
+  top: 60px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--color-primary);
