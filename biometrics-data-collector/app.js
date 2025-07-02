@@ -142,10 +142,11 @@ class BiometricDataCollector {
     
     generateParticipantId() {
         const timestamp = Date.now();
-        const random = Math.floor(Math.random() * 1000);
-        this.participantId = `P${timestamp}${random}`;
+        const randomString = Math.random().toString(36).substring(2, 8); // 6-char random ID
+        this.participantId = `P${timestamp}-${randomString}`;
         document.getElementById('participant-id').textContent = this.participantId;
     }
+
     
     bindEvents() {
         // Welcome screen
@@ -1255,7 +1256,7 @@ class BiometricDataCollector {
     exportKeystrokeData() {
         const features = this.extractKeystrokeFeatures();
         const csv = this.convertToCSV(features);
-        const filename = `keystroke_data_${this.participantId}.csv`;
+        const filename = `${this.participantId}_keystroke.csv`;
     
         this.uploadCSVToGoogleDrive(csv, filename);
     
@@ -1267,7 +1268,7 @@ class BiometricDataCollector {
     exportTouchData() {
         const features = this.extractTouchFeatures();
         const csv = this.convertToCSV(features);
-        const filename = `touch_data_${this.participantId}.csv`;
+        const filename = `${this.participantId}_touch.csv`;
     
         this.uploadCSVToGoogleDrive(csv, filename);
     
