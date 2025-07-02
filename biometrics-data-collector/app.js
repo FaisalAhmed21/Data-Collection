@@ -141,11 +141,16 @@ class BiometricDataCollector {
     }
     
     generateParticipantId() {
-        const timestamp = Date.now();
-        const randomString = Math.random().toString(36).substring(2, 8); // 6-char random ID
-        this.participantId = `P${timestamp}-${randomString}`;
+        const now = new Date();
+        const pad = n => n.toString().padStart(2, '0');
+    
+        const timePart = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+        const randomPart = Math.random().toString(36).substring(2, 5); // 3 random chars
+    
+        this.participantId = `P${timePart}-${randomPart}`;
         document.getElementById('participant-id').textContent = this.participantId;
     }
+
 
     
     bindEvents() {
