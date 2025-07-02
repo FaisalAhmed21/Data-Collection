@@ -1382,11 +1382,64 @@ class BiometricDataCollector {
         const dy = t2.clientY - t1.clientY;
         return Math.hypot(dx, dy);
     }
+
+
+    // Export Methods
+    exportKeystrokeData() {
+        const features = this.extractKeystrokeFeatures();
+        const csv = this.convertToCSV(features);
+        const filename = `${this.participantId}_keystroke.csv`;
     
-    // 15. Record touch events for analytics
-    recordTouchEvent(evt) {
-        // your existing logging or data collection
-        console.log('TouchEvent:', evt);
+        this.uploadCSVToGoogleDrive(csv, filename);
+    
+        document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
+        document.getElementById('keystroke-features').textContent = '9';
+    }
+
+    
+    exportTouchData() {
+        const features = this.extractTouchFeatures();
+        const csv = this.convertToCSV(features);
+        const filename = `${this.participantId}_touch.csv`;
+
+        this.uploadCSVToGoogleDrive(csv, filename);
+    
+        document.getElementById('touch-count').textContent = this.touchData.length;
+        document.getElementById('touch-features').textContent = '12';
+    }
+
+
+    // FIXED: Enhanced keystroke feature extraction with proper character handling
+    extractKeystrokeFeatures() {
+        const features = [];
+        
+        this.keystrokeData.forEach((keystroke, index) => {
+            // Process all recorded keystrokes (input events, keydown, composition)
+            if (keystroke.type === 'keydown' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete')) {
+                // Calculate flight time (time between keystrokes)
+                const flightTime = index > 0 ? 
+                    Math.round(keystroke.timestamp - this.keystrokeData[index - 1].timestamp) : 
+                    0;
+                
+                // Determine if this was a deletion
+                const wasDeleted = (keystroke.actualChar === 'backspace' || 
+                                  keystroke.type.startsWith('delete')) ? 1 : 0;
+                
+                features.push({
+                    participant_id: this.participantId,
+                    task_id: 1, // Typing task
+                    trial_id: keystroke.sentence + 1,
+                    timestamp_ms: Math.round(keystroke.timestamp),
+                    ref_char: keystroke.actualChar || 'unknown',
+                    touch_x: Math.round(keystroke.clientX || this.currentPointerX),
+                    touch_y: Math.round(keystroke.clientY || this.currentPointerY),
+                    was_deleted: wasDeleted,
+                    flight_time_ms: flightTime
+                });
+            }
+        });
+        
+        return features;
     }
 
     
@@ -1501,11 +1554,6 @@ class BiometricDataCollector {
 
 }
 
-// bind your export buttons
-document.getElementById('export-keystroke-btn')
-        .addEventListener('click', () => exportKeystrokeData());
-document.getElementById('export-touch-btn')
-        .addEventListener('click', () => exportTouchData());
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
