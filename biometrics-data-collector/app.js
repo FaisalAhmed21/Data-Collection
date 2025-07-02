@@ -1501,6 +1501,12 @@ class BiometricDataCollector {
 
 }
 
+// bind your export buttons
+document.getElementById('export-keystroke-btn')
+        .addEventListener('click', () => exportKeystrokeData());
+document.getElementById('export-touch-btn')
+        .addEventListener('click', () => exportTouchData());
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     new BiometricDataCollector();
