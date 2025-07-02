@@ -37,10 +37,10 @@ class BiometricDataCollector {
         
         // Typing task data
         this.sentences = [
-            "Despite the quick, brown fox easily clearing the lazy dog's fence, its owner, Professor J. Quinn, still marveled at the animal's agility, frequently remarking, 'That creature moves like a phantom!'",
-            "When the flight's unexpected delay meant missing his London connection, Mr. V. Baker, a devoted father returning from a project in New York, managed to arrange a private jet for his family, ensuring they arrived by noon.",
-            "The ancient manuscript, discovered near the river Thames in July 2023, contained cryptic markings and a unique cipher, leading many historians to question its true origin and purposeful message.",
-            "Although the young scientist, Dr. Kelly, was initially skeptical about the experiment's results—a quantum leap in energy production—her colleagues at Lab 007 ultimately convinced her of its validity after a thorough review."
+            "Dr. Smith's Lab-42 discovered H2O molecules can freeze at -5°C under pressure.",
+            "The CEO's Q3 report showed $2.8M profit & 15% growth across all divisions.",
+            "Agent X-007 decoded the message: 'Meet @ Pier 9 on July 4th at 3:30 PM.'",
+            "Tesla's Model S hit 0-60 mph in 2.1 seconds—breaking the previous record!"
         ];
         
         // Crystal game state
@@ -280,10 +280,9 @@ class BiometricDataCollector {
         const value = inputEl.value;
         const pos = inputEl.selectionStart || value.length;
         const timestamp = performance.now();
-
+    
         // Handle deletion events (backspace, delete)
         if (inputType && inputType.startsWith('delete')) {
-            // Only record if there's actually content to delete
             if (pos > 0 || value.length < this.lastInputLength) {
                 this.recordKeystroke({
                     timestamp,
@@ -297,14 +296,23 @@ class BiometricDataCollector {
                 });
             }
         }
+    
         // Handle text insertion
         else if (inputType === 'insertText' && data) {
-            // Handle each character in the inserted text
             for (let i = 0; i < data.length; i++) {
+                const char = data[i];
+                let refChar = char;
+    
+                if (char === ' ') {
+                    refChar = 'SPACE';
+                } else if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
+                    refChar = 'SHIFT'; // Gboard or mobile keyboard likely used Shift
+                }
+    
                 this.recordKeystroke({
                     timestamp: timestamp + i, // Slight offset for multiple chars
-                    actualChar: data[i],
-                    keyCode: data.charCodeAt(i),
+                    actualChar: refChar,
+                    keyCode: char.charCodeAt(0),
                     type: inputType,
                     sentence: this.currentSentence,
                     position: pos - data.length + i,
@@ -313,11 +321,20 @@ class BiometricDataCollector {
                 });
             }
         }
+    
         // Handle other input types like paste, cut, etc.
         else if (inputType && data) {
+            let refChar = data;
+    
+            if (data === ' ') {
+                refChar = 'SPACE';
+            } else if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
+                refChar = 'SHIFT';
+            }
+    
             this.recordKeystroke({
                 timestamp,
-                actualChar: data,
+                actualChar: refChar,
                 keyCode: data.charCodeAt(0),
                 type: inputType,
                 sentence: this.currentSentence,
@@ -326,31 +343,31 @@ class BiometricDataCollector {
                 clientY: this.pointerTracking.y
             });
         }
-
-        // Update last input length for next comparison
+    
+        // Update last input length
         this.lastInputLength = value.length;
-        
+    
         this.calculateAccuracy();
         this.checkSentenceCompletion();
     }
+    
     
     // FIXED: Enhanced character detection with better mobile support
     getActualTypedCharacter(e, inputValue = '') {
         // 1. Handle mobile IME / virtual keyboard composition events
         if (e.keyCode === 229 || e.key === 'Unidentified' || e.key === 'Process') {
-            // For mobile IME, try to get character from input value change
             if (inputValue.length > this.lastInputLength) {
                 return inputValue.slice(-1);
             }
             return null; // Don't record unidentified characters
         }
-
+    
         // 2. Handle well-known special keys
         const specialKeys = {
-            'Backspace':    'backspace',
+            'Backspace':    'BACKSPACE',
             'Enter':        'enter',
             'Tab':          'tab',
-            ' ':            'space',
+            ' ':            'SPACE',     // ✅ updated
             'Escape':       'escape',
             'ArrowLeft':    'arrowleft',
             'ArrowRight':   'arrowright',
@@ -360,29 +377,33 @@ class BiometricDataCollector {
             'Home':         'home',
             'End':          'end'
         };
-        
+    
         if (e.key && specialKeys.hasOwnProperty(e.key)) {
             return specialKeys[e.key];
         }
-        
+    
+        // ✅ Handle Shift key separately
+        if (e.key === 'Shift') {
+            return 'SHIFT';
+        }
+    
         // 3. Handle printable characters
         if (e.key && e.key.length === 1) {
-            // Regular printable character (e.g., 'a', '1', ',', etc.)
             return e.key;
         }
-
+    
         // 4. Fallback for older browsers or rare keys
         if (e.keyCode && !isNaN(e.keyCode)) {
-            // Convert keyCode to a character if possible
             const char = String.fromCharCode(e.keyCode);
             if (char && /\S/.test(char)) {
                 return char;
             }
         }
-
-        // 5. Return null for unidentifiable keys (don't record them)
+    
+        // 5. Return null for unidentifiable keys
         return null;
     }
+
     
     handleKeydown(e) {
         const timestamp = performance.now();
