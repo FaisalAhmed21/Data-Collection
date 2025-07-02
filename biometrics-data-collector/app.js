@@ -5,9 +5,6 @@ class BiometricDataCollector {
         this.currentSentence = 0;
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
-        this.galleryPanStart = { x: 0, y: 0 };
-        this.galleryPanOffset = { x: 0, y: 0 };
-
         
         // Data collection
         this.keystrokeData = [];
@@ -147,12 +144,20 @@ class BiometricDataCollector {
         const now = new Date();
         const pad = n => n.toString().padStart(2, '0');
     
-        const timePart = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+        const year = now.getFullYear();                // e.g. 2025
+        const month = pad(now.getMonth() + 1);         // 01–12
+        const day = pad(now.getDate());                // 01–31
+        const hour = pad(now.getHours());              // 00–23
+        const minute = pad(now.getMinutes());          // 00–59
+        const second = pad(now.getSeconds());          // 00–59
+    
+        const timePart = `${year}${month}${day}-${hour}${minute}${second}`;
         const randomPart = Math.random().toString(36).substring(2, 5); // 3 random chars
     
         this.participantId = `P${timePart}-${randomPart}`;
         document.getElementById('participant-id').textContent = this.participantId;
     }
+
 
 
     
@@ -977,9 +982,6 @@ class BiometricDataCollector {
         const timestamp = performance.now();
         
         if (e.touches.length === 1) {
-            this.galleryPanStart.x = e.touches[0].clientX;
-            this.galleryPanStart.y = e.touches[0].clientY;
-
             this.galleryTouchStart.x = e.touches[0].clientX;
             this.galleryTouchStart.y = e.touches[0].clientY;
             this.galleryZoom.touches = [e.touches[0]];
@@ -1007,17 +1009,6 @@ class BiometricDataCollector {
     handleGalleryTouchMove(e) {
         e.preventDefault();
         const timestamp = performance.now();
-
-        if (e.touches.length === 1 && this.galleryZoom.scale > 1.1) {
-            const moveX = e.touches[0].clientX - this.galleryPanStart.x;
-            const moveY = e.touches[0].clientY - this.galleryPanStart.y;
-            
-            this.galleryPanOffset.x = moveX;
-            this.galleryPanOffset.y = moveY;
-            
-            this.updateImageTransform();  // This function already updates the transform
-
-        }
         
         if (e.touches.length === 2 && this.galleryZoom.isPinching) {
             const currentDistance = this.getDistance(e.touches[0], e.touches[1]);
@@ -1064,25 +1055,6 @@ class BiometricDataCollector {
         if (e.touches.length < 2) {
             this.galleryZoom.isPinching = false;
         }
-        if (this.galleryZoom.scale <= 1.1) {
-            const endX = e.changedTouches[0].clientX;
-            const diffX = this.galleryTouchStart.x - endX;
-        
-            if (Math.abs(diffX) > 50) {
-                if (diffX > 0) {
-                    this.nextGalleryImage();
-                } else {
-                    this.prevGalleryImage();
-                }
-            }
-        } else {
-            // Reset pan offset so user must swipe again
-            this.galleryZoom.translateX += this.galleryPanOffset.x;
-            this.galleryZoom.translateY += this.galleryPanOffset.y;
-            this.galleryPanOffset = { x: 0, y: 0 };
-            this.updateImageTransform();
-        }
-
         
         this.recordTouchEvent({
             timestamp,
@@ -1247,13 +1219,8 @@ class BiometricDataCollector {
         const container = document.querySelector('.popup-image-container');
         
         if (img) {
-            const totalX = this.galleryZoom.translateX + (this.galleryPanOffset?.x || 0);
-            const totalY = this.galleryZoom.translateY + (this.galleryPanOffset?.y || 0);
-
-            img.style.transform = `scale(${this.galleryZoom.scale}) translate(${totalX}px, ${totalY}px)`;
-
-            // img.style.transform = `scale(${this.galleryZoom.scale}) translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px)`;
-            container.style.cursor = this.galleryZoom.scale > 1.1? 'grab' : 'default';
+            img.style.transform = `scale(${this.galleryZoom.scale}) translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px)`;
+            container.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
         }
     }
     
