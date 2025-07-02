@@ -402,6 +402,10 @@ class BiometricDataCollector {
         
         // Get the actual typed character
         const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
+
+        if (actualCharacter === 'backspace') {
+            return
+        }
         
         // Only record if we have a valid character
         if (actualCharacter) {
