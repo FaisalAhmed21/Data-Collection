@@ -472,10 +472,11 @@ class BiometricDataCollector {
         const typed = document.getElementById('typing-input').value;
         const target = this.sentences[this.currentSentence];
         
-        if (typed.length === 0) {
-            document.getElementById('accuracy').textContent = '100%';
-            return;
+        if (typed === target) {
+          document.getElementById('accuracy').textContent = '100%';
+          return;
         }
+
         
         let correct = 0;
         const minLength = Math.min(typed.length, target.length);
