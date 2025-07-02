@@ -145,19 +145,23 @@ class BiometricDataCollector {
     generateParticipantId() {
         const now = new Date();
         const pad = n => n.toString().padStart(2, '0');
-    
-        const year = now.getFullYear();                // e.g. 2025
-        const month = pad(now.getMonth() + 1);         // 01–12
-        const day = pad(now.getDate());                // 01–31
-        const hour = pad(now.getHours());              // 00–23
-        const minute = pad(now.getMinutes());          // 00–59
-        const second = pad(now.getSeconds());          // 00–59
-    
+        const year = now.getFullYear();
+        const month = pad(now.getMonth() + 1);
+        const day = pad(now.getDate());
+        const hour = pad(now.getHours());
+        const minute = pad(now.getMinutes());
+        const second = pad(now.getSeconds());
         const timePart = `${year}${month}${day}-${hour}${minute}${second}`;
-        const randomPart = Math.random().toString(36).substring(2, 5); // 3 random chars
-    
+        const randomPart = Math.random().toString(36).substring(2, 5);
+
         this.participantId = `P${timePart}-${randomPart}`;
-        document.getElementById('participant-id').textContent = this.participantId;
+    
+        const idElement = document.getElementById('participant-id');
+        if (idElement) {
+            idElement.textContent = this.participantId;
+        } else {
+            console.warn('⚠️ participant-id element not found when setting ID.');
+        }
     }
 
 
