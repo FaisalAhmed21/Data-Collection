@@ -283,44 +283,70 @@ class BiometricDataCollector {
     
         // Handle deletion events (backspace, delete)
         if (inputType && inputType.startsWith('delete')) {
-            if (pos > 0 || value.length < this.lastInputLength) {
-                this.recordKeystroke({
-                    timestamp,
-                    actualChar: 'backspace',
-                    keyCode: 8,
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-            }
+            // Skip backspace recording here to avoid duplicates
+            return;
         }
+
     
         // Handle text insertion
         else if (inputType === 'insertText' && data) {
             for (let i = 0; i < data.length; i++) {
                 const char = data[i];
-                let refChar = char;
-    
-                if (char === ' ') {
-                    refChar = 'SPACE';
-                } else if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
-                    refChar = 'SHIFT'; // Gboard or mobile keyboard likely used Shift
+                
+                // If uppercase letter, record SHIFT event first, then the letter
+                if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
+                    // Record SHIFT event
+                    this.recordKeystroke({
+                        timestamp: timestamp + i - 0.5, // slightly before letter
+                        actualChar: 'SHIFT',
+                        keyCode: 16, // KeyCode for Shift
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - data.length + i,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                    // Then record actual uppercase letter
+                    this.recordKeystroke({
+                        timestamp: timestamp + i,
+                        actualChar: char,
+                        keyCode: char.charCodeAt(0),
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - data.length + i,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
                 }
-    
-                this.recordKeystroke({
-                    timestamp: timestamp + i, // Slight offset for multiple chars
-                    actualChar: refChar,
-                    keyCode: char.charCodeAt(0),
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos - data.length + i,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
+                else if (char === ' ') {
+                    // SPACE character
+                    this.recordKeystroke({
+                        timestamp: timestamp + i,
+                        actualChar: 'SPACE',
+                        keyCode: 32,
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - data.length + i,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                }
+                else {
+                    // Normal character (lowercase etc.)
+                    this.recordKeystroke({
+                        timestamp: timestamp + i,
+                        actualChar: char,
+                        keyCode: char.charCodeAt(0),
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - data.length + i,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                }
             }
         }
+
     
         // Handle other input types like paste, cut, etc.
         else if (inputType && data) {
@@ -424,10 +450,25 @@ class BiometricDataCollector {
         // Get the actual typed character
         const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
 
-        if (actualCharacter === 'backspace') {
-            return
+        if (actualCharacter === 'BACKSPACE' || actualCharacter === 'backspace') {
+            // Only record BACKSPACE once on keydown
+            this.recordKeystroke({
+                timestamp,
+                actualChar: 'BACKSPACE',
+                keyCode: 8,
+                type: 'keydown',
+                shiftKey: e.shiftKey,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
+                sentence: this.currentSentence,
+                position: e.target.selectionStart || 0,
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y
+            });
+            return;  // Don't record further
         }
         
+                
         // Only record if we have a valid character
         if (actualCharacter) {
             console.log('Key pressed:', e.key, 'KeyCode:', e.keyCode, 'Detected:', actualCharacter);
@@ -961,65 +1002,76 @@ class BiometricDataCollector {
         this.touchData.push(data);
     }
     
-    // Enhanced Gallery Methods
+// --- Updated Enhanced Gallery Methods ---
+
+    // 1. Initialize thumbnail grid
     initializeGallery() {
         const grid = document.getElementById('gallery-grid');
         grid.innerHTML = '';
-        
+    
         this.galleryImages.forEach((url, index) => {
             const imageContainer = document.createElement('div');
             imageContainer.className = 'gallery-item';
-            
+    
             const img = document.createElement('img');
             img.src = url;
             img.alt = `Gallery image ${index + 1}`;
             img.loading = 'lazy';
-            
+    
             imageContainer.appendChild(img);
             imageContainer.addEventListener('click', () => this.openImagePopup(index));
-            
+    
             grid.appendChild(imageContainer);
         });
     }
     
+    // 2. Bind touch events when popup is active
     bindGalleryEvents() {
-        document.addEventListener('touchstart', (e) => {
+        this.galleryTouchStart = { x: 0, y: 0 };
+    
+        document.addEventListener('touchstart', e => {
             if (document.querySelector('.image-popup.active')) {
                 this.handleGalleryTouchStart(e);
             }
-        });
-        
-        document.addEventListener('touchmove', (e) => {
+        }, { passive: false });
+    
+        document.addEventListener('touchmove', e => {
             if (document.querySelector('.image-popup.active')) {
                 this.handleGalleryTouchMove(e);
             }
-        });
-        
-        document.addEventListener('touchend', (e) => {
+        }, { passive: false });
+    
+        document.addEventListener('touchend', e => {
             if (document.querySelector('.image-popup.active')) {
                 this.handleGalleryTouchEnd(e);
             }
         });
-        
-        this.galleryTouchStart = { x: 0, y: 0 };
     }
     
+    // 3. On touch start: detect pan vs pinch vs swipe start
     handleGalleryTouchStart(e) {
-        const timestamp = performance.now();
-        
+        const ts = performance.now();
+    
         if (e.touches.length === 1) {
+            // record swipe start
             this.galleryTouchStart.x = e.touches[0].clientX;
             this.galleryTouchStart.y = e.touches[0].clientY;
-            this.galleryZoom.touches = [e.touches[0]];
+    
+            // if already zoomed, begin panning
+            if (this.galleryZoom.scale > 1) {
+                this.galleryZoom.isPanning = true;
+                this.galleryZoom.startX = e.touches[0].clientX - this.galleryZoom.translateX;
+                this.galleryZoom.startY = e.touches[0].clientY - this.galleryZoom.translateY;
+            }
         } else if (e.touches.length === 2) {
+            // begin pinch zoom
             this.galleryZoom.isPinching = true;
             this.galleryZoom.initialDistance = this.getDistance(e.touches[0], e.touches[1]);
-            this.galleryZoom.touches = [e.touches[0], e.touches[1]];
             e.preventDefault();
         }
-        
+    
         this.recordTouchEvent({
-            timestamp,
+            timestamp: ts,
             type: 'touchstart',
             touches: Array.from(e.touches).map(t => ({
                 identifier: t.identifier,
@@ -1032,24 +1084,30 @@ class BiometricDataCollector {
         });
     }
     
+    // 4. On touch move: perform pinch or pan
     handleGalleryTouchMove(e) {
         e.preventDefault();
-        const timestamp = performance.now();
-        
+        const ts = performance.now();
+    
         if (e.touches.length === 2 && this.galleryZoom.isPinching) {
-            const currentDistance = this.getDistance(e.touches[0], e.touches[1]);
-            const scaleChange = currentDistance / this.galleryZoom.initialDistance;
-            const newScale = Math.max(0.5, Math.min(3.0, this.galleryZoom.scale * scaleChange));
-            
-            this.galleryZoom.scale = newScale;
-            this.galleryZoom.initialDistance = currentDistance;
-            
+            // pinch-to-zoom
+            const dist = this.getDistance(e.touches[0], e.touches[1]);
+            const change = dist / this.galleryZoom.initialDistance;
+            this.galleryZoom.scale = Math.max(0.5, Math.min(3.0, this.galleryZoom.scale * change));
+            this.galleryZoom.initialDistance = dist;
             this.updateImageTransform();
             this.updateZoomLevel();
         }
-        
+        else if (e.touches.length === 1 && this.galleryZoom.isPanning) {
+            // single-finger pan
+            const t = e.touches[0];
+            this.galleryZoom.translateX = t.clientX - this.galleryZoom.startX;
+            this.galleryZoom.translateY = t.clientY - this.galleryZoom.startY;
+            this.updateImageTransform();
+        }
+    
         this.recordTouchEvent({
-            timestamp,
+            timestamp: ts,
             type: 'touchmove',
             touches: Array.from(e.touches).map(t => ({
                 identifier: t.identifier,
@@ -1062,28 +1120,31 @@ class BiometricDataCollector {
         });
     }
     
+    // 5. On touch end: finish pinch/pan and handle swipe if not zoomed
     handleGalleryTouchEnd(e) {
-        const timestamp = performance.now();
-        
-        if (!this.galleryZoom.isPinching && e.changedTouches.length === 1) {
+        const ts = performance.now();
+    
+        // swipe to change image only when scale ≈ 1
+        if (!this.galleryZoom.isPinching && !this.galleryZoom.isPanning
+            && e.changedTouches.length === 1 && this.galleryZoom.scale <= 1.1) {
             const endX = e.changedTouches[0].clientX;
-            const diffX = this.galleryTouchStart.x - endX;
-            
-            if (Math.abs(diffX) > 50 && this.galleryZoom.scale <= 1.1) {
-                if (diffX > 0) {
-                    this.nextGalleryImage();
-                } else {
-                    this.prevGalleryImage();
-                }
+            const dx = this.galleryTouchStart.x - endX;
+            if (Math.abs(dx) > 50) {
+                dx > 0 ? this.nextGalleryImage() : this.prevGalleryImage();
             }
         }
-        
+    
+        // end pinch
         if (e.touches.length < 2) {
             this.galleryZoom.isPinching = false;
         }
-        
+        // end pan
+        if (e.touches.length === 0) {
+            this.galleryZoom.isPanning = false;
+        }
+    
         this.recordTouchEvent({
-            timestamp,
+            timestamp: ts,
             type: 'touchend',
             touches: Array.from(e.changedTouches).map(t => ({
                 identifier: t.identifier,
@@ -1096,124 +1157,145 @@ class BiometricDataCollector {
         });
     }
     
+    // 6. Open popup and attach double-tap listener once
     openImagePopup(index) {
         this.currentGalleryImage = index;
+        this.resetZoom();
     
         if (!document.querySelector('.image-popup')) {
             this.createImagePopup();
         }
     
-        const imageContainer = document.querySelector('.popup-image-container'); // ✅ Fix
-        let lastTapTime = 0;
-    
-        imageContainer.addEventListener('touchend', (e) => {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTapTime;
-    
-            if (tapLength < 300 && tapLength > 0) { // double-tap detected
-                if (this.galleryZoom.scale > 1.1) {
-                    this.resetZoom(); // Zoom out
-                } else {
-                    this.galleryZoom.scale = 2.0; // Zoom in to 200%
-                    this.galleryZoom.translateX = 0;
-                    this.galleryZoom.translateY = 0;
-                    this.updateImageTransform();
-                    this.updateZoomLevel();
-                }
-            }
-    
-            lastTapTime = currentTime;
-        });
-    
-        this.resetZoom();
         this.updatePopupImage();
-        document.querySelector('.image-popup').classList.add('active');
+        const popup = document.querySelector('.image-popup');
+        popup.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
-
     
+    // 7. Build popup DOM and set up controls
     createImagePopup() {
         const popup = document.createElement('div');
         popup.className = 'image-popup';
         popup.innerHTML = `
             <div class="popup-overlay"></div>
             <div class="popup-content">
-                <button class="close-popup">&times;</button>
-                <div class="popup-image-container">
-                    <img class="popup-image" src="" alt="">
-                </div>
-                <div class="popup-counter"></div>
-                <div class="popup-nav">
-                    <button class="popup-prev">❮</button>
-                    <button class="popup-next">❯</button>
-                </div>
-                <div class="zoom-controls">
-                    <button class="zoom-out">−</button>
-                    <span class="zoom-level">100%</span>
-                    <button class="zoom-in">+</button>
-                    <button class="zoom-reset">Reset</button>
-                </div>
-            </div>
-        `;
-        
+              <button class="close-popup">&times;</button>
+              <div class="popup-image-container"><img class="popup-image" src="" alt=""></div>
+              <div class="popup-counter"></div>
+              <div class="popup-nav">
+                <button class="popup-prev">❮</button>
+                <button class="popup-next">❯</button>
+              </div>
+              <div class="zoom-controls">
+                <button class="zoom-out">−</button>
+                <span class="zoom-level">100%</span>
+                <button class="zoom-in">+</button>
+                <button class="zoom-reset">Reset</button>
+              </div>
+            </div>`;
         document.body.appendChild(popup);
-        
-        popup.querySelector('.close-popup').addEventListener('click', () => this.closeImagePopup());
-        popup.querySelector('.popup-overlay').addEventListener('click', () => this.closeImagePopup());
-        popup.querySelector('.popup-prev').addEventListener('click', () => this.prevGalleryImage());
-        popup.querySelector('.popup-next').addEventListener('click', () => this.nextGalleryImage());
-        
-        popup.querySelector('.zoom-in').addEventListener('click', () => this.zoomIn());
-        popup.querySelector('.zoom-out').addEventListener('click', () => this.zoomOut());
-        popup.querySelector('.zoom-reset').addEventListener('click', () => this.resetZoom());
-        
-        const imageContainer = popup.querySelector('.popup-image-container');
-        imageContainer.addEventListener('wheel', (e) => {
+    
+        // close & nav
+        popup.querySelector('.close-popup').onclick = () => this.closeImagePopup();
+        popup.querySelector('.popup-overlay').onclick = () => this.closeImagePopup();
+        popup.querySelector('.popup-prev').onclick = () => this.prevGalleryImage();
+        popup.querySelector('.popup-next').onclick = () => this.nextGalleryImage();
+    
+        // zoom controls
+        popup.querySelector('.zoom-in').onclick = () => this.zoomIn();
+        popup.querySelector('.zoom-out').onclick = () => this.zoomOut();
+        popup.querySelector('.zoom-reset').onclick = () => this.resetZoom();
+    
+        // container events
+        const ctr = popup.querySelector('.popup-image-container');
+    
+        ctr.addEventListener('wheel', e => {
             e.preventDefault();
-            if (e.deltaY < 0) {
-                this.zoomIn();
-            } else {
-                this.zoomOut();
-            }
+            e.deltaY < 0 ? this.zoomIn() : this.zoomOut();
         });
-        
-        let isPanning = false;
-        imageContainer.addEventListener('mousedown', (e) => {
+    
+        // mouse pan
+        let mousePanning = false;
+        ctr.onmousedown = e => {
             if (this.galleryZoom.scale > 1) {
-                isPanning = true;
+                mousePanning = true;
                 this.galleryZoom.startX = e.clientX - this.galleryZoom.translateX;
                 this.galleryZoom.startY = e.clientY - this.galleryZoom.translateY;
-                imageContainer.style.cursor = 'grabbing';
+                ctr.style.cursor = 'grabbing';
             }
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (isPanning && this.galleryZoom.scale > 1) {
+        };
+        document.onmousemove = e => {
+            if (mousePanning) {
                 this.galleryZoom.translateX = e.clientX - this.galleryZoom.startX;
                 this.galleryZoom.translateY = e.clientY - this.galleryZoom.startY;
                 this.updateImageTransform();
             }
-        });
-        
-        document.addEventListener('mouseup', () => {
-            if (isPanning) {
-                isPanning = false;
-                imageContainer.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
+        };
+        document.onmouseup = () => {
+            if (mousePanning) {
+                mousePanning = false;
+                ctr.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
             }
-        });
-        
-        document.addEventListener('keydown', (e) => {
-            if (popup.classList.contains('active')) {
-                if (e.key === 'Escape') this.closeImagePopup();
-                if (e.key === 'ArrowLeft') this.prevGalleryImage();
-                if (e.key === 'ArrowRight') this.nextGalleryImage();
-                if (e.key === '+' || e.key === '=') this.zoomIn();
-                if (e.key === '-') this.zoomOut();
-                if (e.key === '0') this.resetZoom();
+        };
+    
+        // touch pan & double-tap
+        let touchPanning = false;
+        ctr.addEventListener('touchstart', e => {
+            if (e.touches.length === 1 && this.galleryZoom.scale > 1) {
+                touchPanning = true;
+                this.galleryZoom.startX = e.touches[0].clientX - this.galleryZoom.translateX;
+                this.galleryZoom.startY = e.touches[0].clientY - this.galleryZoom.translateY;
+                ctr.style.cursor = 'grabbing';
+                e.preventDefault();
             }
+        }, { passive: false });
+    
+        ctr.addEventListener('touchmove', e => {
+            if (touchPanning) {
+                this.galleryZoom.translateX = e.touches[0].clientX - this.galleryZoom.startX;
+                this.galleryZoom.translateY = e.touches[0].clientY - this.galleryZoom.startY;
+                this.updateImageTransform();
+                e.preventDefault();
+            }
+        }, { passive: false });
+    
+        ctr.addEventListener('touchend', e => {
+            if (touchPanning) {
+                touchPanning = false;
+                ctr.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
+            }
+            // double-tap
+            const now = Date.now();
+            const dt = now - this.galleryZoom.lastTapTime;
+            if (dt > 0 && dt < 300) {
+                if (this.galleryZoom.scale > 1.1) {
+                    this.resetZoom();
+                } else {
+                    this.galleryZoom.scale = 2.0;
+                    this.galleryZoom.translateX = 0;
+                    this.galleryZoom.translateY = 0;
+                    this.updateImageTransform();
+                    this.updateZoomLevel();
+                }
+            }
+            this.galleryZoom.lastTapTime = now;
         });
+    
+        // keyboard
+        document.onkeydown = e => {
+            if (!popup.classList.contains('active')) return;
+            switch (e.key) {
+                case 'Escape': this.closeImagePopup(); break;
+                case 'ArrowLeft': this.prevGalleryImage(); break;
+                case 'ArrowRight': this.nextGalleryImage(); break;
+                case '+': case '=': this.zoomIn(); break;
+                case '-': this.zoomOut(); break;
+                case '0': this.resetZoom(); break;
+            }
+        };
     }
     
+    // 8. Zoom methods
     zoomIn() {
         this.galleryZoom.scale = Math.min(this.galleryZoom.scale * 1.2, 3.0);
         this.updateImageTransform();
@@ -1222,13 +1304,12 @@ class BiometricDataCollector {
     
     zoomOut() {
         this.galleryZoom.scale = Math.max(this.galleryZoom.scale / 1.2, 0.5);
-        this.updateImageTransform();
-        this.updateZoomLevel();
-        
         if (this.galleryZoom.scale <= 1) {
             this.galleryZoom.translateX = 0;
             this.galleryZoom.translateY = 0;
         }
+        this.updateImageTransform();
+        this.updateZoomLevel();
     }
     
     resetZoom() {
@@ -1236,36 +1317,39 @@ class BiometricDataCollector {
         this.galleryZoom.translateX = 0;
         this.galleryZoom.translateY = 0;
         this.galleryZoom.isPinching = false;
+        this.galleryZoom.isPanning = false;
         this.updateImageTransform();
         this.updateZoomLevel();
     }
     
+    // 9. Apply translate then scale
     updateImageTransform() {
         const img = document.querySelector('.popup-image');
-        const container = document.querySelector('.popup-image-container');
-        
-        if (img) {
-            img.style.transform = `scale(${this.galleryZoom.scale}) translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px)`;
-            container.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
-        }
+        const ctr = document.querySelector('.popup-image-container');
+        if (!img) return;
+        img.style.transform = 
+            `translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px) ` +
+            `scale(${this.galleryZoom.scale})`;
+        ctr.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
     }
     
+    // 10. Update zoom percentage display
     updateZoomLevel() {
-        const zoomLevelSpan = document.querySelector('.zoom-level');
-        if (zoomLevelSpan) {
-            zoomLevelSpan.textContent = `${Math.round(this.galleryZoom.scale * 100)}%`;
-        }
+        const span = document.querySelector('.zoom-level');
+        if (span) span.textContent = `${Math.round(this.galleryZoom.scale * 100)}%`;
     }
     
+    // 11. Refresh popup image & counter
     updatePopupImage() {
-        const popup = document.querySelector('.image-popup');
-        if (popup) {
-            popup.querySelector('.popup-image').src = this.galleryImages[this.currentGalleryImage];
-            popup.querySelector('.popup-counter').textContent = `${this.currentGalleryImage + 1} of 20`;
-            this.updateZoomLevel();
-        }
+        const pop = document.querySelector('.image-popup');
+        if (!pop) return;
+        pop.querySelector('.popup-image').src = this.galleryImages[this.currentGalleryImage];
+        pop.querySelector('.popup-counter').textContent =
+            `${this.currentGalleryImage + 1} of ${this.galleryImages.length}`;
+        this.updateZoomLevel();
     }
     
+    // 12. Navigate images
     nextGalleryImage() {
         if (this.currentGalleryImage < this.galleryImages.length - 1) {
             this.currentGalleryImage++;
@@ -1282,72 +1366,29 @@ class BiometricDataCollector {
         }
     }
     
+    // 13. Close popup
     closeImagePopup() {
-        const popup = document.querySelector('.image-popup');
-        if (popup) {
-            popup.classList.remove('active');
+        const pop = document.querySelector('.image-popup');
+        if (pop) {
+            pop.classList.remove('active');
             document.body.style.overflow = '';
             this.resetZoom();
         }
     }
     
-    // Export Methods
-    exportKeystrokeData() {
-        const features = this.extractKeystrokeFeatures();
-        const csv = this.convertToCSV(features);
-        const filename = `${this.participantId}_keystroke.csv`;
+    // 14. Utility: distance between two touches
+    getDistance(t1, t2) {
+        const dx = t2.clientX - t1.clientX;
+        const dy = t2.clientY - t1.clientY;
+        return Math.hypot(dx, dy);
+    }
     
-        this.uploadCSVToGoogleDrive(csv, filename);
-    
-        document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '9';
+    // 15. Record touch events for analytics
+    recordTouchEvent(evt) {
+        // your existing logging or data collection
+        console.log('TouchEvent:', evt);
     }
 
-    
-    exportTouchData() {
-        const features = this.extractTouchFeatures();
-        const csv = this.convertToCSV(features);
-        const filename = `${this.participantId}_touch.csv`;
-    
-        this.uploadCSVToGoogleDrive(csv, filename);
-    
-        document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '12';
-    }
-
-    
-    // FIXED: Enhanced keystroke feature extraction with proper character handling
-    extractKeystrokeFeatures() {
-        const features = [];
-        
-        this.keystrokeData.forEach((keystroke, index) => {
-            // Process all recorded keystrokes (input events, keydown, composition)
-            if (keystroke.type === 'keydown' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete')) {
-                // Calculate flight time (time between keystrokes)
-                const flightTime = index > 0 ? 
-                    Math.round(keystroke.timestamp - this.keystrokeData[index - 1].timestamp) : 
-                    0;
-                
-                // Determine if this was a deletion
-                const wasDeleted = (keystroke.actualChar === 'backspace' || 
-                                  keystroke.type.startsWith('delete')) ? 1 : 0;
-                
-                features.push({
-                    participant_id: this.participantId,
-                    task_id: 1, // Typing task
-                    trial_id: keystroke.sentence + 1,
-                    timestamp_ms: Math.round(keystroke.timestamp),
-                    ref_char: keystroke.actualChar || 'unknown',
-                    touch_x: Math.round(keystroke.clientX || this.currentPointerX),
-                    touch_y: Math.round(keystroke.clientY || this.currentPointerY),
-                    was_deleted: wasDeleted,
-                    flight_time_ms: flightTime
-                });
-            }
-        });
-        
-        return features;
-    }
     
     // FIXED: Enhanced touch feature extraction
     extractTouchFeatures() {
