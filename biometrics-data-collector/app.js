@@ -240,13 +240,13 @@ class BiometricDataCollector {
         typingInput.addEventListener('contextmenu', e => e.preventDefault()); // Disable Right-Click menu[4]
 
         
-        // Cursor restrictions
-        typingInput.addEventListener('mousedown', (e) => {
-            setTimeout(() => {
-                const length = typingInput.value.length;
-                typingInput.setSelectionRange(length, length);
-            }, 0);
-        });
+        // // Cursor restrictions
+        // typingInput.addEventListener('mousedown', (e) => {
+        //     setTimeout(() => {
+        //         const length = typingInput.value.length;
+        //         typingInput.setSelectionRange(length, length);
+        //     }, 0);
+        // });
         
         document.getElementById('next-sentence-btn').addEventListener('click', () => this.nextSentence());
         
