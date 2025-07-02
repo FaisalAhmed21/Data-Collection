@@ -1442,7 +1442,9 @@ class BiometricDataCollector {
 
 }
 
-// Initialize the application
+// Initialize the application (safely delayed to ensure DOM is fully ready)
 document.addEventListener('DOMContentLoaded', () => {
-    new BiometricDataCollector();
+    requestAnimationFrame(() => {
+        new BiometricDataCollector();
+    });
 });
