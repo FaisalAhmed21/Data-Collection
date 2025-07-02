@@ -384,6 +384,15 @@ class BiometricDataCollector {
         return null;
     }
     
+    
+    
+    startTypingTask() {
+        this.currentSentence = 0;
+        this.lastInputLength = 0; // FIXED: Reset at task start
+        eys (don't record them)
+        return null;
+    }
+    
     handleKeydown(e) {
         const timestamp = performance.now();
         
@@ -402,6 +411,9 @@ class BiometricDataCollector {
         
         // Get the actual typed character
         const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
+        // Skip backspace to avoid double logging (Gboard issue)
+        if (actualCharacter === 'backspace') 
+            return;
         
         // Only record if we have a valid character
         if (actualCharacter) {
@@ -424,14 +436,7 @@ class BiometricDataCollector {
     }
     
     startTypingTask() {
-        this.currentSentence = 0;
-        this.lastInputLength = 0; // FIXED: Reset at task start
-        this.displayCurrentSentence();
-        this.updateTypingProgress();
-    }
-    
-    displayCurrentSentence() {
-        document.getElementById('target-sentence').textContent = this.sentences[this.currentSentence];
+        this.currentSentence =      document.getElementById('target-sentence').textContent = this.sentences[this.currentSentence];
         const input = document.getElementById('typing-input');
         input.value = '';
         input.focus();
