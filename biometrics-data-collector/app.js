@@ -97,7 +97,9 @@ class BiometricDataCollector {
     
     init() {
         this.bindEvents();
+        requestAnimationFrame(() => {
         this.generateParticipantId();
+    });;
         this.initializeGallery();
         this.setupPointerTracking();
     }
