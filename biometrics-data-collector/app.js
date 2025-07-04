@@ -702,74 +702,6 @@ class BiometricDataCollector {
         return Math.PI * radiusX * radiusY;
     }
 
-    // NEW: Calculate touch velocity
-    calculateTouchVelocity(touch, timestamp) {
-        const history = this.touchHistory;
-        if (history.length === 0) {
-            this.updateTouchHistory(touch, timestamp);
-            return { x: 0, y: 0, magnitude: 0 };
-        }
-
-        const lastTouch = history[history.length - 1];
-        const deltaX = touch.clientX - lastTouch.x;
-        const deltaY = touch.clientY - lastTouch.y;
-        const deltaTime = timestamp - lastTouch.timestamp;
-
-        if (deltaTime === 0) {
-            return { x: 0, y: 0, magnitude: 0 };
-        }
-
-        const velocityX = deltaX / deltaTime;
-        const velocityY = deltaY / deltaTime;
-        const magnitude = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-
-        return { x: velocityX, y: velocityY, magnitude: magnitude };
-    }
-
-    // NEW: Calculate touch acceleration
-    calculateTouchAcceleration(velocity, timestamp) {
-        const history = this.velocityHistory;
-        if (history.length === 0) {
-            this.velocityHistory.push({ velocity, timestamp });
-            return { x: 0, y: 0, magnitude: 0 };
-        }
-
-        const lastVelocity = history[history.length - 1];
-        const deltaVX = velocity.x - lastVelocity.velocity.x;
-        const deltaVY = velocity.y - lastVelocity.velocity.y;
-        const deltaTime = timestamp - lastVelocity.timestamp;
-
-        if (deltaTime === 0) {
-            return { x: 0, y: 0, magnitude: 0 };
-        }
-
-        const accelerationX = deltaVX / deltaTime;
-        const accelerationY = deltaVY / deltaTime;
-        const magnitude = Math.sqrt(accelerationX * accelerationX + accelerationY * accelerationY);
-
-        // Keep velocity history manageable
-        this.velocityHistory.push({ velocity, timestamp });
-        if (this.velocityHistory.length > 10) {
-            this.velocityHistory.shift();
-        }
-
-        return { x: accelerationX, y: accelerationY, magnitude: magnitude };
-    }
-
-    // NEW: Update touch history for analytics
-    updateTouchHistory(touch, timestamp) {
-        this.touchHistory.push({
-            x: touch.clientX,
-            y: touch.clientY,
-            timestamp: timestamp
-        });
-
-        // Keep history manageable
-        if (this.touchHistory.length > 10) {
-            this.touchHistory.shift();
-        }
-    }
-
     processCrystalInteraction(phase, touches) {
         const step = this.crystalSteps[this.currentCrystalStep - 1];
         const crystal = document.getElementById('crystal');
@@ -1072,56 +1004,68 @@ class BiometricDataCollector {
     initializeGallery() {
         const grid = document.getElementById('gallery-grid');
         grid.innerHTML = '';
+    
         this.galleryImages.forEach((url, index) => {
             const imageContainer = document.createElement('div');
             imageContainer.className = 'gallery-item';
+    
             const img = document.createElement('img');
             img.src = url;
             img.alt = `Gallery image ${index + 1}`;
             img.loading = 'lazy';
+    
             imageContainer.appendChild(img);
             imageContainer.addEventListener('click', () => this.openImagePopup(index));
+    
             grid.appendChild(imageContainer);
         });
     }
-
+    
+    // 2. Bind touch events when popup is active
     bindGalleryEvents() {
         this.galleryTouchStart = { x: 0, y: 0 };
+    
         document.addEventListener('touchstart', e => {
             if (document.querySelector('.image-popup.active')) {
                 this.handleGalleryTouchStart(e);
             }
         }, { passive: false });
-
+    
         document.addEventListener('touchmove', e => {
             if (document.querySelector('.image-popup.active')) {
                 this.handleGalleryTouchMove(e);
             }
         }, { passive: false });
-
+    
         document.addEventListener('touchend', e => {
             if (document.querySelector('.image-popup.active')) {
                 this.handleGalleryTouchEnd(e);
             }
         });
     }
-
+    
+    // 3. On touch start: detect pan vs pinch vs swipe start
     handleGalleryTouchStart(e) {
         const ts = performance.now();
+    
         if (e.touches.length === 1) {
+            // record swipe start
             this.galleryTouchStart.x = e.touches[0].clientX;
             this.galleryTouchStart.y = e.touches[0].clientY;
+    
+            // if already zoomed, begin panning
             if (this.galleryZoom.scale > 1) {
                 this.galleryZoom.isPanning = true;
                 this.galleryZoom.startX = e.touches[0].clientX - this.galleryZoom.translateX;
                 this.galleryZoom.startY = e.touches[0].clientY - this.galleryZoom.translateY;
             }
         } else if (e.touches.length === 2) {
+            // begin pinch zoom
             this.galleryZoom.isPinching = true;
             this.galleryZoom.initialDistance = this.getDistance(e.touches[0], e.touches[1]);
             e.preventDefault();
         }
-
+    
         this.recordTouchEvent({
             timestamp: ts,
             type: 'touchstart',
@@ -1129,37 +1073,35 @@ class BiometricDataCollector {
                 identifier: t.identifier,
                 clientX: t.clientX,
                 clientY: t.clientY,
-                force: t.force || 0.5,
-                radiusX: t.radiusX || 1,
-                radiusY: t.radiusY || 1,
-                rotationAngle: t.rotationAngle || 0,
-                touchArea: this.calculateTouchArea(t),
-                velocity: { x: 0, y: 0, magnitude: 0 },
-                acceleration: { x: 0, y: 0, magnitude: 0 }
+                force: t.force || 0.5
             })),
             step: this.currentGalleryImage + 1,
             taskId: 3
         });
     }
-
+    
+    // 4. On touch move: perform pinch or pan
     handleGalleryTouchMove(e) {
         e.preventDefault();
         const ts = performance.now();
-
+    
         if (e.touches.length === 2 && this.galleryZoom.isPinching) {
+            // pinch-to-zoom
             const dist = this.getDistance(e.touches[0], e.touches[1]);
             const change = dist / this.galleryZoom.initialDistance;
             this.galleryZoom.scale = Math.max(0.5, Math.min(3.0, this.galleryZoom.scale * change));
             this.galleryZoom.initialDistance = dist;
             this.updateImageTransform();
             this.updateZoomLevel();
-        } else if (e.touches.length === 1 && this.galleryZoom.isPanning) {
+        }
+        else if (e.touches.length === 1 && this.galleryZoom.isPanning) {
+            // single-finger pan
             const t = e.touches[0];
             this.galleryZoom.translateX = t.clientX - this.galleryZoom.startX;
             this.galleryZoom.translateY = t.clientY - this.galleryZoom.startY;
             this.updateImageTransform();
         }
-
+    
         this.recordTouchEvent({
             timestamp: ts,
             type: 'touchmove',
@@ -1167,37 +1109,36 @@ class BiometricDataCollector {
                 identifier: t.identifier,
                 clientX: t.clientX,
                 clientY: t.clientY,
-                force: t.force || 0.5,
-                radiusX: t.radiusX || 1,
-                radiusY: t.radiusY || 1,
-                rotationAngle: t.rotationAngle || 0,
-                touchArea: this.calculateTouchArea(t),
-                velocity: this.calculateTouchVelocity(t, ts),
-                acceleration: this.calculateTouchAcceleration(this.calculateTouchVelocity(t, ts), ts)
+                force: t.force || 0.5
             })),
             step: this.currentGalleryImage + 1,
             taskId: 3
         });
     }
-
+    
+    // 5. On touch end: finish pinch/pan and handle swipe if not zoomed
     handleGalleryTouchEnd(e) {
         const ts = performance.now();
-
-        if (!this.galleryZoom.isPinching && !this.galleryZoom.isPanning && e.changedTouches.length === 1 && this.galleryZoom.scale <= 1.1) {
+    
+        // swipe to change image only when scale ≈ 1
+        if (!this.galleryZoom.isPinching && !this.galleryZoom.isPanning
+            && e.changedTouches.length === 1 && this.galleryZoom.scale <= 1.1) {
             const endX = e.changedTouches[0].clientX;
             const dx = this.galleryTouchStart.x - endX;
             if (Math.abs(dx) > 50) {
                 dx > 0 ? this.nextGalleryImage() : this.prevGalleryImage();
             }
         }
-
+    
+        // end pinch
         if (e.touches.length < 2) {
             this.galleryZoom.isPinching = false;
         }
+        // end pan
         if (e.touches.length === 0) {
             this.galleryZoom.isPanning = false;
         }
-
+    
         this.recordTouchEvent({
             timestamp: ts,
             type: 'touchend',
@@ -1205,140 +1146,229 @@ class BiometricDataCollector {
                 identifier: t.identifier,
                 clientX: t.clientX,
                 clientY: t.clientY,
-                force: t.force || 0.5,
-                radiusX: t.radiusX || 1,
-                radiusY: t.radiusY || 1,
-                rotationAngle: t.rotationAngle || 0,
-                touchArea: this.calculateTouchArea(t),
-                velocity: { x: 0, y: 0, magnitude: 0 },
-                acceleration: { x: 0, y: 0, magnitude: 0 }
+                force: t.force || 0.5
             })),
             step: this.currentGalleryImage + 1,
             taskId: 3
         });
     }
-
+    
+    // 6. Open popup and attach double-tap listener once
     openImagePopup(index) {
         this.currentGalleryImage = index;
         this.resetZoom();
+    
         if (!document.querySelector('.image-popup')) {
             this.createImagePopup();
         }
+    
         this.updatePopupImage();
         const popup = document.querySelector('.image-popup');
         popup.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
-
+    
+    // 7. Build popup DOM and set up controls
     createImagePopup() {
         const popup = document.createElement('div');
         popup.className = 'image-popup';
         popup.innerHTML = `
-            <div class="popup-header">
-                <span class="image-counter"></span>
-                <button class="close-popup">&times;</button>
-            </div>
+            <div class="popup-overlay"></div>
             <div class="popup-content">
-                <button class="nav-btn prev-btn">‹</button>
-                <div class="image-container">
-                    <img class="popup-image" src="" alt="">
-                </div>
-                <button class="nav-btn next-btn">›</button>
-            </div>
-            <div class="popup-footer">
-                <div class="zoom-controls">
-                    <button class="zoom-btn zoom-out">-</button>
-                    <span class="zoom-level">100%</span>
-                    <button class="zoom-btn zoom-in">+</button>
-                </div>
-            </div>
-        `;
+              <button class="close-popup">&times;</button>
+              <div class="popup-image-container"><img class="popup-image" src="" alt=""></div>
+              <div class="popup-counter"></div>
+              <div class="popup-nav">
+                <button class="popup-prev">❮</button>
+                <button class="popup-next">❯</button>
+              </div>
+              <div class="zoom-controls">
+                <button class="zoom-out">−</button>
+                <span class="zoom-level">100%</span>
+                <button class="zoom-in">+</button>
+                <button class="zoom-reset">Reset</button>
+              </div>
+            </div>`;
         document.body.appendChild(popup);
-
-        popup.querySelector('.close-popup').addEventListener('click', () => this.closeImagePopup());
-        popup.querySelector('.prev-btn').addEventListener('click', () => this.prevGalleryImage());
-        popup.querySelector('.next-btn').addEventListener('click', () => this.nextGalleryImage());
-        popup.querySelector('.zoom-out').addEventListener('click', () => this.zoomOut());
-        popup.querySelector('.zoom-in').addEventListener('click', () => this.zoomIn());
-
-        let lastTap = 0;
-        popup.querySelector('.image-container').addEventListener('touchend', (e) => {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTap;
-            if (tapLength < 500 && tapLength > 0) {
-                this.toggleZoom();
-            }
-            lastTap = currentTime;
+    
+        // close & nav
+        popup.querySelector('.close-popup').onclick = () => this.closeImagePopup();
+        popup.querySelector('.popup-overlay').onclick = () => this.closeImagePopup();
+        popup.querySelector('.popup-prev').onclick = () => this.prevGalleryImage();
+        popup.querySelector('.popup-next').onclick = () => this.nextGalleryImage();
+    
+        // zoom controls
+        popup.querySelector('.zoom-in').onclick = () => this.zoomIn();
+        popup.querySelector('.zoom-out').onclick = () => this.zoomOut();
+        popup.querySelector('.zoom-reset').onclick = () => this.resetZoom();
+    
+        // container events
+        const ctr = popup.querySelector('.popup-image-container');
+    
+        ctr.addEventListener('wheel', e => {
+            e.preventDefault();
+            e.deltaY < 0 ? this.zoomIn() : this.zoomOut();
         });
+    
+        // mouse pan
+        let mousePanning = false;
+        ctr.onmousedown = e => {
+            if (this.galleryZoom.scale > 1) {
+                mousePanning = true;
+                this.galleryZoom.startX = e.clientX - this.galleryZoom.translateX;
+                this.galleryZoom.startY = e.clientY - this.galleryZoom.translateY;
+                ctr.style.cursor = 'grabbing';
+            }
+        };
+        document.onmousemove = e => {
+            if (mousePanning) {
+                this.galleryZoom.translateX = e.clientX - this.galleryZoom.startX;
+                this.galleryZoom.translateY = e.clientY - this.galleryZoom.startY;
+                this.updateImageTransform();
+            }
+        };
+        document.onmouseup = () => {
+            if (mousePanning) {
+                mousePanning = false;
+                ctr.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
+            }
+        };
+    
+        // touch pan & double-tap
+        let touchPanning = false;
+        ctr.addEventListener('touchstart', e => {
+            if (e.touches.length === 1 && this.galleryZoom.scale > 1) {
+                touchPanning = true;
+                this.galleryZoom.startX = e.touches[0].clientX - this.galleryZoom.translateX;
+                this.galleryZoom.startY = e.touches[0].clientY - this.galleryZoom.translateY;
+                ctr.style.cursor = 'grabbing';
+                e.preventDefault();
+            }
+        }, { passive: false });
+    
+        ctr.addEventListener('touchmove', e => {
+            if (touchPanning) {
+                this.galleryZoom.translateX = e.touches[0].clientX - this.galleryZoom.startX;
+                this.galleryZoom.translateY = e.touches[0].clientY - this.galleryZoom.startY;
+                this.updateImageTransform();
+                e.preventDefault();
+            }
+        }, { passive: false });
+    
+        ctr.addEventListener('touchend', e => {
+            if (touchPanning) {
+                touchPanning = false;
+                ctr.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
+            }
+            // double-tap
+            const now = Date.now();
+            const dt = now - this.galleryZoom.lastTapTime;
+            if (dt > 0 && dt < 300) {
+                if (this.galleryZoom.scale > 1.1) {
+                    this.resetZoom();
+                } else {
+                    this.galleryZoom.scale = 2.0;
+                    this.galleryZoom.translateX = 0;
+                    this.galleryZoom.translateY = 0;
+                    this.updateImageTransform();
+                    this.updateZoomLevel();
+                }
+            }
+            this.galleryZoom.lastTapTime = now;
+        });
+    
+        // keyboard
+        document.onkeydown = e => {
+            if (!popup.classList.contains('active')) return;
+            switch (e.key) {
+                case 'Escape': this.closeImagePopup(); break;
+                case 'ArrowLeft': this.prevGalleryImage(); break;
+                case 'ArrowRight': this.nextGalleryImage(); break;
+                case '+': case '=': this.zoomIn(); break;
+                case '-': this.zoomOut(); break;
+                case '0': this.resetZoom(); break;
+            }
+        };
     }
-
-    updatePopupImage() {
-        const popup = document.querySelector('.image-popup');
-        if (popup) {
-            popup.querySelector('.popup-image').src = this.galleryImages[this.currentGalleryImage];
-            popup.querySelector('.image-counter').textContent = `${this.currentGalleryImage + 1} / ${this.galleryImages.length}`;
+    
+    // 8. Zoom methods
+    zoomIn() {
+        this.galleryZoom.scale = Math.min(this.galleryZoom.scale * 1.2, 3.0);
+        this.updateImageTransform();
+        this.updateZoomLevel();
+    }
+    
+    zoomOut() {
+        this.galleryZoom.scale = Math.max(this.galleryZoom.scale / 1.2, 0.5);
+        if (this.galleryZoom.scale <= 1) {
+            this.galleryZoom.translateX = 0;
+            this.galleryZoom.translateY = 0;
         }
+        this.updateImageTransform();
+        this.updateZoomLevel();
     }
-
-    nextGalleryImage() {
-        this.currentGalleryImage = (this.currentGalleryImage + 1) % this.galleryImages.length;
-        this.updatePopupImage();
-        this.resetZoom();
-    }
-
-    prevGalleryImage() {
-        this.currentGalleryImage = (this.currentGalleryImage - 1 + this.galleryImages.length) % this.galleryImages.length;
-        this.updatePopupImage();
-        this.resetZoom();
-    }
-
-    closeImagePopup() {
-        const popup = document.querySelector('.image-popup');
-        if (popup) {
-            popup.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-    }
-
+    
     resetZoom() {
         this.galleryZoom.scale = 1;
         this.galleryZoom.translateX = 0;
         this.galleryZoom.translateY = 0;
+        this.galleryZoom.isPinching = false;
+        this.galleryZoom.isPanning = false;
         this.updateImageTransform();
         this.updateZoomLevel();
     }
-
-    zoomIn() {
-        this.galleryZoom.scale = Math.min(3, this.galleryZoom.scale * 1.2);
-        this.updateImageTransform();
-        this.updateZoomLevel();
-    }
-
-    zoomOut() {
-        this.galleryZoom.scale = Math.max(0.5, this.galleryZoom.scale / 1.2);
-        this.updateImageTransform();
-        this.updateZoomLevel();
-    }
-
-    toggleZoom() {
-        this.galleryZoom.scale = this.galleryZoom.scale > 1 ? 1 : 2;
-        this.galleryZoom.translateX = 0;
-        this.galleryZoom.translateY = 0;
-        this.updateImageTransform();
-        this.updateZoomLevel();
-    }
-
+    
+    // 9. Apply translate then scale
     updateImageTransform() {
         const img = document.querySelector('.popup-image');
-        if (img) {
-            img.style.transform = `scale(${this.galleryZoom.scale}) translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px)`;
+        const ctr = document.querySelector('.popup-image-container');
+        if (!img) return;
+        img.style.transform = 
+            `translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px) ` +
+            `scale(${this.galleryZoom.scale})`;
+        ctr.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
+    }
+    
+    // 10. Update zoom percentage display
+    updateZoomLevel() {
+        const span = document.querySelector('.zoom-level');
+        if (span) span.textContent = `${Math.round(this.galleryZoom.scale * 100)}%`;
+    }
+    
+    // 11. Refresh popup image & counter
+    updatePopupImage() {
+        const pop = document.querySelector('.image-popup');
+        if (!pop) return;
+        pop.querySelector('.popup-image').src = this.galleryImages[this.currentGalleryImage];
+        pop.querySelector('.popup-counter').textContent =
+            `${this.currentGalleryImage + 1} of ${this.galleryImages.length}`;
+        this.updateZoomLevel();
+    }
+    
+    // 12. Navigate images
+    nextGalleryImage() {
+        if (this.currentGalleryImage < this.galleryImages.length - 1) {
+            this.currentGalleryImage++;
+            this.resetZoom();
+            this.updatePopupImage();
         }
     }
-
-    updateZoomLevel() {
-        const zoomLevel = document.querySelector('.zoom-level');
-        if (zoomLevel) {
-            zoomLevel.textContent = `${Math.round(this.galleryZoom.scale * 100)}%`;
+    
+    prevGalleryImage() {
+        if (this.currentGalleryImage > 0) {
+            this.currentGalleryImage--;
+            this.resetZoom();
+            this.updatePopupImage();
+        }
+    }
+    
+    // 13. Close popup
+    closeImagePopup() {
+        const pop = document.querySelector('.image-popup');
+        if (pop) {
+            pop.classList.remove('active');
+            document.body.style.overflow = '';
+            this.resetZoom();
         }
     }
     
@@ -1438,6 +1468,46 @@ class BiometricDataCollector {
         return features;
     }
     
+    calculateVelocity(touch, index) {
+        if (index === 0 || !this.touchData[index - 1]) return 0;
+        
+        const prev = this.touchData[index - 1];
+        const dt = touch.timestamp - prev.timestamp;
+        
+        if (dt === 0 || !touch.touches[0] || !prev.touches[0]) return 0;
+        
+        const dx = touch.touches[0].clientX - prev.touches[0].clientX;
+        const dy = touch.touches[0].clientY - prev.touches[0].clientY;
+        
+        return Math.sqrt(dx * dx + dy * dy) / dt;
+    }
+    
+    calculateAcceleration(touch, index) {
+        if (index < 2) return 0;
+        
+        const curr = this.calculateVelocity(touch, index);
+        const prev = this.calculateVelocity(this.touchData[index - 1], index - 1);
+        const dt = touch.timestamp - this.touchData[index - 1].timestamp;
+        
+        return dt > 0 ? (curr - prev) / dt : 0;
+    }
+    
+    calculateTouchArea(touches) {
+        if (touches.length === 1) return 1;
+        
+        let minX = touches[0].clientX, maxX = touches[0].clientX;
+        let minY = touches[0].clientY, maxY = touches[0].clientY;
+        
+        touches.forEach(touch => {
+            minX = Math.min(minX, touch.clientX);
+            maxX = Math.max(maxX, touch.clientX);
+            minY = Math.min(minY, touch.clientY);
+            maxY = Math.max(maxY, touch.clientY);
+        });
+        
+        return (maxX - minX) * (maxY - minY);
+    }
+    
     convertToCSV(data) {
         if (data.length === 0) return 'No data available';
         
@@ -1479,6 +1549,8 @@ class BiometricDataCollector {
 
 
 }
+
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     new BiometricDataCollector();
