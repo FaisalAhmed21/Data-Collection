@@ -21,8 +21,9 @@ class BiometricDataCollector {
         this.compositionActive = false;
         this.lastInputLength = 0;
 
-        // Track previous-char case
+        // Track previous-char case for SHIFT insertion
         this.lastCharWasUppercase = false;
+        this.lastInputValue = '';
 
         // Enhanced gallery zoom state with pinch support
         this.galleryZoom = {
@@ -45,7 +46,7 @@ class BiometricDataCollector {
             "Tesla's Model S hit 0-60 mph in 2.1 seconds - breaking the previous record!"
         ];
 
-        // Crystal game definition - UPDATED step 2 for alternating rotation
+        // Crystal game definition
         this.crystalSteps = [
             { id: 1, instruction: "Tap the crystal exactly 3 times with your index finger", target: 3, type: 'tap' },
             { id: 2, instruction: "Rotate your finger on the crystal surface three full 360° turns, alternating direction each time (e.g., clockwise → counter-clockwise → clockwise)", target: 3, type: 'altRotate' },
@@ -54,7 +55,7 @@ class BiometricDataCollector {
             { id: 5, instruction: "Apply pressure with 3 fingers simultaneously for 3 seconds", target: 3000, type: 'pressure' }
         ];
 
-        // Crystal runtime state - UPDATED for alternating rotation
+        // Crystal runtime state
         this.crystalState = {
             tapCount: 0,
             rotationTime: 0,
@@ -66,12 +67,12 @@ class BiometricDataCollector {
             pressureStart: null,
             pressureFingers: 0,
             initialDistance: 0,
-            // Rotation tracking - enhanced for alternating rotation
+            // Rotation tracking for alternating rotation
             initialAngle: null,
             totalRotation: 0,
             rotationsCompleted: 0,
-            expectedDirection: null,  // +1 for CW, -1 for CCW
-            currentRotation: 0        // accumulated angle for current turn
+            expectedDirection: null,
+            currentRotation: 0
         };
 
         // Gallery images
@@ -159,7 +160,7 @@ class BiometricDataCollector {
             this.startTypingTask();
         });
 
-        // Typing task - UPDATED for enhanced keystroke handling
+        // UPDATED: Enhanced typing task event handling
         const typingInput = document.getElementById('typing-input');
 
         // Composition events for mobile IME handling
@@ -174,25 +175,20 @@ class BiometricDataCollector {
         typingInput.addEventListener('compositionend', e => {
             this.compositionActive = false;
             if (e.data) {
-                this.recordKeystroke({
-                    timestamp: performance.now(),
-                    actualChar: e.data,
-                    keyCode: e.data.charCodeAt(0),
-                    type: 'compositionend',
-                    sentence: this.currentSentence,
-                    position: e.target.selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
+                // Process composition data character by character
+                for (let i = 0; i < e.data.length; i++) {
+                    const char = e.data[i];
+                    this.handleCharacterInput(char, 'compositionend', performance.now() + i);
+                }
             }
         });
 
-        // UPDATED: Enhanced input event handling with SHIFT insertion and iOS deduplication
+        // UPDATED: Enhanced input event handling
         typingInput.addEventListener('input', e => this.handleTypingInput(e));
 
-        // Keydown for special keys only
+        // UPDATED: Enhanced keydown handling for proper iOS support
         typingInput.addEventListener('keydown', e => {
-            if (this.compositionActive || e.keyCode === 229) return;
+            if (this.compositionActive) return;
             this.handleKeydown(e);
         });
 
@@ -244,122 +240,130 @@ class BiometricDataCollector {
         }
     }
 
-    // UPDATED: Enhanced input handling with SHIFT insertion and deduplication
+    // UPDATED: Enhanced input handling with better iOS support and complete character capture
     handleTypingInput(e) {
         const { inputType, data } = e;
         const inputEl = e.target;
-        const value = inputEl.value;
-        const pos = inputEl.selectionStart || value.length;
+        const currentValue = inputEl.value;
         const ts = performance.now();
 
-        // Ignore deletion events; backspace handled via keydown
-        if (inputType && inputType.startsWith('delete')) return;
-
-        // Handle printable characters arriving via insertText
-        if (inputType === 'insertText' && data) {
-            for (let i = 0; i < data.length; i++) {
-                const char = data[i];
-                const isUpper = char === char.toUpperCase() && char.match(/[A-Z]/);
-
-                // SHIFT insertion when case changes
-                if (isUpper && !this.lastCharWasUppercase) {
-                    this.recordKeystroke({
-                        timestamp: ts + i - 0.5,
-                        actualChar: 'SHIFT',
-                        keyCode: 16,
-                        type: 'input',
-                        sentence: this.currentSentence,
-                        position: pos - data.length + i,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
-                } else if (!isUpper && this.lastCharWasUppercase) {
-                    this.recordKeystroke({
-                        timestamp: ts + i - 0.5,
-                        actualChar: 'SHIFT',
-                        keyCode: 16,
-                        type: 'input',
-                        sentence: this.currentSentence,
-                        position: pos - data.length + i,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
-                }
-
-                // Record actual character
-                if (char === ' ') {
-                    this.recordKeystroke({
-                        timestamp: ts + i,
-                        actualChar: 'SPACE',
-                        keyCode: 32,
-                        type: inputType,
-                        sentence: this.currentSentence,
-                        position: pos - data.length + i,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
-                } else {
-                    this.recordKeystroke({
-                        timestamp: ts + i,
-                        actualChar: char,
-                        keyCode: char.charCodeAt(0),
-                        type: inputType,
-                        sentence: this.currentSentence,
-                        position: pos - data.length + i,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
-                }
-
-                // Update case memory
-                this.lastCharWasUppercase = isUpper;
-            }
-
-            // Prevent subsequent duplicate keydown
-            this.skipNextKeydown = true;
-            this.lastRecordedCharTime = performance.now();
-        }
-        // Catch-all for other input types
-        else if (inputType && data) {
-            let refChar = data === ' ' ? 'SPACE' : data;
+        // Handle deletions
+        if (inputType && inputType.includes('delete')) {
             this.recordKeystroke({
                 timestamp: ts,
-                actualChar: refChar,
-                keyCode: data.charCodeAt(0),
+                actualChar: 'BACKSPACE',
+                keyCode: 8,
                 type: inputType,
                 sentence: this.currentSentence,
-                position: pos - 1,
+                position: inputEl.selectionStart || 0,
                 clientX: this.pointerTracking.x,
                 clientY: this.pointerTracking.y
             });
-            this.lastCharWasUppercase = refChar.length === 1 && refChar === refChar.toUpperCase() && refChar.match(/[A-Z]/);
+            this.lastInputValue = currentValue;
+            this.calculateAccuracy();
+            this.checkSentenceCompletion();
+            return;
         }
 
-        this.lastInputLength = value.length;
+        // Handle insertText and other character inputs
+        if (inputType === 'insertText' && data) {
+            // Process each character in the data
+            for (let i = 0; i < data.length; i++) {
+                const char = data[i];
+                this.handleCharacterInput(char, inputType, ts + i);
+            }
+        } else if (inputType === 'insertCompositionText' && data) {
+            // Handle composition text
+            for (let i = 0; i < data.length; i++) {
+                const char = data[i];
+                this.handleCharacterInput(char, inputType, ts + i);
+            }
+        } else if (currentValue.length > this.lastInputValue.length) {
+            // Fallback: detect new characters by comparing input values
+            const newChars = currentValue.slice(this.lastInputValue.length);
+            for (let i = 0; i < newChars.length; i++) {
+                const char = newChars[i];
+                this.handleCharacterInput(char, 'input', ts + i);
+            }
+        }
+
+        this.lastInputValue = currentValue;
         this.calculateAccuracy();
         this.checkSentenceCompletion();
     }
 
-    // UPDATED: Enhanced keydown to avoid iOS duplicates and handle all symbols
+    // UPDATED: Enhanced character input handler with proper SHIFT insertion
+    handleCharacterInput(char, inputType, timestamp) {
+        const isUpper = char.match(/[A-Z]/);
+        const isLower = char.match(/[a-z]/);
+        const isLetter = isUpper || isLower;
+
+        // Insert SHIFT when case changes
+        if (isLetter) {
+            const currentIsUpper = isUpper;
+            if (currentIsUpper !== this.lastCharWasUppercase) {
+                this.recordKeystroke({
+                    timestamp: timestamp - 0.5,
+                    actualChar: 'SHIFT',
+                    keyCode: 16,
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: document.getElementById('typing-input').selectionStart || 0,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+            }
+            this.lastCharWasUppercase = currentIsUpper;
+        }
+
+        // Record the actual character
+        let actualChar = char;
+        let keyCode = char.charCodeAt(0);
+
+        if (char === ' ') {
+            actualChar = 'SPACE';
+            keyCode = 32;
+        }
+
+        this.recordKeystroke({
+            timestamp: timestamp,
+            actualChar: actualChar,
+            keyCode: keyCode,
+            type: inputType,
+            sentence: this.currentSentence,
+            position: document.getElementById('typing-input').selectionStart || 0,
+            clientX: this.pointerTracking.x,
+            clientY: this.pointerTracking.y
+        });
+
+        // Prevent duplicate keydown events
+        this.skipNextKeydown = true;
+        this.lastRecordedCharTime = timestamp;
+    }
+
+    // UPDATED: Enhanced keydown handling for better iOS support
     handleKeydown(e) {
         const now = performance.now();
 
-        // Skip duplicate triggered within 100ms of input event
-        if (this.skipNextKeydown && now - this.lastRecordedCharTime < 100) {
+        // Skip if we just processed an input event
+        if (this.skipNextKeydown && now - this.lastRecordedCharTime < 50) {
             this.skipNextKeydown = false;
             return;
         }
 
         // Block navigation keys
         const restricted = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
-        if (restricted.includes(e.key)) { e.preventDefault(); return; }
-        if (e.ctrlKey && ['v','x','c'].includes(e.key.toLowerCase())) { e.preventDefault(); return; }
+        if (restricted.includes(e.key)) { 
+            e.preventDefault(); 
+            return; 
+        }
+        if (e.ctrlKey && ['v','x','c'].includes(e.key.toLowerCase())) { 
+            e.preventDefault(); 
+            return; 
+        }
 
-        // Determine actual char
-        const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
-
-        // Record BACKSPACE only once
-        if (actualCharacter === 'BACKSPACE' || actualCharacter === 'backspace') {
+        // Handle backspace specifically
+        if (e.key === 'Backspace' || e.keyCode === 8) {
             this.recordKeystroke({
                 timestamp: now,
                 actualChar: 'BACKSPACE',
@@ -373,14 +377,35 @@ class BiometricDataCollector {
             return;
         }
 
-        // Printable keys already captured in input event - skip to avoid duplicates
-        if (actualCharacter && actualCharacter.length === 1) return;
-
-        // Record other special keys
-        if (actualCharacter) {
+        // Handle Enter key
+        if (e.key === 'Enter' || e.keyCode === 13) {
             this.recordKeystroke({
                 timestamp: now,
-                actualChar: actualCharacter,
+                actualChar: 'ENTER',
+                keyCode: 13,
+                type: 'keydown',
+                sentence: this.currentSentence,
+                position: e.target.selectionStart || 0,
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y
+            });
+            return;
+        }
+
+        // Handle other special keys
+        const specialKeys = {
+            'Tab': 'TAB',
+            'Escape': 'ESCAPE',
+            'Shift': 'SHIFT',
+            'Control': 'CTRL',
+            'Alt': 'ALT',
+            'Meta': 'META'
+        };
+
+        if (specialKeys[e.key]) {
+            this.recordKeystroke({
+                timestamp: now,
+                actualChar: specialKeys[e.key],
                 keyCode: e.keyCode,
                 type: 'keydown',
                 sentence: this.currentSentence,
@@ -388,38 +413,18 @@ class BiometricDataCollector {
                 clientX: this.pointerTracking.x,
                 clientY: this.pointerTracking.y
             });
-        }
-    }
-
-    // UPDATED: Enhanced character resolver to map quotes and every symbol
-    getActualTypedCharacter(e, inputValue = '') {
-        if (e.keyCode === 229 || e.key === 'Unidentified' || e.key === 'Process') {
-            if (inputValue.length > this.lastInputLength) return inputValue.slice(-1);
-            return null;
+            return;
         }
 
-        const special = {
-            'Backspace':'BACKSPACE','Enter':'enter','Tab':'tab',' ':'SPACE',
-            'Escape':'escape','ArrowLeft':'arrowleft','ArrowRight':'arrowright',
-            'ArrowUp':'arrowup','ArrowDown':'arrowdown','Delete':'delete',
-            'Home':'home','End':'end','Shift':'SHIFT'
-        };
-        if (e.key && special.hasOwnProperty(e.key)) return special[e.key];
-
-        // Printable character including quotes and symbols
-        if (e.key && e.key.length === 1) return e.key;
-
-        // Fallback
-        if (e.keyCode && !isNaN(e.keyCode)) {
-            const ch = String.fromCharCode(e.keyCode);
-            if (ch && /\S/.test(ch)) return ch;
+        // Skip printable characters as they're handled by input event
+        if (e.key && e.key.length === 1) {
+            return;
         }
-        return null;
     }
 
     startTypingTask() {
         this.currentSentence = 0;
-        this.lastInputLength = 0;
+        this.lastInputValue = '';
         this.lastCharWasUppercase = false;
         this.displayCurrentSentence();
         this.updateTypingProgress();
@@ -433,7 +438,7 @@ class BiometricDataCollector {
         document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
         this.calculateAccuracy();
         document.getElementById('next-sentence-btn').disabled = true;
-        this.lastInputLength = 0;
+        this.lastInputValue = '';
         this.lastCharWasUppercase = false;
     }
 
@@ -497,6 +502,7 @@ class BiometricDataCollector {
         this.updateCrystalDisplay();
     }
 
+    // UPDATED: Enhanced crystal event binding with proper touch area detection
     bindCrystalEvents() {
         const crystalArea = document.getElementById('crystal-area');
         crystalArea.addEventListener('touchstart', (e) => this.handleCrystalTouchStart(e));
@@ -508,10 +514,17 @@ class BiometricDataCollector {
         crystalArea.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
+    // UPDATED: Enhanced crystal touch detection - only within crystal bounds
     handleCrystalTouchStart(e) {
         e.preventDefault();
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
+        
+        // Check if touch is within crystal bounds
+        if (!this.isTouchWithinCrystal(touches[0])) {
+            return;
+        }
+
         this.recordTouchEvent({
             timestamp,
             type: 'touchstart',
@@ -531,6 +544,12 @@ class BiometricDataCollector {
         e.preventDefault();
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
+        
+        // Check if touch is within crystal bounds
+        if (!this.isTouchWithinCrystal(touches[0])) {
+            return;
+        }
+
         this.recordTouchEvent({
             timestamp,
             type: 'touchmove',
@@ -566,6 +585,11 @@ class BiometricDataCollector {
     }
 
     handleCrystalMouseDown(e) {
+        // Check if click is within crystal bounds
+        if (!this.isTouchWithinCrystal(e)) {
+            return;
+        }
+
         const timestamp = performance.now();
         this.recordTouchEvent({
             timestamp,
@@ -579,6 +603,11 @@ class BiometricDataCollector {
 
     handleCrystalMouseMove(e) {
         if (e.buttons === 1) {
+            // Check if mouse is within crystal bounds
+            if (!this.isTouchWithinCrystal(e)) {
+                return;
+            }
+
             const timestamp = performance.now();
             this.recordTouchEvent({
                 timestamp,
@@ -603,7 +632,18 @@ class BiometricDataCollector {
         this.processCrystalInteraction('end', [{ clientX: e.clientX, clientY: e.clientY }]);
     }
 
-    // UPDATED: Enhanced crystal interaction with alternating rotation
+    // NEW: Check if touch/click is within crystal bounds
+    isTouchWithinCrystal(touch) {
+        const crystal = document.getElementById('crystal');
+        if (!crystal) return false;
+        
+        const rect = crystal.getBoundingClientRect();
+        const x = touch.clientX;
+        const y = touch.clientY;
+        
+        return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    }
+
     processCrystalInteraction(phase, touches) {
         const step = this.crystalSteps[this.currentCrystalStep - 1];
         const crystal = document.getElementById('crystal');
@@ -625,11 +665,9 @@ class BiometricDataCollector {
                 }
                 break;
 
-            // NEW: Alternating rotation implementation
             case 'altRotate': {
                 if (touches.length !== 1) return;
 
-                // Calculate finger angle relative to crystal center
                 const rect = crystal.getBoundingClientRect();
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
@@ -640,50 +678,43 @@ class BiometricDataCollector {
                     this.crystalState.initialAngle = angle;
                     this.crystalState.currentRotation = 0;
                     this.crystalState.rotationsCompleted = 0;
-                    this.crystalState.expectedDirection = null; // Will be set on first move
+                    this.crystalState.expectedDirection = null;
                     crystal.classList.add('active');
                     this.updateStepProgress('0/3');
                 }
                 else if (phase === 'move') {
                     if (typeof this.crystalState.initialAngle !== 'number') return;
 
-                    // Calculate rotation delta
                     let delta = angle - this.crystalState.initialAngle;
                     if (delta > Math.PI) delta -= 2 * Math.PI;
                     if (delta < -Math.PI) delta += 2 * Math.PI;
                     this.crystalState.currentRotation += delta;
 
-                    // Determine rotation direction
                     const direction = Math.sign(delta);
                     if (direction !== 0 && this.crystalState.expectedDirection === null) {
-                        this.crystalState.expectedDirection = direction; // Set initial direction
+                        this.crystalState.expectedDirection = direction;
                     }
 
-                    // Calculate required direction for current turn
                     const requiredDirection = (this.crystalState.rotationsCompleted % 2 === 0)
                         ? this.crystalState.expectedDirection
                         : -this.crystalState.expectedDirection;
 
-                    // Reset if going wrong direction
                     if (direction !== 0 && direction !== requiredDirection) {
                         this.crystalState.currentRotation = 0;
                         this.crystalState.initialAngle = angle;
                         return;
                     }
 
-                    // Check if full 360° rotation completed
                     if (Math.abs(this.crystalState.currentRotation) >= 2 * Math.PI) {
                         this.crystalState.rotationsCompleted += 1;
                         this.crystalState.currentRotation = 0;
 
-                        // Visual feedback for completed rotation
                         crystal.classList.add('rotation-feedback');
                         setTimeout(() => crystal.classList.remove('rotation-feedback'), 200);
                     }
 
                     this.updateStepProgress(`${this.crystalState.rotationsCompleted}/3`);
 
-                    // Check if all 3 alternating rotations completed
                     if (this.crystalState.rotationsCompleted >= step.target) {
                         this.completeStep();
                     }
@@ -842,7 +873,6 @@ class BiometricDataCollector {
         this.updateCrystalDisplay();
     }
 
-    // UPDATED: Reset crystal state with new alternating rotation fields
     resetCrystalState() {
         this.crystalState = {
             tapCount: 0,
@@ -882,7 +912,6 @@ class BiometricDataCollector {
         document.getElementById('next-crystal-btn').disabled = true;
     }
 
-    // UPDATED: Added title for alternating rotation
     getStepTitle(type) {
         const titles = {
             'tap': 'Index Finger Tapping',
@@ -894,7 +923,6 @@ class BiometricDataCollector {
         return titles[type] || 'Unknown';
     }
 
-    // UPDATED: Added progress indicator for alternating rotation
     getInitialProgress(type) {
         const progress = {
             'tap': '0/3',
@@ -914,7 +942,7 @@ class BiometricDataCollector {
         this.touchData.push(data);
     }
 
-    // Gallery Methods
+    // Gallery Methods - KEPT AS BEFORE (unchanged)
     initializeGallery() {
         const grid = document.getElementById('gallery-grid');
         grid.innerHTML = '';
@@ -1103,30 +1131,38 @@ class BiometricDataCollector {
     }
 
     updatePopupImage() {
-        const popup = document.querySelector('.image-popup');
-        if (popup) {
-            popup.querySelector('.popup-image').src = this.galleryImages[this.currentGalleryImage];
-            popup.querySelector('.image-counter').textContent = `${this.currentGalleryImage + 1} / ${this.galleryImages.length}`;
+        const pop = document.querySelector('.image-popup');
+        if (!pop) return;
+        pop.querySelector('.popup-image').src = this.galleryImages[this.currentGalleryImage];
+        pop.querySelector('.popup-counter').textContent =
+            `${this.currentGalleryImage + 1} of ${this.galleryImages.length}`;
+        this.updateZoomLevel();
+    }
+
+    // 12. Navigate images
+    nextGalleryImage() {
+        if (this.currentGalleryImage < this.galleryImages.length - 1) {
+            this.currentGalleryImage++;
+            this.resetZoom();
+            this.updatePopupImage();
         }
     }
 
-    nextGalleryImage() {
-        this.currentGalleryImage = (this.currentGalleryImage + 1) % this.galleryImages.length;
-        this.updatePopupImage();
-        this.resetZoom();
-    }
-
     prevGalleryImage() {
-        this.currentGalleryImage = (this.currentGalleryImage - 1 + this.galleryImages.length) % this.galleryImages.length;
-        this.updatePopupImage();
-        this.resetZoom();
+        if (this.currentGalleryImage > 0) {
+            this.currentGalleryImage--;
+            this.resetZoom();
+            this.updatePopupImage();
+        }
     }
 
+    // 13. Close popup
     closeImagePopup() {
-        const popup = document.querySelector('.image-popup');
-        if (popup) {
-            popup.classList.remove('active');
+        const pop = document.querySelector('.image-popup');
+        if (pop) {
+            pop.classList.remove('active');
             document.body.style.overflow = '';
+            this.resetZoom();
         }
     }
 
@@ -1169,43 +1205,6 @@ class BiometricDataCollector {
         const zoomLevel = document.querySelector('.zoom-level');
         if (zoomLevel) {
             zoomLevel.textContent = `${Math.round(this.galleryZoom.scale * 100)}%`;
-        }
-    }
-    
-    // 11. Refresh popup image & counter
-    updatePopupImage() {
-        const pop = document.querySelector('.image-popup');
-        if (!pop) return;
-        pop.querySelector('.popup-image').src = this.galleryImages[this.currentGalleryImage];
-        pop.querySelector('.popup-counter').textContent =
-            `${this.currentGalleryImage + 1} of ${this.galleryImages.length}`;
-        this.updateZoomLevel();
-    }
-    
-    // 12. Navigate images
-    nextGalleryImage() {
-        if (this.currentGalleryImage < this.galleryImages.length - 1) {
-            this.currentGalleryImage++;
-            this.resetZoom();
-            this.updatePopupImage();
-        }
-    }
-    
-    prevGalleryImage() {
-        if (this.currentGalleryImage > 0) {
-            this.currentGalleryImage--;
-            this.resetZoom();
-            this.updatePopupImage();
-        }
-    }
-    
-    // 13. Close popup
-    closeImagePopup() {
-        const pop = document.querySelector('.image-popup');
-        if (pop) {
-            pop.classList.remove('active');
-            document.body.style.overflow = '';
-            this.resetZoom();
         }
     }
     
@@ -1386,6 +1385,8 @@ class BiometricDataCollector {
 
 
 }
+
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     new BiometricDataCollector();
