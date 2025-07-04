@@ -176,6 +176,16 @@ class BiometricDataCollector {
         const typingInput = document.getElementById('typing-input');
         
         // Composition events for mobile IME handling
+        typingInput.addEventListener('compositionstart', (e) => {
+            this.compositionActive = true;
+            console.log('Composition started');
+        });
+        
+        typingInput.addEventListener('compositionupdate', (e) => {
+            // Track composition updates but don't record as final keystrokes
+            console.log('Composition update:', e.data);
+        });
+        
         typingInput.addEventListener('compositionend', (e) => {
             this.compositionActive = false;
         
@@ -183,16 +193,19 @@ class BiometricDataCollector {
                 // ✅ Normalize smart quotes
                 let char = e.data.replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
         
+                // ✅ Handle multi-character input safely (e.g., emojis)
+                const keyCode = char.length === 1 ? char.charCodeAt(0) : 0;
+        
                 this.recordKeystroke({
                     timestamp: performance.now(),
                     actualChar: char,
                     refChar: char,
-                    keyCode: char.charCodeAt(0),
+                    keyCode: keyCode,
                     type: 'compositionend',
                     sentence: this.currentSentence,
                     position: e.target.selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
+                    clientX: this.pointerTracking?.x || 0,
+                    clientY: this.pointerTracking?.y || 0
                 });
         
                 this.skipNextKeydown = true;
@@ -201,7 +214,6 @@ class BiometricDataCollector {
         
             console.log('Composition ended:', e.data);
         });
-
         
         // FIXED: Use input event with inputType for reliable character detection
         typingInput.addEventListener('input', (e) => {
@@ -216,6 +228,7 @@ class BiometricDataCollector {
             }
             this.handleKeydown(e);
         });
+
         
         // Update pointer coordinates when typing
         typingInput.addEventListener('focus', (e) => {
@@ -304,7 +317,7 @@ handleTypingInput(e) {
                 this.recordKeystroke({
                     timestamp: timestamp + i - 0.5, // slightly before letter
                     actualChar: 'SHIFT',
-                    refChar: 'SHIFT',
+                    refChar: char,
                     keyCode: 16, // KeyCode for Shift
                     type: inputType,
                     sentence: this.currentSentence,
@@ -332,7 +345,7 @@ handleTypingInput(e) {
                 this.recordKeystroke({
                     timestamp: timestamp + i,
                     actualChar: 'SPACE',
-                    refChar: ' ',
+                    refChar: char,
                     keyCode: 32,
                     type: inputType,
                     sentence: this.currentSentence,
@@ -1058,8 +1071,8 @@ handleTypingInput(e) {
         const titles = {
             'tap': 'Index Finger Tapping',
             'rotate': 'Two-Finger Rotation',
-            'pinch': 'Pinch to Shrink',
             'spread': 'Spread to Enlarge',
+            'pinch': 'Pinch to Shrink',
             'pressure': 'Three-Finger Pressure'
         };
         return titles[type] || 'Unknown';
@@ -1069,8 +1082,8 @@ handleTypingInput(e) {
         const progress = {
             'tap': '0/3',
             'rotate-alternating': '0 / 3 rotations',
-            'pinch': '100% → 50%',
             'spread': '100% → 150%',
+            'pinch': '100% → 50%',
             'pressure': '0s / 3s'
         };
         return progress[type] || '0/0';
