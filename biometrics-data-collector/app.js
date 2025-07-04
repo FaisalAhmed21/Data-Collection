@@ -176,32 +176,33 @@ class BiometricDataCollector {
         const typingInput = document.getElementById('typing-input');
         
         // Composition events for mobile IME handling
+        typingInput.addEventListener('compositionstart', (e) => {
+            this.compositionActive = true;
+            console.log('Composition started');
+        });
+        
+        typingInput.addEventListener('compositionupdate', (e) => {
+            // Track composition updates but don't record as final keystrokes
+            console.log('Composition update:', e.data);
+        });
+        
         typingInput.addEventListener('compositionend', (e) => {
             this.compositionActive = false;
-        
             if (e.data) {
-                // ✅ Normalize smart quotes
-                let char = e.data.replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
-        
+                // Record final composition result
                 this.recordKeystroke({
                     timestamp: performance.now(),
-                    actualChar: char,
-                    refChar: char,
-                    keyCode: char.charCodeAt(0),
+                    actualChar: e.data,
+                    keyCode: e.data.charCodeAt(0),
                     type: 'compositionend',
                     sentence: this.currentSentence,
                     position: e.target.selectionStart || 0,
                     clientX: this.pointerTracking.x,
                     clientY: this.pointerTracking.y
                 });
-        
-                this.skipNextKeydown = true;
-                this.lastRecordedCharTime = performance.now();
             }
-        
             console.log('Composition ended:', e.data);
         });
-
         
         // FIXED: Use input event with inputType for reliable character detection
         typingInput.addEventListener('input', (e) => {
@@ -395,6 +396,7 @@ handleTypingInput(e) {
     this.calculateAccuracy();
     this.checkSentenceCompletion();
 }
+
     
     
     // FIXED: Enhanced character detection with better mobile support
