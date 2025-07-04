@@ -746,14 +746,12 @@ class BiometricDataCollector {
                 }
                 break;
                 
-            case 'rotate':
-                case 'rotate360':
+            case 'rotate360':
                 if (phase === 'start' && touches.length === 2) {
                     const dx = touches[1].clientX - touches[0].clientX;
                     const dy = touches[1].clientY - touches[0].clientY;
                     this.crystalState.initialAngle = Math.atan2(dy, dx);
                     this.crystalState.totalRotation = 0;
-                    this.crystalState.rotationCount = 0;  // ✅ track full 360s
                     this.crystalState.isRotating = true;
                     this.crystalState.rotationStart = performance.now();
                     crystal.classList.add('rotation-feedback', 'active');
@@ -762,45 +760,30 @@ class BiometricDataCollector {
                     const dx = touches[1].clientX - touches[0].clientX;
                     const dy = touches[1].clientY - touches[0].clientY;
                     const currentAngle = Math.atan2(dy, dx);
-                    
+            
                     let angleDiff = currentAngle - this.crystalState.initialAngle;
-                    if (angleDiff > Math.PI) {
-                        angleDiff -= 2 * Math.PI;
-                    } else if (angleDiff < -Math.PI) {
-                        angleDiff += 2 * Math.PI;
-                    }
+                    if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                    if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
             
                     this.crystalState.totalRotation += angleDiff;
                     this.crystalState.initialAngle = currentAngle;
             
-                    // For type === 'rotate360': Check number of full circles
-                    if (step.type === 'rotate360') {
-                        const fullRotations = Math.floor(Math.abs(this.crystalState.totalRotation) / (2 * Math.PI));
-                        this.updateStepProgress(`${fullRotations} / ${step.target} rotations`);
+                    const fullRotations = Math.floor(Math.abs(this.crystalState.totalRotation) / (2 * Math.PI));
+                    this.updateStepProgress(`${fullRotations} / ${step.target} rotations`);
             
-                        if (fullRotations >= step.target) {
-                            this.completeStep();
-                        }
-                    } else {
-                        // old 5-second rotation logic
-                        const elapsed = performance.now() - this.crystalState.rotationStart;
-                        const rotationDeg = Math.round(this.crystalState.totalRotation * 180 / Math.PI);
-                        this.updateStepProgress(`${rotationDeg}° | ${Math.floor(elapsed / 1000)}s / ${step.target/1000}s`);
-            
-                        const requiredRadians = 10 * Math.PI / 180;
-                        if (elapsed >= step.target && this.crystalState.totalRotation >= requiredRadians) {
-                            this.completeStep();
-                        }
+                    if (fullRotations >= step.target) {
+                        this.completeStep();
                     }
-                } 
+                }
                 else if (phase === 'end' && touches.length < 2) {
                     this.crystalState.isRotating = false;
                     crystal.classList.remove('rotation-feedback', 'active');
                 }
                 break;
-
             
-                
+            
+                        
+                            
             case 'pinch':
             case 'spread':
                 if (touches.length === 2) {
