@@ -844,11 +844,12 @@ select.form-control {
 
 .crystal {
   position: relative;
-  width: 200px;
-  height: 200px;
+  width: 600px;
+  height: 600px;
   cursor: pointer;
   transition: transform 0.3s var(--ease-standard), filter 0.3s var(--ease-standard);
   transform-origin: center;
+  border-radius: 50%; /* 👈 Makes it circular */
 }
 
 .crystal-inner {
@@ -929,7 +930,7 @@ select.form-control {
 
 .size-indicator {
   position: absolute;
-  top: -60px;
+  top: 250px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--color-primary);
