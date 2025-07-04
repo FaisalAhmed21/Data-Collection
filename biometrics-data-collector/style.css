@@ -755,13 +755,6 @@ select.form-control {
   font-family: var(--font-family-mono);
 }
 
-.instruction-text {
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-}
-
 .typing-area {
   margin: var(--space-24) 0;
 }
