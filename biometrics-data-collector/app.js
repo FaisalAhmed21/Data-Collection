@@ -48,11 +48,11 @@ class BiometricDataCollector {
         
         // Crystal game state
         this.crystalSteps = [
-            { id: 1, instruction: "Tap the crystal exactly 3 times with your index finger", target: 3, type: 'tap' },
-            { id: 2,  instruction: "Touch and rotate your finger around the crystal 3 full times, alternating direction each rotation (e.g., clockwise → counterclockwise → clockwise)",  target: 3,  type: 'rotate-alternating'},
-            { id: 3, instruction: "Pinch to shrink the crystal to 50% size", target: 0.5, type: 'pinch' },
-            { id: 4, instruction: "Spread fingers to grow crystal to 150% size", target: 1.5, type: 'spread' },
-            { id: 5, instruction: "Apply pressure with 3 fingers simultaneously for 3 seconds", target: 3000, type: 'pressure' }
+            {id: 1, instruction: "Tap the crystal exactly 3 times with your index finger", target: 3, type: 'tap' },
+            {id: 2,  instruction: "Touch and rotate your finger around the crystal 3 full times, alternating direction each rotation (e.g., clockwise → counterclockwise → clockwise)",  target: 3,  type: 'rotate-alternating'},
+            {id: 3, instruction: "Pinch outward to enlarge the crystal to 1.5x size",  target: 1.5,  type: 'pinch'},
+            {id: 4, instruction: "Pinch inward to shrink the crystal to 0.6x size",  target: 0.6,  type: 'pinch'},
+            {id: 5, instruction: "Apply pressure with 3 fingers simultaneously for 3 seconds", target: 3000, type: 'pressure' }
         ];
         
         this.crystalState = {
@@ -809,6 +809,42 @@ class BiometricDataCollector {
                         
                             
             case 'pinch':
+                if (phase === 'start' && touches.length === 2) {
+                    const dx = touches[1].clientX - touches[0].clientX;
+                    const dy = touches[1].clientY - touches[0].clientY;
+                    this.crystalState.initialDistance = Math.hypot(dx, dy);
+                    this.crystalState.isPinching = true;
+                    crystal.classList.add('rotation-feedback', 'active'); // optional visual cue
+                }
+                else if (phase === 'move' && this.crystalState.isPinching && touches.length === 2) {
+                    const dx = touches[1].clientX - touches[0].clientX;
+                    const dy = touches[1].clientY - touches[0].clientY;
+                    const currentDistance = Math.hypot(dx, dy);
+                    const scaleChange = currentDistance / this.crystalState.initialDistance;
+            
+                    // Update current crystal scale
+                    this.crystalState.currentSize = scaleChange;
+                    crystal.style.transform = `scale(${scaleChange})`;
+            
+                    // Optional: show feedback or indicator
+                    this.updateStepProgress(`Size: ${scaleChange.toFixed(2)}x`);
+            
+                    // Shrink detection: target < 1.0
+                    if (step.target < 1 && scaleChange <= step.target) {
+                        this.completeStep();
+                    }
+            
+                    // Enlarge detection: target > 1.0
+                    else if (step.target > 1 && scaleChange >= step.target) {
+                        this.completeStep();
+                    }
+                }
+                else if (phase === 'end') {
+                    this.crystalState.isPinching = false;
+                    crystal.classList.remove('rotation-feedback');
+                }
+                break;
+
             case 'spread':
                 if (touches.length === 2) {
                     if (phase === 'start') {
@@ -1020,7 +1056,7 @@ class BiometricDataCollector {
     getInitialProgress(type) {
         const progress = {
             'tap': '0/3',
-            'rotate-alternating': '0 / 3 rotations'
+            'rotate-alternating': '0 / 3 rotations',
             'pinch': '100% → 50%',
             'spread': '100% → 150%',
             'pressure': '0s / 3s'
