@@ -930,7 +930,7 @@ select.form-control {
 
 .size-indicator {
   position: absolute;
-  top: 300px;
+  top: 500px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--color-primary);
@@ -1356,12 +1356,12 @@ select.form-control {
   }
 
   .crystal-area {
-    width: 300px;
+    width: 250px;
     height: 200px;
   }
 
   .crystal {
-    width: 350px;
+    width: 300px;
     height: 250px;
   }
 
