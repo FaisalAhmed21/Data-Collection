@@ -102,9 +102,6 @@ class BiometricDataCollector {
     init() {
         this.bindEvents();
         this.generateParticipantId();
-        this.switchScreen('typing');
-        this.startTypingTask();
-
         this.initializeGallery();
         this.setupPointerTracking();
     }
@@ -169,6 +166,11 @@ class BiometricDataCollector {
 
     
     bindEvents() {
+        // Welcome screen
+        document.getElementById('start-btn').addEventListener('click', () => {
+            this.switchScreen('typing');
+            this.startTypingTask();
+        });
         
         // Typing task - FIXED: Proper mobile-friendly event handling
         const typingInput = document.getElementById('typing-input');
