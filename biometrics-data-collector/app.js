@@ -5,7 +5,10 @@ class BiometricDataCollector {
         this.currentSentence = 0;
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
-        
+        this.lastRecordedCharTime = 0;
+        this.skipNextKeydown = false;
+
+
         // Data collection
         this.keystrokeData = [];
         this.touchData = [];
@@ -46,7 +49,7 @@ class BiometricDataCollector {
         // Crystal game state
         this.crystalSteps = [
             { id: 1, instruction: "Tap the crystal exactly 3 times with your index finger", target: 3, type: 'tap' },
-            { id: 2, instruction: "Rotate the crystal clockwise using two fingers for 5 seconds", target: 5000, type: 'rotate' },
+            { id: 2, instruction: "Touch and rotate the crystal on the screen for 3 full 360° rotations", target: 3, type: 'rotate360' },
             { id: 3, instruction: "Pinch to shrink the crystal to 50% size", target: 0.5, type: 'pinch' },
             { id: 4, instruction: "Spread fingers to grow crystal to 150% size", target: 1.5, type: 'spread' },
             { id: 5, instruction: "Apply pressure with 3 fingers simultaneously for 3 seconds", target: 3000, type: 'pressure' }
@@ -54,7 +57,6 @@ class BiometricDataCollector {
         
         this.crystalState = {
             tapCount: 0,
-            rotationTime: 0,
             rotationStart: null,
             currentSize: 1.0,
             isRotating: false,
@@ -65,7 +67,7 @@ class BiometricDataCollector {
             initialDistance: 0,
             // Rotation tracking
             initialAngle: null,
-            totalRotation: 0  // in radians
+            totalRotation: 0,
         };
         
         // Gallery images
@@ -345,6 +347,9 @@ class BiometricDataCollector {
                     });
                 }
             }
+            this.skipNextKeydown = true;
+            this.lastRecordedCharTime = performance.now();
+
         }
 
     
@@ -433,7 +438,14 @@ class BiometricDataCollector {
     
     handleKeydown(e) {
         const timestamp = performance.now();
-        
+        const now = performance.now();
+
+        // Prevent duplicate recording on iOS/Gboard
+        if (this.skipNextKeydown && now - this.lastRecordedCharTime < 100) {
+            this.skipNextKeydown = false;  // reset flag
+            return;
+        }
+
         // Block navigation keys
         const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
         if (restrictedKeys.includes(e.key)) {
@@ -735,11 +747,13 @@ class BiometricDataCollector {
                 break;
                 
             case 'rotate':
+                case 'rotate360':
                 if (phase === 'start' && touches.length === 2) {
                     const dx = touches[1].clientX - touches[0].clientX;
                     const dy = touches[1].clientY - touches[0].clientY;
                     this.crystalState.initialAngle = Math.atan2(dy, dx);
                     this.crystalState.totalRotation = 0;
+                    this.crystalState.rotationCount = 0;  // ✅ track full 360s
                     this.crystalState.isRotating = true;
                     this.crystalState.rotationStart = performance.now();
                     crystal.classList.add('rotation-feedback', 'active');
@@ -755,20 +769,28 @@ class BiometricDataCollector {
                     } else if (angleDiff < -Math.PI) {
                         angleDiff += 2 * Math.PI;
                     }
-                    
-                    if (angleDiff > 0) {
-                        this.crystalState.totalRotation += angleDiff;
-                    }
-                    
+            
+                    this.crystalState.totalRotation += angleDiff;
                     this.crystalState.initialAngle = currentAngle;
-                    const elapsed = performance.now() - this.crystalState.rotationStart;
-                    const rotationDeg = Math.round(this.crystalState.totalRotation * 180 / Math.PI);
-                    
-                    this.updateStepProgress(`${rotationDeg}° | ${Math.floor(elapsed/1000)}s / ${step.target/1000}s`);
-                    
-                    const requiredRadians = 10 * Math.PI / 180;
-                    if (elapsed >= step.target && this.crystalState.totalRotation >= requiredRadians) {
-                        this.completeStep();
+            
+                    // For type === 'rotate360': Check number of full circles
+                    if (step.type === 'rotate360') {
+                        const fullRotations = Math.floor(Math.abs(this.crystalState.totalRotation) / (2 * Math.PI));
+                        this.updateStepProgress(`${fullRotations} / ${step.target} rotations`);
+            
+                        if (fullRotations >= step.target) {
+                            this.completeStep();
+                        }
+                    } else {
+                        // old 5-second rotation logic
+                        const elapsed = performance.now() - this.crystalState.rotationStart;
+                        const rotationDeg = Math.round(this.crystalState.totalRotation * 180 / Math.PI);
+                        this.updateStepProgress(`${rotationDeg}° | ${Math.floor(elapsed / 1000)}s / ${step.target/1000}s`);
+            
+                        const requiredRadians = 10 * Math.PI / 180;
+                        if (elapsed >= step.target && this.crystalState.totalRotation >= requiredRadians) {
+                            this.completeStep();
+                        }
                     }
                 } 
                 else if (phase === 'end' && touches.length < 2) {
@@ -776,6 +798,8 @@ class BiometricDataCollector {
                     crystal.classList.remove('rotation-feedback', 'active');
                 }
                 break;
+
+            
                 
             case 'pinch':
             case 'spread':
@@ -986,7 +1010,7 @@ class BiometricDataCollector {
     getInitialProgress(type) {
         const progress = {
             'tap': '0/3',
-            'rotate': '0° | 0s / 5s',
+            'rotate360': '0 / 3 rotations',
             'pinch': '100% → 50%',
             'spread': '100% → 150%',
             'pressure': '0s / 3s'
