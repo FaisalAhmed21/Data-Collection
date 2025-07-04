@@ -844,8 +844,8 @@ select.form-control {
 
 .crystal {
   position: relative;
-  width: 350px;
-  height: 350px;
+  width: 500px;
+  height: 500px;
   cursor: pointer;
   transition: transform 0.3s var(--ease-standard), filter 0.3s var(--ease-standard);
   transform-origin: center;
@@ -950,7 +950,7 @@ select.form-control {
 
 .size-indicator {
   position: absolute;
-  top: -60px;
+  top: 250px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--color-primary);
