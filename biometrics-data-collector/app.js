@@ -504,11 +504,6 @@ class BiometricDataCollector {
         e.preventDefault();
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
-        
-        // Check if touch is within crystal bounds
-        if (!this.isTouchWithinCrystal(touches[0])) {
-            return;
-        }
 
         // Record enhanced touch data with analytics
         const touchData = {
@@ -539,10 +534,6 @@ class BiometricDataCollector {
         e.preventDefault();
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
-        
-        if (!this.isTouchWithinCrystal(touches[0])) {
-            return;
-        }
 
         // Calculate velocity and acceleration
         const velocity = this.calculateTouchVelocity(touches[0], timestamp);
@@ -601,10 +592,6 @@ class BiometricDataCollector {
     }
 
     handleCrystalMouseDown(e) {
-        if (!this.isTouchWithinCrystal(e)) {
-            return;
-        }
-
         const timestamp = performance.now();
         this.recordTouchEvent({
             timestamp,
@@ -629,9 +616,6 @@ class BiometricDataCollector {
 
     handleCrystalMouseMove(e) {
         if (e.buttons === 1) {
-            if (!this.isTouchWithinCrystal(e)) {
-                return;
-            }
 
             const timestamp = performance.now();
             const velocity = this.calculateTouchVelocity({ clientX: e.clientX, clientY: e.clientY }, timestamp);
@@ -680,18 +664,6 @@ class BiometricDataCollector {
             taskId: 2
         });
         this.processCrystalInteraction('end', [{ clientX: e.clientX, clientY: e.clientY }]);
-    }
-
-    // Check if touch/click is within crystal bounds
-    isTouchWithinCrystal(touch) {
-        const crystal = document.getElementById('crystal');
-        if (!crystal) return false;
-        
-        const rect = crystal.getBoundingClientRect();
-        const x = touch.clientX;
-        const y = touch.clientY;
-        
-        return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
     // Calculate touch area using radiusX and radiusY
