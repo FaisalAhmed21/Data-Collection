@@ -755,6 +755,13 @@ select.form-control {
   font-family: var(--font-family-mono);
 }
 
+.instruction-text {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .typing-area {
   margin: var(--space-24) 0;
 }
@@ -824,8 +831,8 @@ select.form-control {
 
 .crystal-area {
   position: relative;
-  width: 500px;
-  height: 500px;
+  width: 400px;
+  height: 400px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -837,14 +844,12 @@ select.form-control {
 
 .crystal {
   position: relative;
-  width: 600px;
-  height: 600px;
+  width: 200px;
+  height: 200px;
   cursor: pointer;
   transition: transform 0.3s var(--ease-standard), filter 0.3s var(--ease-standard);
   transform-origin: center;
-  border-radius: 50%; /* 👈 Makes it circular */
 }
-
 
 .crystal-inner {
   width: 100%;
@@ -853,7 +858,7 @@ select.form-control {
     rgba(0, 31, 63, 0.8) 0%,
     rgba(255, 215, 0, 0.9) 50%,
     rgba(0, 31, 63, 0.7) 100%);
-  border-radius: 50%;
+  border-radius: 30px;
   box-shadow:
     0 0 30px rgba(0, 31, 63, 0.5),
     inset 0 0 30px rgba(255, 255, 255, 0.2);
@@ -922,7 +927,44 @@ select.form-control {
   75% { transform: scale(calc(var(--current-scale, 1) * 1.2)) rotate(-10deg); }
 }
 
+.size-indicator {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-primary);
+  color: var(--color-btn-primary-text);
+  padding: var(--space-12) var(--space-20);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-2xl);
+  box-shadow: 0 4px 20px rgba(0, 31, 63, 0.3);
+  transition: all 0.3s var(--ease-standard);
+  z-index: 10;
+  min-width: 80px;
+  text-align: center;
+}
 
+.size-indicator.shrink-highlight {
+  background: var(--color-error);
+  transform: translateX(-50%) scale(1.3);
+  box-shadow: 0 0 30px rgba(255, 84, 89, 0.8);
+  animation: pulse-shrink 0.5s ease-in-out;
+}
+
+.size-indicator.enlarge-highlight {
+  background: var(--color-success);
+  transform: translateX(-50%) scale(1.3);
+  box-shadow: 0 0 30px rgba(0, 31, 63, 0.8);
+  animation: pulse-enlarge 0.5s ease-in-out;
+}
+
+.size-indicator.completion-highlight {
+  background: linear-gradient(45deg, var(--color-success), var(--color-primary));
+  transform: translateX(-50%) scale(1.4);
+  box-shadow: 0 0 40px rgba(0, 31, 63, 1);
+  animation: completion-celebration 1s ease-in-out;
+}
 
 @keyframes pulse-shrink {
   0%, 100% { transform: translateX(-50%) scale(1.3); }
@@ -1313,13 +1355,13 @@ select.form-control {
   }
 
   .crystal-area {
-    width: 350px;
-    height: 350px;
+    width: 300px;
+    height: 300px;
   }
 
   .crystal {
-    width: 225px;
-    height: 225px;
+    width: 150px;
+    height: 150px;
   }
 
   .typing-stats {
