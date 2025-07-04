@@ -859,7 +859,7 @@ select.form-control {
     rgba(0, 31, 63, 0.8) 0%,
     rgba(255, 215, 0, 0.9) 50%,
     rgba(0, 31, 63, 0.7) 100%);
-  border-radius: 30px;
+  border-radius: 50%;
   box-shadow:
     0 0 30px rgba(0, 31, 63, 0.5),
     inset 0 0 30px rgba(255, 255, 255, 0.2);
@@ -1361,8 +1361,8 @@ select.form-control {
   }
 
   .crystal {
-    width: 150px;
-    height: 150px;
+    width: 250px;
+    height: 250px;
   }
 
   .typing-stats {
