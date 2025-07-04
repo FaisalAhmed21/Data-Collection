@@ -1,181 +1,147 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Crystal Game & Gallery App</title>
-  <!-- Inline critical CSS -->
-  <style>
-    :root {
-      --color-primary: #4a90e2;
-      --color-secondary: #50e3c2;
-      --color-bg: #f5f7fa;
-      --font-base: 'Helvetica Neue', Arial, sans-serif;
-      --transition-speed: 0.2s;
-    }
-
-    html {
-      box-sizing: border-box;
-      font-family: var(--font-base);
-      background-color: var(--color-bg);
-      color: #333;
-    }
-    *, *::before, *::after { box-sizing: inherit; }
-    body, h1, h2, p, button { margin: 0; padding: 0; }
-    img { max-width: 100%; height: auto; display: block; }
-
-    header, main, section, footer { padding: 1rem; }
-
-    header {
-      background: var(--color-primary);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    nav a {
-      color: #fff;
-      margin-left: 1rem;
-      text-decoration: none;
-    }
-    nav a:focus-visible, nav a:hover {
-      text-decoration: underline;
-    }
-
-    /* Utility classes */
-    .flex { display: flex; }
-    .flex-center { justify-content: center; align-items: center; }
-    .btn {
-      padding: 0.6rem 1.2rem;
-      background: var(--color-secondary);
-      border: none;
-      border-radius: 4px;
-      color: #fff;
-      cursor: pointer;
-      transition: transform var(--transition-speed);
-    }
-    .btn:focus-visible { outline: 2px solid var(--color-primary); }
-    .btn:hover, .btn:focus { transform: scale(1.05); }
-
-    /* Layout */
-    .container { max-width: 960px; margin: 0 auto; }
-    .screen { display: none; }
-    .screen.active { display: block; }
-
-    /* Typing screen */
-    #typing-screen textarea {
-      width: 100%;
-      min-height: 150px;
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 1rem;
-      resize: vertical;
-    }
-
-    /* Crystal game */
-    #game-screen .crystal {
-      width: 80px;
-      height: 80px;
-      margin: 0.5rem;
-      background-size: cover;
-      transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-    }
-    #game-screen .crystal:active {
-      transform: scale(1.1);
-      box-shadow: 0 0 10px var(--color-secondary);
-    }
-    #game-screen .progress {
-      margin-top: 1rem;
-      height: 8px;
-      background: #ddd;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    #game-screen .progress-bar {
-      height: 100%;
-      background: var(--color-primary);
-      transition: width var(--transition-speed);
-    }
-
-    /* Gallery */
-    #gallery-screen .gallery-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 1rem;
-    }
-    #gallery-screen .gallery-item {
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-    }
-    #gallery-screen .gallery-item img {
-      transition: transform var(--transition-speed);
-    }
-    #gallery-screen .gallery-item:focus-visible, .gallery-item:hover img {
-      transform: scale(1.05);
-    }
-
-    /* Export */
-    #export-screen .export-btn {
-      margin-top: 1rem;
-    }
-
-    @media (min-width: 768px) {
-      nav a { margin: 0 1rem; }
-      header { padding: 1rem 2rem; }
-    }
-  </style>
-  <!-- Deferred non-critical CSS -->
-  <link rel="stylesheet" href="styles.css" media="print" onload="this.media='all'">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behavioral Biometrics Data Collection</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header role="banner">
-    <h1>Crystal App</h1>
-    <nav aria-label="Main navigation">
-      <a href="#" id="nav-typing">Typing</a>
-      <a href="#" id="nav-game">Game</a>
-      <a href="#" id="nav-gallery">Gallery</a>
-      <a href="#" id="nav-export">Export</a>
-    </nav>
-  </header>
+    <div class="container">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen active">
+            <div class="welcome-content">
+                <h1>Behavioral Biometrics Study</h1>
+                <p>This application collects keystroke dynamics and touch gesture data for research purposes.</p>
+                <div class="participant-info">
+                    <p>Participant ID: <span id="participant-id">-</span></p>
+                </div>
+                <button id="start-btn" class="btn btn--primary btn--lg">START STUDY</button>
+            </div>
+        </div>
 
-  <main class="container">
-    <!-- Typing Screen -->
-    <section id="typing-screen" class="screen active" aria-labelledby="nav-typing">
-      <h2>Typing Practice</h2>
-      <label for="typing-area" class="visually-hidden">Type your text here</label>
-      <textarea id="typing-area" aria-describedby="typing-instructions"></textarea>
-      <p id="typing-instructions">Practice typing to fill the text export.</p>
-    </section>
+        <!-- Typing Task Screen -->
+        <div id="typing-screen" class="screen">
+            <div class="typing-content">
+                <h2>Typing Task</h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="typing-progress"></div>
+                </div>
+                <p class="task-instruction">Type the following sentence exactly as shown. Use only backspace to correct mistakes - cursor movement is disabled.</p>
+                
+                <div class="sentence-display">
+                    <p id="target-sentence"></p>
+                </div>
+                
+                <div class="typing-area">
+                    <textarea id="typing-input" class="form-control" rows="3" placeholder="Start typing here..." spellcheck="false" autocomplete="off"></textarea>
+                </div>
+                
+                <div class="typing-stats">
+                    <div class="stat">
+                        <span class="stat-label">Accuracy:</span>
+                        <span id="accuracy" class="stat-value">100%</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Progress:</span>
+                        <span id="sentence-progress" class="stat-value">1/4</span>
+                    </div>
+                </div>
+                
+                <button id="next-sentence-btn" class="btn btn--primary" disabled>Next Sentence</button>
+            </div>
+        </div>
 
-    <!-- Crystal Game Screen -->
-    <section id="game-screen" class="screen" aria-labelledby="nav-game">
-      <h2>Crystal Tapping Game</h2>
-      <div class="flex flex-center" id="crystals-container" aria-live="polite"></div>
-      <div class="progress" aria-label="Game progress">
-        <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
-      </div>
-    </section>
+        <!-- Crystal Forge Game Screen -->
+        <div id="crystal-screen" class="screen">
+            <div class="crystal-content">
+                <h2>Crystal Forge Game</h2>
+                <div class="crystal-step-info">
+                    <h3 id="step-title">Step 1: Index Finger Tapping</h3>
+                    <p id="step-instruction">Tap the crystal exactly 3 times with your index finger</p>
+                </div>
+                
+                <div class="crystal-container">
+                    <div class="crystal-area" id="crystal-area">
+                        <div class="crystal" id="crystal">
+                            <div class="crystal-inner"></div>
+                            <div class="crystal-glow"></div>
+                        </div>
+                        <div class="size-indicator" id="size-indicator">100%</div>
+                    </div>
+                </div>
+                
+                <div class="crystal-feedback">
+                    <div class="feedback-item">
+                        <span class="feedback-label">Current Step:</span>
+                        <span id="current-step" class="feedback-value">1/5</span>
+                    </div>
+                    <div class="feedback-item">
+                        <span class="feedback-label">Status:</span>
+                        <span id="step-status" class="feedback-value">Ready</span>
+                    </div>
+                    <div class="feedback-item">
+                        <span class="feedback-label">Progress:</span>
+                        <span id="step-progress" class="feedback-value">0/3</span>
+                    </div>
+                </div>
+                
+                <div class="crystal-controls">
+                    <button id="reset-step-btn" class="btn btn--secondary">Reset Step</button>
+                    <button id="next-crystal-btn" class="btn btn--primary" disabled>Next Step</button>
+                </div>
+            </div>
+        </div>
 
-    <!-- Gallery Screen -->
-    <section id="gallery-screen" class="screen" aria-labelledby="nav-gallery">
-      <h2>Image Gallery</h2>
-      <div class="gallery-grid" id="gallery" aria-live="polite"></div>
-    </section>
+        <!-- Gallery Screen -->
+        <div id="gallery-screen" class="screen">
+            <div class="gallery-content">
+                <h2>Image Gallery</h2>
+                <p class="gallery-instruction">Click on images to view them. In full-screen: swipe right for next image, swipe left for previous image. Use zoom controls to zoom in/out.</p>
+                
+                <div class="gallery-container">
+                    <div class="gallery-grid" id="gallery-grid">
+                        <!-- Images will be dynamically generated -->
+                    </div>
+                </div>
+                
+                <button id="finish-gallery-btn" class="btn btn--primary">Complete Gallery</button>
+            </div>
+        </div>
 
-    <!-- Export Screen -->
-    <section id="export-screen" class="screen" aria-labelledby="nav-export">
-      <h2>Export Data</h2>
-      <button class="btn export-btn" id="export-btn">Download as Text</button>
-    </section>
-  </main>
+        <!-- Export Screen -->
+        <div id="export-screen" class="screen">
+            <div class="export-content">
+                <h2>Data Export</h2>
+                <p>Your behavioral biometric data has been collected successfully.</p>
+                
+                <div class="export-stats">
+                    <div class="stat-card">
+                        <h4>Keystroke Data</h4>
+                        <p><span id="keystroke-count">0</span> keystrokes recorded</p>
+                        <p><span id="keystroke-features">9</span> features extracted</p>
+                        <p>ref_char now shows actual typed characters (A, B, C, space, etc.)</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Touch Data (Combined)</h4>
+                        <p><span id="touch-count">0</span> touch events recorded</p>
+                        <p><span id="touch-features">12</span> features extracted</p>
+                        <p>Includes Crystal Forge game + Gallery interactions</p>
+                    </div>
+                </div>
+                
+                <div class="export-actions">
+                    <button id="export-keystroke-btn" class="btn btn--primary">Export Keystroke Data</button>
+                    <button id="export-touch-btn" class="btn btn--primary">Export Touch Data</button>
+                </div>
+                
+                <div class="completion-message">
+                    <p>Thank you for participating in this behavioral biometrics study!</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <footer role="contentinfo" class="container">
-    <p>&copy; 2025 Crystal App Inc.</p>
-  </footer>
-
-  <script src="app.js" defer></script>
+    <script src="app.js"></script>
 </body>
 </html>
