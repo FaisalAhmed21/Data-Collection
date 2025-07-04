@@ -5,10 +5,7 @@ class BiometricDataCollector {
         this.currentSentence = 0;
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
-        this.lastRecordedCharTime = 0;
-        this.skipNextKeydown = false;
-
-
+        
         // Data collection
         this.keystrokeData = [];
         this.touchData = [];
@@ -348,9 +345,6 @@ class BiometricDataCollector {
                     });
                 }
             }
-            this.skipNextKeydown = true;
-            this.lastRecordedCharTime = performance.now();
-
         }
 
     
@@ -439,14 +433,7 @@ class BiometricDataCollector {
     
     handleKeydown(e) {
         const timestamp = performance.now();
-        const now = performance.now();
-
-        // Prevent duplicate recording on iOS/Gboard
-        if (this.skipNextKeydown && now - this.lastRecordedCharTime < 100) {
-            this.skipNextKeydown = false;  // reset flag
-            return;
-        }
-
+        
         // Block navigation keys
         const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
         if (restrictedKeys.includes(e.key)) {
