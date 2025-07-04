@@ -844,8 +844,8 @@ select.form-control {
 
 .crystal {
   position: relative;
-  width: 600px;
-  height: 600px;
+  width: 500px;
+  height: 500px;
   cursor: pointer;
   transition: transform 0.3s var(--ease-standard), filter 0.3s var(--ease-standard);
   transform-origin: center;
@@ -859,7 +859,7 @@ select.form-control {
     rgba(0, 31, 63, 0.8) 0%,
     rgba(255, 215, 0, 0.9) 50%,
     rgba(0, 31, 63, 0.7) 100%);
-  border-radius: 50%;
+  border-radius: 30px;
   box-shadow:
     0 0 30px rgba(0, 31, 63, 0.5),
     inset 0 0 30px rgba(255, 255, 255, 0.2);
@@ -930,7 +930,7 @@ select.form-control {
 
 .size-indicator {
   position: absolute;
-  top: 250px;
+  top: 700px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--color-primary);
@@ -1356,13 +1356,13 @@ select.form-control {
   }
 
   .crystal-area {
-    width: 300px;
-    height: 300px;
+    width: 400px;
+    height: 400px;
   }
 
   .crystal {
-    width: 250px;
-    height: 250px;
+    width: 500px;
+    height: 500px;
   }
 
   .typing-stats {
