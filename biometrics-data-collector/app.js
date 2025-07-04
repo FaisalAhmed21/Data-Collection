@@ -38,7 +38,8 @@ class BiometricDataCollector {
             translateX: 0,
             translateY: 0,
             initialDistance: 0,
-            touches: []
+            touches: [],
+            lastTapTime: 0
         };
 
         // Typing task data
@@ -109,7 +110,6 @@ class BiometricDataCollector {
         this.generateParticipantId();
         this.initializeGallery();
         this.setupPointerTracking();
-        this.initializeGoogleDrive();
     }
 
     setupPointerTracking() {
@@ -160,7 +160,7 @@ class BiometricDataCollector {
             this.startTypingTask();
         });
 
-        // ENHANCED: Fixed typing task event handling
+        // Enhanced typing task event handling
         const typingInput = document.getElementById('typing-input');
 
         typingInput.addEventListener('compositionstart', () => {
@@ -223,9 +223,9 @@ class BiometricDataCollector {
         this.bindGalleryEvents();
         document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
 
-        // UPDATED: Export with Google Drive upload
-        document.getElementById('export-keystroke-btn').addEventListener('click', () => this.uploadKeystrokeDataToDrive());
-        document.getElementById('export-touch-btn').addEventListener('click', () => this.uploadTouchDataToDrive());
+        // Export
+        document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
+        document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
     }
 
     switchScreen(screenName) {
@@ -510,7 +510,7 @@ class BiometricDataCollector {
             return;
         }
 
-        // NEW: Record enhanced touch data with analytics
+        // Record enhanced touch data with analytics
         const touchData = {
             timestamp,
             type: 'touchstart',
@@ -544,7 +544,7 @@ class BiometricDataCollector {
             return;
         }
 
-        // NEW: Calculate velocity and acceleration
+        // Calculate velocity and acceleration
         const velocity = this.calculateTouchVelocity(touches[0], timestamp);
         const acceleration = this.calculateTouchAcceleration(velocity, timestamp);
 
@@ -682,7 +682,7 @@ class BiometricDataCollector {
         this.processCrystalInteraction('end', [{ clientX: e.clientX, clientY: e.clientY }]);
     }
 
-    // NEW: Check if touch/click is within crystal bounds
+    // Check if touch/click is within crystal bounds
     isTouchWithinCrystal(touch) {
         const crystal = document.getElementById('crystal');
         if (!crystal) return false;
@@ -694,12 +694,80 @@ class BiometricDataCollector {
         return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
-    // NEW: Calculate touch area using radiusX and radiusY
+    // Calculate touch area using radiusX and radiusY
     calculateTouchArea(touch) {
         const radiusX = touch.radiusX || 1;
         const radiusY = touch.radiusY || 1;
         // Elliptical area formula: π × radiusX × radiusY
         return Math.PI * radiusX * radiusY;
+    }
+
+    // Calculate touch velocity
+    calculateTouchVelocity(touch, timestamp) {
+        const history = this.touchHistory;
+        if (history.length === 0) {
+            this.updateTouchHistory(touch, timestamp);
+            return { x: 0, y: 0, magnitude: 0 };
+        }
+
+        const lastTouch = history[history.length - 1];
+        const deltaX = touch.clientX - lastTouch.x;
+        const deltaY = touch.clientY - lastTouch.y;
+        const deltaTime = timestamp - lastTouch.timestamp;
+
+        if (deltaTime === 0) {
+            return { x: 0, y: 0, magnitude: 0 };
+        }
+
+        const velocityX = deltaX / deltaTime;
+        const velocityY = deltaY / deltaTime;
+        const magnitude = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+
+        return { x: velocityX, y: velocityY, magnitude: magnitude };
+    }
+
+    // Calculate touch acceleration
+    calculateTouchAcceleration(velocity, timestamp) {
+        const history = this.velocityHistory;
+        if (history.length === 0) {
+            this.velocityHistory.push({ velocity, timestamp });
+            return { x: 0, y: 0, magnitude: 0 };
+        }
+
+        const lastVelocity = history[history.length - 1];
+        const deltaVX = velocity.x - lastVelocity.velocity.x;
+        const deltaVY = velocity.y - lastVelocity.velocity.y;
+        const deltaTime = timestamp - lastVelocity.timestamp;
+
+        if (deltaTime === 0) {
+            return { x: 0, y: 0, magnitude: 0 };
+        }
+
+        const accelerationX = deltaVX / deltaTime;
+        const accelerationY = deltaVY / deltaTime;
+        const magnitude = Math.sqrt(accelerationX * accelerationX + accelerationY * accelerationY);
+
+        // Keep velocity history manageable
+        this.velocityHistory.push({ velocity, timestamp });
+        if (this.velocityHistory.length > 10) {
+            this.velocityHistory.shift();
+        }
+
+        return { x: accelerationX, y: accelerationY, magnitude: magnitude };
+    }
+
+    // Update touch history for analytics
+    updateTouchHistory(touch, timestamp) {
+        this.touchHistory.push({
+            x: touch.clientX,
+            y: touch.clientY,
+            timestamp: timestamp
+        });
+
+        // Keep history manageable
+        if (this.touchHistory.length > 10) {
+            this.touchHistory.shift();
+        }
     }
 
     processCrystalInteraction(phase, touches) {
@@ -869,12 +937,6 @@ class BiometricDataCollector {
         }
     }
 
-    getDistance(touch1, touch2) {
-        const dx = touch1.clientX - touch2.clientX;
-        const dy = touch1.clientY - touch2.clientY;
-        return Math.sqrt(dx * dx + dy * dy);
-    }
-
     showPressureIndicator() {
         const crystalArea = document.getElementById('crystal-area');
         if (!crystalArea.querySelector('.pressure-indicator')) {
@@ -1000,7 +1062,8 @@ class BiometricDataCollector {
         this.touchData.push(data);
     }
 
-    // PRESERVED: Gallery Methods - Kept exactly as before
+    // Gallery Methods - YOUR PROVIDED FUNCTIONS (kept exactly as-is)
+    // 1. Initialize thumbnail grid
     initializeGallery() {
         const grid = document.getElementById('gallery-grid');
         grid.innerHTML = '';
@@ -1379,8 +1442,7 @@ class BiometricDataCollector {
         return Math.hypot(dx, dy);
     }
 
-
-    // Export Methods
+    // Export Methods - YOUR PROVIDED FUNCTIONS (kept exactly as-is)
     exportKeystrokeData() {
         const features = this.extractKeystrokeFeatures();
         const csv = this.convertToCSV(features);
@@ -1392,7 +1454,6 @@ class BiometricDataCollector {
         document.getElementById('keystroke-features').textContent = '9';
     }
 
-    
     exportTouchData() {
         const features = this.extractTouchFeatures();
         const csv = this.convertToCSV(features);
@@ -1403,7 +1464,6 @@ class BiometricDataCollector {
         document.getElementById('touch-count').textContent = this.touchData.length;
         document.getElementById('touch-features').textContent = '12';
     }
-
 
     // FIXED: Enhanced keystroke feature extraction with proper character handling
     extractKeystrokeFeatures() {
@@ -1438,7 +1498,6 @@ class BiometricDataCollector {
         return features;
     }
 
-    
     // FIXED: Enhanced touch feature extraction
     extractTouchFeatures() {
         const features = [];
@@ -1523,10 +1582,8 @@ class BiometricDataCollector {
         return csvContent;
     }
 
-    // https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec
-
     uploadCSVToGoogleDrive(content, filename) {
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec'; // 🔁 Replace with your actual Apps Script Web App URL
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec';
     
         fetch(`${scriptURL}?filename=${encodeURIComponent(filename)}`, {
             method: 'POST',
@@ -1545,11 +1602,7 @@ class BiometricDataCollector {
             alert(`❌ Upload failed for ${filename}: ` + error.message);
         });
     }
-
-
-
 }
-
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
