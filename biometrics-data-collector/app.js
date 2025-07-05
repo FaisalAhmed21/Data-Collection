@@ -21,6 +21,7 @@ class BiometricDataCollector {
         // Composition state for mobile IME handling
         this.compositionActive = false;
         this.lastInputLength = 0;
+        this.previousChar = null; // Track previous character for shift detection
         
         // Enhanced gallery zoom state with pinch support
         this.galleryZoom = {
@@ -343,10 +344,83 @@ class BiometricDataCollector {
                     });
                 }
                 else {
-                    // Normal character (lowercase etc.)
+                    // Enhanced character handling for all characters including quotes
+                    let refChar = char;
+                    
+                    if (char === "'") {
+                        refChar = "'"; // Single quote
+                    } else if (char === '"') {
+                        refChar = '"'; // Double quote
+                    } else if (char === '-') {
+                        refChar = '-'; // Hyphen
+                    } else if (char === '.') {
+                        refChar = '.'; // Period
+                    } else if (char === ',') {
+                        refChar = ','; // Comma
+                    } else if (char === '!') {
+                        refChar = '!'; // Exclamation
+                    } else if (char === '?') {
+                        refChar = '?'; // Question mark
+                    } else if (char === '@') {
+                        refChar = '@'; // At symbol
+                    } else if (char === '#') {
+                        refChar = '#'; // Hash
+                    } else if (char === '$') {
+                        refChar = '$'; // Dollar
+                    } else if (char === '%') {
+                        refChar = '%'; // Percent
+                    } else if (char === '&') {
+                        refChar = '&'; // Ampersand
+                    } else if (char === '*') {
+                        refChar = '*'; // Asterisk
+                    } else if (char === '(') {
+                        refChar = '('; // Left parenthesis
+                    } else if (char === ')') {
+                        refChar = ')'; // Right parenthesis
+                    } else if (char === '+') {
+                        refChar = '+'; // Plus
+                    } else if (char === '=') {
+                        refChar = '='; // Equals
+                    } else if (char === '[') {
+                        refChar = '['; // Left bracket
+                    } else if (char === ']') {
+                        refChar = ']'; // Right bracket
+                    } else if (char === '{') {
+                        refChar = '{'; // Left brace
+                    } else if (char === '}') {
+                        refChar = '}'; // Right brace
+                    } else if (char === '\\') {
+                        refChar = '\\'; // Backslash
+                    } else if (char === '|') {
+                        refChar = '|'; // Pipe
+                    } else if (char === ';') {
+                        refChar = ';'; // Semicolon
+                    } else if (char === ':') {
+                        refChar = ':'; // Colon
+                    } else if (char === '/') {
+                        refChar = '/'; // Forward slash
+                    } else if (char === '<') {
+                        refChar = '<'; // Less than
+                    } else if (char === '>') {
+                        refChar = '>'; // Greater than
+                    } else if (char === '`') {
+                        refChar = '`'; // Backtick
+                    } else if (char === '~') {
+                        refChar = '~'; // Tilde
+                    } else if (char === '^') {
+                        refChar = '^'; // Caret
+                    } else if (char === '_') {
+                        refChar = '_'; // Underscore
+                    } else if (char === '°') {
+                        refChar = '°'; // Degree symbol
+                    } else {
+                        // For all other characters, use as-is
+                        refChar = char;
+                    }
+                    
                     this.recordKeystroke({
                         timestamp: timestamp + i,
-                        actualChar: char,
+                        actualChar: refChar,
                         keyCode: char.charCodeAt(0),
                         type: inputType,
                         sentence: this.currentSentence,
@@ -355,6 +429,9 @@ class BiometricDataCollector {
                         clientY: this.pointerTracking.y
                     });
                 }
+                
+                // Update previous character for next iteration
+                this.previousChar = char;
             }
         }
 
@@ -365,6 +442,10 @@ class BiometricDataCollector {
     
             if (data === ' ') {
                 refChar = 'SPACE';
+            } else if (data === "'") {
+                refChar = "'"; // Single quote
+            } else if (data === '"') {
+                refChar = '"'; // Double quote
             } else if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
                 refChar = 'SHIFT';
             }
@@ -379,6 +460,9 @@ class BiometricDataCollector {
                 clientX: this.pointerTracking.x,
                 clientY: this.pointerTracking.y
             });
+            
+            // Update previous character
+            this.previousChar = data;
         }
     
         // Update last input length
@@ -405,6 +489,39 @@ class BiometricDataCollector {
             'Enter':        'enter',
             'Tab':          'tab',
             ' ':            'SPACE',     // ✅ updated
+            "'":            "'",         // Single quote
+            '"':            '"',         // Double quote
+            '-':            '-',         // Hyphen
+            '.':            '.',         // Period
+            ',':            ',',         // Comma
+            '!':            '!',         // Exclamation
+            '?':            '?',         // Question mark
+            '@':            '@',         // At symbol
+            '#':            '#',         // Hash
+            '$':            '$',         // Dollar
+            '%':            '%',         // Percent
+            '&':            '&',         // Ampersand
+            '*':            '*',         // Asterisk
+            '(':            '(',         // Left parenthesis
+            ')':            ')',         // Right parenthesis
+            '+':            '+',         // Plus
+            '=':            '=',         // Equals
+            '[':            '[',         // Left bracket
+            ']':            ']',         // Right bracket
+            '{':            '{',         // Left brace
+            '}':            '}',         // Right brace
+            '\\':           '\\',        // Backslash
+            '|':            '|',         // Pipe
+            ';':            ';',         // Semicolon
+            ':':            ':',         // Colon
+            '/':            '/',         // Forward slash
+            '<':            '<',         // Less than
+            '>':            '>',         // Greater than
+            '`':            '`',         // Backtick
+            '~':            '~',         // Tilde
+            '^':            '^',         // Caret
+            '_':            '_',         // Underscore
+            '°':            '°',         // Degree symbol
             'Escape':       'escape',
             'ArrowLeft':    'arrowleft',
             'ArrowRight':   'arrowright',
@@ -503,6 +620,7 @@ class BiometricDataCollector {
     startTypingTask() {
         this.currentSentence = 0;
         this.lastInputLength = 0; // FIXED: Reset at task start
+        this.previousChar = null; // FIXED: Reset previousChar at task start
         this.displayCurrentSentence();
         this.updateTypingProgress();
     }
@@ -518,6 +636,8 @@ class BiometricDataCollector {
         
         // FIXED: Reset lastInputLength when starting new sentence
         this.lastInputLength = 0;
+        // FIXED: Reset previousChar when starting new sentence
+        this.previousChar = null;
     }
     
     calculateAccuracy() {
