@@ -303,32 +303,34 @@ class BiometricDataCollector {
                 const isUpper = char.match(/[A-Z]/);
                 const isLower = char.match(/[a-z]/);
               
-                // Enhanced shift detection logic for both directions
+                // Enhanced shift detection logic - more precise rules
                 let shiftNeeded = false;
               
-                if (this.previousChar) {
-                    const prevIsUpper = this.previousChar.match(/[A-Z]/);
-                    const prevIsLower = this.previousChar.match(/[a-z]/);
-              
-                    // Shift needed when:
-                    // 1. Previous was lowercase and current is uppercase (a → A)
-                    // 2. Previous was uppercase and current is lowercase (A → a)
-                    if ((prevIsLower && isUpper) || (prevIsUpper && isLower)) {
-                        shiftNeeded = true;
-                    }
+                // Rule 1: Shift before capital letter ONLY if previous character is NOT a capital letter
+                if (isUpper && (!this.previousChar || !this.previousChar.match(/[A-Z]/))) {
+                    shiftNeeded = true;
+                }
+                // Rule 2: Shift before small letter ONLY if previous character IS a capital letter
+                else if (this.previousChar && this.previousChar.match(/[A-Z]/) && isLower) {
+                    shiftNeeded = true;
                 }
               
                 if (shiftNeeded) {
-                  this.recordKeystroke({
-                    timestamp: timestamp + i - 0.5,
-                    actualChar: 'SHIFT',
-                    keyCode: 16,
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: posOffset,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                  });
+                    if (isUpper) {
+                        console.log('Shift detected before capital letter:', char, 'previousChar:', this.previousChar, '(Rule 1: previous not capital)');
+                    } else {
+                        console.log('Shift detected before small letter:', char, 'previousChar:', this.previousChar, '(Rule 2: previous was capital)');
+                    }
+                    this.recordKeystroke({
+                        timestamp: timestamp + i - 0.5,
+                        actualChar: 'SHIFT',
+                        keyCode: 16,
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: posOffset,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
                 }
               
 
@@ -351,10 +353,10 @@ class BiometricDataCollector {
                     let refChar = char;
                     
                     // Handle smart quotes and apostrophes (common in mobile keyboards)
-                    if (char === "'" || char === "'" || char === "'" || char === "'") {
-                        refChar = "'"; // Single quote/apostrophe
-                    } else if (char === '"' || char === '"' || char === '"' || char === '"') {
-                        refChar = '"'; // Double quote
+                    if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'") {
+                        refChar = "'"; // Single quote/apostrophe - all variants
+                    } else if (char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"') {
+                        refChar = '"'; // Double quote - all variants
                     } else if (char === '-' || char === '–' || char === '—') {
                         refChar = '-'; // Hyphen/dash
                     } else if (char === '.' || char === '…') {
@@ -452,6 +454,11 @@ class BiometricDataCollector {
                         refChar = char;
                     }
                     
+                    // Debug logging for quote characters
+                    if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'") {
+                        console.log('Quote detected:', char, '-> stored as:', refChar);
+                    }
+                    
                     this.recordKeystroke({
                         timestamp: timestamp + i,
                         actualChar: refChar,
@@ -476,10 +483,10 @@ class BiometricDataCollector {
     
             if (data === ' ') {
                 refChar = 'SPACE';
-            } else if (data === "'" || data === "'" || data === "'" || data === "'") {
-                refChar = "'"; // Single quote/apostrophe
-            } else if (data === '"' || data === '"' || data === '"' || data === '"') {
-                refChar = '"'; // Double quote
+            } else if (data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'") {
+                refChar = "'"; // Single quote/apostrophe - all variants
+            } else if (data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"') {
+                refChar = '"'; // Double quote - all variants
             } else if (data === '–' || data === '—') {
                 refChar = '-'; // En dash and em dash
             } else if (data === '…') {
@@ -560,6 +567,43 @@ class BiometricDataCollector {
                 refChar = data; // More Greek letters
             } else if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
                 refChar = 'SHIFT';
+            } else if (data === 'π' || data === 'μ' || data === 'σ' || data === 'τ') {
+                refChar = data; // More Greek letters
+            } else {
+                // For all other characters, use as-is
+                refChar = data;
+            }
+    
+            // Apply shift detection logic for other input types
+            const isUpper = data.match(/[A-Z]/);
+            const isLower = data.match(/[a-z]/);
+            let shiftNeeded = false;
+            
+            // Rule 1: Shift before capital letter ONLY if previous character is NOT a capital letter
+            if (isUpper && (!this.previousChar || !this.previousChar.match(/[A-Z]/))) {
+                shiftNeeded = true;
+            }
+            // Rule 2: Shift before small letter ONLY if previous character IS a capital letter
+            else if (this.previousChar && this.previousChar.match(/[A-Z]/) && isLower) {
+                shiftNeeded = true;
+            }
+            
+            if (shiftNeeded) {
+                if (isUpper) {
+                    console.log('Shift detected before capital letter (other input):', data, 'previousChar:', this.previousChar, '(Rule 1: previous not capital)');
+                } else {
+                    console.log('Shift detected before small letter (other input):', data, 'previousChar:', this.previousChar, '(Rule 2: previous was capital)');
+                }
+                this.recordKeystroke({
+                    timestamp: timestamp - 0.5,
+                    actualChar: 'SHIFT',
+                    keyCode: 16,
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos - 1,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
             }
     
             this.recordKeystroke({
