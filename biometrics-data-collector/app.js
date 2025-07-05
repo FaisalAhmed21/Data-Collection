@@ -1584,12 +1584,6 @@ class BiometricDataCollector {
 
 }
 
-showWrongDirectionFeedback() ; {
-    const crystal = document.getElementById('crystal');
-    crystal.classList.add('error');
-    setTimeout(() => crystal.classList.remove('error'), 300);
-}
-
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
