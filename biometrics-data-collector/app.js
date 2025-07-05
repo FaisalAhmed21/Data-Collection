@@ -810,6 +810,9 @@ class BiometricDataCollector {
                 break;
 
             case 'altRotate': {
+                const mobileRotationThreshold = 0.005;
+                 
+
                 if (touches.length !== 1) return;
             
                 const rect = crystal.getBoundingClientRect();
@@ -850,7 +853,9 @@ class BiometricDataCollector {
                     }
                     
                     // Only process moves above threshold to reduce jitter
-                    if (Math.abs(delta) < 0.02) return;
+                    if (Math.abs(delta) < mobileRotationThreshold){
+                        return;
+                    }
                     
                     // Determine required direction for current rotation
                     const requiredDirection = (this.crystalState.rotationsCompleted % 2 === 0) 
