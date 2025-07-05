@@ -593,6 +593,50 @@ class BiometricDataCollector {
         this.recordTouchEvent(touchData);
     }
 
+    // Show direction indicator
+    updateDirectionIndicator() {
+        const crystalArea = document.getElementById('crystal-area');
+        let indicator = crystalArea.querySelector('.direction-indicator');
+        
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.className = 'direction-indicator';
+            crystalArea.appendChild(indicator);
+        }
+        
+        if (this.crystalState.expectedDirection === null) {
+            indicator.textContent = 'Start rotating in any direction';
+            indicator.className = 'direction-indicator neutral';
+        } else {
+            const currentRotation = this.crystalState.rotationsCompleted;
+            const isClockwise = (currentRotation % 2 === 0) 
+                ? this.crystalState.expectedDirection > 0 
+                : this.crystalState.expectedDirection < 0;
+            
+            indicator.textContent = isClockwise ? '↻ Rotate Clockwise' : '↺ Rotate Counter-Clockwise';
+            indicator.className = `direction-indicator ${isClockwise ? 'clockwise' : 'counter-clockwise'}`;
+        }
+    }
+    
+    // Hide direction indicator
+    hideDirectionIndicator() {
+        const indicator = document.querySelector('.direction-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
+    }
+    
+    // Show wrong direction feedback
+    showWrongDirectionFeedback() {
+        const crystal = document.getElementById('crystal');
+        crystal.classList.add('wrong-direction');
+        
+        setTimeout(() => {
+            crystal.classList.remove('wrong-direction');
+        }, 300);
+    }
+
+
     handleCrystalMouseDown(e) {
         const timestamp = performance.now();
         this.recordTouchEvent({
@@ -766,80 +810,92 @@ class BiometricDataCollector {
                 break;
 
             case 'altRotate': {
-            if (touches.length !== 1) return;
-        
-            const rect = crystal.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            const touch = touches[0];
-            const angle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX);
-        
-            if (phase === 'start') {
-                this.crystalState.initialAngle = angle;
-                this.crystalState.lastAngle = angle;
-                this.crystalState.currentRotation = 0;
-                this.crystalState.rotationsCompleted = 0;
-                if (this.crystalState.rotationsCompleted === 0) {
-                    this.crystalState.expectedDirection = null;
-                }
-                crystal.classList.add('active');
-                this.updateStepProgress('0/3');
-            }
-        
-            else if (phase === 'move') {
-                const last = this.crystalState.lastAngle;
-                let delta = angle - last;
-        
-                if (delta > Math.PI) delta -= 2 * Math.PI;
-                if (delta < -Math.PI) delta += 2 * Math.PI;
-        
-                if (!isFinite(delta)) return;
-        
-                // Set expected direction on first move
-                if (this.crystalState.expectedDirection === null && Math.abs(delta) > 0.01) {
-                    this.crystalState.expectedDirection = Math.sign(delta);
-                }
-        
-                // Check current required direction
-                const requiredDirection = (this.crystalState.rotationsCompleted % 2 === 0)
-                    ? this.crystalState.expectedDirection
-                    : -this.crystalState.expectedDirection;
-        
-                // Abort if wrong direction
-                if (Math.sign(delta) !== requiredDirection) {
-                    console.log('❌ Wrong rotation direction. Resetting.');
+                if (touches.length !== 1) return;
+            
+                const rect = crystal.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const touch = touches[0];
+                const angle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX);
+            
+                if (phase === 'start') {
+                    this.crystalState.initialAngle = angle;
+                    this.crystalState.lastAngle = angle;
                     this.crystalState.currentRotation = 0;
-                    this.crystalState.lastAngle = angle; // reset angle reference
-                    return;
+                    
+                    // Only reset rotations if completely starting over
+                    if (this.crystalState.rotationsCompleted === 0) {
+                        this.crystalState.expectedDirection = null;
+                    }
+                    
+                    crystal.classList.add('active');
+                    this.updateStepProgress(`${this.crystalState.rotationsCompleted}/3`);
+                    this.updateDirectionIndicator();
+                    
+                } else if (phase === 'move') {
+                    const last = this.crystalState.lastAngle;
+                    let delta = angle - last;
+                    
+                    // Improved angle wrapping with validation
+                    if (delta > Math.PI) delta -= 2 * Math.PI;
+                    if (delta < -Math.PI) delta += 2 * Math.PI;
+                    
+                    // Skip if delta is invalid or too large (likely a calculation error)
+                    if (!isFinite(delta) || Math.abs(delta) > Math.PI/2) return;
+                    
+                    // Set expected direction on first significant move
+                    if (this.crystalState.expectedDirection === null && Math.abs(delta) > 0.02) {
+                        this.crystalState.expectedDirection = Math.sign(delta);
+                        this.updateDirectionIndicator();
+                    }
+                    
+                    // Only process moves above threshold to reduce jitter
+                    if (Math.abs(delta) < 0.02) return;
+                    
+                    // Determine required direction for current rotation
+                    const requiredDirection = (this.crystalState.rotationsCompleted % 2 === 0) 
+                        ? this.crystalState.expectedDirection 
+                        : -this.crystalState.expectedDirection;
+                    
+                    // ✅ FIXED: Gentle feedback instead of harsh reset
+                    if (Math.sign(delta) !== requiredDirection) {
+                        this.showWrongDirectionFeedback();
+                        this.crystalState.lastAngle = angle; // Update angle reference but keep progress
+                        return;
+                    }
+                    
+                    // ✅ Valid rotation - update progress
+                    this.crystalState.currentRotation += delta;
+                    this.crystalState.lastAngle = angle;
+                    
+                    const rotationAmount = Math.abs(this.crystalState.currentRotation);
+                    const partialRotation = Math.min(rotationAmount / (2 * Math.PI), 1);
+                    
+                    this.updateStepProgress(`${(this.crystalState.rotationsCompleted + partialRotation).toFixed(1)}/3`);
+                    
+                    // Complete a full rotation
+                    if (rotationAmount >= 2 * Math.PI) {
+                        this.crystalState.rotationsCompleted += 1;
+                        this.crystalState.currentRotation = 0;
+                        
+                        crystal.classList.add('rotation-feedback');
+                        setTimeout(() => crystal.classList.remove('rotation-feedback'), 300);
+                        
+                        this.updateDirectionIndicator();
+                        
+                        // Check if all rotations completed
+                        if (this.crystalState.rotationsCompleted >= step.target) {
+                            this.completeStep();
+                        }
+                    }
+                    
+                } else if (phase === 'end') {
+                    crystal.classList.remove('active');
+                    this.hideDirectionIndicator();
                 }
-        
-                this.crystalState.currentRotation += delta;
-                this.crystalState.lastAngle = angle;  // update last angle
-        
-                const rotationAmount = Math.abs(this.crystalState.currentRotation);
-                const partialRotation = Math.min(rotationAmount / (2 * Math.PI), 1);
-                
-                this.updateStepProgress(`${(this.crystalState.rotationsCompleted + partialRotation).toFixed(2)}/3`);
-                
-                if (rotationAmount >= 2 * Math.PI) {
-                    this.crystalState.rotationsCompleted += 1;
-                    this.crystalState.currentRotation = 0;
-                
-                    crystal.classList.add('rotation-feedback');
-                    setTimeout(() => crystal.classList.remove('rotation-feedback'), 200);
-                }
-                
-                if (this.crystalState.rotationsCompleted >= step.target) {
-                    this.completeStep();
-                }
+                break;
             }
 
-            else if (phase === 'end') {
-                crystal.classList.remove('active');
-            }
-        
-            break;
-        }
 
             case 'pinch':
             case 'spread':
@@ -1008,6 +1064,7 @@ class BiometricDataCollector {
         document.getElementById('size-indicator').textContent = '100%';
         document.getElementById('size-indicator').classList.remove('shrink-highlight', 'enlarge-highlight', 'completion-highlight');
         this.hidePressureIndicator();
+        this.hideDirectionIndicator();
     }
 
     updateCrystalDisplay() {
