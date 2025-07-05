@@ -587,7 +587,10 @@ class BiometricDataCollector {
         };
 
         this.recordTouchEvent(touchData);
-        this.processCrystalInteraction('end', touches);
+        this.processCrystalInteraction('end', touches.map(t => ({
+            clientX: t.clientX,
+            clientY: t.clientY
+        })));
     }
 
     handleCrystalMouseDown(e) {
