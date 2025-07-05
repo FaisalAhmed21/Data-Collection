@@ -819,18 +819,18 @@ class BiometricDataCollector {
                 this.crystalState.lastAngle = angle;  // update last angle
         
                 const rotationAmount = Math.abs(this.crystalState.currentRotation);
-                this.updateStepProgress(`${this.crystalState.rotationsCompleted} + ${Math.floor(rotationAmount / (2 * Math.PI * 100)) / 100} / 3`);
-        
+                const partialRotation = Math.min(rotationAmount / (2 * Math.PI), 1);
+                
+                this.updateStepProgress(`${(this.crystalState.rotationsCompleted + partialRotation).toFixed(2)}/3`);
+                
                 if (rotationAmount >= 2 * Math.PI) {
                     this.crystalState.rotationsCompleted += 1;
                     this.crystalState.currentRotation = 0;
-        
+                
                     crystal.classList.add('rotation-feedback');
                     setTimeout(() => crystal.classList.remove('rotation-feedback'), 200);
-        
-                    this.updateStepProgress(`${this.crystalState.rotationsCompleted}/3`);
                 }
-        
+                
                 if (this.crystalState.rotationsCompleted >= step.target) {
                     this.completeStep();
                 }
