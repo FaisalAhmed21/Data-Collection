@@ -821,8 +821,6 @@ this.processCrystalInteraction('end', touches);
                     if (this.crystalState.rotationsCompleted >= step.target) {
                         this.completeStep();
                     }
-
-                    this.crystalState.initialAngle = angle;
                 }
                 else if (phase === 'end') {
                     crystal.classList.remove('active');
