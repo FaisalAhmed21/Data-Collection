@@ -297,80 +297,71 @@ class BiometricDataCollector {
         else if (inputType === 'insertText' && data) {
             for (let i = 0; i < data.length; i++) {
                 const char = data[i];
-    
-                // 1. SHIFT detection: lowercase → uppercase
-                if (this.lastChar && this.lastChar.match(/[a-z]/) && char.match(/[A-Z]/)) {
-                    // Log SHIFT before uppercase letter
-                    this.recordKeystroke({
-                        timestamp: timestamp + i - 0.5,
-                        actualChar: 'SHIFT',
-                        keyCode: 16,
-                        type: 'shift',
-                        sentence: this.currentSentence,
-                        position: pos - data.length + i,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
-    
-                    // Then log the uppercase letter
-                    this.recordKeystroke({
-                        timestamp: timestamp + i,
-                        actualChar: char,
-                        keyCode: char.charCodeAt(0),
-                        type: inputType,
-                        sentence: this.currentSentence,
-                        position: pos - data.length + i,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
+              
+                // Normalize smart quotes
+                let normalizedChar = char;
+                if (`‘’` .includes(char)) normalizedChar = "'";
+                if (`“”` .includes(char)) normalizedChar = '"';
+              
+                // Always log SHIFT before any uppercase letter
+                if (normalizedChar.match(/[A-Z]/)) {
+                  this.recordKeystroke({
+                    timestamp: timestamp + i - 0.5,
+                    actualChar: 'SHIFT',
+                    keyCode: 16,
+                    type: 'shift',
+                    sentence: this.currentSentence,
+                    position: pos - data.length + i,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                  });
                 }
-    
-                // 2. Space character
-                else if (char === ' ') {
-                    this.recordKeystroke({
-                        timestamp: timestamp + i,
-                        actualChar: 'SPACE',
-                        keyCode: 32,
-                        type: inputType,
-                        sentence: this.currentSentence,
-                        position: pos - data.length + i,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
+              
+                // Log all smart punctuation as-is
+                if (`'"`.includes(normalizedChar)) {
+                  this.recordKeystroke({
+                    timestamp: timestamp + i,
+                    actualChar: normalizedChar,
+                    keyCode: normalizedChar.charCodeAt(0),
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos - data.length + i,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                  });
                 }
-    
-                // 3. Smart punctuation characters (quotes etc.)
-                else if (`'"‘’“”`.includes(char)) {
-                    this.recordKeystroke({
-                        timestamp: timestamp + i,
-                        actualChar: char,
-                        keyCode: char.charCodeAt(0),
-                        type: inputType,
-                        sentence: this.currentSentence,
-                        position: pos - data.length + i,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
+                // SPACE
+                else if (normalizedChar === ' ') {
+                  this.recordKeystroke({
+                    timestamp: timestamp + i,
+                    actualChar: 'SPACE',
+                    keyCode: 32,
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos - data.length + i,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                  });
                 }
-    
-                // 4. Normal characters (lowercase, digits, symbols)
+                // Normal characters
                 else {
-                    this.recordKeystroke({
-                        timestamp: timestamp + i,
-                        actualChar: char,
-                        keyCode: char.charCodeAt(0),
-                        type: inputType,
-                        sentence: this.currentSentence,
-                        position: pos - data.length + i,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
+                  this.recordKeystroke({
+                    timestamp: timestamp + i,
+                    actualChar: normalizedChar,
+                    keyCode: normalizedChar.charCodeAt(0),
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos - data.length + i,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                  });
                 }
+              
+                this.lastChar = normalizedChar;
+              }
+
     
-                // Update last character for next shift detection
-                this.lastChar = char;
             }
-        }
     
         // Handle other input types like paste, drag-drop, cut
         else if (inputType && data) {
