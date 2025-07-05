@@ -289,30 +289,30 @@ class BiometricDataCollector {
     
         // Handle deletion events (backspace, delete)
         if (inputType && inputType.startsWith('delete')) {
-            // Skip backspace recording here to avoid duplicates
+            // Skip backspace recording here to avoid duplicates (handled in keydown)
             return;
         }
-
     
         // Handle text insertion
         else if (inputType === 'insertText' && data) {
             for (let i = 0; i < data.length; i++) {
                 const char = data[i];
-                
-                // If uppercase letter, record SHIFT event first, then the letter
-                if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
-                    // Record SHIFT event
+    
+                // 1. SHIFT detection: lowercase → uppercase
+                if (this.lastChar && this.lastChar.match(/[a-z]/) && char.match(/[A-Z]/)) {
+                    // Log SHIFT before uppercase letter
                     this.recordKeystroke({
-                        timestamp: timestamp + i - 0.5, // slightly before letter
+                        timestamp: timestamp + i - 0.5,
                         actualChar: 'SHIFT',
-                        keyCode: 16, // KeyCode for Shift
-                        type: inputType,
+                        keyCode: 16,
+                        type: 'shift',
                         sentence: this.currentSentence,
                         position: pos - data.length + i,
                         clientX: this.pointerTracking.x,
                         clientY: this.pointerTracking.y
                     });
-                    // Then record actual uppercase letter
+    
+                    // Then log the uppercase letter
                     this.recordKeystroke({
                         timestamp: timestamp + i,
                         actualChar: char,
@@ -324,8 +324,9 @@ class BiometricDataCollector {
                         clientY: this.pointerTracking.y
                     });
                 }
+    
+                // 2. Space character
                 else if (char === ' ') {
-                    // SPACE character
                     this.recordKeystroke({
                         timestamp: timestamp + i,
                         actualChar: 'SPACE',
@@ -337,8 +338,9 @@ class BiometricDataCollector {
                         clientY: this.pointerTracking.y
                     });
                 }
-                else {
-                    // Normal character (lowercase etc.)
+    
+                // 3. Smart punctuation characters (quotes etc.)
+                else if (`'"‘’“”`.includes(char)) {
                     this.recordKeystroke({
                         timestamp: timestamp + i,
                         actualChar: char,
@@ -350,11 +352,27 @@ class BiometricDataCollector {
                         clientY: this.pointerTracking.y
                     });
                 }
+    
+                // 4. Normal characters (lowercase, digits, symbols)
+                else {
+                    this.recordKeystroke({
+                        timestamp: timestamp + i,
+                        actualChar: char,
+                        keyCode: char.charCodeAt(0),
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - data.length + i,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                }
+    
+                // Update last character for next shift detection
+                this.lastChar = char;
             }
         }
-
     
-        // Handle other input types like paste, cut, etc.
+        // Handle other input types like paste, drag-drop, cut
         else if (inputType && data) {
             let refChar = data;
     
@@ -376,13 +394,12 @@ class BiometricDataCollector {
             });
         }
     
-        // Update last input length
+        // Update input length & check progress
         this.lastInputLength = value.length;
-    
         this.calculateAccuracy();
         this.checkSentenceCompletion();
     }
-    
+
     
     // FIXED: Enhanced character detection with better mobile support
     getActualTypedCharacter(e, inputValue = '') {
