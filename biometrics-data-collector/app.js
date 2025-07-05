@@ -591,10 +591,6 @@ class BiometricDataCollector {
         };
 
         this.recordTouchEvent(touchData);
-        this.processCrystalInteraction('end', touches.map(t => ({
-            clientX: t.clientX,
-            clientY: t.clientY
-        })));
     }
 
     handleCrystalMouseDown(e) {
@@ -783,7 +779,9 @@ class BiometricDataCollector {
                 this.crystalState.lastAngle = angle;
                 this.crystalState.currentRotation = 0;
                 this.crystalState.rotationsCompleted = 0;
-                this.crystalState.expectedDirection = null;
+                if (this.crystalState.rotationsCompleted === 0) {
+                    this.crystalState.expectedDirection = null;
+                }
                 crystal.classList.add('active');
                 this.updateStepProgress('0/3');
             }
