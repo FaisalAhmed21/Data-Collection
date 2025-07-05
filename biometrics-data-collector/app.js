@@ -296,36 +296,38 @@ class BiometricDataCollector {
         // Handle text insertion
         else if (inputType === 'insertText' && data) {
             for (let i = 0; i < data.length; i++) {
-              const char = data[i];
+              let char = data[i];
           
-              // Normalize smart quotes to straight if you want
-              let normalizedChar = char;
-              if (`‘’‹›`.includes(char)) normalizedChar = "'";
-              if (`“”«»„‟`.includes(char)) normalizedChar = '"';
+              // Normalize smart quotes to straight forms
+              if (`‘’‹›`.includes(char)) char = "'";
+              if (`“”«»„‟`.includes(char)) char = '"';
           
-              // Determine case
-              const isUppercase = normalizedChar.match(/[A-Z]/);
-              const isLowercase = normalizedChar.match(/[a-z]/);
+              const isUpper = char.match(/[A-Z]/);
+              const isLower = char.match(/[a-z]/);
+              const isLetter = isUpper || isLower;
           
-              // Always store smart quotes as is
               const isSmartQuote = `'\"‘’“”‹›«»„‟`.includes(char);
+          
+              const isSpace = char === ' ';
+          
+              // 1️⃣ Always record smart quotes as is
               if (isSmartQuote) {
                 this.recordKeystroke({
                   timestamp: timestamp + i,
-                  actualChar: normalizedChar,
-                  keyCode: normalizedChar.charCodeAt(0),
+                  actualChar: char,
+                  keyCode: char.charCodeAt(0),
                   type: inputType,
                   sentence: this.currentSentence,
                   position: pos - data.length + i,
                   clientX: this.pointerTracking.x,
                   clientY: this.pointerTracking.y
                 });
-                this.lastChar = normalizedChar;
+                this.lastChar = char;
                 continue;
               }
           
-              // Handle SPACE
-              if (normalizedChar === ' ') {
+              // 2️⃣ Always record SPACE
+              if (isSpace) {
                 this.recordKeystroke({
                   timestamp: timestamp + i,
                   actualChar: 'SPACE',
@@ -336,44 +338,60 @@ class BiometricDataCollector {
                   clientX: this.pointerTracking.x,
                   clientY: this.pointerTracking.y
                 });
-                this.lastChar = normalizedChar;
+                this.lastChar = char;
                 continue;
               }
           
-              // Check for SHIFT needed:
-              let shiftNeeded = false;
+              // 3️⃣ For letters, detect SHIFT if case changes
+              if (isLetter) {
+                let shiftNeeded = false;
           
-              if (!this.lastChar) {
-                // first letter typed
-                if (isUppercase) shiftNeeded = true;
-              } else {
-                const lastIsUpper = this.lastChar.match(/[A-Z]/);
-                const lastIsLower = this.lastChar.match(/[a-z]/);
+                if (!this.lastChar) {
+                  // first letter
+                  if (isUpper) shiftNeeded = true;
+                } else {
+                  const lastUpper = this.lastChar.match(/[A-Z]/);
+                  const lastLower = this.lastChar.match(/[a-z]/);
           
-                // Change between lower <-> upper
-                if ((lastIsLower && isUppercase) || (lastIsUpper && isLowercase)) {
-                  shiftNeeded = true;
+                  if ((lastLower && isUpper) || (lastUpper && isLower)) {
+                    shiftNeeded = true;
+                  }
                 }
-              }
           
-              if (shiftNeeded) {
+                if (shiftNeeded) {
+                  this.recordKeystroke({
+                    timestamp: timestamp + i - 0.5,
+                    actualChar: 'SHIFT',
+                    keyCode: 16,
+                    type: 'shift',
+                    sentence: this.currentSentence,
+                    position: pos - data.length + i,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                  });
+                }
+          
+                // Then record the actual letter
                 this.recordKeystroke({
-                  timestamp: timestamp + i - 0.5,
-                  actualChar: 'SHIFT',
-                  keyCode: 16,
-                  type: 'shift',
+                  timestamp: timestamp + i,
+                  actualChar: char,
+                  keyCode: char.charCodeAt(0),
+                  type: inputType,
                   sentence: this.currentSentence,
                   position: pos - data.length + i,
                   clientX: this.pointerTracking.x,
                   clientY: this.pointerTracking.y
                 });
+          
+                this.lastChar = char;
+                continue;
               }
           
-              // Record the actual letter
+              // 4️⃣ All other characters (numbers, symbols) recorded as is
               this.recordKeystroke({
                 timestamp: timestamp + i,
-                actualChar: normalizedChar,
-                keyCode: normalizedChar.charCodeAt(0),
+                actualChar: char,
+                keyCode: char.charCodeAt(0),
                 type: inputType,
                 sentence: this.currentSentence,
                 position: pos - data.length + i,
@@ -381,11 +399,8 @@ class BiometricDataCollector {
                 clientY: this.pointerTracking.y
               });
           
-              this.lastChar = normalizedChar;
+              this.lastChar = char;
             }
-
-
-    
         }
     
         // Handle other input types like paste, drag-drop, cut
@@ -1613,7 +1628,10 @@ class BiometricDataCollector {
         });
     }
 
+
+
 }
+
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
