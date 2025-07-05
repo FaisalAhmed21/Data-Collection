@@ -23,6 +23,10 @@ class BiometricDataCollector {
         this.lastInputLength = 0;
         this.previousChar = null; // Track previous character for shift detection
         
+        // Mobile backspace deduplication
+        this.lastBackspaceTime = 0;
+        this.backspaceCooldown = 100; // 100ms cooldown to prevent duplicates
+        
         // Enhanced gallery zoom state with pinch support
         this.galleryZoom = {
             scale: 1,
@@ -290,19 +294,29 @@ class BiometricDataCollector {
     
         // Handle deletion events (backspace, delete)
         if (inputType && inputType.startsWith('delete')) {
-            // Record backspace for mobile keyboards (Gboard, Samsung, iOS)
-            if (inputType === 'deleteContentBackward') {
-                this.recordKeystroke({
-                    timestamp: timestamp - 0.5,
-                    actualChar: 'Backspace',
-                    keyCode: 8,
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-                console.log('Mobile backspace detected:', inputType);
+            // Record backspace for mobile keyboards (Gboard, Samsung, iOS) with deduplication
+            if (inputType === 'deleteContentBackward' || inputType === 'deleteContent' || inputType === 'deleteWordBackward') {
+                const currentTime = performance.now();
+                
+                // Check if enough time has passed since last backspace to avoid duplicates
+                if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
+                    this.recordKeystroke({
+                        timestamp: timestamp - 0.5,
+                        actualChar: 'Backspace',
+                        keyCode: 8,
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                    console.log('Mobile backspace recorded:', inputType, 'at time:', currentTime);
+                    
+                    // Update last backspace time
+                    this.lastBackspaceTime = currentTime;
+                } else {
+                    console.log('Mobile backspace duplicate ignored:', inputType, 'time since last:', currentTime - this.lastBackspaceTime);
+                }
             }
             // Skip other deletion recording here to avoid duplicates
             return;
@@ -848,20 +862,31 @@ class BiometricDataCollector {
         const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
 
         if (actualCharacter === 'Backspace' || actualCharacter === 'backspace') {
-            // Only record Backspace once on keydown
-            this.recordKeystroke({
-                timestamp,
-                actualChar: 'Backspace',
-                keyCode: 8,
-                type: 'keydown',
-                shiftKey: e.shiftKey,
-                ctrlKey: e.ctrlKey,
-                altKey: e.altKey,
-                sentence: this.currentSentence,
-                position: e.target.selectionStart || 0,
-                clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y
-            });
+            // Only record Backspace once on keydown with deduplication
+            const currentTime = performance.now();
+            
+            // Check if enough time has passed since last backspace to avoid duplicates
+            if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
+                this.recordKeystroke({
+                    timestamp,
+                    actualChar: 'Backspace',
+                    keyCode: 8,
+                    type: 'keydown',
+                    shiftKey: e.shiftKey,
+                    ctrlKey: e.ctrlKey,
+                    altKey: e.altKey,
+                    sentence: this.currentSentence,
+                    position: e.target.selectionStart || 0,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+                console.log('Desktop backspace recorded at time:', currentTime);
+                
+                // Update last backspace time
+                this.lastBackspaceTime = currentTime;
+            } else {
+                console.log('Desktop backspace duplicate ignored, time since last:', currentTime - this.lastBackspaceTime);
+            }
             return;  // Don't record further
         }
         
@@ -890,6 +915,7 @@ class BiometricDataCollector {
         this.currentSentence = 0;
         this.lastInputLength = 0; // FIXED: Reset at task start
         this.previousChar = null; // FIXED: Reset previousChar at task start
+        this.lastBackspaceTime = 0; // Reset backspace tracking
         this.displayCurrentSentence();
         this.updateTypingProgress();
     }
@@ -907,6 +933,8 @@ class BiometricDataCollector {
         this.lastInputLength = 0;
         // FIXED: Reset previousChar when starting new sentence
         this.previousChar = null;
+        // Reset backspace tracking for new sentence
+        this.lastBackspaceTime = 0;
     }
     
     calculateAccuracy() {
@@ -970,7 +998,21 @@ class BiometricDataCollector {
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('Recording keystroke with quote:', data.actualChar, 'type:', data.type);
         }
+        // Debug logging for backspace
+        if (data.actualChar === 'Backspace') {
+            console.log('Recording backspace keystroke:', data.type, 'timestamp:', data.timestamp);
+        }
         this.keystrokeData.push(data);
+    }
+    
+    // Helper method to get backspace statistics for debugging
+    getBackspaceStats() {
+        const backspaces = this.keystrokeData.filter(k => k.actualChar === 'Backspace');
+        console.log('Backspace Statistics:');
+        console.log('Total backspaces recorded:', backspaces.length);
+        console.log('Backspace types:', [...new Set(backspaces.map(b => b.type))]);
+        console.log('Backspace details:', backspaces);
+        return backspaces;
     }
     
     // Crystal Game Methods
