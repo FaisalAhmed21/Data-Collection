@@ -296,72 +296,97 @@ class BiometricDataCollector {
         // Handle text insertion
         else if (inputType === 'insertText' && data) {
             for (let i = 0; i < data.length; i++) {
-                const char = data[i];
-              
-                // Normalize smart quotes
-                let normalizedChar = char;
-                if (`‘’` .includes(char)) normalizedChar = "'";
-                if (`“”` .includes(char)) normalizedChar = '"';
-              
-                // Always log SHIFT before any uppercase letter
-                if (normalizedChar.match(/[A-Z]/)) {
-                  this.recordKeystroke({
-                    timestamp: timestamp + i - 0.5,
-                    actualChar: 'SHIFT',
-                    keyCode: 16,
-                    type: 'shift',
-                    sentence: this.currentSentence,
-                    position: pos - data.length + i,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                  });
-                }
-              
-                // Log all smart punctuation as-is
-                if (`'"`.includes(normalizedChar)) {
-                  this.recordKeystroke({
-                    timestamp: timestamp + i,
-                    actualChar: normalizedChar,
-                    keyCode: normalizedChar.charCodeAt(0),
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos - data.length + i,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                  });
-                }
-                // SPACE
-                else if (normalizedChar === ' ') {
-                  this.recordKeystroke({
-                    timestamp: timestamp + i,
-                    actualChar: 'SPACE',
-                    keyCode: 32,
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos - data.length + i,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                  });
-                }
-                // Normal characters
-                else {
-                  this.recordKeystroke({
-                    timestamp: timestamp + i,
-                    actualChar: normalizedChar,
-                    keyCode: normalizedChar.charCodeAt(0),
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos - data.length + i,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                  });
-                }
-              
+              const char = data[i];
+          
+              // Normalize smart quotes to straight if you want
+              let normalizedChar = char;
+              if (`‘’‹›`.includes(char)) normalizedChar = "'";
+              if (`“”«»„‟`.includes(char)) normalizedChar = '"';
+          
+              // Determine case
+              const isUppercase = normalizedChar.match(/[A-Z]/);
+              const isLowercase = normalizedChar.match(/[a-z]/);
+          
+              // Always store smart quotes as is
+              const isSmartQuote = `'\"‘’“”‹›«»„‟`.includes(char);
+              if (isSmartQuote) {
+                this.recordKeystroke({
+                  timestamp: timestamp + i,
+                  actualChar: normalizedChar,
+                  keyCode: normalizedChar.charCodeAt(0),
+                  type: inputType,
+                  sentence: this.currentSentence,
+                  position: pos - data.length + i,
+                  clientX: this.pointerTracking.x,
+                  clientY: this.pointerTracking.y
+                });
                 this.lastChar = normalizedChar;
+                continue;
               }
+          
+              // Handle SPACE
+              if (normalizedChar === ' ') {
+                this.recordKeystroke({
+                  timestamp: timestamp + i,
+                  actualChar: 'SPACE',
+                  keyCode: 32,
+                  type: inputType,
+                  sentence: this.currentSentence,
+                  position: pos - data.length + i,
+                  clientX: this.pointerTracking.x,
+                  clientY: this.pointerTracking.y
+                });
+                this.lastChar = normalizedChar;
+                continue;
+              }
+          
+              // Check for SHIFT needed:
+              let shiftNeeded = false;
+          
+              if (!this.lastChar) {
+                // first letter typed
+                if (isUppercase) shiftNeeded = true;
+              } else {
+                const lastIsUpper = this.lastChar.match(/[A-Z]/);
+                const lastIsLower = this.lastChar.match(/[a-z]/);
+          
+                // Change between lower <-> upper
+                if ((lastIsLower && isUppercase) || (lastIsUpper && isLowercase)) {
+                  shiftNeeded = true;
+                }
+              }
+          
+              if (shiftNeeded) {
+                this.recordKeystroke({
+                  timestamp: timestamp + i - 0.5,
+                  actualChar: 'SHIFT',
+                  keyCode: 16,
+                  type: 'shift',
+                  sentence: this.currentSentence,
+                  position: pos - data.length + i,
+                  clientX: this.pointerTracking.x,
+                  clientY: this.pointerTracking.y
+                });
+              }
+          
+              // Record the actual letter
+              this.recordKeystroke({
+                timestamp: timestamp + i,
+                actualChar: normalizedChar,
+                keyCode: normalizedChar.charCodeAt(0),
+                type: inputType,
+                sentence: this.currentSentence,
+                position: pos - data.length + i,
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y
+              });
+          
+              this.lastChar = normalizedChar;
+            }
+
 
     
-            }
+        }
     
         // Handle other input types like paste, drag-drop, cut
         else if (inputType && data) {
@@ -1588,10 +1613,7 @@ class BiometricDataCollector {
         });
     }
 
-
-
 }
-
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
