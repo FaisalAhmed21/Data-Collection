@@ -290,7 +290,21 @@ class BiometricDataCollector {
     
         // Handle deletion events (backspace, delete)
         if (inputType && inputType.startsWith('delete')) {
-            // Skip backspace recording here to avoid duplicates
+            // Record backspace for mobile keyboards (Gboard, Samsung, iOS)
+            if (inputType === 'deleteContentBackward') {
+                this.recordKeystroke({
+                    timestamp: timestamp - 0.5,
+                    actualChar: 'Backspace',
+                    keyCode: 8,
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+                console.log('Mobile backspace detected:', inputType);
+            }
+            // Skip other deletion recording here to avoid duplicates
             return;
         }
 
@@ -353,10 +367,12 @@ class BiometricDataCollector {
                     let refChar = char;
                     
                     // Handle smart quotes and apostrophes (common in mobile keyboards)
-                    if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'") {
+                    if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´') {
                         refChar = "'"; // Single quote/apostrophe - all variants
-                    } else if (char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"') {
+                        console.log('Single quote detected:', char, '-> stored as:', refChar);
+                    } else if (char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟') {
                         refChar = '"'; // Double quote - all variants
+                        console.log('Double quote detected:', char, '-> stored as:', refChar);
                     } else if (char === '-' || char === '–' || char === '—') {
                         refChar = '-'; // Hyphen/dash
                     } else if (char === '.' || char === '…') {
@@ -455,7 +471,7 @@ class BiometricDataCollector {
                     }
                     
                     // Debug logging for quote characters
-                    if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'") {
+                    if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´') {
                         console.log('Quote detected:', char, '-> stored as:', refChar);
                     }
                     
@@ -483,10 +499,12 @@ class BiometricDataCollector {
     
             if (data === ' ') {
                 refChar = 'SPACE';
-            } else if (data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'") {
+            } else if (data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´') {
                 refChar = "'"; // Single quote/apostrophe - all variants
-            } else if (data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"') {
+                console.log('Single quote detected:', data, '-> stored as:', refChar);
+            } else if (data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟') {
                 refChar = '"'; // Double quote - all variants
+                console.log('Double quote detected:', data, '-> stored as:', refChar);
             } else if (data === '–' || data === '—') {
                 refChar = '-'; // En dash and em dash
             } else if (data === '…') {
@@ -641,7 +659,7 @@ class BiometricDataCollector {
     
         // 2. Handle well-known special keys
         const specialKeys = {
-            'Backspace':    'BACKSPACE',
+            'Backspace':    'Backspace',
             'Enter':        'enter',
             'Tab':          'tab',
             ' ':            'SPACE',     // ✅ updated
@@ -649,8 +667,20 @@ class BiometricDataCollector {
             '"':            '"',         // Double quote
             "'":            "'",         // Smart single quote
             "'":            "'",         // Smart single quote
+            "'":            "'",         // Smart single quote
+            "'":            "'",         // Smart single quote
+            "'":            "'",         // Smart single quote
+            "'":            "'",         // Smart single quote
+            '`':            "'",         // Backtick as single quote
+            '´':            "'",         // Acute accent as single quote
             '"':            '"',         // Smart double quote
             '"':            '"',         // Smart double quote
+            '"':            '"',         // Smart double quote
+            '"':            '"',         // Smart double quote
+            '"':            '"',         // Smart double quote
+            '"':            '"',         // Smart double quote
+            '„':            '"',         // German opening double quote
+            '‟':            '"',         // German closing double quote
             '-':            '-',         // Hyphen
             '–':            '-',         // En dash
             '—':            '-',         // Em dash
@@ -817,11 +847,11 @@ class BiometricDataCollector {
         // Get the actual typed character
         const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
 
-        if (actualCharacter === 'BACKSPACE' || actualCharacter === 'backspace') {
-            // Only record BACKSPACE once on keydown
+        if (actualCharacter === 'Backspace' || actualCharacter === 'backspace') {
+            // Only record Backspace once on keydown
             this.recordKeystroke({
                 timestamp,
-                actualChar: 'BACKSPACE',
+                actualChar: 'Backspace',
                 keyCode: 8,
                 type: 'keydown',
                 shiftKey: e.shiftKey,
@@ -936,6 +966,10 @@ class BiometricDataCollector {
     }
     
     recordKeystroke(data) {
+        // Debug logging for quote characters
+        if (data.actualChar === "'" || data.actualChar === '"') {
+            console.log('Recording keystroke with quote:', data.actualChar, 'type:', data.type);
+        }
         this.keystrokeData.push(data);
     }
     
@@ -1816,7 +1850,7 @@ class BiometricDataCollector {
                     0;
                 
                 // Determine if this was a deletion
-                const wasDeleted = (keystroke.actualChar === 'backspace' || 
+                const wasDeleted = (keystroke.actualChar === 'Backspace' || 
                                   keystroke.type.startsWith('delete')) ? 1 : 0;
                 
                 features.push({
