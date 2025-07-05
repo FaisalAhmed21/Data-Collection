@@ -770,63 +770,78 @@ this.processCrystalInteraction('end', touches);
                 break;
 
             case 'altRotate': {
-                if (touches.length !== 1) return;
+    if (touches.length !== 1) return;
 
-                const rect = crystal.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                const touch = touches[0];
-                const angle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX);
+    const rect = crystal.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const touch = touches[0];
+    const angle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX);
 
-                if (phase === 'start') {
-                    this.crystalState.currentRotation = 0;
-                    this.crystalState.rotationsCompleted = 0;
-                    this.crystalState.expectedDirection = null;
-                    crystal.classList.add('active');
-                    this.updateStepProgress('0/3');
-                }
-                else if (phase === 'move') {
-                    if (typeof this.crystalState.initialAngle !== 'number') return;
+    if (phase === 'start') {
+        this.crystalState.initialAngle = angle;
+        this.crystalState.lastAngle = angle;
+        this.crystalState.currentRotation = 0;
+        this.crystalState.rotationsCompleted = 0;
+        this.crystalState.expectedDirection = null;
+        crystal.classList.add('active');
+        this.updateStepProgress('0/3');
+    }
 
-                    let delta = angle - this.crystalState.initialAngle;
-                    if (delta > Math.PI) delta -= 2 * Math.PI;
-                    if (delta < -Math.PI) delta += 2 * Math.PI;
-                    this.crystalState.currentRotation += delta;
+    else if (phase === 'move') {
+        const last = this.crystalState.lastAngle;
+        let delta = angle - last;
 
-                    const direction = Math.sign(delta);
-                    if (direction !== 0 && this.crystalState.expectedDirection === null) {
-                        this.crystalState.expectedDirection = direction;
-                    }
+        if (delta > Math.PI) delta -= 2 * Math.PI;
+        if (delta < -Math.PI) delta += 2 * Math.PI;
 
-                    const requiredDirection = (this.crystalState.rotationsCompleted % 2 === 0)
-                        ? this.crystalState.expectedDirection
-                        : -this.crystalState.expectedDirection;
+        if (!isFinite(delta)) return;
 
-                    if (direction !== 0 && direction !== requiredDirection) {
-                        this.crystalState.currentRotation = 0;
-                        this.crystalState.initialAngle = angle;
-                        return;
-                    }
+        // Set expected direction on first move
+        if (this.crystalState.expectedDirection === null && Math.abs(delta) > 0.01) {
+            this.crystalState.expectedDirection = Math.sign(delta);
+        }
 
-                    if (Math.abs(this.crystalState.currentRotation) >= 2 * Math.PI) {
-                        this.crystalState.rotationsCompleted += 1;
-                        this.crystalState.currentRotation = 0;
+        // Check current required direction
+        const requiredDirection = (this.crystalState.rotationsCompleted % 2 === 0)
+            ? this.crystalState.expectedDirection
+            : -this.crystalState.expectedDirection;
 
-                        crystal.classList.add('rotation-feedback');
-                        setTimeout(() => crystal.classList.remove('rotation-feedback'), 200);
-                    }
+        // Abort if wrong direction
+        if (Math.sign(delta) !== requiredDirection) {
+            console.log('❌ Wrong rotation direction. Resetting.');
+            this.crystalState.currentRotation = 0;
+            this.crystalState.lastAngle = angle; // reset angle reference
+            return;
+        }
 
-                    this.updateStepProgress(`${this.crystalState.rotationsCompleted}/3`);
+        this.crystalState.currentRotation += delta;
+        this.crystalState.lastAngle = angle;  // update last angle
 
-                    if (this.crystalState.rotationsCompleted >= step.target) {
-                        this.completeStep();
-                    }
-                }
-                else if (phase === 'end') {
-                    crystal.classList.remove('active');
-                }
-                break;
-            }
+        const rotationAmount = Math.abs(this.crystalState.currentRotation);
+        this.updateStepProgress(`${this.crystalState.rotationsCompleted} + ${Math.floor(rotationAmount / (2 * Math.PI * 100)) / 100} / 3`);
+
+        if (rotationAmount >= 2 * Math.PI) {
+            this.crystalState.rotationsCompleted += 1;
+            this.crystalState.currentRotation = 0;
+
+            crystal.classList.add('rotation-feedback');
+            setTimeout(() => crystal.classList.remove('rotation-feedback'), 200);
+
+            this.updateStepProgress(`${this.crystalState.rotationsCompleted}/3`);
+        }
+
+        if (this.crystalState.rotationsCompleted >= step.target) {
+            this.completeStep();
+        }
+    }
+
+    else if (phase === 'end') {
+        crystal.classList.remove('active');
+    }
+
+    break;
+}
 
             case 'pinch':
             case 'spread':
