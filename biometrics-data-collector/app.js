@@ -8,7 +8,6 @@ class BiometricDataCollector {
         this.lastRecordedCharTime = 0;
         this.skipNextKeydown = false;
         this.backspaceProcessed = false;
-
         // Data collection
         this.keystrokeData = [];
         this.touchData = [];
