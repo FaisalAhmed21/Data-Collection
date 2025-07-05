@@ -565,7 +565,11 @@ class BiometricDataCollector {
     handleCrystalTouchEnd(e) {
         e.preventDefault();
         const timestamp = performance.now();
-        const touches = Array.from(e.changedTouches);
+        const touches = Array.from(e.changedTouches).map(t => ({
+            clientX: t.clientX,
+            clientY: t.clientY
+        }));
+this.processCrystalInteraction('end', touches);
         
         const touchData = {
             timestamp,
