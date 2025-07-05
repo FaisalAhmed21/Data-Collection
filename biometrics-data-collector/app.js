@@ -303,16 +303,19 @@ class BiometricDataCollector {
                 const isUpper = char.match(/[A-Z]/);
                 const isLower = char.match(/[a-z]/);
               
-                // check if shift is needed before this char
+                // Enhanced shift detection logic for both directions
                 let shiftNeeded = false;
               
                 if (this.previousChar) {
-                  const prevIsUpper = this.previousChar.match(/[A-Z]/);
-                  const prevIsLower = this.previousChar.match(/[a-z]/);
+                    const prevIsUpper = this.previousChar.match(/[A-Z]/);
+                    const prevIsLower = this.previousChar.match(/[a-z]/);
               
-                  if ((prevIsLower && isUpper) || (prevIsUpper && isLower)) {
-                    shiftNeeded = true;
-                  }
+                    // Shift needed when:
+                    // 1. Previous was lowercase and current is uppercase (a → A)
+                    // 2. Previous was uppercase and current is lowercase (A → a)
+                    if ((prevIsLower && isUpper) || (prevIsUpper && isLower)) {
+                        shiftNeeded = true;
+                    }
                 }
               
                 if (shiftNeeded) {
@@ -344,29 +347,30 @@ class BiometricDataCollector {
                     });
                 }
                 else {
-                    // Enhanced character handling for all characters including quotes
+                    // Enhanced character handling for all characters including quotes and smart characters
                     let refChar = char;
                     
-                    if (char === "'") {
-                        refChar = "'"; // Single quote
-                    } else if (char === '"') {
+                    // Handle smart quotes and apostrophes (common in mobile keyboards)
+                    if (char === "'" || char === "'" || char === "'" || char === "'") {
+                        refChar = "'"; // Single quote/apostrophe
+                    } else if (char === '"' || char === '"' || char === '"' || char === '"') {
                         refChar = '"'; // Double quote
-                    } else if (char === '-') {
-                        refChar = '-'; // Hyphen
-                    } else if (char === '.') {
-                        refChar = '.'; // Period
-                    } else if (char === ',') {
+                    } else if (char === '-' || char === '–' || char === '—') {
+                        refChar = '-'; // Hyphen/dash
+                    } else if (char === '.' || char === '…') {
+                        refChar = '.'; // Period/ellipsis
+                    } else if (char === ',' || char === '،') {
                         refChar = ','; // Comma
-                    } else if (char === '!') {
+                    } else if (char === '!' || char === '¡') {
                         refChar = '!'; // Exclamation
-                    } else if (char === '?') {
+                    } else if (char === '?' || char === '¿') {
                         refChar = '?'; // Question mark
                     } else if (char === '@') {
                         refChar = '@'; // At symbol
                     } else if (char === '#') {
                         refChar = '#'; // Hash
-                    } else if (char === '$') {
-                        refChar = '$'; // Dollar
+                    } else if (char === '$' || char === '€' || char === '£' || char === '¥') {
+                        refChar = '$'; // Dollar/currency
                     } else if (char === '%') {
                         refChar = '%'; // Percent
                     } else if (char === '&') {
@@ -377,42 +381,72 @@ class BiometricDataCollector {
                         refChar = '('; // Left parenthesis
                     } else if (char === ')') {
                         refChar = ')'; // Right parenthesis
-                    } else if (char === '+') {
+                    } else if (char === '+' || char === '±') {
                         refChar = '+'; // Plus
-                    } else if (char === '=') {
+                    } else if (char === '=' || char === '≠') {
                         refChar = '='; // Equals
-                    } else if (char === '[') {
+                    } else if (char === '[' || char === '【') {
                         refChar = '['; // Left bracket
-                    } else if (char === ']') {
+                    } else if (char === ']' || char === '】') {
                         refChar = ']'; // Right bracket
-                    } else if (char === '{') {
+                    } else if (char === '{' || char === '｛') {
                         refChar = '{'; // Left brace
-                    } else if (char === '}') {
+                    } else if (char === '}' || char === '｝') {
                         refChar = '}'; // Right brace
-                    } else if (char === '\\') {
+                    } else if (char === '\\' || char === '＼') {
                         refChar = '\\'; // Backslash
-                    } else if (char === '|') {
+                    } else if (char === '|' || char === '｜') {
                         refChar = '|'; // Pipe
-                    } else if (char === ';') {
+                    } else if (char === ';' || char === '；') {
                         refChar = ';'; // Semicolon
-                    } else if (char === ':') {
+                    } else if (char === ':' || char === '：') {
                         refChar = ':'; // Colon
-                    } else if (char === '/') {
+                    } else if (char === '/' || char === '／') {
                         refChar = '/'; // Forward slash
-                    } else if (char === '<') {
+                    } else if (char === '<' || char === '＜') {
                         refChar = '<'; // Less than
-                    } else if (char === '>') {
+                    } else if (char === '>' || char === '＞') {
                         refChar = '>'; // Greater than
-                    } else if (char === '`') {
+                    } else if (char === '`' || char === '｀') {
                         refChar = '`'; // Backtick
-                    } else if (char === '~') {
+                    } else if (char === '~' || char === '～') {
                         refChar = '~'; // Tilde
-                    } else if (char === '^') {
+                    } else if (char === '^' || char === '＾') {
                         refChar = '^'; // Caret
-                    } else if (char === '_') {
+                    } else if (char === '_' || char === '＿') {
                         refChar = '_'; // Underscore
-                    } else if (char === '°') {
+                    } else if (char === '°' || char === '℃' || char === '℉') {
                         refChar = '°'; // Degree symbol
+                    } else if (char === '©' || char === '®' || char === '™') {
+                        refChar = char; // Copyright symbols
+                    } else if (char === '§' || char === '¶') {
+                        refChar = char; // Section symbols
+                    } else if (char === '†' || char === '‡') {
+                        refChar = char; // Dagger symbols
+                    } else if (char === '•' || char === '·' || char === '▪' || char === '▫') {
+                        refChar = '•'; // Bullet points
+                    } else if (char === '✓' || char === '✔' || char === '☑') {
+                        refChar = '✓'; // Check marks
+                    } else if (char === '✗' || char === '✘' || char === '☒') {
+                        refChar = '✗'; // X marks
+                    } else if (char === '→' || char === '←' || char === '↑' || char === '↓') {
+                        refChar = char; // Arrows
+                    } else if (char === '♠' || char === '♥' || char === '♦' || char === '♣') {
+                        refChar = char; // Card suits
+                    } else if (char === '☺' || char === '☻' || char === '☹') {
+                        refChar = char; // Emoticons
+                    } else if (char === '☀' || char === '☁' || char === '☂' || char === '☃') {
+                        refChar = char; // Weather symbols
+                    } else if (char === '♫' || char === '♪' || char === '♬') {
+                        refChar = char; // Music symbols
+                    } else if (char === '∞' || char === '≈' || char === '≤' || char === '≥') {
+                        refChar = char; // Math symbols
+                    } else if (char === '∑' || char === '∏' || char === '∫' || char === '√') {
+                        refChar = char; // Advanced math symbols
+                    } else if (char === 'α' || char === 'β' || char === 'γ' || char === 'δ') {
+                        refChar = char; // Greek letters
+                    } else if (char === 'π' || char === 'μ' || char === 'σ' || char === 'τ') {
+                        refChar = char; // More Greek letters
                     } else {
                         // For all other characters, use as-is
                         refChar = char;
@@ -442,10 +476,88 @@ class BiometricDataCollector {
     
             if (data === ' ') {
                 refChar = 'SPACE';
-            } else if (data === "'") {
-                refChar = "'"; // Single quote
-            } else if (data === '"') {
+            } else if (data === "'" || data === "'" || data === "'" || data === "'") {
+                refChar = "'"; // Single quote/apostrophe
+            } else if (data === '"' || data === '"' || data === '"' || data === '"') {
                 refChar = '"'; // Double quote
+            } else if (data === '–' || data === '—') {
+                refChar = '-'; // En dash and em dash
+            } else if (data === '…') {
+                refChar = '.'; // Ellipsis
+            } else if (data === '،') {
+                refChar = ','; // Arabic comma
+            } else if (data === '¡') {
+                refChar = '!'; // Inverted exclamation
+            } else if (data === '¿') {
+                refChar = '?'; // Inverted question
+            } else if (data === '€' || data === '£' || data === '¥') {
+                refChar = '$'; // Other currency symbols
+            } else if (data === '±') {
+                refChar = '+'; // Plus-minus
+            } else if (data === '≠') {
+                refChar = '='; // Not equals
+            } else if (data === '【') {
+                refChar = '['; // Fullwidth left bracket
+            } else if (data === '】') {
+                refChar = ']'; // Fullwidth right bracket
+            } else if (data === '｛') {
+                refChar = '{'; // Fullwidth left brace
+            } else if (data === '｝') {
+                refChar = '}'; // Fullwidth right brace
+            } else if (data === '＼') {
+                refChar = '\\'; // Fullwidth backslash
+            } else if (data === '｜') {
+                refChar = '|'; // Fullwidth pipe
+            } else if (data === '；') {
+                refChar = ';'; // Fullwidth semicolon
+            } else if (data === '：') {
+                refChar = ':'; // Fullwidth colon
+            } else if (data === '／') {
+                refChar = '/'; // Fullwidth forward slash
+            } else if (data === '＜') {
+                refChar = '<'; // Fullwidth less than
+            } else if (data === '＞') {
+                refChar = '>'; // Fullwidth greater than
+            } else if (data === '｀') {
+                refChar = '`'; // Fullwidth backtick
+            } else if (data === '～') {
+                refChar = '~'; // Fullwidth tilde
+            } else if (data === '＾') {
+                refChar = '^'; // Fullwidth caret
+            } else if (data === '＿') {
+                refChar = '_'; // Fullwidth underscore
+            } else if (data === '℃' || data === '℉') {
+                refChar = '°'; // Temperature symbols
+            } else if (data === '©' || data === '®' || data === '™') {
+                refChar = data; // Copyright symbols
+            } else if (data === '§' || data === '¶') {
+                refChar = data; // Section symbols
+            } else if (data === '†' || data === '‡') {
+                refChar = data; // Dagger symbols
+            } else if (data === '•' || data === '·' || data === '▪' || data === '▫') {
+                refChar = '•'; // Bullet points
+            } else if (data === '✓' || data === '✔' || data === '☑') {
+                refChar = '✓'; // Check marks
+            } else if (data === '✗' || data === '✘' || data === '☒') {
+                refChar = '✗'; // X marks
+            } else if (data === '→' || data === '←' || data === '↑' || data === '↓') {
+                refChar = data; // Arrows
+            } else if (data === '♠' || data === '♥' || data === '♦' || data === '♣') {
+                refChar = data; // Card suits
+            } else if (data === '☺' || data === '☻' || data === '☹') {
+                refChar = data; // Emoticons
+            } else if (data === '☀' || data === '☁' || data === '☂' || data === '☃') {
+                refChar = data; // Weather symbols
+            } else if (data === '♫' || data === '♪' || data === '♬') {
+                refChar = data; // Music symbols
+            } else if (data === '∞' || data === '≈' || data === '≤' || data === '≥') {
+                refChar = data; // Math symbols
+            } else if (data === '∑' || data === '∏' || data === '∫' || data === '√') {
+                refChar = data; // Advanced math symbols
+            } else if (data === 'α' || data === 'β' || data === 'γ' || data === 'δ') {
+                refChar = data; // Greek letters
+            } else if (data === 'π' || data === 'μ' || data === 'σ' || data === 'τ') {
+                refChar = data; // More Greek letters
             } else if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
                 refChar = 'SHIFT';
             }
@@ -491,37 +603,120 @@ class BiometricDataCollector {
             ' ':            'SPACE',     // ✅ updated
             "'":            "'",         // Single quote
             '"':            '"',         // Double quote
+            "'":            "'",         // Smart single quote
+            "'":            "'",         // Smart single quote
+            '"':            '"',         // Smart double quote
+            '"':            '"',         // Smart double quote
             '-':            '-',         // Hyphen
+            '–':            '-',         // En dash
+            '—':            '-',         // Em dash
             '.':            '.',         // Period
+            '…':            '.',         // Ellipsis
             ',':            ',',         // Comma
+            '،':            ',',         // Arabic comma
             '!':            '!',         // Exclamation
+            '¡':            '!',         // Inverted exclamation
             '?':            '?',         // Question mark
+            '¿':            '?',         // Inverted question
             '@':            '@',         // At symbol
             '#':            '#',         // Hash
             '$':            '$',         // Dollar
+            '€':            '$',         // Euro
+            '£':            '$',         // Pound
+            '¥':            '$',         // Yen
             '%':            '%',         // Percent
             '&':            '&',         // Ampersand
             '*':            '*',         // Asterisk
             '(':            '(',         // Left parenthesis
             ')':            ')',         // Right parenthesis
             '+':            '+',         // Plus
+            '±':            '+',         // Plus-minus
             '=':            '=',         // Equals
+            '≠':            '=',         // Not equals
             '[':            '[',         // Left bracket
             ']':            ']',         // Right bracket
+            '【':            '[',         // Fullwidth left bracket
+            '】':            ']',         // Fullwidth right bracket
             '{':            '{',         // Left brace
             '}':            '}',         // Right brace
+            '｛':            '{',         // Fullwidth left brace
+            '｝':            '}',         // Fullwidth right brace
             '\\':           '\\',        // Backslash
+            '＼':           '\\',        // Fullwidth backslash
             '|':            '|',         // Pipe
+            '｜':            '|',         // Fullwidth pipe
             ';':            ';',         // Semicolon
+            '；':            ';',         // Fullwidth semicolon
             ':':            ':',         // Colon
+            '：':            ':',         // Fullwidth colon
             '/':            '/',         // Forward slash
+            '／':            '/',         // Fullwidth forward slash
             '<':            '<',         // Less than
             '>':            '>',         // Greater than
+            '＜':            '<',         // Fullwidth less than
+            '＞':            '>',         // Fullwidth greater than
             '`':            '`',         // Backtick
+            '｀':            '`',         // Fullwidth backtick
             '~':            '~',         // Tilde
+            '～':            '~',         // Fullwidth tilde
             '^':            '^',         // Caret
+            '＾':            '^',         // Fullwidth caret
             '_':            '_',         // Underscore
+            '＿':            '_',         // Fullwidth underscore
             '°':            '°',         // Degree symbol
+            '℃':            '°',         // Celsius
+            '℉':            '°',         // Fahrenheit
+            '©':            '©',         // Copyright
+            '®':            '®',         // Registered
+            '™':            '™',         // Trademark
+            '§':            '§',         // Section
+            '¶':            '¶',         // Paragraph
+            '†':            '†',         // Dagger
+            '‡':            '‡',         // Double dagger
+            '•':            '•',         // Bullet
+            '·':            '•',         // Middle dot
+            '▪':            '•',         // Black square
+            '▫':            '•',         // White square
+            '✓':            '✓',         // Check mark
+            '✔':            '✓',         // Heavy check mark
+            '☑':            '✓',         // Ballot box with check
+            '✗':            '✗',         // Ballot X
+            '✘':            '✗',         // Heavy ballot X
+            '☒':            '✗',         // Ballot box with X
+            '→':            '→',         // Right arrow
+            '←':            '←',         // Left arrow
+            '↑':            '↑',         // Up arrow
+            '↓':            '↓',         // Down arrow
+            '♠':            '♠',         // Spade
+            '♥':            '♥',         // Heart
+            '♦':            '♦',         // Diamond
+            '♣':            '♣',         // Club
+            '☺':            '☺',         // White smiling face
+            '☻':            '☻',         // Black smiling face
+            '☹':            '☹',         // White frowning face
+            '☀':            '☀',         // Black sun with rays
+            '☁':            '☁',         // Cloud
+            '☂':            '☂',         // Umbrella
+            '☃':            '☃',         // Snowman
+            '♫':            '♫',         // Beamed eighth notes
+            '♪':            '♪',         // Eighth note
+            '♬':            '♬',         // Beamed sixteenth notes
+            '∞':            '∞',         // Infinity
+            '≈':            '≈',         // Almost equal to
+            '≤':            '≤',         // Less than or equal to
+            '≥':            '≥',         // Greater than or equal to
+            '∑':            '∑',         // N-ary summation
+            '∏':            '∏',         // N-ary product
+            '∫':            '∫',         // Integral
+            '√':            '√',         // Square root
+            'α':            'α',         // Greek alpha
+            'β':            'β',         // Greek beta
+            'γ':            'γ',         // Greek gamma
+            'δ':            'δ',         // Greek delta
+            'π':            'π',         // Greek pi
+            'μ':            'μ',         // Greek mu
+            'σ':            'σ',         // Greek sigma
+            'τ':            'τ',         // Greek tau
             'Escape':       'escape',
             'ArrowLeft':    'arrowleft',
             'ArrowRight':   'arrowright',
