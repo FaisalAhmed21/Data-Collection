@@ -779,7 +779,6 @@ this.processCrystalInteraction('end', touches);
                 const angle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX);
 
                 if (phase === 'start') {
-                    this.crystalState.initialAngle = angle;
                     this.crystalState.currentRotation = 0;
                     this.crystalState.rotationsCompleted = 0;
                     this.crystalState.expectedDirection = null;
