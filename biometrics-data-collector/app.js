@@ -5,28 +5,23 @@ class BiometricDataCollector {
         this.currentSentence = 0;
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
-        this.lastRecordedCharTime = 0;
-        this.skipNextKeydown = false;
-        this.backspaceProcessed = false;
+        
         // Data collection
         this.keystrokeData = [];
         this.touchData = [];
-
+        
         // Enhanced pointer tracking
         this.currentPointerX = window.innerWidth / 2;
         this.currentPointerY = window.innerHeight / 2;
-        this.pointerTracking = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-
+        this.pointerTracking = {
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2
+        };
+        
         // Composition state for mobile IME handling
         this.compositionActive = false;
         this.lastInputLength = 0;
-        this.lastCharWasUppercase = false;
-        this.lastInputValue = '';
-
-        // Touch analytics tracking
-        this.touchHistory = [];
-        this.velocityHistory = [];
-
+        
         // Enhanced gallery zoom state with pinch support
         this.galleryZoom = {
             scale: 1,
@@ -37,10 +32,9 @@ class BiometricDataCollector {
             translateX: 0,
             translateY: 0,
             initialDistance: 0,
-            touches: [],
-            lastTapTime: 0
+            touches: []
         };
-
+        
         // Typing task data
         this.sentences = [
             "Dr. Smith's Lab-42 discovered H2O molecules can freeze at -5 degree Celsius under pressure.",
@@ -48,17 +42,16 @@ class BiometricDataCollector {
             "Agent X-007 decoded the message: 'Meet @ Pier 9 on July 4th at 3:30 PM.'",
             "Tesla's Model S hit 0-60 mph in 2.1 seconds - breaking the previous record!"
         ];
-
-        // Crystal game definition
+        
+        // Crystal game state
         this.crystalSteps = [
             { id: 1, instruction: "Tap the crystal exactly 3 times with your index finger", target: 3, type: 'tap' },
-            { id: 2, instruction: "Rotate your finger on the crystal surface three full 360° turns, alternating direction each time (e.g., clockwise → counter-clockwise → clockwise)", target: 3, type: 'altRotate' },
+            { id: 2, instruction: "Rotate the crystal clockwise using two fingers for 5 seconds", target: 5000, type: 'rotate' },
             { id: 3, instruction: "Pinch to shrink the crystal to 50% size", target: 0.5, type: 'pinch' },
             { id: 4, instruction: "Spread fingers to grow crystal to 150% size", target: 1.5, type: 'spread' },
             { id: 5, instruction: "Apply pressure with 3 fingers simultaneously for 3 seconds", target: 3000, type: 'pressure' }
         ];
-
-        // Crystal runtime state
+        
         this.crystalState = {
             tapCount: 0,
             rotationTime: 0,
@@ -70,15 +63,11 @@ class BiometricDataCollector {
             pressureStart: null,
             pressureFingers: 0,
             initialDistance: 0,
+            // Rotation tracking
             initialAngle: null,
-            totalRotation: 0,
-            rotationsCompleted: 0,
-            currentRotation: 0,
-            expectedDirection: null, // 1 = clockwise, -1 = counterclockwise
-            currentDirection: null,
-            activeTouchId: null
+            totalRotation: 0  // in radians
         };
-
+        
         // Gallery images
         this.galleryImages = [
             'https://picsum.photos/800/600?random=1',
@@ -102,95 +91,130 @@ class BiometricDataCollector {
             'https://picsum.photos/800/600?random=19',
             'https://picsum.photos/800/600?random=20'
         ];
-
+        
         this.init();
     }
-
+    
     init() {
         this.bindEvents();
         this.generateParticipantId();
         this.initializeGallery();
         this.setupPointerTracking();
     }
-
+    
     setupPointerTracking() {
+        // Track mouse movement
         document.addEventListener('mousemove', (e) => {
             this.currentPointerX = e.clientX;
             this.currentPointerY = e.clientY;
-            this.pointerTracking = { x: e.clientX, y: e.clientY };
+            this.pointerTracking = {
+                x: e.clientX,
+                y: e.clientY
+            };
         });
-
+        
+        // Track touch movement
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length > 0) {
                 const touch = e.touches[0];
                 this.currentPointerX = touch.clientX;
                 this.currentPointerY = touch.clientY;
-                this.pointerTracking = { x: touch.clientX, y: touch.clientY };
+                this.pointerTracking = {
+                    x: touch.clientX,
+                    y: touch.clientY
+                };
             }
         });
-
+        
+        // Track touch start
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length > 0) {
                 const touch = e.touches[0];
                 this.currentPointerX = touch.clientX;
                 this.currentPointerY = touch.clientY;
-                this.pointerTracking = { x: touch.clientX, y: touch.clientY };
+                this.pointerTracking = {
+                    x: touch.clientX,
+                    y: touch.clientY
+                };
             }
         });
     }
-
+    
     generateParticipantId() {
         const now = new Date();
         const pad = n => n.toString().padStart(2, '0');
-        const year = now.getFullYear();
-        const month = pad(now.getMonth() + 1);
-        const day = pad(now.getDate());
-        const hour = pad(now.getHours());
-        const minute = pad(now.getMinutes());
-        const second = pad(now.getSeconds());
+    
+        const year = now.getFullYear();                // e.g. 2025
+        const month = pad(now.getMonth() + 1);         // 01–12
+        const day = pad(now.getDate());                // 01–31
+        const hour = pad(now.getHours());              // 00–23
+        const minute = pad(now.getMinutes());          // 00–59
+        const second = pad(now.getSeconds());          // 00–59
+    
         const timePart = `${year}${month}${day}-${hour}${minute}${second}`;
-        const randomPart = Math.random().toString(36).substring(2, 5);
+        const randomPart = Math.random().toString(36).substring(2, 5); // 3 random chars
+    
         this.participantId = `P${timePart}-${randomPart}`;
         document.getElementById('participant-id').textContent = this.participantId;
     }
 
+
+
+    
     bindEvents() {
         // Welcome screen
         document.getElementById('start-btn').addEventListener('click', () => {
             this.switchScreen('typing');
             this.startTypingTask();
         });
-
-        // Enhanced typing task event handling
+        
+        // Typing task - FIXED: Proper mobile-friendly event handling
         const typingInput = document.getElementById('typing-input');
-
-        typingInput.addEventListener('compositionstart', () => {
+        
+        // Composition events for mobile IME handling
+        typingInput.addEventListener('compositionstart', (e) => {
             this.compositionActive = true;
+            console.log('Composition started');
         });
-
-        typingInput.addEventListener('compositionupdate', () => {
-            // Track composition updates
+        
+        typingInput.addEventListener('compositionupdate', (e) => {
+            // Track composition updates but don't record as final keystrokes
+            console.log('Composition update:', e.data);
         });
-
-        typingInput.addEventListener('compositionend', e => {
+        
+        typingInput.addEventListener('compositionend', (e) => {
             this.compositionActive = false;
             if (e.data) {
-                for (let i = 0; i < e.data.length; i++) {
-                    const char = e.data[i];
-                    this.handleCharacterInput(char, 'compositionend', performance.now() + i);
-                }
+                // Record final composition result
+                this.recordKeystroke({
+                    timestamp: performance.now(),
+                    actualChar: e.data,
+                    keyCode: e.data.charCodeAt(0),
+                    type: 'compositionend',
+                    sentence: this.currentSentence,
+                    position: e.target.selectionStart || 0,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
             }
+            console.log('Composition ended:', e.data);
         });
-
-        // FIXED: Enhanced input event handling with backspace deduplication
-        typingInput.addEventListener('input', e => this.handleTypingInput(e));
-
-        // FIXED: Enhanced keydown handling for proper iOS support
-        typingInput.addEventListener('keydown', e => {
-            if (this.compositionActive) return;
+        
+        // FIXED: Use input event with inputType for reliable character detection
+        typingInput.addEventListener('input', (e) => {
+            this.handleTypingInput(e);
+        });
+        
+        // Keydown for additional handling (non-composition events)
+        typingInput.addEventListener('keydown', (e) => {
+            if (this.compositionActive || e.keyCode === 229) {
+                // Skip processing during composition
+                return;
+            }
             this.handleKeydown(e);
         });
-
+        
+        // Update pointer coordinates when typing
         typingInput.addEventListener('focus', (e) => {
             const rect = e.target.getBoundingClientRect();
             this.currentPointerX = rect.left + rect.width / 2;
@@ -198,37 +222,48 @@ class BiometricDataCollector {
             this.pointerTracking.x = this.currentPointerX;
             this.pointerTracking.y = this.currentPointerY;
         });
-
+        
         typingInput.addEventListener('click', (e) => {
             this.currentPointerX = e.clientX;
             this.currentPointerY = e.clientY;
             this.pointerTracking.x = e.clientX;
             this.pointerTracking.y = e.clientY;
         });
-
+        
         // Prevent paste operations
         typingInput.addEventListener('paste', (e) => e.preventDefault());
-        typingInput.addEventListener('copy', e => e.preventDefault());
-        typingInput.addEventListener('cut', e => e.preventDefault());
-        typingInput.addEventListener('drop', e => e.preventDefault());
-        typingInput.addEventListener('contextmenu', e => e.preventDefault());
 
+        // Inside bindEvents(), after `typingInput.addEventListener('paste', …)`
+        typingInput.addEventListener('copy',   e => e.preventDefault());   // Disable Copy[6]
+        typingInput.addEventListener('cut',    e => e.preventDefault());   // Disable Cut[6]
+        typingInput.addEventListener('drop',   e => e.preventDefault());   // Disable Drag-and-Drop paste
+        typingInput.addEventListener('contextmenu', e => e.preventDefault()); // Disable Right-Click menu[4]
+
+        
+        // // Cursor restrictions
+        // typingInput.addEventListener('mousedown', (e) => {
+        //     setTimeout(() => {
+        //         const length = typingInput.value.length;
+        //         typingInput.setSelectionRange(length, length);
+        //     }, 0);
+        // });
+        
         document.getElementById('next-sentence-btn').addEventListener('click', () => this.nextSentence());
-
+        
         // Crystal game
         this.bindCrystalEvents();
         document.getElementById('reset-step-btn').addEventListener('click', () => this.resetCrystalStep());
         document.getElementById('next-crystal-btn').addEventListener('click', () => this.nextCrystalStep());
-
+        
         // Gallery
         this.bindGalleryEvents();
         document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
-
+        
         // Export
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
     }
-
+    
     switchScreen(screenName) {
         document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
         const targetScreen = document.getElementById(`${screenName}-screen`);
@@ -237,186 +272,230 @@ class BiometricDataCollector {
             this.currentScreen = screenName;
         }
     }
-
-    // FIXED: Enhanced input handling with backspace deduplication
+    
+    // FIXED: Enhanced mobile-friendly keystroke detection using inputType
     handleTypingInput(e) {
         const { inputType, data } = e;
         const inputEl = e.target;
-        const currentValue = inputEl.value;
-        const ts = performance.now();
-
-        // FIXED: Handle deletions with deduplication
-        if (inputType && inputType.includes('delete')) {
-            if (!this.backspaceProcessed) {
-                this.recordKeystroke({
-                    timestamp: ts,
-                    actualChar: 'BACKSPACE',
-                    keyCode: 8,
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: inputEl.selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-                this.backspaceProcessed = true;
-                setTimeout(() => { this.backspaceProcessed = false; }, 50);
-            }
-            this.lastInputValue = currentValue;
-            this.calculateAccuracy();
-            this.checkSentenceCompletion();
+        const value = inputEl.value;
+        const pos = inputEl.selectionStart || value.length;
+        const timestamp = performance.now();
+    
+        // Handle deletion events (backspace, delete)
+        if (inputType && inputType.startsWith('delete')) {
+            // Skip backspace recording here to avoid duplicates
             return;
         }
 
-        // Handle character inputs
-        if (inputType === 'insertText' && data) {
+    
+        // Handle text insertion
+        else if (inputType === 'insertText' && data) {
             for (let i = 0; i < data.length; i++) {
                 const char = data[i];
-                this.handleCharacterInput(char, inputType, ts + i);
-            }
-        } else if (inputType === 'insertCompositionText' && data) {
-            for (let i = 0; i < data.length; i++) {
-                const char = data[i];
-                this.handleCharacterInput(char, inputType, ts + i);
-            }
-        } else if (currentValue.length > this.lastInputValue.length) {
-            const newChars = currentValue.slice(this.lastInputValue.length);
-            for (let i = 0; i < newChars.length; i++) {
-                const char = newChars[i];
-                this.handleCharacterInput(char, 'input', ts + i);
+                
+                // If uppercase letter, record SHIFT event first, then the letter
+                if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
+                    // Record SHIFT event
+                    this.recordKeystroke({
+                        timestamp: timestamp + i - 0.5, // slightly before letter
+                        actualChar: 'SHIFT',
+                        keyCode: 16, // KeyCode for Shift
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - data.length + i,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                    // Then record actual uppercase letter
+                    this.recordKeystroke({
+                        timestamp: timestamp + i,
+                        actualChar: char,
+                        keyCode: char.charCodeAt(0),
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - data.length + i,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                }
+                else if (char === ' ') {
+                    // SPACE character
+                    this.recordKeystroke({
+                        timestamp: timestamp + i,
+                        actualChar: 'SPACE',
+                        keyCode: 32,
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - data.length + i,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                }
+                else {
+                    // Normal character (lowercase etc.)
+                    this.recordKeystroke({
+                        timestamp: timestamp + i,
+                        actualChar: char,
+                        keyCode: char.charCodeAt(0),
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - data.length + i,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                }
             }
         }
 
-        this.lastInputValue = currentValue;
+    
+        // Handle other input types like paste, cut, etc.
+        else if (inputType && data) {
+            let refChar = data;
+    
+            if (data === ' ') {
+                refChar = 'SPACE';
+            } else if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
+                refChar = 'SHIFT';
+            }
+    
+            this.recordKeystroke({
+                timestamp,
+                actualChar: refChar,
+                keyCode: data.charCodeAt(0),
+                type: inputType,
+                sentence: this.currentSentence,
+                position: pos - 1,
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y
+            });
+        }
+    
+        // Update last input length
+        this.lastInputLength = value.length;
+    
         this.calculateAccuracy();
         this.checkSentenceCompletion();
     }
-
-    // ENHANCED: Character input handler with proper SHIFT insertion
-    handleCharacterInput(char, inputType, timestamp) {
-        const isUpper = char.match(/[A-Z]/);
-        const isLower = char.match(/[a-z]/);
-        const isLetter = isUpper || isLower;
-
-        // Insert SHIFT when case changes
-        if (isLetter) {
-            const currentIsUpper = isUpper;
-            if (currentIsUpper !== this.lastCharWasUppercase) {
-                this.recordKeystroke({
-                    timestamp: timestamp - 0.5,
-                    actualChar: 'SHIFT',
-                    keyCode: 16,
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: document.getElementById('typing-input').selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
+    
+    
+    // FIXED: Enhanced character detection with better mobile support
+    getActualTypedCharacter(e, inputValue = '') {
+        // 1. Handle mobile IME / virtual keyboard composition events
+        if (e.keyCode === 229 || e.key === 'Unidentified' || e.key === 'Process') {
+            if (inputValue.length > this.lastInputLength) {
+                return inputValue.slice(-1);
             }
-            this.lastCharWasUppercase = currentIsUpper;
+            return null; // Don't record unidentified characters
         }
-
-        // Record the actual character
-        let actualChar = char;
-        let keyCode = char.charCodeAt(0);
-
-        if (char === ' ') {
-            actualChar = 'SPACE';
-            keyCode = 32;
+    
+        // 2. Handle well-known special keys
+        const specialKeys = {
+            'Backspace':    'BACKSPACE',
+            'Enter':        'enter',
+            'Tab':          'tab',
+            ' ':            'SPACE',     // ✅ updated
+            'Escape':       'escape',
+            'ArrowLeft':    'arrowleft',
+            'ArrowRight':   'arrowright',
+            'ArrowUp':      'arrowup',
+            'ArrowDown':    'arrowdown',
+            'Delete':       'delete',
+            'Home':         'home',
+            'End':          'end'
+        };
+    
+        if (e.key && specialKeys.hasOwnProperty(e.key)) {
+            return specialKeys[e.key];
         }
-
-        this.recordKeystroke({
-            timestamp: timestamp,
-            actualChar: actualChar,
-            keyCode: keyCode,
-            type: inputType,
-            sentence: this.currentSentence,
-            position: document.getElementById('typing-input').selectionStart || 0,
-            clientX: this.pointerTracking.x,
-            clientY: this.pointerTracking.y
-        });
-
-        this.skipNextKeydown = true;
-        this.lastRecordedCharTime = timestamp;
+    
+        // ✅ Handle Shift key separately
+        if (e.key === 'Shift') {
+            return 'SHIFT';
+        }
+    
+        // 3. Handle printable characters
+        if (e.key && e.key.length === 1) {
+            return e.key;
+        }
+    
+        // 4. Fallback for older browsers or rare keys
+        if (e.keyCode && !isNaN(e.keyCode)) {
+            const char = String.fromCharCode(e.keyCode);
+            if (char && /\S/.test(char)) {
+                return char;
+            }
+        }
+    
+        // 5. Return null for unidentifiable keys
+        return null;
     }
 
-    // FIXED: Enhanced keydown handling
+    
     handleKeydown(e) {
-        const now = performance.now();
-
-        if (this.skipNextKeydown && now - this.lastRecordedCharTime < 50) {
-            this.skipNextKeydown = false;
+        const timestamp = performance.now();
+        
+        // Block navigation keys
+        const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (restrictedKeys.includes(e.key)) {
+            e.preventDefault();
             return;
         }
-
-        const restricted = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
-        if (restricted.includes(e.key)) { 
-            e.preventDefault(); 
-            return; 
-        }
-        if (e.ctrlKey && ['v','x','c'].includes(e.key.toLowerCase())) { 
-            e.preventDefault(); 
-            return; 
-        }
-
-        // FIXED: Handle backspace with deduplication
-        if (e.key === 'Backspace' || e.keyCode === 8) {
-            if (!this.backspaceProcessed) {
-                this.recordKeystroke({
-                    timestamp: now,
-                    actualChar: 'BACKSPACE',
-                    keyCode: 8,
-                    type: 'keydown',
-                    sentence: this.currentSentence,
-                    position: e.target.selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-                this.backspaceProcessed = true;
-                setTimeout(() => { this.backspaceProcessed = false; }, 50);
-            }
+        
+        // Block copy-paste
+        if (e.ctrlKey && ['v', 'x', 'c'].includes(e.key.toLowerCase())) {
+            e.preventDefault();
             return;
         }
+        
+        // Get the actual typed character
+        const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
 
-        // Handle other special keys
-        const specialKeys = {
-            'Enter': 'ENTER',
-            'Tab': 'TAB',
-            'Escape': 'ESCAPE',
-            'Shift': 'SHIFT',
-            'Control': 'CTRL',
-            'Alt': 'ALT',
-            'Meta': 'META'
-        };
-
-        if (specialKeys[e.key]) {
+        if (actualCharacter === 'BACKSPACE' || actualCharacter === 'backspace') {
+            // Only record BACKSPACE once on keydown
             this.recordKeystroke({
-                timestamp: now,
-                actualChar: specialKeys[e.key],
-                keyCode: e.keyCode,
+                timestamp,
+                actualChar: 'BACKSPACE',
+                keyCode: 8,
                 type: 'keydown',
+                shiftKey: e.shiftKey,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
                 sentence: this.currentSentence,
                 position: e.target.selectionStart || 0,
                 clientX: this.pointerTracking.x,
                 clientY: this.pointerTracking.y
             });
-            return;
+            return;  // Don't record further
         }
-
-        // Skip printable characters as they're handled by input event
-        if (e.key && e.key.length === 1) {
-            return;
+        
+                
+        // Only record if we have a valid character
+        if (actualCharacter) {
+            console.log('Key pressed:', e.key, 'KeyCode:', e.keyCode, 'Detected:', actualCharacter);
+            
+            this.recordKeystroke({
+                timestamp,
+                actualChar: actualCharacter,
+                keyCode: e.keyCode,
+                type: 'keydown',
+                shiftKey: e.shiftKey,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
+                sentence: this.currentSentence,
+                position: e.target.selectionStart || 0,
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y
+            });
         }
     }
-
+    
     startTypingTask() {
         this.currentSentence = 0;
-        this.lastInputValue = '';
-        this.lastCharWasUppercase = false;
-        this.backspaceProcessed = false;
+        this.lastInputLength = 0; // FIXED: Reset at task start
         this.displayCurrentSentence();
         this.updateTypingProgress();
     }
-
+    
     displayCurrentSentence() {
         document.getElementById('target-sentence').textContent = this.sentences[this.currentSentence];
         const input = document.getElementById('typing-input');
@@ -425,32 +504,38 @@ class BiometricDataCollector {
         document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
         this.calculateAccuracy();
         document.getElementById('next-sentence-btn').disabled = true;
-        this.lastInputValue = '';
-        this.lastCharWasUppercase = false;
-        this.backspaceProcessed = false;
+        
+        // FIXED: Reset lastInputLength when starting new sentence
+        this.lastInputLength = 0;
     }
-
+    
     calculateAccuracy() {
         const typed = document.getElementById('typing-input').value;
         const target = this.sentences[this.currentSentence];
+        
         if (typed === target) {
-            document.getElementById('accuracy').textContent = '100%';
-            return;
+          document.getElementById('accuracy').textContent = '100%';
+          return;
         }
+
+        
         let correct = 0;
         const minLength = Math.min(typed.length, target.length);
+        
         for (let i = 0; i < minLength; i++) {
             if (typed[i] === target[i]) {
                 correct++;
             }
         }
+        
         const accuracy = Math.round((correct / target.length) * 100);
         document.getElementById('accuracy').textContent = `${accuracy}%`;
     }
-
+    
     checkSentenceCompletion() {
         const typed = document.getElementById('typing-input').value.trim();
         const target = this.sentences[this.currentSentence].trim();
+        
         const nextBtn = document.getElementById('next-sentence-btn');
         if (typed === target) {
             nextBtn.disabled = false;
@@ -462,9 +547,10 @@ class BiometricDataCollector {
             nextBtn.style.opacity = '0.5';
         }
     }
-
+    
     nextSentence() {
         this.currentSentence++;
+        
         if (this.currentSentence >= this.sentences.length) {
             this.switchScreen('crystal');
             this.startCrystalGame();
@@ -473,25 +559,26 @@ class BiometricDataCollector {
             this.updateTypingProgress();
         }
     }
-
+    
     updateTypingProgress() {
         const progress = ((this.currentSentence) / this.sentences.length) * 100;
         document.getElementById('typing-progress').style.width = `${progress}%`;
     }
-
+    
     recordKeystroke(data) {
         this.keystrokeData.push(data);
     }
-
+    
     // Crystal Game Methods
     startCrystalGame() {
         this.currentCrystalStep = 1;
         this.resetCrystalState();
         this.updateCrystalDisplay();
     }
-
+    
     bindCrystalEvents() {
         const crystalArea = document.getElementById('crystal-area');
+        
         crystalArea.addEventListener('touchstart', (e) => this.handleCrystalTouchStart(e));
         crystalArea.addEventListener('touchmove', (e) => this.handleCrystalTouchMove(e));
         crystalArea.addEventListener('touchend', (e) => this.handleCrystalTouchEnd(e));
@@ -500,397 +587,196 @@ class BiometricDataCollector {
         crystalArea.addEventListener('mouseup', (e) => this.handleCrystalMouseUp(e));
         crystalArea.addEventListener('contextmenu', (e) => e.preventDefault());
     }
-
+    
     handleCrystalTouchStart(e) {
         e.preventDefault();
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
-
-        // Record enhanced touch data with analytics
-        const touchData = {
+        
+        this.recordTouchEvent({
             timestamp,
             type: 'touchstart',
             touches: touches.map(t => ({
                 identifier: t.identifier,
                 clientX: t.clientX,
                 clientY: t.clientY,
-                force: t.force || 0.5,
-                radiusX: t.radiusX || 1,
-                radiusY: t.radiusY || 1,
-                rotationAngle: t.rotationAngle || 0,
-                touchArea: this.calculateTouchArea(t),
-                velocity: { x: 0, y: 0, magnitude: 0 },
-                acceleration: { x: 0, y: 0, magnitude: 0 }
+                force: t.force || 0.5
             })),
             step: this.currentCrystalStep,
             taskId: 2
-        };
-
-        this.recordTouchEvent(touchData);
-        this.updateTouchHistory(touches[0], timestamp);
+        });
+        
         this.processCrystalInteraction('start', touches);
     }
-
+    
     handleCrystalTouchMove(e) {
         e.preventDefault();
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
-
-        // Calculate velocity and acceleration
-        const velocity = this.calculateTouchVelocity(touches[0], timestamp);
-        const acceleration = this.calculateTouchAcceleration(velocity, timestamp);
-
-        const touchData = {
+        
+        this.recordTouchEvent({
             timestamp,
             type: 'touchmove',
             touches: touches.map(t => ({
                 identifier: t.identifier,
                 clientX: t.clientX,
                 clientY: t.clientY,
-                force: t.force || 0.5,
-                radiusX: t.radiusX || 1,
-                radiusY: t.radiusY || 1,
-                rotationAngle: t.rotationAngle || 0,
-                touchArea: this.calculateTouchArea(t),
-                velocity: velocity,
-                acceleration: acceleration
+                force: t.force || 0.5
             })),
             step: this.currentCrystalStep,
             taskId: 2
-        };
-
-        this.recordTouchEvent(touchData);
-        this.updateTouchHistory(touches[0], timestamp);
+        });
+        
         this.processCrystalInteraction('move', touches);
     }
-
+    
     handleCrystalTouchEnd(e) {
         e.preventDefault();
         const timestamp = performance.now();
-        const touches = Array.from(e.changedTouches).map(t => ({
-            clientX: t.clientX,
-            clientY: t.clientY
-        }));
-        this.processCrystalInteraction('end', touches);
+        const touches = Array.from(e.changedTouches);
         
-        const touchData = {
+        this.recordTouchEvent({
             timestamp,
             type: 'touchend',
             touches: touches.map(t => ({
                 identifier: t.identifier,
                 clientX: t.clientX,
                 clientY: t.clientY,
-                force: t.force || 0.5,
-                radiusX: t.radiusX || 1,
-                radiusY: t.radiusY || 1,
-                rotationAngle: t.rotationAngle || 0,
-                touchArea: this.calculateTouchArea(t),
-                velocity: { x: 0, y: 0, magnitude: 0 },
-                acceleration: { x: 0, y: 0, magnitude: 0 }
+                force: t.force || 0.5
             })),
             step: this.currentCrystalStep,
             taskId: 2
-        };
-
-        this.recordTouchEvent(touchData);
-    }
-
-    // Show direction indicator
-    updateDirectionIndicator() {
-        const crystalArea = document.getElementById('crystal-area');
-        let indicator = crystalArea.querySelector('.direction-indicator');
+        });
         
-        if (!indicator) {
-            indicator = document.createElement('div');
-            indicator.className = 'direction-indicator';
-            crystalArea.appendChild(indicator);
-        }
-        
-        if (this.crystalState.expectedDirection === null) {
-            indicator.textContent = 'Start rotating in any direction';
-            indicator.className = 'direction-indicator neutral';
-        } else {
-            const currentRotation = this.crystalState.rotationsCompleted;
-            const isClockwise = (currentRotation % 2 === 0) 
-                ? this.crystalState.expectedDirection > 0 
-                : this.crystalState.expectedDirection < 0;
-            
-            indicator.textContent = isClockwise ? '↻ Rotate Clockwise' : '↺ Rotate Counter-Clockwise';
-            indicator.className = `direction-indicator ${isClockwise ? 'clockwise' : 'counter-clockwise'}`;
-        }
+        this.processCrystalInteraction('end', touches);
     }
     
-    // Hide direction indicator
-    hideDirectionIndicator() {
-        const indicator = document.querySelector('.direction-indicator');
-        if (indicator) {
-            indicator.remove();
-        }
-    }
-    
-    // Show wrong direction feedback
-    showWrongDirectionFeedback() {
-        const crystal = document.getElementById('crystal');
-        crystal.classList.add('wrong-direction');
-        
-        setTimeout(() => {
-            crystal.classList.remove('wrong-direction');
-        }, 300);
-    }
-
-
     handleCrystalMouseDown(e) {
         const timestamp = performance.now();
+        
         this.recordTouchEvent({
             timestamp,
             type: 'mousedown',
-            touches: [{ 
-                identifier: 0, 
-                clientX: e.clientX, 
-                clientY: e.clientY, 
-                force: 0.5,
-                radiusX: 1,
-                radiusY: 1,
-                rotationAngle: 0,
-                touchArea: Math.PI,
-                velocity: { x: 0, y: 0, magnitude: 0 },
-                acceleration: { x: 0, y: 0, magnitude: 0 }
+            touches: [{
+                identifier: 0,
+                clientX: e.clientX,
+                clientY: e.clientY,
+                force: 0.5
             }],
             step: this.currentCrystalStep,
             taskId: 2
         });
+        
         this.processCrystalInteraction('start', [{ clientX: e.clientX, clientY: e.clientY }]);
     }
-
+    
     handleCrystalMouseMove(e) {
         if (e.buttons === 1) {
-
             const timestamp = performance.now();
-            const velocity = this.calculateTouchVelocity({ clientX: e.clientX, clientY: e.clientY }, timestamp);
-            const acceleration = this.calculateTouchAcceleration(velocity, timestamp);
-
+            
             this.recordTouchEvent({
                 timestamp,
                 type: 'mousemove',
-                touches: [{ 
-                    identifier: 0, 
-                    clientX: e.clientX, 
-                    clientY: e.clientY, 
-                    force: 0.5,
-                    radiusX: 1,
-                    radiusY: 1,
-                    rotationAngle: 0,
-                    touchArea: Math.PI,
-                    velocity: velocity,
-                    acceleration: acceleration
+                touches: [{
+                    identifier: 0,
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    force: 0.5
                 }],
                 step: this.currentCrystalStep,
                 taskId: 2
             });
+            
             this.processCrystalInteraction('move', [{ clientX: e.clientX, clientY: e.clientY }]);
         }
     }
-
+    
     handleCrystalMouseUp(e) {
         const timestamp = performance.now();
+        
         this.recordTouchEvent({
             timestamp,
             type: 'mouseup',
-            touches: [{ 
-                identifier: 0, 
-                clientX: e.clientX, 
-                clientY: e.clientY, 
-                force: 0.5,
-                radiusX: 1,
-                radiusY: 1,
-                rotationAngle: 0,
-                touchArea: Math.PI,
-                velocity: { x: 0, y: 0, magnitude: 0 },
-                acceleration: { x: 0, y: 0, magnitude: 0 }
+            touches: [{
+                identifier: 0,
+                clientX: e.clientX,
+                clientY: e.clientY,
+                force: 0.5
             }],
             step: this.currentCrystalStep,
             taskId: 2
         });
+        
         this.processCrystalInteraction('end', [{ clientX: e.clientX, clientY: e.clientY }]);
     }
-
-    // Calculate touch area using radiusX and radiusY
-    calculateTouchArea(touch) {
-        const radiusX = touch.radiusX || 1;
-        const radiusY = touch.radiusY || 1;
-        // Elliptical area formula: π × radiusX × radiusY
-        return Math.PI * radiusX * radiusY;
-    }
-
-    // Calculate touch velocity
-    calculateTouchVelocity(touch, timestamp) {
-        const history = this.touchHistory;
-        if (history.length === 0) {
-            this.updateTouchHistory(touch, timestamp);
-            return { x: 0, y: 0, magnitude: 0 };
-        }
-
-        const lastTouch = history[history.length - 1];
-        const deltaX = touch.clientX - lastTouch.x;
-        const deltaY = touch.clientY - lastTouch.y;
-        const deltaTime = timestamp - lastTouch.timestamp;
-
-        if (deltaTime === 0) {
-            return { x: 0, y: 0, magnitude: 0 };
-        }
-
-        const velocityX = deltaX / deltaTime;
-        const velocityY = deltaY / deltaTime;
-        const magnitude = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-
-        return { x: velocityX, y: velocityY, magnitude: magnitude };
-    }
-
-    // Calculate touch acceleration
-    calculateTouchAcceleration(velocity, timestamp) {
-        const history = this.velocityHistory;
-        if (history.length === 0) {
-            this.velocityHistory.push({ velocity, timestamp });
-            return { x: 0, y: 0, magnitude: 0 };
-        }
-
-        const lastVelocity = history[history.length - 1];
-        const deltaVX = velocity.x - lastVelocity.velocity.x;
-        const deltaVY = velocity.y - lastVelocity.velocity.y;
-        const deltaTime = timestamp - lastVelocity.timestamp;
-
-        if (deltaTime === 0) {
-            return { x: 0, y: 0, magnitude: 0 };
-        }
-
-        const accelerationX = deltaVX / deltaTime;
-        const accelerationY = deltaVY / deltaTime;
-        const magnitude = Math.sqrt(accelerationX * accelerationX + accelerationY * accelerationY);
-
-        // Keep velocity history manageable
-        this.velocityHistory.push({ velocity, timestamp });
-        if (this.velocityHistory.length > 10) {
-            this.velocityHistory.shift();
-        }
-
-        return { x: accelerationX, y: accelerationY, magnitude: magnitude };
-    }
-
-    // Update touch history for analytics
-    updateTouchHistory(touch, timestamp) {
-        this.touchHistory.push({
-            x: touch.clientX,
-            y: touch.clientY,
-            timestamp: timestamp
-        });
-
-        // Keep history manageable
-        if (this.touchHistory.length > 10) {
-            this.touchHistory.shift();
-        }
-    }
-
+    
     processCrystalInteraction(phase, touches) {
         const step = this.crystalSteps[this.currentCrystalStep - 1];
         const crystal = document.getElementById('crystal');
-        const mobileRotationThreshold = 0.005;
-    
+        
         switch (step.type) {
             case 'tap':
                 if (phase === 'end' && touches.length === 1) {
                     this.crystalState.tapCount++;
                     crystal.classList.add('tap-feedback');
                     crystal.classList.add('active');
+                    
                     setTimeout(() => {
                         crystal.classList.remove('tap-feedback');
                         crystal.classList.remove('active');
                     }, 200);
+                    
                     this.updateStepProgress(`${this.crystalState.tapCount}/${step.target}`);
+                    
                     if (this.crystalState.tapCount >= step.target) {
                         this.completeStep();
                     }
                 }
                 break;
-    
-            case 'altRotate': {
-                if (touches.length !== 1) return;
-                const touch = touches[0];
-                const rect = crystal.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                const angle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX); // -PI to PI
-            
-                if (phase === 'start') {
-                    this.crystalState.initialAngle = angle;
-                    this.crystalState.lastAngle = angle;
-                    this.crystalState.currentRotation = 0;
-                    this.crystalState.currentDirection = null;
-                    this.crystalState.activeTouchId = touch.identifier;
-            
-                    if (this.crystalState.rotationsCompleted === 0) {
-                        this.crystalState.expectedDirection = 1; // Start with clockwise
+                
+            case 'rotate':
+                if (phase === 'start' && touches.length === 2) {
+                    const dx = touches[1].clientX - touches[0].clientX;
+                    const dy = touches[1].clientY - touches[0].clientY;
+                    this.crystalState.initialAngle = Math.atan2(dy, dx);
+                    this.crystalState.totalRotation = 0;
+                    this.crystalState.isRotating = true;
+                    this.crystalState.rotationStart = performance.now();
+                    crystal.classList.add('rotation-feedback', 'active');
+                } 
+                else if (phase === 'move' && this.crystalState.isRotating && touches.length === 2) {
+                    const dx = touches[1].clientX - touches[0].clientX;
+                    const dy = touches[1].clientY - touches[0].clientY;
+                    const currentAngle = Math.atan2(dy, dx);
+                    
+                    let angleDiff = currentAngle - this.crystalState.initialAngle;
+                    if (angleDiff > Math.PI) {
+                        angleDiff -= 2 * Math.PI;
+                    } else if (angleDiff < -Math.PI) {
+                        angleDiff += 2 * Math.PI;
                     }
-            
-                    crystal.classList.add('active');
-                    this.updateStepProgress(`${this.crystalState.rotationsCompleted}/3`);
-                    this.updateDirectionIndicator();
+                    
+                    if (angleDiff > 0) {
+                        this.crystalState.totalRotation += angleDiff;
+                    }
+                    
+                    this.crystalState.initialAngle = currentAngle;
+                    const elapsed = performance.now() - this.crystalState.rotationStart;
+                    const rotationDeg = Math.round(this.crystalState.totalRotation * 180 / Math.PI);
+                    
+                    this.updateStepProgress(`${rotationDeg}° | ${Math.floor(elapsed/1000)}s / ${step.target/1000}s`);
+                    
+                    const requiredRadians = 10 * Math.PI / 180;
+                    if (elapsed >= step.target && this.crystalState.totalRotation >= requiredRadians) {
+                        this.completeStep();
+                    }
+                } 
+                else if (phase === 'end' && touches.length < 2) {
+                    this.crystalState.isRotating = false;
+                    crystal.classList.remove('rotation-feedback', 'active');
                 }
-            
-                else if (phase === 'move') {
-                    if (touch.identifier !== this.crystalState.activeTouchId) return;
-            
-                    let delta = angle - this.crystalState.lastAngle;
-            
-                    // Wrap angle correctly
-                    if (delta > Math.PI) delta -= 2 * Math.PI;
-                    if (delta < -Math.PI) delta += 2 * Math.PI;
-            
-                    // Track current direction once delta is meaningful
-                    const direction = Math.sign(delta);
-                    if (this.crystalState.currentDirection === null && Math.abs(delta) > 0.01) {
-                        this.crystalState.currentDirection = direction;
-                    }
-            
-                    // If wrong direction, reject move
-                    const expected = this.crystalState.expectedDirection;
-                    if (direction !== expected) {
-                        this.showWrongDirectionFeedback();
-                        this.crystalState.lastAngle = angle;
-                        return;
-                    }
-            
-                    this.crystalState.currentRotation += delta;
-                    this.crystalState.lastAngle = angle;
-            
-                    const rotationAmount = Math.abs(this.crystalState.currentRotation);
-                    const partial = Math.min(rotationAmount / (2 * Math.PI), 1);
-                    this.updateStepProgress(`${(this.crystalState.rotationsCompleted + partial).toFixed(1)}/3`);
-            
-                    if (rotationAmount >= 2 * Math.PI) {
-                        this.crystalState.rotationsCompleted += 1;
-                        this.crystalState.currentRotation = 0;
-                        this.crystalState.currentDirection = null;
-                        this.crystalState.expectedDirection *= -1;
-            
-                        crystal.classList.add('rotation-feedback');
-                        setTimeout(() => crystal.classList.remove('rotation-feedback'), 300);
-                        this.updateDirectionIndicator();
-            
-                        if (this.crystalState.rotationsCompleted >= step.target) {
-                            this.completeStep();
-                        }
-                    }
-                }
-            
-                else if (phase === 'end') {
-                    crystal.classList.remove('active');
-                    this.hideDirectionIndicator();
-                }
-            
                 break;
-            }
-
-
+                
             case 'pinch':
             case 'spread':
                 if (touches.length === 2) {
@@ -903,8 +789,10 @@ class BiometricDataCollector {
                         const currentDistance = this.getDistance(touches[0], touches[1]);
                         const scale = currentDistance / this.crystalState.initialDistance;
                         const newSize = Math.max(0.3, Math.min(2.0, scale));
+                        
                         this.updateCrystalSize(newSize);
                         this.updateStepProgress(`${Math.round(newSize * 100)}%`);
+                        
                         if (Math.abs(newSize - step.target) < 0.1) {
                             this.completeStep();
                         }
@@ -915,7 +803,7 @@ class BiometricDataCollector {
                     crystal.classList.remove('active');
                 }
                 break;
-    
+                
             case 'pressure':
                 if (touches.length === 3) {
                     if (phase === 'start') {
@@ -927,6 +815,7 @@ class BiometricDataCollector {
                         const elapsed = performance.now() - this.crystalState.pressureStart;
                         this.updatePressureIndicator(elapsed / step.target);
                         this.updateStepProgress(`${Math.floor(elapsed / 1000)}s / ${step.target / 1000}s`);
+                        
                         if (elapsed >= step.target) {
                             this.completeStep();
                         }
@@ -940,17 +829,18 @@ class BiometricDataCollector {
                 break;
         }
     }
-
-
+    
     updateCrystalSize(size) {
         const crystal = document.getElementById('crystal');
         const sizeIndicator = document.getElementById('size-indicator');
+        
         this.crystalState.currentSize = size;
         crystal.style.transform = `scale(${size})`;
         crystal.style.setProperty('--current-scale', size);
+        
         const percentage = Math.round(size * 100);
         sizeIndicator.textContent = `${percentage}%`;
-
+        
         if (size <= 0.6) {
             crystal.classList.add('shrinking');
             sizeIndicator.classList.add('shrink-highlight');
@@ -966,7 +856,7 @@ class BiometricDataCollector {
                 sizeIndicator.classList.remove('enlarge-highlight');
             }, 500);
         }
-
+        
         if (size < 0.7) {
             crystal.style.filter = 'hue-rotate(180deg) brightness(0.8)';
         } else if (size > 1.3) {
@@ -975,7 +865,13 @@ class BiometricDataCollector {
             crystal.style.filter = 'none';
         }
     }
-
+    
+    getDistance(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
     showPressureIndicator() {
         const crystalArea = document.getElementById('crystal-area');
         if (!crystalArea.querySelector('.pressure-indicator')) {
@@ -985,53 +881,59 @@ class BiometricDataCollector {
             crystalArea.appendChild(indicator);
         }
     }
-
+    
     updatePressureIndicator(progress) {
         const fill = document.querySelector('.pressure-fill');
         if (fill) {
             fill.style.width = `${Math.min(progress * 100, 100)}%`;
         }
     }
-
+    
     hidePressureIndicator() {
         const indicator = document.querySelector('.pressure-indicator');
         if (indicator) {
             indicator.remove();
         }
     }
-
+    
     completeStep() {
         const crystal = document.getElementById('crystal');
         crystal.classList.add('success');
+        
         setTimeout(() => {
             crystal.classList.remove('success');
         }, 600);
+        
         document.getElementById('step-status').textContent = 'Completed';
         document.getElementById('next-crystal-btn').disabled = false;
+        
         const sizeIndicator = document.getElementById('size-indicator');
         sizeIndicator.classList.add('completion-highlight');
         setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
     }
-
+    
     nextCrystalStep() {
         if (this.currentCrystalStep >= this.crystalSteps.length) {
             this.switchScreen('gallery');
             return;
         }
+        
         this.currentCrystalStep++;
+        
         if (this.currentCrystalStep > this.crystalSteps.length) {
             this.switchScreen('gallery');
             return;
         }
+        
         this.resetCrystalState();
         this.updateCrystalDisplay();
     }
-
+    
     resetCrystalStep() {
         this.resetCrystalState();
         this.updateCrystalDisplay();
     }
-
+    
     resetCrystalState() {
         this.crystalState = {
             tapCount: 0,
@@ -1045,25 +947,23 @@ class BiometricDataCollector {
             pressureFingers: 0,
             initialDistance: 0,
             initialAngle: null,
-            totalRotation: 0,
-            rotationsCompleted: 0,
-            expectedDirection: null,
-            currentRotation: 0
+            totalRotation: 0
         };
-
+        
         const crystal = document.getElementById('crystal');
         crystal.style.transform = 'scale(1)';
         crystal.style.setProperty('--current-scale', 1);
         crystal.style.filter = 'none';
         crystal.classList.remove('active', 'shrinking', 'enlarging', 'success', 'tap-feedback', 'rotation-feedback');
+        
         document.getElementById('size-indicator').textContent = '100%';
         document.getElementById('size-indicator').classList.remove('shrink-highlight', 'enlarge-highlight', 'completion-highlight');
         this.hidePressureIndicator();
-        this.hideDirectionIndicator();
     }
-
+    
     updateCrystalDisplay() {
         const step = this.crystalSteps[this.currentCrystalStep - 1];
+        
         document.getElementById('step-title').textContent = `Step ${this.currentCrystalStep}: ${this.getStepTitle(step.type)}`;
         document.getElementById('step-instruction').textContent = step.instruction;
         document.getElementById('current-step').textContent = `${this.currentCrystalStep}/5`;
@@ -1071,38 +971,39 @@ class BiometricDataCollector {
         document.getElementById('step-progress').textContent = this.getInitialProgress(step.type);
         document.getElementById('next-crystal-btn').disabled = true;
     }
-
+    
     getStepTitle(type) {
         const titles = {
             'tap': 'Index Finger Tapping',
-            'altRotate': 'Alternating Finger Rotation',
+            'rotate': 'Two-Finger Rotation',
             'pinch': 'Pinch to Shrink',
             'spread': 'Spread to Enlarge',
             'pressure': 'Three-Finger Pressure'
         };
         return titles[type] || 'Unknown';
     }
-
+    
     getInitialProgress(type) {
         const progress = {
             'tap': '0/3',
-            'altRotate': '0/3',
+            'rotate': '0° | 0s / 5s',
             'pinch': '100% → 50%',
             'spread': '100% → 150%',
             'pressure': '0s / 3s'
         };
         return progress[type] || '0/0';
     }
-
+    
     updateStepProgress(progress) {
         document.getElementById('step-progress').textContent = progress;
     }
-
+    
     recordTouchEvent(data) {
         this.touchData.push(data);
     }
+    
+// --- Updated Enhanced Gallery Methods ---
 
-    // Gallery Methods - YOUR PROVIDED FUNCTIONS (kept exactly as-is)
     // 1. Initialize thumbnail grid
     initializeGallery() {
         const grid = document.getElementById('gallery-grid');
@@ -1482,7 +1383,8 @@ class BiometricDataCollector {
         return Math.hypot(dx, dy);
     }
 
-    // Export Methods - YOUR PROVIDED FUNCTIONS (kept exactly as-is)
+
+    // Export Methods
     exportKeystrokeData() {
         const features = this.extractKeystrokeFeatures();
         const csv = this.convertToCSV(features);
@@ -1494,6 +1396,7 @@ class BiometricDataCollector {
         document.getElementById('keystroke-features').textContent = '9';
     }
 
+    
     exportTouchData() {
         const features = this.extractTouchFeatures();
         const csv = this.convertToCSV(features);
@@ -1504,6 +1407,7 @@ class BiometricDataCollector {
         document.getElementById('touch-count').textContent = this.touchData.length;
         document.getElementById('touch-features').textContent = '12';
     }
+
 
     // FIXED: Enhanced keystroke feature extraction with proper character handling
     extractKeystrokeFeatures() {
@@ -1538,6 +1442,7 @@ class BiometricDataCollector {
         return features;
     }
 
+    
     // FIXED: Enhanced touch feature extraction
     extractTouchFeatures() {
         const features = [];
@@ -1622,8 +1527,10 @@ class BiometricDataCollector {
         return csvContent;
     }
 
+    // https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec
+
     uploadCSVToGoogleDrive(content, filename) {
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec'; // 🔁 Replace with your actual Apps Script Web App URL
     
         fetch(`${scriptURL}?filename=${encodeURIComponent(filename)}`, {
             method: 'POST',
@@ -1642,7 +1549,11 @@ class BiometricDataCollector {
             alert(`❌ Upload failed for ${filename}: ` + error.message);
         });
     }
+
+
+
 }
+
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
