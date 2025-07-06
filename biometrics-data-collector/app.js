@@ -1276,6 +1276,7 @@ class BiometricDataCollector {
         
         // Enhanced mobile device detection and setup
         console.log('Crystal game started - Trial tracking initialized');
+        console.log('Initial trial state:', this.crystalState.currentTrial);
         console.log('Device info:', {
             userAgent: navigator.userAgent,
             platform: navigator.platform,
@@ -1806,7 +1807,7 @@ class BiometricDataCollector {
     getStepTitle(type) {
         const titles = {
             'tap': 'Index Finger Tapping',
-            'rotate': 'Two-Finger Rotation',
+            'rotate': 'One-Finger Rotation',
             'pinch': 'Pinch to Shrink',
             'spread': 'Spread to Enlarge',
             'pressure': 'Three-Finger Pressure'
@@ -1833,6 +1834,10 @@ class BiometricDataCollector {
         // Add trial information for crystal game
         if (data.taskId === 2) { // Crystal game
             data.trial = this.crystalState.currentTrial;
+            // Debug logging for trial tracking
+            if (data.type === 'touchstart') {
+                console.log(`📊 Touch event recorded - Step: ${data.step}, Trial: ${data.trial}`);
+            }
         } else {
             data.trial = 1; // Default trial for other tasks
         }
@@ -2231,7 +2236,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '9'; // 9 features (no trial column for keystroke)
+        document.getElementById('keystroke-features').textContent = '8'; // 8 features (removed trial_id)
     }
 
     
@@ -2243,7 +2248,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '12'; // Updated: 12 features including trial tracking
+        document.getElementById('touch-features').textContent = '9'; // 9 features (removed trial_id, tracking_id, touch_count)
     }
 
 
@@ -2274,7 +2279,6 @@ class BiometricDataCollector {
                 features.push({
                     participant_id: this.participantId,
                     task_id: 1, // Typing task
-                    trial_id: keystroke.sentence + 1,
                     timestamp_ms: Math.round(keystroke.timestamp),
                     ref_char: keystroke.actualChar || 'unknown',
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
@@ -2298,20 +2302,21 @@ class BiometricDataCollector {
             const baseFeature = {
                 participant_id: this.participantId,
                 task_id: touch.taskId,
-                trial_id: touch.step,
                 trial: touch.trial || 1, // Trial number (1 for first attempt, 2+ for retries)
                 timestamp_ms: Math.round(touch.timestamp),
                 touch_x: Math.round(touch.touches[0]?.clientX || 0),
                 touch_y: Math.round(touch.touches[0]?.clientY || 0),
                 btn_touch_state: touch.type,
-                tracking_id: touch.touches[0]?.identifier || 0,
-                touch_count: touch.touches.length,
                 inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0
             };
             
-            // ACCURATE PRESSURE: Only include when force is actually available and meaningful
+            // FIXED PRESSURE: Only include when force is actually available and meaningful
+            // Most mobile devices don't support pressure/force, so we'll use a default value
             if (touch.touches[0]?.force !== undefined && touch.touches[0].force > 0 && touch.touches[0].force <= 1) {
                 baseFeature.pressure = Math.round(touch.touches[0].force * 1000) / 1000; // 3 decimal precision
+            } else {
+                // Use default pressure value for devices that don't support force
+                baseFeature.pressure = 0.5; // Default pressure value
             }
             
             // ACCURATE VELOCITY: Calculate for move events with proper validation
