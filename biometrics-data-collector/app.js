@@ -1429,28 +1429,28 @@ class BiometricDataCollector {
     
     updateCrystalSize(size) {
         const crystal = document.getElementById('crystal');
-        const sizeIndicator = document.getElementById('size-indicator');
+        const crystalSizeDisplay = document.getElementById('crystal-size-display');
         
         this.crystalState.currentSize = size;
         crystal.style.transform = `scale(${size})`;
         crystal.style.setProperty('--current-scale', size);
         
         const percentage = Math.round(size * 100);
-        sizeIndicator.textContent = `${percentage}%`;
+        crystalSizeDisplay.textContent = `${percentage}%`;
         
         if (size <= 0.6) {
             crystal.classList.add('shrinking');
-            sizeIndicator.classList.add('shrink-highlight');
+            crystalSizeDisplay.classList.add('shrink-highlight');
             setTimeout(() => {
                 crystal.classList.remove('shrinking');
-                sizeIndicator.classList.remove('shrink-highlight');
+                crystalSizeDisplay.classList.remove('shrink-highlight');
             }, 500);
         } else if (size >= 1.4) {
             crystal.classList.add('enlarging');
-            sizeIndicator.classList.add('enlarge-highlight');
+            crystalSizeDisplay.classList.add('enlarge-highlight');
             setTimeout(() => {
                 crystal.classList.remove('enlarging');
-                sizeIndicator.classList.remove('enlarge-highlight');
+                crystalSizeDisplay.classList.remove('enlarge-highlight');
             }, 500);
         }
         
@@ -1504,9 +1504,9 @@ class BiometricDataCollector {
         document.getElementById('step-status').textContent = 'Completed';
         document.getElementById('next-crystal-btn').disabled = false;
         
-        const sizeIndicator = document.getElementById('size-indicator');
-        sizeIndicator.classList.add('completion-highlight');
-        setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
+        const crystalSizeDisplay = document.getElementById('crystal-size-display');
+        crystalSizeDisplay.classList.add('completion-highlight');
+        setTimeout(() => crystalSizeDisplay.classList.remove('completion-highlight'), 1000);
     }
     
     nextCrystalStep() {
@@ -1553,8 +1553,8 @@ class BiometricDataCollector {
         crystal.style.filter = 'none';
         crystal.classList.remove('active', 'shrinking', 'enlarging', 'success', 'tap-feedback', 'rotation-feedback');
         
-        document.getElementById('size-indicator').textContent = '100%';
-        document.getElementById('size-indicator').classList.remove('shrink-highlight', 'enlarge-highlight', 'completion-highlight');
+        document.getElementById('crystal-size-display').textContent = '100%';
+        document.getElementById('crystal-size-display').classList.remove('shrink-highlight', 'enlarge-highlight', 'completion-highlight');
         this.hidePressureIndicator();
     }
     
