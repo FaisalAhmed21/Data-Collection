@@ -8,6 +8,8 @@ class BiometricDataCollector {
         
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        this.isAndroid = /Android/.test(navigator.userAgent);
+        this.isMobile = this.isIOS || this.isAndroid;
         
         this.keystrokeData = [];
         this.touchData = [];
@@ -46,7 +48,9 @@ class BiometricDataCollector {
             translateX: 0,
             translateY: 0,
             initialDistance: 0,
-            touches: []
+            touches: [],
+            lastTapTime: 0,
+            zoomPersistent: false // Track if zoom should persist
         };
         
         this.sentences = [
@@ -310,21 +314,21 @@ class BiometricDataCollector {
                 return;
             }
             
-            // ENHANCED: Block iOS-specific double input issues with longer cooldown
-            if (this.isIOS && this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 400) {
-                console.log('🚫 iOS duplicate input BLOCKED (enhanced):', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+            // ENHANCED: Block mobile-specific double input issues with longer cooldown
+            if (this.isMobile && this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 400) {
+                console.log('🚫 Mobile duplicate input BLOCKED (enhanced):', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
                 return;
             }
             
-            // ADDITIONAL: Block any rapid character input on iOS
-            if (this.isIOS && this.lastCharTime && (currentTime - this.lastCharTime) < 300) {
-                console.log('🚫 iOS rapid character input BLOCKED:', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
+            // ADDITIONAL: Block any rapid character input on mobile
+            if (this.isMobile && this.lastCharTime && (currentTime - this.lastCharTime) < 300) {
+                console.log('🚫 Mobile rapid character input BLOCKED:', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
                 return;
             }
         }
         
-        if (this.isIOS && this.compositionActive && inputType === 'insertText') {
-            console.log('iOS composition active, skipping insertText');
+        if (this.isMobile && this.compositionActive && inputType === 'insertText') {
+            console.log('Mobile composition active, skipping insertText');
             return;
         }
         
@@ -632,7 +636,8 @@ class BiometricDataCollector {
             } else if (data === 'π' || data === 'μ' || data === 'σ' || data === 'τ') {
                 refChar = data; // More Greek letters
             } else if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
-                refChar = 'SHIFT';
+                // Don't record SHIFT for case changes - mobile keyboards handle this automatically
+                refChar = data; // Record the actual uppercase letter instead
             } else if (data === 'π' || data === 'μ' || data === 'σ' || data === 'τ') {
                 refChar = data; // More Greek letters
             } else {
@@ -1500,8 +1505,8 @@ class BiometricDataCollector {
                     this.crystalState.rotationAccumulated += delta;
                     this.crystalState.lastAngle = angle;
             
-                    const progress = Math.abs(this.crystalState.rotationAccumulated) / (2 * Math.PI);
-                    this.updateStepProgress(`${(this.crystalState.rotationRounds + Math.min(progress, 1)).toFixed(1)}/3 (CW → CCW → CW)`);
+                    // Only show whole number progress - no fractional progress during rotation
+                    this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (CW → CCW → CW)`);
             
                                         // Check for full rotation completion
                     if (Math.abs(this.crystalState.rotationAccumulated) >= 2 * Math.PI) {
@@ -1983,6 +1988,7 @@ class BiometricDataCollector {
             const change = dist / this.galleryZoom.initialDistance;
             this.galleryZoom.scale = Math.max(0.5, Math.min(3.0, this.galleryZoom.scale * change));
             this.galleryZoom.initialDistance = dist;
+            this.galleryZoom.zoomPersistent = true; // Mark zoom as persistent
             this.updateImageTransform();
             this.updateZoomLevel();
         }
@@ -2048,7 +2054,7 @@ class BiometricDataCollector {
     // 6. Open popup and attach double-tap listener once
     openImagePopup(index) {
         this.currentGalleryImage = index;
-        this.resetZoom();
+        this.resetZoom(); // Always start with no zoom
     
         if (!document.querySelector('.image-popup')) {
             this.createImagePopup();
@@ -2162,6 +2168,7 @@ class BiometricDataCollector {
                     this.galleryZoom.scale = 2.0;
                     this.galleryZoom.translateX = 0;
                     this.galleryZoom.translateY = 0;
+                    this.galleryZoom.zoomPersistent = true; // Mark zoom as persistent
                     this.updateImageTransform();
                     this.updateZoomLevel();
                 }
@@ -2186,6 +2193,7 @@ class BiometricDataCollector {
     // 8. Zoom methods
     zoomIn() {
         this.galleryZoom.scale = Math.min(this.galleryZoom.scale * 1.2, 3.0);
+        this.galleryZoom.zoomPersistent = true; // Mark zoom as persistent
         this.updateImageTransform();
         this.updateZoomLevel();
     }
@@ -2195,6 +2203,7 @@ class BiometricDataCollector {
         if (this.galleryZoom.scale <= 1) {
             this.galleryZoom.translateX = 0;
             this.galleryZoom.translateY = 0;
+            this.galleryZoom.zoomPersistent = false; // Reset persistence when back to normal size
         }
         this.updateImageTransform();
         this.updateZoomLevel();
@@ -2206,6 +2215,7 @@ class BiometricDataCollector {
         this.galleryZoom.translateY = 0;
         this.galleryZoom.isPinching = false;
         this.galleryZoom.isPanning = false;
+        this.galleryZoom.zoomPersistent = false; // Reset zoom persistence
         this.updateImageTransform();
         this.updateZoomLevel();
     }
@@ -2241,7 +2251,7 @@ class BiometricDataCollector {
     nextGalleryImage() {
         if (this.currentGalleryImage < this.galleryImages.length - 1) {
             this.currentGalleryImage++;
-            this.resetZoom();
+            this.resetZoom(); // Reset zoom when changing images
             this.updatePopupImage();
         }
     }
@@ -2249,7 +2259,7 @@ class BiometricDataCollector {
     prevGalleryImage() {
         if (this.currentGalleryImage > 0) {
             this.currentGalleryImage--;
-            this.resetZoom();
+            this.resetZoom(); // Reset zoom when changing images
             this.updatePopupImage();
         }
     }
