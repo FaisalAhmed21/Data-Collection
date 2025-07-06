@@ -1443,15 +1443,21 @@ class BiometricDataCollector {
                     // DO NOT reset rotationRounds or rotationSequence - preserve progress
                     // DO NOT reset rotationCompleted - preserve completion status
                     crystal.classList.add('active');
-                    this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (Touch crystal, then rotate: CW → CCW → CW)`);
-                    console.log('🔄 Rotation started - touch anywhere on crystal surface');
-                    console.log(`📊 Current progress: ${this.crystalState.rotationRounds}/3`);
+                    
+                    if (this.crystalState.rotationCompleted) {
+                        this.updateStepProgress(`3/3 (Task completed - CW → CCW → CW)`);
+                        console.log('✅ Rotation task already completed - progress permanently at 3/3');
+                    } else {
+                        this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (Touch crystal, then rotate: CW → CCW → CW)`);
+                        console.log('🔄 Rotation started - touch anywhere on crystal surface');
+                        console.log(`📊 Current progress: ${this.crystalState.rotationRounds}/3`);
+                    }
                 }
             
                 else if (phase === 'move') {
                     // Allow movements even after completion, but don't process them
                     if (this.crystalState.rotationCompleted) {
-                        console.log('✅ Rotation task completed - allowing free movement');
+                        console.log('✅ Rotation task completed - allowing free movement, progress permanently at 3/3');
                         return;
                     }
                     
@@ -1484,7 +1490,7 @@ class BiometricDataCollector {
                     const progress = Math.abs(this.crystalState.rotationAccumulated) / (2 * Math.PI);
                     this.updateStepProgress(`${(this.crystalState.rotationRounds + Math.min(progress, 1)).toFixed(1)}/3 (CW → CCW → CW)`);
             
-                    // Check for full rotation completion
+                                        // Check for full rotation completion
                     if (Math.abs(this.crystalState.rotationAccumulated) >= 2 * Math.PI) {
                         // Record the completed rotation direction
                         const completedDirection = this.crystalState.rotationDirection;
@@ -1505,14 +1511,14 @@ class BiometricDataCollector {
                             console.log(`✅ Correct rotation ${this.crystalState.rotationRounds} completed: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
                             console.log(`📊 Rotation sequence: [${this.crystalState.rotationSequence.map(d => d === 1 ? 'CW' : 'CCW').join(', ')}]`);
                             
-                                                // Update progress to show completed rotation
-                    this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (CW → CCW → CW)`);
-                    
-                    // If task is not completed, show guidance for next rotation
-                    if (this.crystalState.rotationRounds < 3) {
-                        const nextDirection = this.getExpectedRotationDirection();
-                        console.log(`🔄 Next expected rotation: ${nextDirection === 1 ? 'CW' : 'CCW'}`);
-                    }
+                            // Update progress to show completed rotation
+                            this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (CW → CCW → CW)`);
+                            
+                            // If task is not completed, show guidance for next rotation
+                            if (this.crystalState.rotationRounds < 3) {
+                                const nextDirection = this.getExpectedRotationDirection();
+                                console.log(`🔄 Next expected rotation: ${nextDirection === 1 ? 'CW' : 'CCW'}`);
+                            }
                             
                             // Check if we have completed all 3 correct rotations
                             if (this.crystalState.rotationRounds >= 3) {
@@ -1521,10 +1527,10 @@ class BiometricDataCollector {
                                 this.completeStep();
                             }
                         } else {
-                            // Wrong direction - show feedback but don't count and don't reset progress
+                            // Wrong direction - show feedback but don't count and don't change progress at all
                             this.showWrongDirectionFeedback();
                             console.log(`❌ Wrong rotation direction! Expected: ${expectedDirection === 1 ? 'CW' : 'CCW'}, Got: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
-                            console.log(`📊 Progress remains at: ${this.crystalState.rotationRounds}/3`);
+                            console.log(`📊 Progress unchanged: ${this.crystalState.rotationRounds}/3`);
                         }
                         
                         // Reset for next rotation attempt (regardless of correct/wrong)
@@ -1537,14 +1543,14 @@ class BiometricDataCollector {
                     crystal.classList.remove('active');
                     console.log('🔄 Rotation touch ended');
                     
-                    // Reset progress when user removes finger from crystal area
+                    // Only reset progress if task is not completed
                     if (!this.crystalState.rotationCompleted) {
                         this.crystalState.rotationRounds = 0;
                         this.crystalState.rotationSequence = [];
                         console.log('🔄 Progress reset to 0/3 - finger removed from crystal area');
                         this.updateStepProgress(`0/3 (Touch crystal, then rotate: CW → CCW → CW)`);
                     } else {
-                        console.log(`📊 Progress preserved: ${this.crystalState.rotationRounds}/3 (task completed)`);
+                        console.log(`📊 Progress permanently preserved at 3/3 (task completed)`);
                     }
                 }
             
