@@ -284,18 +284,53 @@ class BiometricDataCollector {
         const eventSignature = `${inputType}-${data}-${value.length}-${pos}`;
         
         if (data && inputType === 'insertText') {
-            // Simplified deduplication - only block true duplicates
-            if (this.lastInputEvent === eventSignature && 
-                this.lastInputEventTime && 
-                (currentTime - this.lastInputEventTime) < 100) {
-                console.log('🚫 Duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
-                return;
+            // iOS-specific deduplication to prevent double character recording
+            if (this.isIOS) {
+                // Check for exact same input event within 300ms
+                if (this.lastInputEvent === eventSignature && 
+                    this.lastInputEventTime && 
+                    (currentTime - this.lastInputEventTime) < 300) {
+                    console.log('🚫 iOS duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                    return;
+                }
+                
+                // Check for same character within 200ms (iOS double-tap protection)
+                if (this.lastChar === data && 
+                    this.lastCharTime && 
+                    (currentTime - this.lastCharTime) < 200) {
+                    console.log('🚫 iOS duplicate character BLOCKED:', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
+                    return;
+                }
+                
+                // Check for rapid input events (iOS keyboard lag)
+                if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 150) {
+                    console.log('🚫 iOS rapid input BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                    return;
+                }
+            } else {
+                // Android deduplication - less aggressive
+                if (this.lastInputEvent === eventSignature && 
+                    this.lastInputEventTime && 
+                    (currentTime - this.lastInputEventTime) < 100) {
+                    console.log('🚫 Android duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                    return;
+                }
             }
         }
         
-        if (this.isMobile && this.compositionActive && inputType === 'insertText') {
-            console.log('Mobile composition active, skipping insertText');
+        // iOS-specific composition handling
+        if (this.isIOS && this.compositionActive && inputType === 'insertText') {
+            console.log('iOS composition active, skipping insertText');
             return;
+        }
+        
+        // Additional iOS protection: block composition events that might cause duplicates
+        if (this.isIOS && inputType === 'insertText' && this.lastInputEventTime) {
+            const timeSinceLast = currentTime - this.lastInputEventTime;
+            if (timeSinceLast < 50) { // Very short window for iOS composition issues
+                console.log('🚫 iOS composition duplicate BLOCKED:', data, 'time since last:', timeSinceLast, 'ms');
+                return;
+            }
         }
         
         this.lastInputValue = value;
@@ -495,6 +530,17 @@ class BiometricDataCollector {
                     
                     // Check if character should be recorded (simplified deduplication)
                     if (this.shouldRecordChar(refChar, timestamp + i)) {
+                        
+                        // Final iOS safety check: prevent duplicate in keystroke data
+                        if (this.isIOS) {
+                            const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
+                            if (lastKeystroke && 
+                                lastKeystroke.actualChar === refChar && 
+                                (timestamp + i - lastKeystroke.timestamp) < 300) {
+                                console.log('🚫 iOS final duplicate BLOCKED in keystroke data:', refChar);
+                                return;
+                            }
+                        }
                         
                         console.log('📝 Recording keystroke:', refChar, 'type:', inputType, 'timestamp:', timestamp + i);
                         this.recordKeystroke({
@@ -1058,14 +1104,33 @@ class BiometricDataCollector {
     shouldRecordChar(char, timestamp) {
         const currentTime = performance.now();
         
-        // Only block actual duplicates, not legitimate characters
-        if (this.lastChar === char && this.lastCharTime) {
-            const timeSinceLast = currentTime - this.lastCharTime;
+        // iOS-specific deduplication
+        if (this.isIOS) {
+            if (this.lastChar === char && this.lastCharTime) {
+                const timeSinceLast = currentTime - this.lastCharTime;
+                
+                // BLOCK: iOS duplicates within 250ms (iOS double-tap issue)
+                if (timeSinceLast < 250) {
+                    console.log('🚫 iOS character duplicate BLOCKED:', char, 'time since last:', timeSinceLast, 'ms');
+                    return false;
+                }
+            }
             
-            // BLOCK: Only true duplicates within 200ms (reduced from 400ms)
-            if (timeSinceLast < 200) {
-                console.log('🚫 Character duplicate BLOCKED:', char, 'time since last:', timeSinceLast, 'ms');
+            // Additional iOS protection: block rapid character input
+            if (this.lastCharTime && (currentTime - this.lastCharTime) < 100) {
+                console.log('🚫 iOS rapid character input BLOCKED:', char, 'time since last:', currentTime - this.lastCharTime, 'ms');
                 return false;
+            }
+        } else {
+            // Android deduplication - less aggressive
+            if (this.lastChar === char && this.lastCharTime) {
+                const timeSinceLast = currentTime - this.lastCharTime;
+                
+                // BLOCK: Android duplicates within 150ms
+                if (timeSinceLast < 150) {
+                    console.log('🚫 Android character duplicate BLOCKED:', char, 'time since last:', timeSinceLast, 'ms');
+                    return false;
+                }
             }
         }
         
