@@ -2223,8 +2223,6 @@ class BiometricDataCollector {
         document.body.style.overflow = 'hidden';
     }
     
-
-    
     // 7. Build popup DOM and set up controls
     createImagePopup() {
         const popup = document.createElement('div');
@@ -2543,10 +2541,6 @@ class BiometricDataCollector {
         
         return features;
     }
-    
-
-    
-
     
     convertToCSV(data) {
         if (data.length === 0) return 'No data available';
