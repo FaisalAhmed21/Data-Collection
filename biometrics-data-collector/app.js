@@ -374,8 +374,6 @@ class BiometricDataCollector {
                 const char = data[i];
                 const posOffset = pos - data.length + i;
               
-
-                
                 if (char === ' ') {
                     // SPACE character
                     this.recordKeystroke({
@@ -497,6 +495,30 @@ class BiometricDataCollector {
                         refChar = char; // More Greek letters
                     } else {
                         // For all other characters, use as-is
+                        refChar = char;
+                    }
+                    
+                    // SPECIAL CASE: Handle SHIFT logic for case changes
+                    // Only record SHIFT if going from lowercase to uppercase, not from uppercase to lowercase
+                    if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
+                        // Check if previous character was lowercase
+                        if (this.previousChar && this.previousChar === this.previousChar.toLowerCase() && this.previousChar.match(/[a-z]/)) {
+                            // Going from lowercase to uppercase - record SHIFT first, then the letter
+                            this.recordKeystroke({
+                                timestamp: timestamp + i - 0.5,
+                                actualChar: 'SHIFT',
+                                keyCode: 16,
+                                type: inputType,
+                                sentence: this.currentSentence,
+                                position: pos - data.length + i,
+                                clientX: this.pointerTracking.x,
+                                clientY: this.pointerTracking.y
+                            });
+                        }
+                        // Record the uppercase letter
+                        refChar = char;
+                    } else if (char === char.toLowerCase() && char.match(/[a-z]/)) {
+                        // Lowercase letter - no SHIFT needed
                         refChar = char;
                     }
                     
@@ -636,8 +658,23 @@ class BiometricDataCollector {
             } else if (data === 'π' || data === 'μ' || data === 'σ' || data === 'τ') {
                 refChar = data; // More Greek letters
             } else if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
-                // Don't record SHIFT for case changes - mobile keyboards handle this automatically
-                refChar = data; // Record the actual uppercase letter instead
+                // SPECIAL CASE: Handle SHIFT logic for case changes
+                // Check if previous character was lowercase
+                if (this.previousChar && this.previousChar === this.previousChar.toLowerCase() && this.previousChar.match(/[a-z]/)) {
+                    // Going from lowercase to uppercase - record SHIFT first, then the letter
+                    this.recordKeystroke({
+                        timestamp: timestamp - 0.5,
+                        actualChar: 'SHIFT',
+                        keyCode: 16,
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - 1,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                }
+                // Record the uppercase letter
+                refChar = data;
             } else if (data === 'π' || data === 'μ' || data === 'σ' || data === 'τ') {
                 refChar = data; // More Greek letters
             } else {
@@ -2398,6 +2435,7 @@ class BiometricDataCollector {
         
         return csvContent;
     }
+
     // https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec
 
     uploadCSVToGoogleDrive(content, filename) {
