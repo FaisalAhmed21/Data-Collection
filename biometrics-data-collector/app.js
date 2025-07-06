@@ -2398,7 +2398,6 @@ class BiometricDataCollector {
         
         return csvContent;
     }
-
     // https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec
 
     uploadCSVToGoogleDrive(content, filename) {
