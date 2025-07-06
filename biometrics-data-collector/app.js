@@ -2459,7 +2459,6 @@ class BiometricDataCollector {
         document.getElementById('touch-features').textContent = '9'; // 9 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, pressure
     }
 
-
     // ENHANCED: Keystroke feature extraction with SHIFT in ref_char column
     extractKeystrokeFeatures() {
         const features = [];
@@ -2509,7 +2508,6 @@ class BiometricDataCollector {
         return features;
     }
 
-    
     // RELIABLE: Touch feature extraction with only accurate, measurable features
     extractTouchFeatures() {
         const features = [];
@@ -2561,7 +2559,6 @@ class BiometricDataCollector {
 
     uploadCSVToGoogleDrive(content, filename) {
         const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec'; // 🔁 Replace with your actual Apps Script Web App URL
-    
         fetch(`${scriptURL}?filename=${encodeURIComponent(filename)}`, {
             method: 'POST',
             headers: {
