@@ -27,10 +27,6 @@ class BiometricDataCollector {
         this.lastBackspaceTime = 0;
         this.backspaceCooldown = 100; // 100ms cooldown to prevent duplicates
         
-        // Mobile shift key deduplication
-        this.lastShiftTime = 0;
-        this.shiftCooldown = 100; // 100ms cooldown to prevent duplicates
-        
         // Mobile character deduplication
         this.lastCharTime = 0;
         this.lastChar = null;
@@ -205,11 +201,10 @@ class BiometricDataCollector {
         typingInput.addEventListener('compositionend', (e) => {
             this.compositionActive = false;
             if (e.data) {
-                // Record final composition result with character normalization
-                const normalizedChar = this.normalizeCharacter(e.data);
+                // Record final composition result
                 this.recordKeystroke({
                     timestamp: performance.now(),
-                    actualChar: normalizedChar,
+                    actualChar: e.data,
                     keyCode: e.data.charCodeAt(0),
                     type: 'compositionend',
                     sentence: this.currentSentence,
@@ -226,32 +221,13 @@ class BiometricDataCollector {
             this.handleTypingInput(e);
         });
         
-        // Mobile-only: Detect actual shift key presses on mobile keyboards (Gboard, iOS)
+        // Keydown for additional handling (non-composition events)
         typingInput.addEventListener('keydown', (e) => {
-            // Only handle shift key presses on mobile
-            if (e.key === 'Shift' || e.keyCode === 16) {
-                const currentTime = performance.now();
-                
-                // Check if enough time has passed since last shift to avoid duplicates
-                if (currentTime - this.lastShiftTime > this.shiftCooldown) {
-                    this.recordKeystroke({
-                        timestamp: currentTime,
-                        actualChar: 'SHIFT',
-                        keyCode: 16,
-                        type: 'keydown',
-                        sentence: this.currentSentence,
-                        position: e.target.selectionStart || 0,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
-                    console.log('Mobile shift key pressed at time:', currentTime);
-                    
-                    // Update last shift time
-                    this.lastShiftTime = currentTime;
-                } else {
-                    console.log('Mobile shift duplicate ignored, time since last:', currentTime - this.lastShiftTime);
-                }
+            if (this.compositionActive || e.keyCode === 229) {
+                // Skip processing during composition
+                return;
             }
+            this.handleKeydown(e);
         });
         
         // Update pointer coordinates when typing
@@ -357,6 +333,50 @@ class BiometricDataCollector {
             for (let i = 0; i < data.length; i++) {
                 const char = data[i];
                 const posOffset = pos - data.length + i;
+                const isUpper = char.match(/[A-Z]/);
+                const isLower = char.match(/[a-z]/);
+              
+                // Enhanced shift detection logic - more precise rules
+                let shiftNeeded = false;
+              
+                // Rule 1: Shift before capital letter ONLY if previous character is NOT a capital letter
+                if (isUpper && (!this.previousChar || !this.previousChar.match(/[A-Z]/))) {
+                    shiftNeeded = true;
+                }
+                // Rule 2: Shift before small letter ONLY if previous character IS a capital letter
+                else if (this.previousChar && this.previousChar.match(/[A-Z]/) && isLower) {
+                    shiftNeeded = true;
+                }
+              
+                if (shiftNeeded) {
+                    if (isUpper) {
+                        console.log('Shift detected before capital letter:', char, 'previousChar:', this.previousChar, '(Rule 1: previous not capital)');
+                    } else {
+                        console.log('Shift detected before small letter:', char, 'previousChar:', this.previousChar, '(Rule 2: previous was capital)');
+                    }
+                    
+                    // Logical timing division: Randomly allocate time between shift and character
+                    const totalTime = 150; // Total time for shift + character sequence
+                    const shiftTimeRatio = Math.random() * 0.4 + 0.3; // Random ratio between 30% and 70%
+                    const shiftTime = Math.round(totalTime * shiftTimeRatio);
+                    const charTime = totalTime - shiftTime;
+                    
+                    // Record shift with logical timing
+                    this.recordKeystroke({
+                        timestamp: timestamp + i - shiftTime,
+                        actualChar: 'SHIFT',
+                        keyCode: 16,
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: posOffset,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                    
+                    console.log(`Shift timing: ${shiftTime}ms before character, ${charTime}ms after shift`);
+                }
+              
+
                 
                 if (char === ' ') {
                     // SPACE character
@@ -373,7 +393,116 @@ class BiometricDataCollector {
                 }
                 else {
                     // Enhanced character handling for all characters including quotes and smart characters
-                    let refChar = this.normalizeCharacter(char);
+                    let refChar = char;
+                    
+                    // Handle smart quotes and apostrophes (common in mobile keyboards)
+                    if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´') {
+                        refChar = "'"; // Single quote/apostrophe - all variants
+                        console.log('Single quote detected:', char, '-> stored as:', refChar);
+                    } else if (char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟') {
+                        refChar = '"'; // Double quote - all variants
+                        console.log('Double quote detected:', char, '-> stored as:', refChar);
+                    } else if (char === '-' || char === '–' || char === '—') {
+                        refChar = '-'; // Hyphen/dash
+                    } else if (char === '.' || char === '…') {
+                        refChar = '.'; // Period/ellipsis
+                    } else if (char === ',' || char === '،') {
+                        refChar = ','; // Comma
+                    } else if (char === '!' || char === '¡') {
+                        refChar = '!'; // Exclamation
+                    } else if (char === '?' || char === '¿') {
+                        refChar = '?'; // Question mark
+                    } else if (char === '@') {
+                        refChar = '@'; // At symbol
+                    } else if (char === '#') {
+                        refChar = '#'; // Hash
+                    } else if (char === '$' || char === '€' || char === '£' || char === '¥') {
+                        refChar = '$'; // Dollar/currency
+                    } else if (char === '%') {
+                        refChar = '%'; // Percent
+                    } else if (char === '&') {
+                        refChar = '&'; // Ampersand
+                    } else if (char === '*') {
+                        refChar = '*'; // Asterisk
+                    } else if (char === '(') {
+                        refChar = '('; // Left parenthesis
+                    } else if (char === ')') {
+                        refChar = ')'; // Right parenthesis
+                    } else if (char === '+' || char === '±') {
+                        refChar = '+'; // Plus
+                    } else if (char === '=' || char === '≠') {
+                        refChar = '='; // Equals
+                    } else if (char === '[' || char === '【') {
+                        refChar = '['; // Left bracket
+                    } else if (char === ']' || char === '】') {
+                        refChar = ']'; // Right bracket
+                    } else if (char === '{' || char === '｛') {
+                        refChar = '{'; // Left brace
+                    } else if (char === '}' || char === '｝') {
+                        refChar = '}'; // Right brace
+                    } else if (char === '\\' || char === '＼') {
+                        refChar = '\\'; // Backslash
+                    } else if (char === '|' || char === '｜') {
+                        refChar = '|'; // Pipe
+                    } else if (char === ';' || char === '；') {
+                        refChar = ';'; // Semicolon
+                    } else if (char === ':' || char === '：') {
+                        refChar = ':'; // Colon
+                    } else if (char === '/' || char === '／') {
+                        refChar = '/'; // Forward slash
+                    } else if (char === '<' || char === '＜') {
+                        refChar = '<'; // Less than
+                    } else if (char === '>' || char === '＞') {
+                        refChar = '>'; // Greater than
+                    } else if (char === '`' || char === '｀') {
+                        refChar = '`'; // Backtick
+                    } else if (char === '~' || char === '～') {
+                        refChar = '~'; // Tilde
+                    } else if (char === '^' || char === '＾') {
+                        refChar = '^'; // Caret
+                    } else if (char === '_' || char === '＿') {
+                        refChar = '_'; // Underscore
+                    } else if (char === '°' || char === '℃' || char === '℉') {
+                        refChar = '°'; // Degree symbol
+                    } else if (char === '©' || char === '®' || char === '™') {
+                        refChar = char; // Copyright symbols
+                    } else if (char === '§' || char === '¶') {
+                        refChar = char; // Section symbols
+                    } else if (char === '†' || char === '‡') {
+                        refChar = char; // Dagger symbols
+                    } else if (char === '•' || char === '·' || char === '▪' || char === '▫') {
+                        refChar = '•'; // Bullet points
+                    } else if (char === '✓' || char === '✔' || char === '☑') {
+                        refChar = '✓'; // Check marks
+                    } else if (char === '✗' || char === '✘' || char === '☒') {
+                        refChar = '✗'; // X marks
+                    } else if (char === '→' || char === '←' || char === '↑' || char === '↓') {
+                        refChar = char; // Arrows
+                    } else if (char === '♠' || char === '♥' || char === '♦' || char === '♣') {
+                        refChar = char; // Card suits
+                    } else if (char === '☺' || char === '☻' || char === '☹') {
+                        refChar = char; // Emoticons
+                    } else if (char === '☀' || char === '☁' || char === '☂' || char === '☃') {
+                        refChar = char; // Weather symbols
+                    } else if (char === '♫' || char === '♪' || char === '♬') {
+                        refChar = char; // Music symbols
+                    } else if (char === '∞' || char === '≈' || char === '≤' || char === '≥') {
+                        refChar = char; // Math symbols
+                    } else if (char === '∑' || char === '∏' || char === '∫' || char === '√') {
+                        refChar = char; // Advanced math symbols
+                    } else if (char === 'α' || char === 'β' || char === 'γ' || char === 'δ') {
+                        refChar = char; // Greek letters
+                    } else if (char === 'π' || char === 'μ' || char === 'σ' || char === 'τ') {
+                        refChar = char; // More Greek letters
+                    } else {
+                        // For all other characters, use as-is
+                        refChar = char;
+                    }
+                    
+                    // Debug logging for quote characters
+                    if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´') {
+                        console.log('Quote detected:', char, '-> stored as:', refChar);
+                    }
                     
                     // Check if character should be recorded (deduplication)
                     if (this.shouldRecordChar(refChar, timestamp + i)) {
@@ -398,7 +527,143 @@ class BiometricDataCollector {
     
         // Handle other input types like paste, cut, etc.
         else if (inputType && data) {
-            let refChar = data === ' ' ? 'SPACE' : this.normalizeCharacter(data);
+            let refChar = data;
+    
+            if (data === ' ') {
+                refChar = 'SPACE';
+            } else if (data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´') {
+                refChar = "'"; // Single quote/apostrophe - all variants
+                console.log('Single quote detected:', data, '-> stored as:', refChar);
+            } else if (data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟') {
+                refChar = '"'; // Double quote - all variants
+                console.log('Double quote detected:', data, '-> stored as:', refChar);
+            } else if (data === '–' || data === '—') {
+                refChar = '-'; // En dash and em dash
+            } else if (data === '…') {
+                refChar = '.'; // Ellipsis
+            } else if (data === '،') {
+                refChar = ','; // Arabic comma
+            } else if (data === '¡') {
+                refChar = '!'; // Inverted exclamation
+            } else if (data === '¿') {
+                refChar = '?'; // Inverted question
+            } else if (data === '€' || data === '£' || data === '¥') {
+                refChar = '$'; // Other currency symbols
+            } else if (data === '±') {
+                refChar = '+'; // Plus-minus
+            } else if (data === '≠') {
+                refChar = '='; // Not equals
+            } else if (data === '【') {
+                refChar = '['; // Fullwidth left bracket
+            } else if (data === '】') {
+                refChar = ']'; // Fullwidth right bracket
+            } else if (data === '｛') {
+                refChar = '{'; // Fullwidth left brace
+            } else if (data === '｝') {
+                refChar = '}'; // Fullwidth right brace
+            } else if (data === '＼') {
+                refChar = '\\'; // Fullwidth backslash
+            } else if (data === '｜') {
+                refChar = '|'; // Fullwidth pipe
+            } else if (data === '；') {
+                refChar = ';'; // Fullwidth semicolon
+            } else if (data === '：') {
+                refChar = ':'; // Fullwidth colon
+            } else if (data === '／') {
+                refChar = '/'; // Fullwidth forward slash
+            } else if (data === '＜') {
+                refChar = '<'; // Fullwidth less than
+            } else if (data === '＞') {
+                refChar = '>'; // Fullwidth greater than
+            } else if (data === '｀') {
+                refChar = '`'; // Fullwidth backtick
+            } else if (data === '～') {
+                refChar = '~'; // Fullwidth tilde
+            } else if (data === '＾') {
+                refChar = '^'; // Fullwidth caret
+            } else if (data === '＿') {
+                refChar = '_'; // Fullwidth underscore
+            } else if (data === '℃' || data === '℉') {
+                refChar = '°'; // Temperature symbols
+            } else if (data === '©' || data === '®' || data === '™') {
+                refChar = data; // Copyright symbols
+            } else if (data === '§' || data === '¶') {
+                refChar = data; // Section symbols
+            } else if (data === '†' || data === '‡') {
+                refChar = data; // Dagger symbols
+            } else if (data === '•' || data === '·' || data === '▪' || data === '▫') {
+                refChar = '•'; // Bullet points
+            } else if (data === '✓' || data === '✔' || data === '☑') {
+                refChar = '✓'; // Check marks
+            } else if (data === '✗' || data === '✘' || data === '☒') {
+                refChar = '✗'; // X marks
+            } else if (data === '→' || data === '←' || data === '↑' || data === '↓') {
+                refChar = data; // Arrows
+            } else if (data === '♠' || data === '♥' || data === '♦' || data === '♣') {
+                refChar = data; // Card suits
+            } else if (data === '☺' || data === '☻' || data === '☹') {
+                refChar = data; // Emoticons
+            } else if (data === '☀' || data === '☁' || data === '☂' || data === '☃') {
+                refChar = data; // Weather symbols
+            } else if (data === '♫' || data === '♪' || data === '♬') {
+                refChar = data; // Music symbols
+            } else if (data === '∞' || data === '≈' || data === '≤' || data === '≥') {
+                refChar = data; // Math symbols
+            } else if (data === '∑' || data === '∏' || data === '∫' || data === '√') {
+                refChar = data; // Advanced math symbols
+            } else if (data === 'α' || data === 'β' || data === 'γ' || data === 'δ') {
+                refChar = data; // Greek letters
+            } else if (data === 'π' || data === 'μ' || data === 'σ' || data === 'τ') {
+                refChar = data; // More Greek letters
+            } else if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
+                refChar = 'SHIFT';
+            } else if (data === 'π' || data === 'μ' || data === 'σ' || data === 'τ') {
+                refChar = data; // More Greek letters
+            } else {
+                // For all other characters, use as-is
+                refChar = data;
+            }
+    
+            // Apply shift detection logic for other input types
+            const isUpper = data.match(/[A-Z]/);
+            const isLower = data.match(/[a-z]/);
+            let shiftNeeded = false;
+            
+            // Rule 1: Shift before capital letter ONLY if previous character is NOT a capital letter
+            if (isUpper && (!this.previousChar || !this.previousChar.match(/[A-Z]/))) {
+                shiftNeeded = true;
+            }
+            // Rule 2: Shift before small letter ONLY if previous character IS a capital letter
+            else if (this.previousChar && this.previousChar.match(/[A-Z]/) && isLower) {
+                shiftNeeded = true;
+            }
+            
+            if (shiftNeeded) {
+                if (isUpper) {
+                    console.log('Shift detected before capital letter (other input):', data, 'previousChar:', this.previousChar, '(Rule 1: previous not capital)');
+                } else {
+                    console.log('Shift detected before small letter (other input):', data, 'previousChar:', this.previousChar, '(Rule 2: previous was capital)');
+                }
+                
+                // Logical timing division: Randomly allocate time between shift and character
+                const totalTime = 150; // Total time for shift + character sequence
+                const shiftTimeRatio = Math.random() * 0.4 + 0.3; // Random ratio between 30% and 70%
+                const shiftTime = Math.round(totalTime * shiftTimeRatio);
+                const charTime = totalTime - shiftTime;
+                
+                this.recordKeystroke({
+                    timestamp: timestamp - shiftTime,
+                    actualChar: 'SHIFT',
+                    keyCode: 16,
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos - 1,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+                
+                console.log(`Shift timing (other input): ${shiftTime}ms before character, ${charTime}ms after shift`);
+            }
     
             // Check if character should be recorded (deduplication)
             if (this.shouldRecordChar(refChar, timestamp)) {
@@ -634,7 +899,7 @@ class BiometricDataCollector {
             if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
                 this.recordKeystroke({
                     timestamp,
-                    actualChar: 'Backspace',
+                    actualChar: 'BACKSPACE',
                     keyCode: 8,
                     type: 'keydown',
                     shiftKey: e.shiftKey,
@@ -679,167 +944,11 @@ class BiometricDataCollector {
     // Mobile-only keystroke handling - no desktop keyboard support needed
     // All keystroke recording is handled through input events for mobile keyboards (Gboard, iOS)
     
-    // Centralized character normalization for mobile keyboards (Gboard, iOS)
-    normalizeCharacter(char) {
-        // Handle smart quotes and apostrophes (common in mobile keyboards)
-        if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵') {
-            console.log('Single quote/apostrophe detected:', char, '-> stored as: \'');
-            return "'"; // Single quote/apostrophe - all variants
-        } 
-        else if (char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟' || char === '″' || char === '‶') {
-            console.log('Double quote detected:', char, '-> stored as: "');
-            return '"'; // Double quote - all variants
-        } 
-        else if (char === '-' || char === '–' || char === '—' || char === '−' || char === '‐') {
-            return '-'; // Hyphen/dash variants
-        } 
-        else if (char === '.' || char === '…' || char === '․') {
-            return '.'; // Period/ellipsis
-        } 
-        else if (char === ',' || char === '،' || char === '、') {
-            return ','; // Comma variants
-        } 
-        else if (char === '!' || char === '¡') {
-            return '!'; // Exclamation
-        } 
-        else if (char === '?' || char === '¿') {
-            return '?'; // Question mark
-        } 
-        else if (char === '@') {
-            return '@'; // At symbol
-        } 
-        else if (char === '#') {
-            return '#'; // Hash
-        } 
-        else if (char === '$' || char === '€' || char === '£' || char === '¥' || char === '₽' || char === '₹') {
-            return '$'; // Dollar/currency
-        } 
-        else if (char === '%') {
-            return '%'; // Percent
-        } 
-        else if (char === '&') {
-            return '&'; // Ampersand
-        } 
-        else if (char === '*') {
-            return '*'; // Asterisk
-        } 
-        else if (char === '(') {
-            return '('; // Left parenthesis
-        } 
-        else if (char === ')') {
-            return ')'; // Right parenthesis
-        } 
-        else if (char === '+' || char === '±') {
-            return '+'; // Plus
-        } 
-        else if (char === '=' || char === '≠') {
-            return '='; // Equals
-        } 
-        else if (char === '[' || char === '【' || char === '［') {
-            return '['; // Left bracket
-        } 
-        else if (char === ']' || char === '】' || char === '］') {
-            return ']'; // Right bracket
-        } 
-        else if (char === '{' || char === '｛' || char === '｢') {
-            return '{'; // Left brace
-        } 
-        else if (char === '}' || char === '｝' || char === '｣') {
-            return '}'; // Right brace
-        } 
-        else if (char === '\\' || char === '＼') {
-            return '\\'; // Backslash
-        } 
-        else if (char === '|' || char === '｜' || char === '│') {
-            return '|'; // Pipe
-        } 
-        else if (char === ';' || char === '；') {
-            return ';'; // Semicolon
-        } 
-        else if (char === ':' || char === '：') {
-            return ':'; // Colon
-        } 
-        else if (char === '/' || char === '／') {
-            return '/'; // Forward slash
-        } 
-        else if (char === '<' || char === '＜') {
-            return '<'; // Less than
-        } 
-        else if (char === '>' || char === '＞') {
-            return '>'; // Greater than
-        } 
-        else if (char === '`' || char === '｀') {
-            return '`'; // Backtick
-        } 
-        else if (char === '~' || char === '～') {
-            return '~'; // Tilde
-        } 
-        else if (char === '^' || char === '＾') {
-            return '^'; // Caret
-        } 
-        else if (char === '_' || char === '＿') {
-            return '_'; // Underscore
-        } 
-        else if (char === '°' || char === '℃' || char === '℉') {
-            return '°'; // Degree symbol
-        } 
-        else if (char === '©' || char === '®' || char === '™') {
-            return char; // Copyright symbols
-        } 
-        else if (char === '§' || char === '¶') {
-            return char; // Section symbols
-        } 
-        else if (char === '†' || char === '‡') {
-            return char; // Dagger symbols
-        } 
-        else if (char === '•' || char === '·' || char === '▪' || char === '▫') {
-            return '•'; // Bullet points
-        } 
-        else if (char === '✓' || char === '✔' || char === '☑') {
-            return '✓'; // Check marks
-        } 
-        else if (char === '✗' || char === '✘' || char === '☒') {
-            return '✗'; // X marks
-        } 
-        else if (char === '→' || char === '←' || char === '↑' || char === '↓') {
-            return char; // Arrows
-        } 
-        else if (char === '♠' || char === '♥' || char === '♦' || char === '♣') {
-            return char; // Card suits
-        } 
-        else if (char === '☺' || char === '☻' || char === '☹') {
-            return char; // Emoticons
-        } 
-        else if (char === '☀' || char === '☁' || char === '☂' || char === '☃') {
-            return char; // Weather symbols
-        } 
-        else if (char === '♫' || char === '♪' || char === '♬') {
-            return char; // Music symbols
-        } 
-        else if (char === '∞' || char === '≈' || char === '≤' || char === '≥') {
-            return char; // Math symbols
-        } 
-        else if (char === '∑' || char === '∏' || char === '∫' || char === '√') {
-            return char; // Advanced math symbols
-        } 
-        else if (char === 'α' || char === 'β' || char === 'γ' || char === 'δ') {
-            return char; // Greek letters
-        } 
-        else if (char === 'π' || char === 'μ' || char === 'σ' || char === 'τ') {
-            return char; // More Greek letters
-        } 
-        else {
-            // For all other characters, use as-is
-            return char;
-        }
-    }
-    
     startTypingTask() {
         this.currentSentence = 0;
         this.lastInputLength = 0; // FIXED: Reset at task start
         this.previousChar = null; // FIXED: Reset previousChar at task start
         this.lastBackspaceTime = 0; // Reset backspace tracking
-        this.lastShiftTime = 0; // Reset shift tracking
         this.lastCharTime = 0; // Reset character tracking
         this.lastChar = null; // Reset character tracking
         this.displayCurrentSentence();
@@ -861,8 +970,6 @@ class BiometricDataCollector {
         this.previousChar = null;
         // Reset backspace tracking for new sentence
         this.lastBackspaceTime = 0;
-        // Reset shift tracking for new sentence
-        this.lastShiftTime = 0;
         // Reset character tracking for new sentence
         this.lastCharTime = 0;
         this.lastChar = null;
@@ -983,74 +1090,6 @@ class BiometricDataCollector {
         }
         
         return chars;
-    }
-    
-    // Helper method to test quote handling for debugging
-    testQuoteHandling() {
-        console.log('Testing quote handling for mobile keyboards (Gboard, iOS):');
-        const testChars = ["'", "'", "'", "'", "'", "'", "`", "´", "′", "‵", '"', '"', '"', '"', '"', '"', "„", "‟", "″", "‶"];
-        
-        testChars.forEach(char => {
-            const normalized = this.normalizeCharacter(char);
-            console.log(`Original: "${char}" (${char.charCodeAt(0)}) -> Normalized: "${normalized}" (${normalized.charCodeAt(0)})`);
-        });
-    }
-    
-    // Helper method to test shift and backspace timing for debugging
-    testTiming() {
-        console.log('Testing shift and backspace timing for mobile keyboards:');
-        const shifts = this.keystrokeData.filter(k => k.actualChar === 'SHIFT');
-        const backspaces = this.keystrokeData.filter(k => k.actualChar === 'BACKSPACE');
-        
-        console.log('Shift events:', shifts.length);
-        shifts.forEach((shift, i) => {
-            console.log(`Shift ${i + 1}: timestamp ${Math.round(shift.timestamp)}ms, type: ${shift.type}`);
-        });
-        
-        console.log('Backspace events:', backspaces.length);
-        backspaces.forEach((backspace, i) => {
-            console.log(`Backspace ${i + 1}: timestamp ${Math.round(backspace.timestamp)}ms, type: ${backspace.type}`);
-        });
-        
-        // Check timing between shift and next character
-        for (let i = 0; i < shifts.length; i++) {
-            const shift = shifts[i];
-            const nextChar = this.keystrokeData.find(k => 
-                k.timestamp > shift.timestamp && 
-                k.actualChar !== 'SHIFT' && 
-                k.actualChar !== 'BACKSPACE'
-            );
-            
-            if (nextChar) {
-                const timeDiff = nextChar.timestamp - shift.timestamp;
-                console.log(`Shift ${i + 1} to next char: ${Math.round(timeDiff)}ms`);
-            }
-        }
-    }
-    
-    // Helper method to test actual shift key detection
-    testShiftDetection() {
-        console.log('Testing actual shift key detection for mobile keyboards:');
-        const shifts = this.keystrokeData.filter(k => k.actualChar === 'SHIFT');
-        
-        console.log('Total shift key presses detected:', shifts.length);
-        console.log('Shift events by type:');
-        
-        const typeCounts = {};
-        shifts.forEach(shift => {
-            typeCounts[shift.type] = (typeCounts[shift.type] || 0) + 1;
-        });
-        
-        Object.entries(typeCounts).forEach(([type, count]) => {
-            console.log(`  ${type}: ${count} events`);
-        });
-        
-        console.log('Shift key press details:');
-        shifts.forEach((shift, i) => {
-            console.log(`  Shift ${i + 1}: timestamp ${Math.round(shift.timestamp)}ms, type: ${shift.type}, position: ${shift.position}`);
-        });
-        
-        return shifts;
     }
     
     // Crystal Game Methods
