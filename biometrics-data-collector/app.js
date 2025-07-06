@@ -6,15 +6,12 @@ class BiometricDataCollector {
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
         
-        // Detect iOS for special handling
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         
-        // Data collection
         this.keystrokeData = [];
         this.touchData = [];
         
-        // Enhanced pointer tracking
         this.currentPointerX = window.innerWidth / 2;
         this.currentPointerY = window.innerHeight / 2;
         this.pointerTracking = {
@@ -22,29 +19,24 @@ class BiometricDataCollector {
             y: window.innerHeight / 2
         };
         
-        // Composition state for mobile IME handling
         this.compositionActive = false;
         this.lastInputLength = 0;
-        this.previousChar = null; // Track previous character for shift detection
+        this.previousChar = null;
         
-        // Mobile backspace deduplication
         this.lastBackspaceTime = 0;
-        this.backspaceCooldown = 100; // 100ms cooldown to prevent duplicates
+        this.backspaceCooldown = 100;
         
-            // Mobile character deduplication
     this.lastCharTime = 0;
     this.lastChar = null;
-    this.charCooldown = 50; // 50ms cooldown for character deduplication
+    this.charCooldown = 50;
     
-    // Enhanced mobile input tracking
     this.lastInputValue = '';
     this.lastInputLength = 0;
     this.inputEventCount = 0;
     this.lastInputEvent = null;
     this.lastInputEventTime = 0;
-    this.inputEventCooldown = 50; // 50ms cooldown for input events
+    this.inputEventCooldown = 50;
         
-        // Enhanced gallery zoom state with pinch support
         this.galleryZoom = {
             scale: 1,
             isPanning: false,
@@ -57,7 +49,6 @@ class BiometricDataCollector {
             touches: []
         };
         
-        // Typing task data
         this.sentences = [
             "Dr. Smith's Lab-42 discovered H2O molecules can freeze at -5 degree Celsius under pressure.",
             "The CEO's Q3 report showed $2.8M profit and 15% growth across all divisions.",
@@ -65,7 +56,6 @@ class BiometricDataCollector {
             "Tesla's Model S hit 0-60 mph in 2.1 seconds - breaking the previous record!"
         ];
         
-        // Crystal game state
         this.crystalSteps = [
             { id: 1, instruction: "Tap the crystal exactly 3 times with your index finger", target: 3, type: 'tap' },
             { id: 2, instruction: "Rotate the crystal with one finger: CW → CCW → CW", target: 3, type: 'rotate' },
@@ -85,20 +75,17 @@ class BiometricDataCollector {
             pressureStart: null,
             pressureFingers: 0,
             initialDistance: 0,
-            // Rotation tracking
             initialAngle: null,
-            totalRotation: 0,  // in radians
-            initialAngle: null,
+            totalRotation: 0,
             lastAngle: null,
             rotationAccumulated: 0,
-            rotationDirection: null, // 1 = CW, -1 = CCW
+            rotationDirection: null,
             rotationRounds: 0,
-            // Trial tracking
-            currentTrial: 1, // Track current trial number for this step
-            stepStartTime: null // Track when step started
+            rotationSequence: [],
+            currentTrial: 1,
+            stepStartTime: null
         };
         
-        // Gallery images
         this.galleryImages = [
             'https://picsum.photos/800/600?random=1',
             'https://picsum.photos/800/600?random=2',
@@ -133,7 +120,6 @@ class BiometricDataCollector {
     }
     
     setupPointerTracking() {
-        // Track mouse movement
         document.addEventListener('mousemove', (e) => {
             this.currentPointerX = e.clientX;
             this.currentPointerY = e.clientY;
@@ -143,7 +129,6 @@ class BiometricDataCollector {
             };
         });
         
-        // Track touch movement
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length > 0) {
                 const touch = e.touches[0];
@@ -156,7 +141,6 @@ class BiometricDataCollector {
             }
         });
         
-        // Track touch start
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length > 0) {
                 const touch = e.touches[0];
@@ -174,15 +158,15 @@ class BiometricDataCollector {
         const now = new Date();
         const pad = n => n.toString().padStart(2, '0');
     
-        const year = now.getFullYear();                // e.g. 2025
-        const month = pad(now.getMonth() + 1);         // 01–12
-        const day = pad(now.getDate());                // 01–31
-        const hour = pad(now.getHours());              // 00–23
-        const minute = pad(now.getMinutes());          // 00–59
-        const second = pad(now.getSeconds());          // 00–59
+        const year = now.getFullYear();
+        const month = pad(now.getMonth() + 1);
+        const day = pad(now.getDate());
+        const hour = pad(now.getHours());
+        const minute = pad(now.getMinutes());
+        const second = pad(now.getSeconds());
     
         const timePart = `${year}${month}${day}-${hour}${minute}${second}`;
-        const randomPart = Math.random().toString(36).substring(2, 5); // 3 random chars
+        const randomPart = Math.random().toString(36).substring(2, 5);
     
         this.participantId = `P${timePart}-${randomPart}`;
         document.getElementById('participant-id').textContent = this.participantId;
@@ -192,30 +176,25 @@ class BiometricDataCollector {
 
     
     bindEvents() {
-        // Welcome screen
         document.getElementById('start-btn').addEventListener('click', () => {
             this.switchScreen('typing');
             this.startTypingTask();
         });
         
-        // Typing task - FIXED: Proper mobile-friendly event handling
         const typingInput = document.getElementById('typing-input');
         
-        // Composition events for mobile IME handling
         typingInput.addEventListener('compositionstart', (e) => {
             this.compositionActive = true;
             console.log('Composition started');
         });
         
         typingInput.addEventListener('compositionupdate', (e) => {
-            // Track composition updates but don't record as final keystrokes
             console.log('Composition update:', e.data);
         });
         
         typingInput.addEventListener('compositionend', (e) => {
             this.compositionActive = false;
             if (e.data) {
-                // Record final composition result
                 this.recordKeystroke({
                     timestamp: performance.now(),
                     actualChar: e.data,
@@ -230,21 +209,17 @@ class BiometricDataCollector {
             console.log('Composition ended:', e.data);
         });
         
-        // FIXED: Use input event with inputType for reliable character detection
         typingInput.addEventListener('input', (e) => {
             this.handleTypingInput(e);
         });
         
-        // Keydown for additional handling (non-composition events)
         typingInput.addEventListener('keydown', (e) => {
             if (this.compositionActive || e.keyCode === 229) {
-                // Skip processing during composition
                 return;
             }
             this.handleKeydown(e);
         });
         
-        // Update pointer coordinates when typing
         typingInput.addEventListener('focus', (e) => {
             const rect = e.target.getBoundingClientRect();
             this.currentPointerX = rect.left + rect.width / 2;
@@ -260,36 +235,23 @@ class BiometricDataCollector {
             this.pointerTracking.y = e.clientY;
         });
         
-        // Prevent paste operations
         typingInput.addEventListener('paste', (e) => e.preventDefault());
 
-        // Inside bindEvents(), after `typingInput.addEventListener('paste', …)`
-        typingInput.addEventListener('copy',   e => e.preventDefault());   // Disable Copy[6]
-        typingInput.addEventListener('cut',    e => e.preventDefault());   // Disable Cut[6]
-        typingInput.addEventListener('drop',   e => e.preventDefault());   // Disable Drag-and-Drop paste
-        typingInput.addEventListener('contextmenu', e => e.preventDefault()); // Disable Right-Click menu[4]
+        typingInput.addEventListener('copy',   e => e.preventDefault());
+        typingInput.addEventListener('cut',    e => e.preventDefault());
+        typingInput.addEventListener('drop',   e => e.preventDefault());
+        typingInput.addEventListener('contextmenu', e => e.preventDefault());
 
-        
-        // // Cursor restrictions
-        // typingInput.addEventListener('mousedown', (e) => {
-        //     setTimeout(() => {
-        //         const length = typingInput.value.length;
-        //         typingInput.setSelectionRange(length, length);
-        //     }, 0);
-        // });
         
         document.getElementById('next-sentence-btn').addEventListener('click', () => this.nextSentence());
         
-        // Crystal game
         this.bindCrystalEvents();
         document.getElementById('reset-step-btn').addEventListener('click', () => this.resetCrystalStep());
         document.getElementById('next-crystal-btn').addEventListener('click', () => this.nextCrystalStep());
         
-        // Gallery
         this.bindGalleryEvents();
         document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
         
-        // Export
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
     }
@@ -311,15 +273,11 @@ class BiometricDataCollector {
         const pos = inputEl.selectionStart || value.length;
         const timestamp = performance.now();
         
-        // Enhanced mobile deduplication for both iOS and Android
         const currentTime = performance.now();
         
-        // Create a unique event signature for deduplication
         const eventSignature = `${inputType}-${data}-${value.length}-${pos}`;
         
-        // AGGRESSIVE mobile deduplication for iOS and Android
         if (data && inputType === 'insertText') {
-            // STRICT: Block exact duplicate events within 200ms (increased from 50ms)
             if (this.lastInputEvent === eventSignature && 
                 this.lastInputEventTime && 
                 (currentTime - this.lastInputEventTime) < 200) {
@@ -327,7 +285,6 @@ class BiometricDataCollector {
                 return;
             }
             
-            // STRICT: Block duplicate characters within 200ms (increased from 100ms)
             if (this.lastChar === data && 
                 this.lastCharTime && 
                 (currentTime - this.lastCharTime) < 200) {
@@ -335,50 +292,41 @@ class BiometricDataCollector {
                 return;
             }
             
-            // BLOCK: Input value unchanged but got input event (definite duplicate)
             if (value === this.lastInputValue && data) {
                 console.log('🚫 Mobile duplicate input event BLOCKED (value unchanged):', data);
                 return;
             }
             
-            // BLOCK: Input length unchanged but got input event (definite duplicate)
             if (value.length === this.lastInputLength && data && !inputType?.startsWith('delete')) {
                 console.log('🚫 Mobile duplicate input event BLOCKED (length unchanged):', data);
                 return;
             }
             
-            // ADDITIONAL: Block any character input within 100ms of last input (extra safety)
             if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 100) {
                 console.log('🚫 Mobile input event BLOCKED (rapid input):', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
                 return;
             }
         }
         
-        // iOS-specific composition handling
         if (this.isIOS && this.compositionActive && inputType === 'insertText') {
             console.log('iOS composition active, skipping insertText');
             return;
         }
         
-        // Update tracking for next comparison
         this.lastInputValue = value;
         this.lastInputLength = value.length;
         this.lastInputEvent = eventSignature;
         this.lastInputEventTime = currentTime;
         this.inputEventCount++;
         
-        // Debug logging for mobile input events
         if (data && inputType === 'insertText') {
             console.log(`📱 Mobile input event: "${data}" | Event #${this.inputEventCount} | Signature: ${eventSignature}`);
         }
     
-        // Handle deletion events (backspace, delete)
         if (inputType && inputType.startsWith('delete')) {
-            // Record backspace for mobile keyboards (Gboard, Samsung, iOS) with deduplication
             if (inputType === 'deleteContentBackward' || inputType === 'deleteContent' || inputType === 'deleteWordBackward') {
                 const currentTime = performance.now();
                 
-                // Check if enough time has passed since last backspace to avoid duplicates
                 if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
                     this.recordKeystroke({
                         timestamp: timestamp - 0.5,
@@ -392,13 +340,11 @@ class BiometricDataCollector {
                     });
                     console.log('Mobile backspace recorded:', inputType, 'at time:', currentTime);
                     
-                    // Update last backspace time
                     this.lastBackspaceTime = currentTime;
                 } else {
                     console.log('Mobile backspace duplicate ignored:', inputType, 'time since last:', currentTime - this.lastBackspaceTime);
                 }
             }
-            // Skip other deletion recording here to avoid duplicates
             return;
         }
 
@@ -1534,8 +1480,9 @@ class BiometricDataCollector {
                     this.crystalState.rotationRounds = 0;
                     this.crystalState.rotationDirection = null; // 1 = CW, -1 = CCW
                     this.crystalState.rotationAccumulated = 0;
+                    this.crystalState.rotationSequence = []; // Track rotation sequence: CW=1, CCW=-1
                     crystal.classList.add('active');
-                    this.updateStepProgress(`0/3`);
+                    this.updateStepProgress(`0/3 (CW → CCW → CW)`);
                 }
             
                 else if (phase === 'move') {
@@ -1556,12 +1503,13 @@ class BiometricDataCollector {
                         this.crystalState.rotationDirection = direction;
                     }
             
-                    // Enhanced direction validation for mobile
+                    // STRICT direction validation - no tolerance for wrong direction
                     if (this.crystalState.rotationDirection !== null && direction !== expectedDirection) {
-                        // Allow small direction changes (mobile finger movement can be erratic)
-                        if (Math.abs(delta) > 0.1) {
-                            this.showWrongDirectionFeedback?.();
+                        // Block wrong direction rotations completely
+                        if (Math.abs(delta) > 0.05) { // Reduced tolerance
+                            this.showWrongDirectionFeedback();
                             this.crystalState.lastAngle = angle;
+                            console.log(`❌ Wrong rotation direction! Expected: ${expectedDirection === 1 ? 'CW' : 'CCW'}, Got: ${direction === 1 ? 'CW' : 'CCW'}`);
                             return;
                         }
                     }
@@ -1570,18 +1518,39 @@ class BiometricDataCollector {
                     this.crystalState.lastAngle = angle;
             
                     const progress = Math.abs(this.crystalState.rotationAccumulated) / (2 * Math.PI);
-                    this.updateStepProgress(`${(this.crystalState.rotationRounds + Math.min(progress, 1)).toFixed(1)}/3`);
+                    this.updateStepProgress(`${(this.crystalState.rotationRounds + Math.min(progress, 1)).toFixed(1)}/3 (CW → CCW → CW)`);
             
                     if (Math.abs(this.crystalState.rotationAccumulated) >= 2 * Math.PI) {
+                        // Record the completed rotation direction
+                        const completedDirection = this.crystalState.rotationDirection;
+                        this.crystalState.rotationSequence.push(completedDirection);
+                        
                         this.crystalState.rotationRounds += 1;
                         this.crystalState.rotationAccumulated = 0;
                         this.crystalState.rotationDirection = null;
             
                         crystal.classList.add('rotation-feedback');
                         setTimeout(() => crystal.classList.remove('rotation-feedback'), 400);
+                        
+                        console.log(`✅ Rotation ${this.crystalState.rotationRounds} completed: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
+                        console.log(`📊 Rotation sequence: [${this.crystalState.rotationSequence.map(d => d === 1 ? 'CW' : 'CCW').join(', ')}]`);
             
+                        // Check if we have the correct sequence: CW → CCW → CW
                         if (this.crystalState.rotationRounds >= 3) {
-                            this.completeStep();
+                            const expectedSequence = [1, -1, 1]; // CW, CCW, CW
+                            const actualSequence = this.crystalState.rotationSequence.slice(-3);
+                            
+                            if (JSON.stringify(actualSequence) === JSON.stringify(expectedSequence)) {
+                                console.log('✅ Correct rotation sequence achieved: CW → CCW → CW');
+                                this.completeStep();
+                            } else {
+                                console.log('❌ Wrong rotation sequence! Need: CW → CCW → CW');
+                                console.log(`Got: [${actualSequence.map(d => d === 1 ? 'CW' : 'CCW').join(' → ')}]`);
+                                // Reset to allow correct sequence
+                                this.crystalState.rotationRounds = 0;
+                                this.crystalState.rotationSequence = [];
+                                this.updateStepProgress(`0/3 (CW → CCW → CW) - Try again!`);
+                            }
                         }
                     }
                 }
@@ -1793,6 +1762,11 @@ class BiometricDataCollector {
             initialDistance: 0,
             initialAngle: null,
             totalRotation: 0,
+            lastAngle: null,
+            rotationAccumulated: 0,
+            rotationDirection: null,
+            rotationRounds: 0,
+            rotationSequence: [], // Reset rotation sequence
             // Preserve trial tracking
             currentTrial: currentTrial,
             stepStartTime: performance.now()
@@ -1850,9 +1824,9 @@ class BiometricDataCollector {
         // Add trial information for crystal game
         if (data.taskId === 2) { // Crystal game
             data.trial = this.crystalState.currentTrial;
-            // Debug logging for trial tracking
+            // Enhanced debug logging for trial tracking
             if (data.type === 'touchstart') {
-                console.log(`📊 Touch event recorded - Step: ${data.step}, Trial: ${data.trial}`);
+                console.log(`📊 Touch event recorded - Step: ${data.step}, Trial: ${data.trial}, Current Trial State: ${this.crystalState.currentTrial}`);
             }
         } else {
             data.trial = 1; // Default trial for other tasks
@@ -2264,7 +2238,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '9'; // 9 features (removed trial_id, tracking_id, touch_count)
+        document.getElementById('touch-features').textContent = '11'; // 11 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, pressure, velocity, acceleration
     }
 
 
@@ -2335,20 +2309,20 @@ class BiometricDataCollector {
                 baseFeature.pressure = 0.5; // Default pressure value
             }
             
-            // ACCURATE VELOCITY: Calculate for move events with proper validation
-            if (touch.type === 'touchmove' && index > 0) {
-                const velocity = this.calculateAccurateVelocity(touch, index);
-                if (velocity !== null) {
-                    baseFeature.velocity = Math.round(velocity * 1000) / 1000; // 3 decimal precision
-                }
+            // ENHANCED VELOCITY: Calculate for all touch events with improved accuracy
+            const velocity = this.calculateAccurateVelocity(touch, index);
+            if (velocity !== null) {
+                baseFeature.velocity = Math.round(velocity * 1000) / 1000; // 3 decimal precision
+            } else {
+                baseFeature.velocity = 0; // Default velocity when not available
             }
             
-            // ACCURATE ACCELERATION: Calculate for move events with proper validation
-            if (touch.type === 'touchmove' && index > 1) {
-                const acceleration = this.calculateAccurateAcceleration(touch, index);
-                if (acceleration !== null) {
-                    baseFeature.acceleration = Math.round(acceleration * 1000) / 1000; // 3 decimal precision
-                }
+            // ENHANCED ACCELERATION: Calculate for all touch events with improved accuracy
+            const acceleration = this.calculateAccurateAcceleration(touch, index);
+            if (acceleration !== null) {
+                baseFeature.acceleration = Math.round(acceleration * 1000) / 1000; // 3 decimal precision
+            } else {
+                baseFeature.acceleration = 0; // Default acceleration when not available
             }
             
             features.push(baseFeature);
@@ -2357,13 +2331,16 @@ class BiometricDataCollector {
         return features;
     }
     
-    // ACCURATE VELOCITY CALCULATION
+    // ENHANCED VELOCITY CALCULATION
     calculateAccurateVelocity(touch, index) {
+        // Need at least 2 points for velocity calculation
+        if (index < 1) return null;
+        
         const prev = this.touchData[index - 1];
         
         // Validate time difference (must be reasonable for velocity calculation)
         const dt = touch.timestamp - prev.timestamp;
-        if (dt <= 0 || dt > 200) return null; // Skip if time difference is invalid or too large
+        if (dt <= 0 || dt > 500) return null; // Increased tolerance for mobile devices
         
         // Validate touch data exists
         if (!touch.touches[0] || !prev.touches[0]) return null;
@@ -2376,13 +2353,13 @@ class BiometricDataCollector {
         // Calculate velocity (pixels per millisecond)
         const velocity = distance / dt;
         
-        // Validate velocity is within reasonable bounds (0.1 to 10 pixels/ms)
-        if (velocity < 0.1 || velocity > 10) return null;
+        // Enhanced validation with wider bounds for mobile devices
+        if (velocity < 0.01 || velocity > 20) return null; // Wider bounds for mobile
         
         return velocity;
     }
     
-    // ACCURATE ACCELERATION CALCULATION
+    // ENHANCED ACCELERATION CALCULATION
     calculateAccurateAcceleration(touch, index) {
         // Need at least 3 points for acceleration calculation
         if (index < 2) return null;
@@ -2404,8 +2381,8 @@ class BiometricDataCollector {
         // Calculate acceleration (change in velocity over time)
         const acceleration = (currentVelocity - prevVelocity) / dt;
         
-        // Validate acceleration is within reasonable bounds (-5 to 5 pixels/ms²)
-        if (acceleration < -5 || acceleration > 5) return null;
+        // Enhanced validation with wider bounds for mobile devices
+        if (acceleration < -10 || acceleration > 10) return null; // Wider bounds for mobile
         
         return acceleration;
     }
