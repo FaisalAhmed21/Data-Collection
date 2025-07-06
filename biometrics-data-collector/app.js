@@ -1435,17 +1435,17 @@ class BiometricDataCollector {
                 const angle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX);
             
                 if (phase === 'start') {
-                    // Reset rotation state for new attempt
+                    // Reset only the current rotation attempt, preserve overall progress
                     this.crystalState.initialAngle = angle;
                     this.crystalState.lastAngle = angle;
-                    this.crystalState.rotationRounds = 0;
                     this.crystalState.rotationDirection = null; // 1 = CW, -1 = CCW
                     this.crystalState.rotationAccumulated = 0;
-                    this.crystalState.rotationSequence = []; // Track rotation sequence: CW=1, CCW=-1
-                    this.crystalState.rotationCompleted = false; // Track if task is completed
+                    // DO NOT reset rotationRounds or rotationSequence - preserve progress
+                    // DO NOT reset rotationCompleted - preserve completion status
                     crystal.classList.add('active');
-                    this.updateStepProgress(`0/3 (Touch crystal, then rotate: CW → CCW → CW)`);
+                    this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (Touch crystal, then rotate: CW → CCW → CW)`);
                     console.log('🔄 Rotation started - touch anywhere on crystal surface');
+                    console.log(`📊 Current progress: ${this.crystalState.rotationRounds}/3`);
                 }
             
                 else if (phase === 'move') {
@@ -1505,8 +1505,14 @@ class BiometricDataCollector {
                             console.log(`✅ Correct rotation ${this.crystalState.rotationRounds} completed: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
                             console.log(`📊 Rotation sequence: [${this.crystalState.rotationSequence.map(d => d === 1 ? 'CW' : 'CCW').join(', ')}]`);
                             
-                            // Update progress to show completed rotation
-                            this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (CW → CCW → CW)`);
+                                                // Update progress to show completed rotation
+                    this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (CW → CCW → CW)`);
+                    
+                    // If task is not completed, show guidance for next rotation
+                    if (this.crystalState.rotationRounds < 3) {
+                        const nextDirection = this.getExpectedRotationDirection();
+                        console.log(`🔄 Next expected rotation: ${nextDirection === 1 ? 'CW' : 'CCW'}`);
+                    }
                             
                             // Check if we have completed all 3 correct rotations
                             if (this.crystalState.rotationRounds >= 3) {
@@ -1515,12 +1521,13 @@ class BiometricDataCollector {
                                 this.completeStep();
                             }
                         } else {
-                            // Wrong direction - show feedback but don't count
+                            // Wrong direction - show feedback but don't count and don't reset progress
                             this.showWrongDirectionFeedback();
                             console.log(`❌ Wrong rotation direction! Expected: ${expectedDirection === 1 ? 'CW' : 'CCW'}, Got: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
+                            console.log(`📊 Progress remains at: ${this.crystalState.rotationRounds}/3`);
                         }
                         
-                        // Reset for next rotation attempt
+                        // Reset for next rotation attempt (regardless of correct/wrong)
                         this.crystalState.rotationAccumulated = 0;
                         this.crystalState.rotationDirection = null;
                     }
@@ -1529,6 +1536,16 @@ class BiometricDataCollector {
                 else if (phase === 'end') {
                     crystal.classList.remove('active');
                     console.log('🔄 Rotation touch ended');
+                    
+                    // Reset progress when user removes finger from crystal area
+                    if (!this.crystalState.rotationCompleted) {
+                        this.crystalState.rotationRounds = 0;
+                        this.crystalState.rotationSequence = [];
+                        console.log('🔄 Progress reset to 0/3 - finger removed from crystal area');
+                        this.updateStepProgress(`0/3 (Touch crystal, then rotate: CW → CCW → CW)`);
+                    } else {
+                        console.log(`📊 Progress preserved: ${this.crystalState.rotationRounds}/3 (task completed)`);
+                    }
                 }
             
                 break;
@@ -1745,6 +1762,8 @@ class BiometricDataCollector {
     resetCrystalState() {
         // Preserve trial counter when resetting state
         const currentTrial = this.crystalState.currentTrial;
+        
+        console.log(`🔄 Resetting crystal state - Progress will be reset to 0/3`);
         
         this.crystalState = {
             tapCount: 0,
