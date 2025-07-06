@@ -36,10 +36,13 @@ class BiometricDataCollector {
     this.lastChar = null;
     this.charCooldown = 50; // 50ms cooldown for character deduplication
     
-    // iOS-specific deduplication
+    // Enhanced mobile input tracking
     this.lastInputValue = '';
     this.lastInputLength = 0;
     this.inputEventCount = 0;
+    this.lastInputEvent = null;
+    this.lastInputEventTime = 0;
+    this.inputEventCooldown = 50; // 50ms cooldown for input events
         
         // Enhanced gallery zoom state with pinch support
         this.galleryZoom = {
@@ -308,30 +311,60 @@ class BiometricDataCollector {
         const pos = inputEl.selectionStart || value.length;
         const timestamp = performance.now();
         
-        // iOS-specific deduplication: Check if this is a duplicate input event
-        if (this.isIOS) {
-            // iOS often fires input events twice - check for exact duplicates
-            if (value === this.lastInputValue && data === this.lastChar) {
-                console.log('iOS duplicate input event ignored:', data);
+        // Enhanced mobile deduplication for both iOS and Android
+        const currentTime = performance.now();
+        
+        // Create a unique event signature for deduplication
+        const eventSignature = `${inputType}-${data}-${value.length}-${pos}`;
+        
+        // Check for duplicate input events across all mobile platforms
+        if (data && inputType === 'insertText') {
+            // Check if this is the exact same event as the last one
+            if (this.lastInputEvent === eventSignature && 
+                this.lastInputEventTime && 
+                (currentTime - this.lastInputEventTime) < this.inputEventCooldown) {
+                console.log('Mobile duplicate input event ignored:', data, 'signature:', eventSignature);
                 return;
             }
             
-            // Additional iOS check: if input length didn't change but we got an input event
+            // Check if this is a duplicate character input
+            if (this.lastChar === data && 
+                this.lastCharTime && 
+                (currentTime - this.lastCharTime) < 100) { // 100ms cooldown
+                console.log('Mobile duplicate character ignored:', data, 'time since last:', currentTime - this.lastCharTime);
+                return;
+            }
+            
+            // Check if input value didn't change but we got an input event
+            if (value === this.lastInputValue && data) {
+                console.log('Mobile duplicate input event (value unchanged):', data);
+                return;
+            }
+            
+            // Check if input length didn't change but we got an input event
             if (value.length === this.lastInputLength && data && !inputType?.startsWith('delete')) {
-                console.log('iOS duplicate input event (length unchanged):', data);
-                return;
-            }
-            
-            // iOS composition handling - skip if we're in composition mode
-            if (this.compositionActive && inputType === 'insertText') {
-                console.log('iOS composition active, skipping insertText');
+                console.log('Mobile duplicate input event (length unchanged):', data);
                 return;
             }
         }
         
+        // iOS-specific composition handling
+        if (this.isIOS && this.compositionActive && inputType === 'insertText') {
+            console.log('iOS composition active, skipping insertText');
+            return;
+        }
+        
         // Update tracking for next comparison
         this.lastInputValue = value;
+        this.lastInputLength = value.length;
+        this.lastInputEvent = eventSignature;
+        this.lastInputEventTime = currentTime;
         this.inputEventCount++;
+        
+        // Debug logging for mobile input events
+        if (data && inputType === 'insertText') {
+            console.log(`📱 Mobile input event: "${data}" | Event #${this.inputEventCount} | Signature: ${eventSignature}`);
+        }
     
         // Handle deletion events (backspace, delete)
         if (inputType && inputType.startsWith('delete')) {
@@ -571,8 +604,9 @@ class BiometricDataCollector {
                             clientY: this.pointerTracking.y
                         });
                         
-                        // Update last character for iOS deduplication
+                        // Update last character and time for mobile deduplication
                         this.lastChar = refChar;
+                        this.lastCharTime = timestamp + i;
                     } else {
                         console.log('❌ Character duplicate ignored:', refChar);
                     }
@@ -761,8 +795,9 @@ class BiometricDataCollector {
                     clientY: this.pointerTracking.y
                 });
                 
-                // Update last character for iOS deduplication
+                // Update last character and time for mobile deduplication
                 this.lastChar = refChar;
+                this.lastCharTime = timestamp;
             } else {
                 console.log('❌ Character duplicate ignored (other input):', refChar);
             }
@@ -1040,9 +1075,12 @@ class BiometricDataCollector {
         this.lastCharTime = 0; // Reset character tracking
         this.lastChar = null; // Reset character tracking
         
-        // Reset iOS-specific tracking
+        // Reset mobile input tracking
         this.lastInputValue = '';
+        this.lastInputLength = 0;
         this.inputEventCount = 0;
+        this.lastInputEvent = null;
+        this.lastInputEventTime = 0;
         
         this.displayCurrentSentence();
         this.updateTypingProgress();
@@ -1067,9 +1105,12 @@ class BiometricDataCollector {
         this.lastCharTime = 0;
         this.lastChar = null;
         
-        // Reset iOS-specific tracking for new sentence
+        // Reset mobile input tracking for new sentence
         this.lastInputValue = '';
+        this.lastInputLength = 0;
         this.inputEventCount = 0;
+        this.lastInputEvent = null;
+        this.lastInputEventTime = 0;
     }
     
     calculateAccuracy() {
@@ -1154,10 +1195,21 @@ class BiometricDataCollector {
     shouldRecordChar(char, timestamp) {
         const currentTime = performance.now();
         
-        // Check if this is the same character as last recorded and within cooldown
-        if (this.lastChar === char && (currentTime - this.lastCharTime) < this.charCooldown) {
-            console.log('Character duplicate ignored:', char, 'time since last:', currentTime - this.lastCharTime);
-            return false;
+        // Enhanced mobile deduplication with multiple checks
+        if (this.lastChar === char) {
+            const timeSinceLast = currentTime - this.lastCharTime;
+            
+            // Check if within cooldown period
+            if (timeSinceLast < this.charCooldown) {
+                console.log('Character duplicate ignored (cooldown):', char, 'time since last:', timeSinceLast);
+                return false;
+            }
+            
+            // Additional check for very close timestamps (mobile double-tap protection)
+            if (timeSinceLast < 50) { // 50ms threshold for mobile
+                console.log('Character duplicate ignored (mobile threshold):', char, 'time since last:', timeSinceLast);
+                return false;
+            }
         }
         
         // Update tracking
@@ -1221,24 +1273,56 @@ class BiometricDataCollector {
         this.currentCrystalStep = 1;
         this.resetCrystalState();
         this.updateCrystalDisplay();
+        
+        // Enhanced mobile device detection and setup
         console.log('Crystal game started - Trial tracking initialized');
+        console.log('Device info:', {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            maxTouchPoints: navigator.maxTouchPoints,
+            isIOS: this.isIOS
+        });
+        
+        // Ensure proper touch handling for all mobile devices
+        const crystalArea = document.getElementById('crystal-area');
+        if (crystalArea) {
+            crystalArea.style.touchAction = 'none';
+            crystalArea.style.userSelect = 'none';
+            crystalArea.style.webkitUserSelect = 'none';
+            crystalArea.style.webkitTouchCallout = 'none';
+            crystalArea.style.webkitTapHighlightColor = 'transparent';
+        }
     }
     
     bindCrystalEvents() {
         const crystalArea = document.getElementById('crystal-area');
         
-        // Mobile-only: Touch events for Android and iOS
-        crystalArea.addEventListener('touchstart', (e) => this.handleCrystalTouchStart(e));
-        crystalArea.addEventListener('touchmove', (e) => this.handleCrystalTouchMove(e));
-        crystalArea.addEventListener('touchend', (e) => this.handleCrystalTouchEnd(e));
+        // Enhanced mobile touch events for Android and iOS
+        crystalArea.addEventListener('touchstart', (e) => this.handleCrystalTouchStart(e), { passive: false });
+        crystalArea.addEventListener('touchmove', (e) => this.handleCrystalTouchMove(e), { passive: false });
+        crystalArea.addEventListener('touchend', (e) => this.handleCrystalTouchEnd(e), { passive: false });
+        crystalArea.addEventListener('touchcancel', (e) => this.handleCrystalTouchEnd(e), { passive: false });
+        
+        // Prevent context menu and text selection
         crystalArea.addEventListener('contextmenu', (e) => e.preventDefault());
+        crystalArea.addEventListener('selectstart', (e) => e.preventDefault());
+        crystalArea.addEventListener('dragstart', (e) => e.preventDefault());
+        
+        // Add visual feedback for touch area
+        crystalArea.style.touchAction = 'none';
+        crystalArea.style.userSelect = 'none';
+        crystalArea.style.webkitUserSelect = 'none';
+        crystalArea.style.webkitTouchCallout = 'none';
     }
     
     handleCrystalTouchStart(e) {
         e.preventDefault();
+        e.stopPropagation();
+        
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
         
+        // Enhanced touch data collection for mobile devices
         this.recordTouchEvent({
             timestamp,
             type: 'touchstart',
@@ -1246,20 +1330,30 @@ class BiometricDataCollector {
                 identifier: t.identifier,
                 clientX: t.clientX,
                 clientY: t.clientY,
-                force: t.force || 0.5
+                force: t.force || 0.5,
+                radiusX: t.radiusX || 0,
+                radiusY: t.radiusY || 0,
+                rotationAngle: t.rotationAngle || 0
             })),
             step: this.currentCrystalStep,
             taskId: 2
         });
+        
+        // Add visual feedback
+        const crystalArea = document.getElementById('crystal-area');
+        crystalArea.classList.add('touching');
         
         this.processCrystalInteraction('start', touches);
     }
     
     handleCrystalTouchMove(e) {
         e.preventDefault();
+        e.stopPropagation();
+        
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
         
+        // Enhanced touch data collection for mobile devices
         this.recordTouchEvent({
             timestamp,
             type: 'touchmove',
@@ -1267,7 +1361,10 @@ class BiometricDataCollector {
                 identifier: t.identifier,
                 clientX: t.clientX,
                 clientY: t.clientY,
-                force: t.force || 0.5
+                force: t.force || 0.5,
+                radiusX: t.radiusX || 0,
+                radiusY: t.radiusY || 0,
+                rotationAngle: t.rotationAngle || 0
             })),
             step: this.currentCrystalStep,
             taskId: 2
@@ -1278,9 +1375,12 @@ class BiometricDataCollector {
     
     handleCrystalTouchEnd(e) {
         e.preventDefault();
+        e.stopPropagation();
+        
         const timestamp = performance.now();
         const touches = Array.from(e.changedTouches);
         
+        // Enhanced touch data collection for mobile devices
         this.recordTouchEvent({
             timestamp,
             type: 'touchend',
@@ -1288,11 +1388,18 @@ class BiometricDataCollector {
                 identifier: t.identifier,
                 clientX: t.clientX,
                 clientY: t.clientY,
-                force: t.force || 0.5
+                force: t.force || 0.5,
+                radiusX: t.radiusX || 0,
+                radiusY: t.radiusY || 0,
+                rotationAngle: t.rotationAngle || 0
             })),
             step: this.currentCrystalStep,
             taskId: 2
         });
+        
+        // Remove visual feedback
+        const crystalArea = document.getElementById('crystal-area');
+        crystalArea.classList.remove('touching');
         
         this.processCrystalInteraction('end', touches);
     }
@@ -1363,19 +1470,35 @@ class BiometricDataCollector {
         switch (step.type) {
             case 'tap':
                 if (phase === 'end' && touches.length === 1) {
-                    this.crystalState.tapCount++;
-                    crystal.classList.add('tap-feedback');
-                    crystal.classList.add('active');
+                    // Enhanced tap detection for mobile devices
+                    const touch = touches[0];
+                    const crystalRect = crystal.getBoundingClientRect();
+                    const crystalCenterX = crystalRect.left + crystalRect.width / 2;
+                    const crystalCenterY = crystalRect.top + crystalRect.height / 2;
                     
-                    setTimeout(() => {
-                        crystal.classList.remove('tap-feedback');
-                        crystal.classList.remove('active');
-                    }, 200);
+                    // Check if tap is within reasonable distance of crystal center
+                    const distance = Math.sqrt(
+                        Math.pow(touch.clientX - crystalCenterX, 2) + 
+                        Math.pow(touch.clientY - crystalCenterY, 2)
+                    );
                     
-                    this.updateStepProgress(`${this.crystalState.tapCount}/${step.target}`);
-                    
-                    if (this.crystalState.tapCount >= step.target) {
-                        this.completeStep();
+                    // Allow taps within 100px of crystal center (mobile-friendly)
+                    if (distance <= 100) {
+                        this.crystalState.tapCount++;
+                        crystal.classList.add('tap-feedback');
+                        crystal.classList.add('active');
+                        
+                        // Enhanced visual feedback for mobile
+                        setTimeout(() => {
+                            crystal.classList.remove('tap-feedback');
+                            crystal.classList.remove('active');
+                        }, 300);
+                        
+                        this.updateStepProgress(`${this.crystalState.tapCount}/${step.target}`);
+                        
+                        if (this.crystalState.tapCount >= step.target) {
+                            this.completeStep();
+                        }
                     }
                 }
                 break;
@@ -1404,19 +1527,26 @@ class BiometricDataCollector {
                     if (delta < -Math.PI) delta += 2 * Math.PI;
                     if (!isFinite(delta)) return;
             
+                    // Enhanced mobile rotation detection with tolerance
+                    const minDelta = 0.01; // Reduced threshold for mobile
+                    if (Math.abs(delta) < minDelta) return;
+            
                     const direction = Math.sign(delta);
                     const expectedDirection = (this.crystalState.rotationRounds % 2 === 0) ? 1 : -1;
             
                     // Set direction on first move of this round
-                    if (this.crystalState.rotationDirection === null && Math.abs(delta) > 0.02) {
+                    if (this.crystalState.rotationDirection === null && Math.abs(delta) > minDelta) {
                         this.crystalState.rotationDirection = direction;
                     }
             
-                    // Reject wrong direction
-                    if (direction !== expectedDirection) {
-                        this.showWrongDirectionFeedback?.();
-                        this.crystalState.lastAngle = angle;
-                        return;
+                    // Enhanced direction validation for mobile
+                    if (this.crystalState.rotationDirection !== null && direction !== expectedDirection) {
+                        // Allow small direction changes (mobile finger movement can be erratic)
+                        if (Math.abs(delta) > 0.1) {
+                            this.showWrongDirectionFeedback?.();
+                            this.crystalState.lastAngle = angle;
+                            return;
+                        }
                     }
             
                     this.crystalState.rotationAccumulated += delta;
@@ -1431,7 +1561,7 @@ class BiometricDataCollector {
                         this.crystalState.rotationDirection = null;
             
                         crystal.classList.add('rotation-feedback');
-                        setTimeout(() => crystal.classList.remove('rotation-feedback'), 300);
+                        setTimeout(() => crystal.classList.remove('rotation-feedback'), 400);
             
                         if (this.crystalState.rotationRounds >= 3) {
                             this.completeStep();
@@ -1457,13 +1587,19 @@ class BiometricDataCollector {
                         crystal.classList.add('active');
                     } else if (phase === 'move' && (this.crystalState.isPinching || this.crystalState.isSpreading)) {
                         const currentDistance = this.getDistance(touches[0], touches[1]);
+                        
+                        // Enhanced mobile pinch/spread detection with validation
+                        if (currentDistance < 20) return; // Minimum distance threshold
+                        
                         const scale = currentDistance / this.crystalState.initialDistance;
                         const newSize = Math.max(0.3, Math.min(2.0, scale));
                         
                         this.updateCrystalSize(newSize);
                         this.updateStepProgress(`${Math.round(newSize * 100)}%`);
                         
-                        if (Math.abs(newSize - step.target) < 0.1) {
+                        // Enhanced completion detection for mobile
+                        const targetTolerance = 0.15; // Increased tolerance for mobile
+                        if (Math.abs(newSize - step.target) < targetTolerance) {
                             this.completeStep();
                         }
                     }
@@ -1491,10 +1627,13 @@ class BiometricDataCollector {
                         }
                     }
                 } else if (phase === 'end') {
-                    this.crystalState.pressureStart = null;
-                    this.crystalState.pressureFingers = 0;
-                    crystal.classList.remove('active');
-                    this.hidePressureIndicator();
+                    // Enhanced mobile pressure detection - allow finger count to vary slightly
+                    if (touches.length < 2) { // Only end if most fingers are lifted
+                        this.crystalState.pressureStart = null;
+                        this.crystalState.pressureFingers = 0;
+                        crystal.classList.remove('active');
+                        this.hidePressureIndicator();
+                    }
                 }
                 break;
         }
@@ -1564,6 +1703,14 @@ class BiometricDataCollector {
         if (indicator) {
             indicator.remove();
         }
+    }
+    
+    showWrongDirectionFeedback() {
+        const crystal = document.getElementById('crystal');
+        crystal.style.filter = 'hue-rotate(180deg) brightness(0.7)';
+        setTimeout(() => {
+            crystal.style.filter = '';
+        }, 500);
     }
     
     completeStep() {
