@@ -1820,12 +1820,6 @@ class BiometricDataCollector {
             
                     const direction = Math.sign(delta);
                     
-                    // Set direction on first significant move of this round
-                    if (this.crystalState.rotationDirection === null && Math.abs(delta) > minDelta) {
-                        this.crystalState.rotationDirection = direction;
-                        console.log(`🔄 Rotation direction set: ${direction === 1 ? 'CW' : 'CCW'}`);
-                    }
-            
                     // Set direction on first significant move and validate it
                     if (this.crystalState.rotationDirection === null && Math.abs(delta) > minDelta) {
                         this.crystalState.rotationDirection = direction;
@@ -1849,7 +1843,7 @@ class BiometricDataCollector {
                     // Only show whole number progress - no fractional progress during rotation
                     this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (CW → CCW → CW)`);
             
-                                        // Check for full rotation completion
+                    // Check for full rotation completion (2π radians = 360 degrees)
                     if (Math.abs(this.crystalState.rotationAccumulated) >= 2 * Math.PI) {
                         // Record the completed rotation direction
                         const completedDirection = this.crystalState.rotationDirection;
@@ -1859,7 +1853,7 @@ class BiometricDataCollector {
                         const isCorrectRotation = completedDirection === expectedDirection && !this.crystalState.wrongDirectionStarted;
                         
                         if (isCorrectRotation) {
-                            // ONLY correct rotations count - increment progress
+                            // ONLY correct rotations count - increment progress ONCE
                             this.crystalState.rotationSequence.push(completedDirection);
                             this.crystalState.rotationRounds += 1;
                             
@@ -1894,6 +1888,9 @@ class BiometricDataCollector {
                         this.crystalState.rotationAccumulated = 0;
                         this.crystalState.rotationDirection = null;
                         this.crystalState.wrongDirectionStarted = false;
+                        
+                        // IMPORTANT: Break out of the move phase to prevent multiple counts
+                        return;
                     }
                 }
             
