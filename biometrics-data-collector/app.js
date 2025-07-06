@@ -27,6 +27,10 @@ class BiometricDataCollector {
         this.lastBackspaceTime = 0;
         this.backspaceCooldown = 100; // 100ms cooldown to prevent duplicates
         
+        // Mobile shift key deduplication
+        this.lastShiftTime = 0;
+        this.shiftCooldown = 100; // 100ms cooldown to prevent duplicates
+        
         // Mobile character deduplication
         this.lastCharTime = 0;
         this.lastChar = null;
@@ -222,13 +226,33 @@ class BiometricDataCollector {
             this.handleTypingInput(e);
         });
         
-        // Mobile shift key detection for Android (Gboard) and iOS keyboards
-        typingInput.addEventListener('beforeinput', (e) => {
-            this.handleBeforeInput(e);
+        // Mobile-only: Detect actual shift key presses on mobile keyboards (Gboard, iOS)
+        typingInput.addEventListener('keydown', (e) => {
+            // Only handle shift key presses on mobile
+            if (e.key === 'Shift' || e.keyCode === 16) {
+                const currentTime = performance.now();
+                
+                // Check if enough time has passed since last shift to avoid duplicates
+                if (currentTime - this.lastShiftTime > this.shiftCooldown) {
+                    this.recordKeystroke({
+                        timestamp: currentTime,
+                        actualChar: 'SHIFT',
+                        keyCode: 16,
+                        type: 'keydown',
+                        sentence: this.currentSentence,
+                        position: e.target.selectionStart || 0,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                    console.log('Mobile shift key pressed at time:', currentTime);
+                    
+                    // Update last shift time
+                    this.lastShiftTime = currentTime;
+                } else {
+                    console.log('Mobile shift duplicate ignored, time since last:', currentTime - this.lastShiftTime);
+                }
+            }
         });
-        
-        // Mobile-only: No keydown events needed for mobile keyboards (Gboard, iOS)
-        // All keystroke detection is handled through input events
         
         // Update pointer coordinates when typing
         typingInput.addEventListener('focus', (e) => {
@@ -815,6 +839,7 @@ class BiometricDataCollector {
         this.lastInputLength = 0; // FIXED: Reset at task start
         this.previousChar = null; // FIXED: Reset previousChar at task start
         this.lastBackspaceTime = 0; // Reset backspace tracking
+        this.lastShiftTime = 0; // Reset shift tracking
         this.lastCharTime = 0; // Reset character tracking
         this.lastChar = null; // Reset character tracking
         this.displayCurrentSentence();
@@ -836,6 +861,8 @@ class BiometricDataCollector {
         this.previousChar = null;
         // Reset backspace tracking for new sentence
         this.lastBackspaceTime = 0;
+        // Reset shift tracking for new sentence
+        this.lastShiftTime = 0;
         // Reset character tracking for new sentence
         this.lastCharTime = 0;
         this.lastChar = null;
@@ -1001,19 +1028,26 @@ class BiometricDataCollector {
         }
     }
     
-    // Helper method to test shift key detection for mobile keyboards
+    // Helper method to test actual shift key detection
     testShiftDetection() {
-        console.log('Testing shift key detection for mobile keyboards (Gboard, iOS):');
-        console.log('Instructions:');
-        console.log('1. Type a lowercase letter (e.g., "a")');
-        console.log('2. Press the shift key (upper arrow) on your mobile keyboard');
-        console.log('3. Type a capital letter (e.g., "A")');
-        console.log('4. Check if SHIFT appears in the data');
-        
+        console.log('Testing actual shift key detection for mobile keyboards:');
         const shifts = this.keystrokeData.filter(k => k.actualChar === 'SHIFT');
-        console.log('Current SHIFT events detected:', shifts.length);
+        
+        console.log('Total shift key presses detected:', shifts.length);
+        console.log('Shift events by type:');
+        
+        const typeCounts = {};
+        shifts.forEach(shift => {
+            typeCounts[shift.type] = (typeCounts[shift.type] || 0) + 1;
+        });
+        
+        Object.entries(typeCounts).forEach(([type, count]) => {
+            console.log(`  ${type}: ${count} events`);
+        });
+        
+        console.log('Shift key press details:');
         shifts.forEach((shift, i) => {
-            console.log(`Shift ${i + 1}: timestamp ${Math.round(shift.timestamp)}ms, type: ${shift.type}, position: ${shift.position}`);
+            console.log(`  Shift ${i + 1}: timestamp ${Math.round(shift.timestamp)}ms, type: ${shift.type}, position: ${shift.position}`);
         });
         
         return shifts;
@@ -2022,46 +2056,7 @@ class BiometricDataCollector {
         });
     }
 
-    // Mobile shift key detection for Android (Gboard) and iOS keyboards
-    handleBeforeInput(e) {
-        const timestamp = performance.now();
-        
-        // Detect shift key press on mobile keyboards
-        if (e.inputType === 'insertText' && e.data) {
-            const char = e.data;
-            const isUpper = char.match(/[A-Z]/);
-            const isLower = char.match(/[a-z]/);
-            
-            // Check if this is a case change that requires shift
-            let shiftPressed = false;
-            
-            // Rule 1: Capital letter when previous was not capital (shift was pressed)
-            if (isUpper && (!this.previousChar || !this.previousChar.match(/[A-Z]/))) {
-                shiftPressed = true;
-                console.log('Shift key detected (beforeinput): Capital letter after non-capital');
-            }
-            // Rule 2: Lowercase letter when previous was capital (shift was pressed to turn off caps)
-            else if (isLower && this.previousChar && this.previousChar.match(/[A-Z]/)) {
-                shiftPressed = true;
-                console.log('Shift key detected (beforeinput): Lowercase after capital (shift off)');
-            }
-            
-            if (shiftPressed) {
-                // Record the actual shift key press at the exact time it happens
-                this.recordKeystroke({
-                    timestamp: timestamp, // Exact time when shift key is pressed
-                    actualChar: 'SHIFT',
-                    keyCode: 16,
-                    type: 'beforeinput',
-                    sentence: this.currentSentence,
-                    position: e.target.selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-                console.log('Shift key press recorded in ref_char at exact time:', timestamp);
-            }
-        }
-    }
+
 
 }
 
