@@ -317,33 +317,39 @@ class BiometricDataCollector {
         // Create a unique event signature for deduplication
         const eventSignature = `${inputType}-${data}-${value.length}-${pos}`;
         
-        // Check for duplicate input events across all mobile platforms
+        // AGGRESSIVE mobile deduplication for iOS and Android
         if (data && inputType === 'insertText') {
-            // Check if this is the exact same event as the last one
+            // STRICT: Block exact duplicate events within 200ms (increased from 50ms)
             if (this.lastInputEvent === eventSignature && 
                 this.lastInputEventTime && 
-                (currentTime - this.lastInputEventTime) < this.inputEventCooldown) {
-                console.log('Mobile duplicate input event ignored:', data, 'signature:', eventSignature);
+                (currentTime - this.lastInputEventTime) < 200) {
+                console.log('🚫 Mobile duplicate input event BLOCKED (strict):', data, 'signature:', eventSignature, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
                 return;
             }
             
-            // Check if this is a duplicate character input
+            // STRICT: Block duplicate characters within 200ms (increased from 100ms)
             if (this.lastChar === data && 
                 this.lastCharTime && 
-                (currentTime - this.lastCharTime) < 100) { // 100ms cooldown
-                console.log('Mobile duplicate character ignored:', data, 'time since last:', currentTime - this.lastCharTime);
+                (currentTime - this.lastCharTime) < 200) {
+                console.log('🚫 Mobile duplicate character BLOCKED (strict):', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
                 return;
             }
             
-            // Check if input value didn't change but we got an input event
+            // BLOCK: Input value unchanged but got input event (definite duplicate)
             if (value === this.lastInputValue && data) {
-                console.log('Mobile duplicate input event (value unchanged):', data);
+                console.log('🚫 Mobile duplicate input event BLOCKED (value unchanged):', data);
                 return;
             }
             
-            // Check if input length didn't change but we got an input event
+            // BLOCK: Input length unchanged but got input event (definite duplicate)
             if (value.length === this.lastInputLength && data && !inputType?.startsWith('delete')) {
-                console.log('Mobile duplicate input event (length unchanged):', data);
+                console.log('🚫 Mobile duplicate input event BLOCKED (length unchanged):', data);
+                return;
+            }
+            
+            // ADDITIONAL: Block any character input within 100ms of last input (extra safety)
+            if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 100) {
+                console.log('🚫 Mobile input event BLOCKED (rapid input):', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
                 return;
             }
         }
@@ -590,8 +596,17 @@ class BiometricDataCollector {
                         console.log('🔍 Quote processing complete - Final refChar:', refChar);
                     }
                     
-                    // Check if character should be recorded (deduplication)
+                    // FINAL: Check if character should be recorded (comprehensive deduplication)
                     if (this.shouldRecordChar(refChar, timestamp + i)) {
+                        // ADDITIONAL SAFETY: Check if this exact character was just recorded
+                        const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
+                        if (lastKeystroke && 
+                            lastKeystroke.actualChar === refChar && 
+                            (timestamp + i - lastKeystroke.timestamp) < 500) { // 500ms safety window
+                            console.log('🚫 FINAL BLOCK: Character duplicate detected in keystroke data:', refChar);
+                            return;
+                        }
+                        
                         console.log('📝 Recording keystroke:', refChar, 'type:', inputType, 'timestamp:', timestamp + i);
                         this.recordKeystroke({
                             timestamp: timestamp + i,
@@ -1195,19 +1210,19 @@ class BiometricDataCollector {
     shouldRecordChar(char, timestamp) {
         const currentTime = performance.now();
         
-        // Enhanced mobile deduplication with multiple checks
+        // Enhanced mobile deduplication with comprehensive checks
         if (this.lastChar === char) {
             const timeSinceLast = currentTime - this.lastCharTime;
             
-            // Check if within cooldown period
-            if (timeSinceLast < this.charCooldown) {
-                console.log('Character duplicate ignored (cooldown):', char, 'time since last:', timeSinceLast);
+            // STRICT: Block any duplicate character within 150ms (increased from 50ms)
+            if (timeSinceLast < 150) {
+                console.log('❌ Character duplicate BLOCKED (strict threshold):', char, 'time since last:', timeSinceLast, 'ms');
                 return false;
             }
             
-            // Additional check for very close timestamps (mobile double-tap protection)
-            if (timeSinceLast < 50) { // 50ms threshold for mobile
-                console.log('Character duplicate ignored (mobile threshold):', char, 'time since last:', timeSinceLast);
+            // ADDITIONAL: Block duplicates within 300ms for same character (extra safety)
+            if (timeSinceLast < 300) {
+                console.log('⚠️ Character duplicate BLOCKED (extended threshold):', char, 'time since last:', timeSinceLast, 'ms');
                 return false;
             }
         }
@@ -1215,6 +1230,7 @@ class BiometricDataCollector {
         // Update tracking
         this.lastChar = char;
         this.lastCharTime = currentTime;
+        console.log('✅ Character approved for recording:', char, 'at time:', currentTime);
         return true;
     }
     
