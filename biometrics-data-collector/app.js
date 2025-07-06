@@ -278,17 +278,18 @@ class BiometricDataCollector {
         const eventSignature = `${inputType}-${data}-${value.length}-${pos}`;
         
         if (data && inputType === 'insertText') {
+            // ULTRA-STRICT deduplication for all mobile devices
             if (this.lastInputEvent === eventSignature && 
                 this.lastInputEventTime && 
-                (currentTime - this.lastInputEventTime) < 200) {
-                console.log('🚫 Mobile duplicate input event BLOCKED (strict):', data, 'signature:', eventSignature, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                (currentTime - this.lastInputEventTime) < 300) {
+                console.log('🚫 Mobile duplicate input event BLOCKED (ultra-strict):', data, 'signature:', eventSignature, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
                 return;
             }
             
             if (this.lastChar === data && 
                 this.lastCharTime && 
-                (currentTime - this.lastCharTime) < 200) {
-                console.log('🚫 Mobile duplicate character BLOCKED (strict):', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
+                (currentTime - this.lastCharTime) < 300) {
+                console.log('🚫 Mobile duplicate character BLOCKED (ultra-strict):', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
                 return;
             }
             
@@ -302,8 +303,14 @@ class BiometricDataCollector {
                 return;
             }
             
-            if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 100) {
+            if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 150) {
                 console.log('🚫 Mobile input event BLOCKED (rapid input):', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                return;
+            }
+            
+            // ADDITIONAL: Block iOS-specific double input issues
+            if (this.isIOS && this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 200) {
+                console.log('🚫 iOS duplicate input BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
                 return;
             }
         }
@@ -354,62 +361,6 @@ class BiometricDataCollector {
             for (let i = 0; i < data.length; i++) {
                 const char = data[i];
                 const posOffset = pos - data.length + i;
-                const isUpper = char.match(/[A-Z]/);
-                const isLower = char.match(/[a-z]/);
-              
-                // Enhanced shift detection logic - more precise rules
-                let shiftNeeded = false;
-              
-                // Rule 1: Shift before capital letter ONLY if previous character is NOT a capital letter
-                if (isUpper && (!this.previousChar || !this.previousChar.match(/[A-Z]/))) {
-                    shiftNeeded = true;
-                }
-                // Rule 2: Shift before small letter ONLY if previous character IS a capital letter
-                else if (this.previousChar && this.previousChar.match(/[A-Z]/) && isLower) {
-                    shiftNeeded = true;
-                }
-              
-                if (shiftNeeded) {
-                    if (isUpper) {
-                        console.log('Shift detected before capital letter:', char, 'previousChar:', this.previousChar, '(Rule 1: previous not capital)');
-                    } else {
-                        console.log('Shift detected before small letter:', char, 'previousChar:', this.previousChar, '(Rule 2: previous was capital)');
-                    }
-                    
-                    // AUTHENTIC: Calculate time between previous character completion and current character start
-                    const characterTimestamp = timestamp + i;
-                    let shiftTimestamp;
-                    
-                    if (this.keystrokeData.length > 0) {
-                        // Get the last recorded keystroke timestamp (previous character completion)
-                        const lastKeystrokeTime = this.keystrokeData[this.keystrokeData.length - 1].timestamp;
-                        const totalGap = characterTimestamp - lastKeystrokeTime;
-                        
-                        // Randomly divide the gap between 40-60% for shift timing
-                        const shiftRatio = 0.4 + (Math.random() * 0.2); // Random between 40-60%
-                        const shiftGap = Math.round(totalGap * shiftRatio);
-                        
-                        shiftTimestamp = lastKeystrokeTime + shiftGap;
-                        
-                        console.log(`Authentic timing: Previous char at ${lastKeystrokeTime}ms, Shift at ${shiftTimestamp}ms, Character at ${characterTimestamp}ms (${shiftGap}ms shift gap, ${totalGap - shiftGap}ms char gap)`);
-                    } else {
-                        // First character, use a small gap
-                        shiftTimestamp = characterTimestamp - 30;
-                        console.log(`First character: Shift at ${shiftTimestamp}ms, Character at ${characterTimestamp}ms (30ms gap)`);
-                    }
-                    
-                    // Record shift with authentic timing
-                    this.recordKeystroke({
-                        timestamp: shiftTimestamp,
-                        actualChar: 'SHIFT',
-                        keyCode: 16,
-                        type: inputType,
-                        sentence: this.currentSentence,
-                        position: posOffset,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
-                }
               
 
                 
@@ -686,61 +637,7 @@ class BiometricDataCollector {
                 console.log('🔍 Quote processing complete (other input) - Final refChar:', refChar);
             }
     
-            // Apply shift detection logic for other input types
-            const isUpper = data.match(/[A-Z]/);
-            const isLower = data.match(/[a-z]/);
-            let shiftNeeded = false;
-            
-            // Rule 1: Shift before capital letter ONLY if previous character is NOT a capital letter
-            if (isUpper && (!this.previousChar || !this.previousChar.match(/[A-Z]/))) {
-                shiftNeeded = true;
-            }
-            // Rule 2: Shift before small letter ONLY if previous character IS a capital letter
-            else if (this.previousChar && this.previousChar.match(/[A-Z]/) && isLower) {
-                shiftNeeded = true;
-            }
-            
-            if (shiftNeeded) {
-                if (isUpper) {
-                    console.log('Shift detected before capital letter (other input):', data, 'previousChar:', this.previousChar, '(Rule 1: previous not capital)');
-                } else {
-                    console.log('Shift detected before small letter (other input):', data, 'previousChar:', this.previousChar, '(Rule 2: previous was capital)');
-                }
-                
-                // AUTHENTIC: Calculate time between previous character completion and current character start
-                const characterTimestamp = timestamp;
-                let shiftTimestamp;
-                
-                if (this.keystrokeData.length > 0) {
-                    // Get the last recorded keystroke timestamp (previous character completion)
-                    const lastKeystrokeTime = this.keystrokeData[this.keystrokeData.length - 1].timestamp;
-                    const totalGap = characterTimestamp - lastKeystrokeTime;
-                    
-                    // Randomly divide the gap between 40-60% for shift timing
-                    const shiftRatio = 0.4 + (Math.random() * 0.2); // Random between 40-60%
-                    const shiftGap = Math.round(totalGap * shiftRatio);
-                    
-                    shiftTimestamp = lastKeystrokeTime + shiftGap;
-                    
-                    console.log(`Authentic timing (other input): Previous char at ${lastKeystrokeTime}ms, Shift at ${shiftTimestamp}ms, Character at ${characterTimestamp}ms (${shiftGap}ms shift gap, ${totalGap - shiftGap}ms char gap)`);
-                } else {
-                    // First character, use a small gap
-                    shiftTimestamp = characterTimestamp - 30;
-                    console.log(`First character (other input): Shift at ${shiftTimestamp}ms, Character at ${characterTimestamp}ms (30ms gap)`);
-                }
-                
-                // Record shift with authentic timing
-                this.recordKeystroke({
-                    timestamp: shiftTimestamp,
-                    actualChar: 'SHIFT',
-                    keyCode: 16,
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos - 1,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-            }
+
     
             // Check if character should be recorded (deduplication)
             if (this.shouldRecordChar(refChar, timestamp)) {
@@ -933,10 +830,7 @@ class BiometricDataCollector {
             return specialKeys[e.key];
         }
     
-        // ✅ Handle Shift key separately
-        if (e.key === 'Shift') {
-            return 'SHIFT';
-        }
+
     
         // 3. Handle printable characters
         if (e.key && e.key.length === 1) {
@@ -1156,21 +1050,27 @@ class BiometricDataCollector {
     shouldRecordChar(char, timestamp) {
         const currentTime = performance.now();
         
-        // Enhanced mobile deduplication with comprehensive checks
+        // ULTRA-STRICT mobile deduplication for all Android/iOS versions
         if (this.lastChar === char) {
             const timeSinceLast = currentTime - this.lastCharTime;
             
-            // STRICT: Block any duplicate character within 150ms (increased from 50ms)
-            if (timeSinceLast < 150) {
-                console.log('❌ Character duplicate BLOCKED (strict threshold):', char, 'time since last:', timeSinceLast, 'ms');
+            // BLOCK: Any duplicate character within 250ms (increased for mobile reliability)
+            if (timeSinceLast < 250) {
+                console.log('🚫 Character duplicate BLOCKED (ultra-strict):', char, 'time since last:', timeSinceLast, 'ms');
                 return false;
             }
             
-            // ADDITIONAL: Block duplicates within 300ms for same character (extra safety)
-            if (timeSinceLast < 300) {
-                console.log('⚠️ Character duplicate BLOCKED (extended threshold):', char, 'time since last:', timeSinceLast, 'ms');
+            // BLOCK: Duplicates within 500ms for same character (mobile double-tap protection)
+            if (timeSinceLast < 500) {
+                console.log('🚫 Character duplicate BLOCKED (extended protection):', char, 'time since last:', timeSinceLast, 'ms');
                 return false;
             }
+        }
+        
+        // ADDITIONAL: Block rapid character input (mobile keyboard protection)
+        if (this.lastCharTime && (currentTime - this.lastCharTime) < 50) {
+            console.log('🚫 Character input BLOCKED (rapid input protection):', char, 'time since last:', currentTime - this.lastCharTime, 'ms');
+            return false;
         }
         
         // Update tracking
@@ -1236,8 +1136,8 @@ class BiometricDataCollector {
         this.resetCrystalState();
         this.updateCrystalDisplay();
         
-        // Enhanced mobile device detection and setup
-        console.log('Crystal game started - Trial tracking initialized');
+        // ULTRA-RELIABLE mobile device detection and setup
+        console.log('🎮 Crystal game started - Trial tracking initialized');
         console.log('Initial trial state:', this.crystalState.currentTrial);
         console.log('Device info:', {
             userAgent: navigator.userAgent,
@@ -1254,28 +1154,50 @@ class BiometricDataCollector {
             crystalArea.style.webkitUserSelect = 'none';
             crystalArea.style.webkitTouchCallout = 'none';
             crystalArea.style.webkitTapHighlightColor = 'transparent';
+            
+            // Additional mobile optimizations
+            crystalArea.style.webkitOverflowScrolling = 'touch';
+            crystalArea.style.webkitTransform = 'translateZ(0)';
+            
+            // Prevent all unwanted interactions
+            crystalArea.addEventListener('gesturestart', (e) => e.preventDefault());
+            crystalArea.addEventListener('gesturechange', (e) => e.preventDefault());
+            crystalArea.addEventListener('gestureend', (e) => e.preventDefault());
         }
+        
+        console.log('✅ Crystal game initialized for all mobile devices');
     }
     
     bindCrystalEvents() {
         const crystalArea = document.getElementById('crystal-area');
         
-        // Enhanced mobile touch events for Android and iOS
+        // ULTRA-RELIABLE mobile touch events for all Android and iOS versions
         crystalArea.addEventListener('touchstart', (e) => this.handleCrystalTouchStart(e), { passive: false });
         crystalArea.addEventListener('touchmove', (e) => this.handleCrystalTouchMove(e), { passive: false });
         crystalArea.addEventListener('touchend', (e) => this.handleCrystalTouchEnd(e), { passive: false });
         crystalArea.addEventListener('touchcancel', (e) => this.handleCrystalTouchEnd(e), { passive: false });
         
-        // Prevent context menu and text selection
+        // Prevent all unwanted interactions
         crystalArea.addEventListener('contextmenu', (e) => e.preventDefault());
         crystalArea.addEventListener('selectstart', (e) => e.preventDefault());
         crystalArea.addEventListener('dragstart', (e) => e.preventDefault());
+        crystalArea.addEventListener('gesturestart', (e) => e.preventDefault());
+        crystalArea.addEventListener('gesturechange', (e) => e.preventDefault());
+        crystalArea.addEventListener('gestureend', (e) => e.preventDefault());
         
-        // Add visual feedback for touch area
+        // Enhanced mobile touch handling
         crystalArea.style.touchAction = 'none';
         crystalArea.style.userSelect = 'none';
         crystalArea.style.webkitUserSelect = 'none';
         crystalArea.style.webkitTouchCallout = 'none';
+        crystalArea.style.webkitTapHighlightColor = 'transparent';
+        crystalArea.style.webkitTouchCallout = 'none';
+        
+        // Additional iOS-specific handling
+        if (this.isIOS) {
+            crystalArea.style.webkitOverflowScrolling = 'touch';
+            crystalArea.style.webkitTransform = 'translateZ(0)';
+        }
     }
     
     handleCrystalTouchStart(e) {
@@ -1285,7 +1207,7 @@ class BiometricDataCollector {
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
         
-        // Enhanced touch data collection for mobile devices
+        // ULTRA-RELIABLE touch data collection for all mobile devices
         this.recordTouchEvent({
             timestamp,
             type: 'touchstart',
@@ -1306,7 +1228,12 @@ class BiometricDataCollector {
         const crystalArea = document.getElementById('crystal-area');
         crystalArea.classList.add('touching');
         
-        this.processCrystalInteraction('start', touches);
+        // Enhanced error handling for mobile devices
+        try {
+            this.processCrystalInteraction('start', touches);
+        } catch (error) {
+            console.error('Error in crystal touch start:', error);
+        }
     }
     
     handleCrystalTouchMove(e) {
@@ -1316,7 +1243,7 @@ class BiometricDataCollector {
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
         
-        // Enhanced touch data collection for mobile devices
+        // ULTRA-RELIABLE touch data collection for all mobile devices
         this.recordTouchEvent({
             timestamp,
             type: 'touchmove',
@@ -1333,7 +1260,12 @@ class BiometricDataCollector {
             taskId: 2
         });
         
-        this.processCrystalInteraction('move', touches);
+        // Enhanced error handling for mobile devices
+        try {
+            this.processCrystalInteraction('move', touches);
+        } catch (error) {
+            console.error('Error in crystal touch move:', error);
+        }
     }
     
     handleCrystalTouchEnd(e) {
@@ -1343,7 +1275,7 @@ class BiometricDataCollector {
         const timestamp = performance.now();
         const touches = Array.from(e.changedTouches);
         
-        // Enhanced touch data collection for mobile devices
+        // ULTRA-RELIABLE touch data collection for all mobile devices
         this.recordTouchEvent({
             timestamp,
             type: 'touchend',
@@ -1364,7 +1296,12 @@ class BiometricDataCollector {
         const crystalArea = document.getElementById('crystal-area');
         crystalArea.classList.remove('touching');
         
-        this.processCrystalInteraction('end', touches);
+        // Enhanced error handling for mobile devices
+        try {
+            this.processCrystalInteraction('end', touches);
+        } catch (error) {
+            console.error('Error in crystal touch end:', error);
+        }
     }
     
     handleCrystalMouseDown(e) {
@@ -1433,20 +1370,26 @@ class BiometricDataCollector {
         switch (step.type) {
             case 'tap':
                 if (phase === 'end' && touches.length === 1) {
-                    // Enhanced tap detection for mobile devices
+                    // ULTRA-RELIABLE tap detection for all mobile devices
                     const touch = touches[0];
                     const crystalRect = crystal.getBoundingClientRect();
+                    
+                    // Check if tap is within the crystal boundaries (more precise)
+                    const isWithinBounds = touch.clientX >= crystalRect.left && 
+                                         touch.clientX <= crystalRect.right && 
+                                         touch.clientY >= crystalRect.top && 
+                                         touch.clientY <= crystalRect.bottom;
+                    
+                    // Also check distance from center as backup (for larger touch areas)
                     const crystalCenterX = crystalRect.left + crystalRect.width / 2;
                     const crystalCenterY = crystalRect.top + crystalRect.height / 2;
-                    
-                    // Check if tap is within reasonable distance of crystal center
                     const distance = Math.sqrt(
                         Math.pow(touch.clientX - crystalCenterX, 2) + 
                         Math.pow(touch.clientY - crystalCenterY, 2)
                     );
                     
-                    // Allow taps within 100px of crystal center (mobile-friendly)
-                    if (distance <= 100) {
+                    // Enhanced boundary detection: within bounds OR within 120px of center
+                    if (isWithinBounds || distance <= 120) {
                         this.crystalState.tapCount++;
                         crystal.classList.add('tap-feedback');
                         crystal.classList.add('active');
@@ -1462,6 +1405,10 @@ class BiometricDataCollector {
                         if (this.crystalState.tapCount >= step.target) {
                             this.completeStep();
                         }
+                        
+                        console.log(`✅ Tap ${this.crystalState.tapCount}/${step.target} recorded - within bounds: ${isWithinBounds}, distance: ${Math.round(distance)}px`);
+                    } else {
+                        console.log(`❌ Tap outside crystal bounds - distance: ${Math.round(distance)}px`);
                     }
                 }
                 break;
@@ -1491,8 +1438,8 @@ class BiometricDataCollector {
                     if (delta < -Math.PI) delta += 2 * Math.PI;
                     if (!isFinite(delta)) return;
             
-                    // Enhanced mobile rotation detection with tolerance
-                    const minDelta = 0.01; // Reduced threshold for mobile
+                    // ULTRA-RELIABLE mobile rotation detection with enhanced tolerance
+                    const minDelta = 0.005; // Further reduced threshold for mobile precision
                     if (Math.abs(delta) < minDelta) return;
             
                     const direction = Math.sign(delta);
@@ -1501,12 +1448,13 @@ class BiometricDataCollector {
                     // Set direction on first move of this round
                     if (this.crystalState.rotationDirection === null && Math.abs(delta) > minDelta) {
                         this.crystalState.rotationDirection = direction;
+                        console.log(`🔄 Rotation direction set: ${direction === 1 ? 'CW' : 'CCW'}`);
                     }
             
-                    // STRICT direction validation - no tolerance for wrong direction
+                    // ENHANCED direction validation with mobile-friendly tolerance
                     if (this.crystalState.rotationDirection !== null && direction !== expectedDirection) {
-                        // Block wrong direction rotations completely
-                        if (Math.abs(delta) > 0.05) { // Reduced tolerance
+                        // Allow small direction changes (mobile finger adjustments)
+                        if (Math.abs(delta) > 0.1) { // Increased tolerance for mobile
                             this.showWrongDirectionFeedback();
                             this.crystalState.lastAngle = angle;
                             console.log(`❌ Wrong rotation direction! Expected: ${expectedDirection === 1 ? 'CW' : 'CCW'}, Got: ${direction === 1 ? 'CW' : 'CCW'}`);
@@ -1571,21 +1519,23 @@ class BiometricDataCollector {
                         this.crystalState.isSpreading = step.type === 'spread';
                         this.crystalState.initialDistance = this.getDistance(touches[0], touches[1]);
                         crystal.classList.add('active');
+                        console.log(`🔄 ${step.type} started - initial distance: ${Math.round(this.crystalState.initialDistance)}px`);
                     } else if (phase === 'move' && (this.crystalState.isPinching || this.crystalState.isSpreading)) {
                         const currentDistance = this.getDistance(touches[0], touches[1]);
                         
-                        // Enhanced mobile pinch/spread detection with validation
-                        if (currentDistance < 20) return; // Minimum distance threshold
+                        // ULTRA-RELIABLE mobile pinch/spread detection with validation
+                        if (currentDistance < 15) return; // Reduced minimum distance for mobile
                         
                         const scale = currentDistance / this.crystalState.initialDistance;
-                        const newSize = Math.max(0.3, Math.min(2.0, scale));
+                        const newSize = Math.max(0.2, Math.min(2.5, scale)); // Wider range for mobile
                         
                         this.updateCrystalSize(newSize);
                         this.updateStepProgress(`${Math.round(newSize * 100)}%`);
                         
-                        // Enhanced completion detection for mobile
-                        const targetTolerance = 0.15; // Increased tolerance for mobile
+                        // ENHANCED completion detection with mobile-friendly tolerance
+                        const targetTolerance = 0.12; // Optimized tolerance for mobile precision
                         if (Math.abs(newSize - step.target) < targetTolerance) {
+                            console.log(`✅ ${step.type} target reached: ${Math.round(newSize * 100)}% (target: ${Math.round(step.target * 100)}%)`);
                             this.completeStep();
                         }
                     }
@@ -1593,6 +1543,7 @@ class BiometricDataCollector {
                     this.crystalState.isPinching = false;
                     this.crystalState.isSpreading = false;
                     crystal.classList.remove('active');
+                    console.log(`🔄 ${step.type} ended`);
                 }
                 break;
                 
@@ -1603,18 +1554,24 @@ class BiometricDataCollector {
                         this.crystalState.pressureFingers = touches.length;
                         crystal.classList.add('active');
                         this.showPressureIndicator();
+                        console.log(`🔄 Three-finger pressure started`);
                     } else if (phase === 'move' && this.crystalState.pressureStart) {
                         const elapsed = performance.now() - this.crystalState.pressureStart;
                         this.updatePressureIndicator(elapsed / step.target);
                         this.updateStepProgress(`${Math.floor(elapsed / 1000)}s / ${step.target / 1000}s`);
                         
                         if (elapsed >= step.target) {
+                            console.log(`✅ Three-finger pressure completed: ${Math.floor(elapsed / 1000)}s`);
                             this.completeStep();
                         }
                     }
                 } else if (phase === 'end') {
-                    // Enhanced mobile pressure detection - allow finger count to vary slightly
+                    // ULTRA-RELIABLE mobile pressure detection - allow finger count to vary slightly
                     if (touches.length < 2) { // Only end if most fingers are lifted
+                        if (this.crystalState.pressureStart) {
+                            const elapsed = performance.now() - this.crystalState.pressureStart;
+                            console.log(`🔄 Three-finger pressure ended - duration: ${Math.floor(elapsed / 1000)}s`);
+                        }
                         this.crystalState.pressureStart = null;
                         this.crystalState.pressureFingers = 0;
                         crystal.classList.remove('active');
@@ -2238,7 +2195,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '11'; // 11 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, pressure, velocity, acceleration
+        document.getElementById('touch-features').textContent = '9'; // 9 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, pressure
     }
 
 
@@ -2283,12 +2240,12 @@ class BiometricDataCollector {
     }
 
     
-    // ENHANCED: Touch feature extraction with accurate velocity, acceleration, and pressure
+    // RELIABLE: Touch feature extraction with only accurate, measurable features
     extractTouchFeatures() {
         const features = [];
         
         this.touchData.forEach((touch, index) => {
-            // Base features that are always reliable
+            // Base features that are always reliable across all devices
             const baseFeature = {
                 participant_id: this.participantId,
                 task_id: touch.taskId,
@@ -2300,7 +2257,7 @@ class BiometricDataCollector {
                 inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0
             };
             
-            // FIXED PRESSURE: Only include when force is actually available and meaningful
+            // RELIABLE PRESSURE: Only include when force is actually available and meaningful
             // Most mobile devices don't support pressure/force, so we'll use a default value
             if (touch.touches[0]?.force !== undefined && touch.touches[0].force > 0 && touch.touches[0].force <= 1) {
                 baseFeature.pressure = Math.round(touch.touches[0].force * 1000) / 1000; // 3 decimal precision
@@ -2309,100 +2266,15 @@ class BiometricDataCollector {
                 baseFeature.pressure = 0.5; // Default pressure value
             }
             
-            // ENHANCED VELOCITY: Calculate for all touch events with improved accuracy
-            const velocity = this.calculateAccurateVelocity(touch, index);
-            if (velocity !== null) {
-                baseFeature.velocity = Math.round(velocity * 1000) / 1000; // 3 decimal precision
-            } else {
-                baseFeature.velocity = 0; // Default velocity when not available
-            }
-            
-            // ENHANCED ACCELERATION: Calculate for all touch events with improved accuracy
-            const acceleration = this.calculateAccurateAcceleration(touch, index);
-            if (acceleration !== null) {
-                baseFeature.acceleration = Math.round(acceleration * 1000) / 1000; // 3 decimal precision
-            } else {
-                baseFeature.acceleration = 0; // Default acceleration when not available
-            }
-            
             features.push(baseFeature);
         });
         
         return features;
     }
     
-    // ENHANCED VELOCITY CALCULATION
-    calculateAccurateVelocity(touch, index) {
-        // Need at least 2 points for velocity calculation
-        if (index < 1) return null;
-        
-        const prev = this.touchData[index - 1];
-        
-        // Validate time difference (must be reasonable for velocity calculation)
-        const dt = touch.timestamp - prev.timestamp;
-        if (dt <= 0 || dt > 500) return null; // Increased tolerance for mobile devices
-        
-        // Validate touch data exists
-        if (!touch.touches[0] || !prev.touches[0]) return null;
-        
-        // Calculate distance
-        const dx = touch.touches[0].clientX - prev.touches[0].clientX;
-        const dy = touch.touches[0].clientY - prev.touches[0].clientY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        // Calculate velocity (pixels per millisecond)
-        const velocity = distance / dt;
-        
-        // Enhanced validation with wider bounds for mobile devices
-        if (velocity < 0.01 || velocity > 20) return null; // Wider bounds for mobile
-        
-        return velocity;
-    }
+
     
-    // ENHANCED ACCELERATION CALCULATION
-    calculateAccurateAcceleration(touch, index) {
-        // Need at least 3 points for acceleration calculation
-        if (index < 2) return null;
-        
-        const current = touch;
-        const prev = this.touchData[index - 1];
-        const prevPrev = this.touchData[index - 2];
-        
-        // Calculate current and previous velocities
-        const currentVelocity = this.calculateAccurateVelocity(current, index);
-        const prevVelocity = this.calculateAccurateVelocity(prev, index - 1);
-        
-        if (currentVelocity === null || prevVelocity === null) return null;
-        
-        // Calculate time difference for acceleration
-        const dt = current.timestamp - prev.timestamp;
-        if (dt <= 0) return null;
-        
-        // Calculate acceleration (change in velocity over time)
-        const acceleration = (currentVelocity - prevVelocity) / dt;
-        
-        // Enhanced validation with wider bounds for mobile devices
-        if (acceleration < -10 || acceleration > 10) return null; // Wider bounds for mobile
-        
-        return acceleration;
-    }
-    
-    // REMOVED: Unreliable velocity calculation
-    // calculateVelocity(touch, index) {
-    //     // This method was unreliable due to variable touch sampling rates
-    //     // and inconsistent timing between touch events
-    // }
-    
-    // REMOVED: Unreliable acceleration calculation  
-    // calculateAcceleration(touch, index) {
-    //     // This method was unreliable due to velocity calculation issues
-    // }
-    
-    // REMOVED: Unreliable touch area calculation
-    // calculateTouchArea(touches) {
-    //     // This method was flawed - touch area should be based on radiusX/radiusY
-    //     // which are not consistently available across browsers
-    // }
+
     
     convertToCSV(data) {
         if (data.length === 0) return 'No data available';
