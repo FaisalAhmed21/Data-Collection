@@ -27,6 +27,11 @@ class BiometricDataCollector {
         this.lastBackspaceTime = 0;
         this.backspaceCooldown = 100; // 100ms cooldown to prevent duplicates
         
+        // Mobile character deduplication
+        this.lastCharTime = 0;
+        this.lastChar = null;
+        this.charCooldown = 50; // 50ms cooldown for character deduplication
+        
         // Enhanced gallery zoom state with pinch support
         this.galleryZoom = {
             scale: 1,
@@ -489,16 +494,19 @@ class BiometricDataCollector {
                         console.log('Quote detected:', char, '-> stored as:', refChar);
                     }
                     
-                    this.recordKeystroke({
-                        timestamp: timestamp + i,
-                        actualChar: refChar,
-                        keyCode: char.charCodeAt(0),
-                        type: inputType,
-                        sentence: this.currentSentence,
-                        position: pos - data.length + i,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
+                    // Check if character should be recorded (deduplication)
+                    if (this.shouldRecordChar(refChar, timestamp + i)) {
+                        this.recordKeystroke({
+                            timestamp: timestamp + i,
+                            actualChar: refChar,
+                            keyCode: char.charCodeAt(0),
+                            type: inputType,
+                            sentence: this.currentSentence,
+                            position: pos - data.length + i,
+                            clientX: this.pointerTracking.x,
+                            clientY: this.pointerTracking.y
+                        });
+                    }
                 }
                 
                 // Update previous character for next iteration
@@ -638,16 +646,19 @@ class BiometricDataCollector {
                 });
             }
     
-            this.recordKeystroke({
-                timestamp,
-                actualChar: refChar,
-                keyCode: data.charCodeAt(0),
-                type: inputType,
-                sentence: this.currentSentence,
-                position: pos - 1,
-                clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y
-            });
+            // Check if character should be recorded (deduplication)
+            if (this.shouldRecordChar(refChar, timestamp)) {
+                this.recordKeystroke({
+                    timestamp,
+                    actualChar: refChar,
+                    keyCode: data.charCodeAt(0),
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos - 1,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+            }
             
             // Update previous character
             this.previousChar = data;
@@ -911,11 +922,16 @@ class BiometricDataCollector {
         }
     }
     
+    // Mobile-only keystroke handling - no desktop keyboard support needed
+    // All keystroke recording is handled through input events for mobile keyboards (Gboard, iOS)
+    
     startTypingTask() {
         this.currentSentence = 0;
         this.lastInputLength = 0; // FIXED: Reset at task start
         this.previousChar = null; // FIXED: Reset previousChar at task start
         this.lastBackspaceTime = 0; // Reset backspace tracking
+        this.lastCharTime = 0; // Reset character tracking
+        this.lastChar = null; // Reset character tracking
         this.displayCurrentSentence();
         this.updateTypingProgress();
     }
@@ -935,6 +951,9 @@ class BiometricDataCollector {
         this.previousChar = null;
         // Reset backspace tracking for new sentence
         this.lastBackspaceTime = 0;
+        // Reset character tracking for new sentence
+        this.lastCharTime = 0;
+        this.lastChar = null;
     }
     
     calculateAccuracy() {
@@ -1015,6 +1034,45 @@ class BiometricDataCollector {
         return backspaces;
     }
     
+    // Helper method to check if character should be recorded (deduplication)
+    shouldRecordChar(char, timestamp) {
+        const currentTime = performance.now();
+        
+        // Check if this is the same character as last recorded and within cooldown
+        if (this.lastChar === char && (currentTime - this.lastCharTime) < this.charCooldown) {
+            console.log('Character duplicate ignored:', char, 'time since last:', currentTime - this.lastCharTime);
+            return false;
+        }
+        
+        // Update tracking
+        this.lastChar = char;
+        this.lastCharTime = currentTime;
+        return true;
+    }
+    
+    // Helper method to get character statistics for debugging
+    getCharStats() {
+        const chars = this.keystrokeData.filter(k => k.actualChar && k.actualChar !== 'Backspace' && k.actualChar !== 'SHIFT');
+        console.log('Character Statistics:');
+        console.log('Total characters recorded:', chars.length);
+        console.log('Character types:', [...new Set(chars.map(c => c.type))]);
+        
+        // Count duplicates
+        const charCounts = {};
+        chars.forEach(c => {
+            charCounts[c.actualChar] = (charCounts[c.actualChar] || 0) + 1;
+        });
+        
+        const duplicates = Object.entries(charCounts).filter(([char, count]) => count > 1);
+        if (duplicates.length > 0) {
+            console.log('Potential duplicate characters:', duplicates);
+        } else {
+            console.log('No duplicate characters detected');
+        }
+        
+        return chars;
+    }
+    
     // Crystal Game Methods
     startCrystalGame() {
         this.currentCrystalStep = 1;
@@ -1025,12 +1083,10 @@ class BiometricDataCollector {
     bindCrystalEvents() {
         const crystalArea = document.getElementById('crystal-area');
         
+        // Mobile-only: Touch events for Android and iOS
         crystalArea.addEventListener('touchstart', (e) => this.handleCrystalTouchStart(e));
         crystalArea.addEventListener('touchmove', (e) => this.handleCrystalTouchMove(e));
         crystalArea.addEventListener('touchend', (e) => this.handleCrystalTouchEnd(e));
-        crystalArea.addEventListener('mousedown', (e) => this.handleCrystalMouseDown(e));
-        crystalArea.addEventListener('mousemove', (e) => this.handleCrystalMouseMove(e));
-        crystalArea.addEventListener('mouseup', (e) => this.handleCrystalMouseUp(e));
         crystalArea.addEventListener('contextmenu', (e) => e.preventDefault());
     }
     
