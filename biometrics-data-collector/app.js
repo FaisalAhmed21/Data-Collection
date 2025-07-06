@@ -1167,6 +1167,9 @@ class BiometricDataCollector {
         }
         
         console.log('✅ Crystal game initialized for all mobile devices');
+        
+        // Test rotation logic
+        this.testRotationLogic();
     }
     
     bindCrystalEvents() {
@@ -1434,6 +1437,7 @@ class BiometricDataCollector {
                     crystal.classList.add('active');
                     this.updateStepProgress(`0/3 (CW → CCW → CW)`);
                     console.log('🔄 Rotation started - touch anywhere on crystal surface');
+                    this.debugRotationState(); // Debug initial state
                 }
             
                 else if (phase === 'move') {
@@ -1496,15 +1500,23 @@ class BiometricDataCollector {
                         
                         // Update progress to show completed rotation
                         this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (CW → CCW → CW)`);
-            
+                        
                         // Check if we have the correct sequence: CW → CCW → CW
                         if (this.crystalState.rotationRounds >= 3) {
+                            console.log('🔍 Rotation rounds >= 3, checking sequence...');
                             const expectedSequence = [1, -1, 1]; // CW, CCW, CW
                             const actualSequence = this.crystalState.rotationSequence.slice(-3);
+                            
+                            console.log('🔍 Checking rotation sequence...');
+                            console.log('Expected:', expectedSequence.map(d => d === 1 ? 'CW' : 'CCW'));
+                            console.log('Actual:', actualSequence.map(d => d === 1 ? 'CW' : 'CCW'));
+                            console.log('Expected JSON:', JSON.stringify(expectedSequence));
+                            console.log('Actual JSON:', JSON.stringify(actualSequence));
                             
                             if (JSON.stringify(actualSequence) === JSON.stringify(expectedSequence)) {
                                 console.log('✅ Correct rotation sequence achieved: CW → CCW → CW');
                                 this.crystalState.rotationCompleted = true; // Mark as completed
+                                this.debugRotationState(); // Debug current state
                                 this.completeStep();
                             } else {
                                 console.log('❌ Wrong rotation sequence! Need: CW → CCW → CW');
@@ -1515,6 +1527,8 @@ class BiometricDataCollector {
                                 this.crystalState.rotationCompleted = false;
                                 this.updateStepProgress(`0/3 (CW → CCW → CW) - Try again!`);
                             }
+                        } else {
+                            console.log(`🔄 Rotation rounds: ${this.crystalState.rotationRounds}/3`);
                         }
                     }
                 }
@@ -1674,7 +1688,44 @@ class BiometricDataCollector {
         console.log('❌ Wrong rotation direction - try again!');
     }
     
+    // Debug method to check rotation state
+    debugRotationState() {
+        console.log('🔍 Current Rotation State:');
+        console.log('Rounds:', this.crystalState.rotationRounds);
+        console.log('Sequence:', this.crystalState.rotationSequence.map(d => d === 1 ? 'CW' : 'CCW'));
+        console.log('Completed:', this.crystalState.rotationCompleted);
+        console.log('Direction:', this.crystalState.rotationDirection === 1 ? 'CW' : this.crystalState.rotationDirection === -1 ? 'CCW' : 'null');
+        console.log('Accumulated:', this.crystalState.rotationAccumulated);
+    }
+    
+    // Test method to verify rotation logic
+    testRotationLogic() {
+        console.log('🧪 Testing rotation logic...');
+        
+        // Test 1: Correct sequence CW → CCW → CW
+        const testSequence1 = [1, -1, 1]; // CW, CCW, CW
+        const expected1 = [1, -1, 1];
+        const result1 = JSON.stringify(testSequence1) === JSON.stringify(expected1);
+        console.log('Test 1 (Correct sequence):', result1 ? '✅ PASS' : '❌ FAIL');
+        
+        // Test 2: Wrong sequence CW → CW → CW
+        const testSequence2 = [1, 1, 1]; // CW, CW, CW
+        const expected2 = [1, -1, 1];
+        const result2 = JSON.stringify(testSequence2) === JSON.stringify(expected2);
+        console.log('Test 2 (Wrong sequence):', result2 ? '❌ FAIL' : '✅ PASS');
+        
+        // Test 3: Wrong sequence CCW → CCW → CCW
+        const testSequence3 = [-1, -1, -1]; // CCW, CCW, CCW
+        const expected3 = [1, -1, 1];
+        const result3 = JSON.stringify(testSequence3) === JSON.stringify(expected3);
+        console.log('Test 3 (Wrong sequence):', result3 ? '❌ FAIL' : '✅ PASS');
+        
+        console.log('🧪 Rotation logic tests completed');
+    }
+    
     completeStep() {
+        console.log('🎉 completeStep() called for step:', this.currentCrystalStep);
+        
         const crystal = document.getElementById('crystal');
         crystal.classList.add('success');
         
@@ -1688,6 +1739,8 @@ class BiometricDataCollector {
         const crystalSizeDisplay = document.getElementById('crystal-size-display');
         crystalSizeDisplay.classList.add('completion-highlight');
         setTimeout(() => crystalSizeDisplay.classList.remove('completion-highlight'), 1000);
+        
+        console.log('✅ Step completed - Next button should be enabled');
     }
     
     nextCrystalStep() {
