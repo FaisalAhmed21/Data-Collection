@@ -1217,13 +1217,19 @@ class BiometricDataCollector {
         this.currentSentence++;
         
         if (this.currentSentence >= this.sentences.length) {
-            // Typing task completed - show "Next Task" button
+            // Typing task completed - hide "Next Sentence" button and show only "Next Task"
             this.taskState.typingCompleted = true;
             const nextBtn = document.getElementById('next-sentence-btn');
             nextBtn.textContent = 'Next Task';
             nextBtn.disabled = false;
             nextBtn.style.backgroundColor = 'var(--color-primary)';
             nextBtn.style.opacity = '1';
+            
+            // Hide the button initially, then show it as "Next Task"
+            nextBtn.style.display = 'none';
+            setTimeout(() => {
+                nextBtn.style.display = 'inline-flex';
+            }, 500);
             
             // Update event listener to go to crystal game
             nextBtn.onclick = () => {
@@ -2080,14 +2086,32 @@ class BiometricDataCollector {
         }, 600);
         
         document.getElementById('step-status').textContent = 'Completed';
-        document.getElementById('next-crystal-btn').disabled = false;
+        
+        // Check if this is the final step
+        if (this.currentCrystalStep >= this.crystalSteps.length) {
+            // Final step completed - hide "Next Step" button and show only "Reset" and "Next Task"
+            const nextBtn = document.getElementById('next-crystal-btn');
+            nextBtn.textContent = 'Next Task';
+            nextBtn.disabled = false;
+            nextBtn.style.backgroundColor = 'var(--color-primary)';
+            nextBtn.style.opacity = '1';
+            
+            // Hide the button initially, then show it as "Next Task"
+            nextBtn.style.display = 'none';
+            setTimeout(() => {
+                nextBtn.style.display = 'inline-flex';
+            }, 500);
+            
+            console.log('✅ Final crystal step completed - Next Task button enabled');
+        } else {
+            // Regular step completion - show "Next Step" button
+            document.getElementById('next-crystal-btn').disabled = false;
+            console.log('✅ Step completed - Next Step button enabled');
+        }
         
         const crystalSizeDisplay = document.getElementById('crystal-size-display');
         crystalSizeDisplay.classList.add('completion-highlight');
         setTimeout(() => crystalSizeDisplay.classList.remove('completion-highlight'), 1000);
-        
-        // Ensure next button stays active permanently once step is completed
-        console.log('✅ Step completed - Next button permanently enabled');
     }
     
     nextCrystalStep() {
@@ -2365,10 +2389,25 @@ class BiometricDataCollector {
             this.updateZoomLevel();
         }
         else if (e.touches.length === 1 && this.galleryZoom.isPanning) {
-            // single-finger pan
+            // single-finger pan - enhanced with boundaries
             const t = e.touches[0];
-            this.galleryZoom.translateX = t.clientX - this.galleryZoom.startX;
-            this.galleryZoom.translateY = t.clientY - this.galleryZoom.startY;
+            const newTranslateX = t.clientX - this.galleryZoom.startX;
+            const newTranslateY = t.clientY - this.galleryZoom.startY;
+            
+            // Calculate boundaries to prevent over-panning
+            const container = document.querySelector('.popup-image-container');
+            if (container) {
+                const containerRect = container.getBoundingClientRect();
+                const maxTranslateX = (this.galleryZoom.scale - 1) * containerRect.width / 2;
+                const maxTranslateY = (this.galleryZoom.scale - 1) * containerRect.height / 2;
+                
+                this.galleryZoom.translateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, newTranslateX));
+                this.galleryZoom.translateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, newTranslateY));
+            } else {
+                this.galleryZoom.translateX = newTranslateX;
+                this.galleryZoom.translateY = newTranslateY;
+            }
+            
             this.updateImageTransform();
         }
     
@@ -2436,6 +2475,26 @@ class BiometricDataCollector {
         const popup = document.querySelector('.image-popup');
         popup.classList.add('active');
         document.body.style.overflow = 'hidden';
+        
+        // Add double-tap listener to reset zoom
+        this.addDoubleTapListener();
+    }
+    
+    addDoubleTapListener() {
+        const ctr = document.querySelector('.popup-image-container');
+        if (!ctr) return;
+        
+        let lastTap = 0;
+        ctr.addEventListener('touchend', e => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            if (tapLength < 500 && tapLength > 0) {
+                // Double tap detected
+                this.resetZoom();
+                e.preventDefault();
+            }
+            lastTap = currentTime;
+        });
     }
     
     // 7. Build popup DOM and set up controls
@@ -2478,6 +2537,19 @@ class BiometricDataCollector {
         ctr.addEventListener('wheel', e => {
             e.preventDefault();
             e.deltaY < 0 ? this.zoomIn() : this.zoomOut();
+        });
+        
+        // Double-tap to reset zoom
+        let lastTap = 0;
+        ctr.addEventListener('touchend', e => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            if (tapLength < 500 && tapLength > 0) {
+                // Double tap detected
+                this.resetZoom();
+                e.preventDefault();
+            }
+            lastTap = currentTime;
         });
     
         // mouse pan
@@ -2590,6 +2662,7 @@ class BiometricDataCollector {
         this.galleryZoom.zoomPersistent = false; // Reset zoom persistence
         this.updateImageTransform();
         this.updateZoomLevel();
+        console.log('🔍 Zoom reset to 100%');
     }
     
     // 9. Apply translate then scale
@@ -2663,7 +2736,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '13'; // 13 features including SHIFT data
+        document.getElementById('keystroke-features').textContent = '8'; // 8 features with SHIFT in ref_char
     }
 
     
@@ -2679,7 +2752,7 @@ class BiometricDataCollector {
     }
 
 
-    // ENHANCED: Keystroke feature extraction with SHIFT and flight time data
+    // ENHANCED: Keystroke feature extraction with SHIFT in ref_char column
     extractKeystrokeFeatures() {
         const features = [];
         
@@ -2702,25 +2775,25 @@ class BiometricDataCollector {
                 const wasDeleted = (keystroke.actualChar === 'BACKSPACE' || 
                                   keystroke.type.startsWith('delete')) ? 1 : 0;
                 
-                // Enhanced SHIFT data
-                const shiftData = {
-                    shift_pressed: keystroke.shiftPressed ? 1 : 0,
-                    shift_action: keystroke.shiftAction || 'none',
-                    shift_duration_ms: keystroke.shiftDuration || 0,
-                    case_transition: keystroke.caseTransition || 'none',
-                    character_case: keystroke.characterCase || 'other'
-                };
+                // SHIFT handling: Include SHIFT in ref_char before capital letters
+                let refChar = keystroke.actualChar || 'unknown';
+                if (keystroke.actualChar && keystroke.actualChar.length === 1) {
+                    const charCase = this.getCharacterCase(keystroke.actualChar);
+                    if (charCase === 'uppercase' && keystroke.shiftPressed) {
+                        // Add SHIFT before capital letter
+                        refChar = `SHIFT${keystroke.actualChar}`;
+                    }
+                }
                 
                 features.push({
                     participant_id: this.participantId,
                     task_id: 1, // Typing task
                     timestamp_ms: Math.round(keystroke.timestamp),
-                    ref_char: keystroke.actualChar || 'unknown',
+                    ref_char: refChar,
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
                     was_deleted: wasDeleted,
-                    flight_time_ms: flightTime,
-                    ...shiftData
+                    flight_time_ms: flightTime
                 });
             }
         });
