@@ -36,16 +36,24 @@ class BiometricDataCollector {
         this.lastBackspaceTime = 0;
         this.backspaceCooldown = 100;
         
-    this.lastCharTime = 0;
-    this.lastChar = null;
-    this.charCooldown = 50;
-    
-    this.lastInputValue = '';
-    this.lastInputLength = 0;
-    this.inputEventCount = 0;
-    this.lastInputEvent = null;
-    this.lastInputEventTime = 0;
-    this.inputEventCooldown = 50;
+        this.lastCharTime = 0;
+        this.lastChar = null;
+        this.charCooldown = 50;
+        
+        this.lastInputValue = '';
+        this.lastInputLength = 0;
+        this.inputEventCount = 0;
+        this.lastInputEvent = null;
+        this.lastInputEventTime = 0;
+        this.inputEventCooldown = 50;
+        
+        // SHIFT and flight time tracking
+        this.shiftPressed = false;
+        this.shiftPressTime = 0;
+        this.shiftReleaseTime = 0;
+        this.lastKeystrokeTime = 0;
+        this.currentCase = 'lowercase'; // Track current case state
+        this.flightTimeData = []; // Store flight times between keystrokes
         
         this.galleryZoom = {
             scale: 1,
@@ -242,6 +250,26 @@ class BiometricDataCollector {
             this.handleKeydown(e);
         });
         
+        typingInput.addEventListener('keyup', (e) => {
+            // Track SHIFT release
+            if (e.key === 'Shift') {
+                this.updateShiftState(false);
+                this.recordKeystroke({
+                    timestamp: performance.now(),
+                    actualChar: 'SHIFT',
+                    keyCode: 16,
+                    type: 'keyup',
+                    shiftKey: false,
+                    ctrlKey: e.ctrlKey,
+                    altKey: e.altKey,
+                    sentence: this.currentSentence,
+                    position: e.target.selectionStart || 0,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+            }
+        });
+        
         typingInput.addEventListener('focus', (e) => {
             const rect = e.target.getBoundingClientRect();
             this.currentPointerX = rect.left + rect.width / 2;
@@ -272,7 +300,12 @@ class BiometricDataCollector {
         document.getElementById('next-crystal-btn').addEventListener('click', () => this.nextCrystalStep());
         
         this.bindGalleryEvents();
-        document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
+        document.getElementById('finish-gallery-btn').addEventListener('click', () => {
+            this.taskState.galleryCompleted = true;
+            this.switchScreen('export');
+            this.lockPreviousTasks();
+            this.updateTaskLocks();
+        });
         
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
@@ -345,7 +378,27 @@ class BiometricDataCollector {
         if (targetScreen) {
             targetScreen.classList.add('active');
             this.currentScreen = screenName;
+            
+            // Smooth scroll to the target screen
+            this.smoothScrollToScreen(targetScreen);
         }
+    }
+    
+    smoothScrollToScreen(targetScreen) {
+        // Smooth scroll to the target screen
+        targetScreen.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+            inline: 'nearest'
+        });
+        
+        // Additional smooth scroll for mobile devices
+        setTimeout(() => {
+            window.scrollTo({
+                top: targetScreen.offsetTop,
+                behavior: 'smooth'
+            });
+        }, 100);
     }
     
     // FIXED: Enhanced mobile-friendly keystroke detection using inputType
@@ -984,6 +1037,25 @@ class BiometricDataCollector {
     handleKeydown(e) {
         const timestamp = performance.now();
         
+        // Enhanced SHIFT tracking
+        if (e.key === 'Shift') {
+            this.updateShiftState(true);
+            this.recordKeystroke({
+                timestamp,
+                actualChar: 'SHIFT',
+                keyCode: 16,
+                type: 'keydown',
+                shiftKey: true,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
+                sentence: this.currentSentence,
+                position: e.target.selectionStart || 0,
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y
+            });
+            return;
+        }
+        
         // Block navigation keys
         const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
         if (restrictedKeys.includes(e.key)) {
@@ -1104,10 +1176,9 @@ class BiometricDataCollector {
         const target = this.sentences[this.currentSentence];
         
         if (typed === target) {
-          document.getElementById('accuracy').textContent = '100%';
-          return;
+            document.getElementById('accuracy').textContent = '100%';
+            return 100;
         }
-
         
         let correct = 0;
         const minLength = Math.min(typed.length, target.length);
@@ -1120,6 +1191,7 @@ class BiometricDataCollector {
         
         const accuracy = Math.round((correct / target.length) * 100);
         document.getElementById('accuracy').textContent = `${accuracy}%`;
+        return accuracy;
     }
     
     checkSentenceCompletion() {
@@ -1127,7 +1199,10 @@ class BiometricDataCollector {
         const target = this.sentences[this.currentSentence].trim();
         
         const nextBtn = document.getElementById('next-sentence-btn');
-        if (typed === target) {
+        const accuracy = this.calculateAccuracy();
+        
+        // Only enable next button if 100% accuracy is achieved
+        if (typed === target && accuracy === 100) {
             nextBtn.disabled = false;
             nextBtn.style.backgroundColor = 'var(--color-primary)';
             nextBtn.style.opacity = '1';
@@ -1188,6 +1263,43 @@ class BiometricDataCollector {
             }
         }
         
+        // Calculate flight time (time between keystrokes)
+        const currentTime = performance.now();
+        if (this.lastKeystrokeTime > 0 && data.actualChar !== 'SHIFT') {
+            const flightTime = currentTime - this.lastKeystrokeTime;
+            data.flightTime = flightTime;
+            
+            // Store flight time data for analysis
+            this.flightTimeData.push({
+                timestamp: currentTime,
+                flightTime: flightTime,
+                fromChar: this.lastChar,
+                toChar: data.actualChar,
+                sentence: this.currentSentence
+            });
+            
+            console.log(`✈️ Flight time: ${flightTime.toFixed(2)}ms (${this.lastChar} → ${data.actualChar})`);
+        }
+        
+        // Enhanced SHIFT handling
+        if (data.actualChar === 'SHIFT') {
+            data.shiftAction = this.shiftPressed ? 'release' : 'press';
+            data.shiftDuration = this.shiftPressed ? (currentTime - this.shiftPressTime) : 0;
+            data.caseTransition = this.getCaseTransition(data);
+            
+            console.log(`🔤 SHIFT ${data.shiftAction}: ${data.caseTransition}, duration: ${data.shiftDuration.toFixed(2)}ms`);
+        } else if (data.actualChar && data.actualChar !== 'BACKSPACE') {
+            // Add SHIFT context to regular characters
+            data.shiftPressed = this.shiftPressed;
+            data.characterCase = this.getCharacterCase(data.actualChar);
+            data.caseTransition = this.getCaseTransition(data);
+        }
+        
+        // Update last keystroke time
+        if (data.actualChar !== 'SHIFT') {
+            this.lastKeystrokeTime = currentTime;
+        }
+        
         // Debug logging for quote characters
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('Recording keystroke with quote:', data.actualChar, 'type:', data.type);
@@ -1196,7 +1308,52 @@ class BiometricDataCollector {
         if (data.actualChar === 'Backspace') {
             console.log('Recording backspace keystroke:', data.type, 'timestamp:', data.timestamp);
         }
+        
         this.keystrokeData.push(data);
+    }
+    
+    // SHIFT and case handling helper methods
+    getCharacterCase(char) {
+        if (char.length === 1) {
+            if (char >= 'A' && char <= 'Z') return 'uppercase';
+            if (char >= 'a' && char <= 'z') return 'lowercase';
+        }
+        return 'other';
+    }
+    
+    getCaseTransition(data) {
+        if (data.actualChar === 'SHIFT') {
+            return this.shiftPressed ? 'lowercase_to_uppercase' : 'uppercase_to_lowercase';
+        }
+        
+        if (data.actualChar && data.actualChar.length === 1) {
+            const charCase = this.getCharacterCase(data.actualChar);
+            if (charCase === 'uppercase' && !this.shiftPressed) {
+                return 'natural_uppercase';
+            } else if (charCase === 'lowercase' && this.shiftPressed) {
+                return 'shifted_lowercase';
+            } else if (charCase === 'uppercase' && this.shiftPressed) {
+                return 'shifted_uppercase';
+            }
+        }
+        
+        return 'no_transition';
+    }
+    
+    updateShiftState(isPressed) {
+        const currentTime = performance.now();
+        
+        if (isPressed && !this.shiftPressed) {
+            // SHIFT pressed
+            this.shiftPressed = true;
+            this.shiftPressTime = currentTime;
+            console.log('🔤 SHIFT pressed at:', currentTime);
+        } else if (!isPressed && this.shiftPressed) {
+            // SHIFT released
+            this.shiftPressed = false;
+            this.shiftReleaseTime = currentTime;
+            console.log('🔤 SHIFT released at:', currentTime);
+        }
     }
     
     // Helper method to get backspace statistics for debugging
@@ -2506,7 +2663,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '8'; // 8 features (removed trial_id)
+        document.getElementById('keystroke-features').textContent = '13'; // 13 features including SHIFT data
     }
 
     
@@ -2522,21 +2679,20 @@ class BiometricDataCollector {
     }
 
 
-    // FIXED: Enhanced keystroke feature extraction with proper character handling
+    // ENHANCED: Keystroke feature extraction with SHIFT and flight time data
     extractKeystrokeFeatures() {
         const features = [];
         
         this.keystrokeData.forEach((keystroke, index) => {
-            // Process all recorded keystrokes (input events, keydown, composition)
-            if (keystroke.type === 'keydown' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete')) {
-                // FIXED: Calculate flight time with validation to prevent negative values
-                let flightTime = 0;
-                if (index > 0) {
+            // Process all recorded keystrokes (input events, keydown, composition, SHIFT)
+            if (keystroke.type === 'keydown' || keystroke.type === 'keyup' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete')) {
+                
+                // Use enhanced flight time calculation if available
+                let flightTime = keystroke.flightTime || 0;
+                if (flightTime === 0 && index > 0) {
                     const timeDiff = keystroke.timestamp - this.keystrokeData[index - 1].timestamp;
-                    // Ensure flight time is never negative
                     flightTime = Math.max(0, Math.round(timeDiff));
                     
-                    // Log any potential timing issues for debugging
                     if (timeDiff < 0) {
                         console.warn(`⚠️ Negative flight time detected: ${timeDiff}ms between "${this.keystrokeData[index - 1].actualChar}" and "${keystroke.actualChar}". Setting to 0.`);
                     }
@@ -2546,6 +2702,15 @@ class BiometricDataCollector {
                 const wasDeleted = (keystroke.actualChar === 'BACKSPACE' || 
                                   keystroke.type.startsWith('delete')) ? 1 : 0;
                 
+                // Enhanced SHIFT data
+                const shiftData = {
+                    shift_pressed: keystroke.shiftPressed ? 1 : 0,
+                    shift_action: keystroke.shiftAction || 'none',
+                    shift_duration_ms: keystroke.shiftDuration || 0,
+                    case_transition: keystroke.caseTransition || 'none',
+                    character_case: keystroke.characterCase || 'other'
+                };
+                
                 features.push({
                     participant_id: this.participantId,
                     task_id: 1, // Typing task
@@ -2554,7 +2719,8 @@ class BiometricDataCollector {
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
                     was_deleted: wasDeleted,
-                    flight_time_ms: flightTime
+                    flight_time_ms: flightTime,
+                    ...shiftData
                 });
             }
         });
