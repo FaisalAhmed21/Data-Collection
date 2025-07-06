@@ -6,6 +6,10 @@ class BiometricDataCollector {
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
         
+        // Detect iOS for special handling
+        this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        
         // Data collection
         this.keystrokeData = [];
         this.touchData = [];
@@ -27,10 +31,15 @@ class BiometricDataCollector {
         this.lastBackspaceTime = 0;
         this.backspaceCooldown = 100; // 100ms cooldown to prevent duplicates
         
-        // Mobile character deduplication
-        this.lastCharTime = 0;
-        this.lastChar = null;
-        this.charCooldown = 50; // 50ms cooldown for character deduplication
+            // Mobile character deduplication
+    this.lastCharTime = 0;
+    this.lastChar = null;
+    this.charCooldown = 50; // 50ms cooldown for character deduplication
+    
+    // iOS-specific deduplication
+    this.lastInputValue = '';
+    this.lastInputLength = 0;
+    this.inputEventCount = 0;
         
         // Enhanced gallery zoom state with pinch support
         this.galleryZoom = {
@@ -298,6 +307,31 @@ class BiometricDataCollector {
         const value = inputEl.value;
         const pos = inputEl.selectionStart || value.length;
         const timestamp = performance.now();
+        
+        // iOS-specific deduplication: Check if this is a duplicate input event
+        if (this.isIOS) {
+            // iOS often fires input events twice - check for exact duplicates
+            if (value === this.lastInputValue && data === this.lastChar) {
+                console.log('iOS duplicate input event ignored:', data);
+                return;
+            }
+            
+            // Additional iOS check: if input length didn't change but we got an input event
+            if (value.length === this.lastInputLength && data && !inputType?.startsWith('delete')) {
+                console.log('iOS duplicate input event (length unchanged):', data);
+                return;
+            }
+            
+            // iOS composition handling - skip if we're in composition mode
+            if (this.compositionActive && inputType === 'insertText') {
+                console.log('iOS composition active, skipping insertText');
+                return;
+            }
+        }
+        
+        // Update tracking for next comparison
+        this.lastInputValue = value;
+        this.inputEventCount++;
     
         // Handle deletion events (backspace, delete)
         if (inputType && inputType.startsWith('delete')) {
@@ -536,6 +570,9 @@ class BiometricDataCollector {
                             clientX: this.pointerTracking.x,
                             clientY: this.pointerTracking.y
                         });
+                        
+                        // Update last character for iOS deduplication
+                        this.lastChar = refChar;
                     } else {
                         console.log('❌ Character duplicate ignored:', refChar);
                     }
@@ -723,6 +760,9 @@ class BiometricDataCollector {
                     clientX: this.pointerTracking.x,
                     clientY: this.pointerTracking.y
                 });
+                
+                // Update last character for iOS deduplication
+                this.lastChar = refChar;
             } else {
                 console.log('❌ Character duplicate ignored (other input):', refChar);
             }
@@ -731,7 +771,7 @@ class BiometricDataCollector {
             this.previousChar = data;
         }
     
-        // Update last input length
+        // Update last input length for next comparison
         this.lastInputLength = value.length;
     
         this.calculateAccuracy();
@@ -999,6 +1039,11 @@ class BiometricDataCollector {
         this.lastBackspaceTime = 0; // Reset backspace tracking
         this.lastCharTime = 0; // Reset character tracking
         this.lastChar = null; // Reset character tracking
+        
+        // Reset iOS-specific tracking
+        this.lastInputValue = '';
+        this.inputEventCount = 0;
+        
         this.displayCurrentSentence();
         this.updateTypingProgress();
     }
@@ -1021,6 +1066,10 @@ class BiometricDataCollector {
         // Reset character tracking for new sentence
         this.lastCharTime = 0;
         this.lastChar = null;
+        
+        // Reset iOS-specific tracking for new sentence
+        this.lastInputValue = '';
+        this.inputEventCount = 0;
     }
     
     calculateAccuracy() {
@@ -2035,7 +2084,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '9';
+        document.getElementById('keystroke-features').textContent = '9'; // 9 features (no trial column for keystroke)
     }
 
     
