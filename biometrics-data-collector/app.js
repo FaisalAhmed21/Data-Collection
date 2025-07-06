@@ -83,6 +83,7 @@ class BiometricDataCollector {
             rotationRounds: 0,
             rotationSequence: [],
             rotationCompleted: false, // Track if rotation task is completed
+            wrongDirectionStarted: false, // Track if wrong direction was started
             currentTrial: 1,
             stepStartTime: null
         };
@@ -1440,6 +1441,7 @@ class BiometricDataCollector {
                     this.crystalState.lastAngle = angle;
                     this.crystalState.rotationDirection = null; // 1 = CW, -1 = CCW
                     this.crystalState.rotationAccumulated = 0;
+                    this.crystalState.wrongDirectionStarted = false; // Reset wrong direction flag for new attempt
                     // DO NOT reset rotationRounds or rotationSequence - preserve progress
                     // DO NOT reset rotationCompleted - preserve completion status
                     crystal.classList.add('active');
@@ -1478,10 +1480,21 @@ class BiometricDataCollector {
                         console.log(`🔄 Rotation direction set: ${direction === 1 ? 'CW' : 'CCW'}`);
                     }
             
-                    // Allow any direction during movement, but track the direction
+                    // Set direction on first significant move and validate it
                     if (this.crystalState.rotationDirection === null && Math.abs(delta) > minDelta) {
                         this.crystalState.rotationDirection = direction;
-                        console.log(`🔄 Rotation direction set: ${direction === 1 ? 'CW' : 'CCW'}`);
+                        
+                        // Check if this direction is correct for the current step
+                        const expectedDirection = this.getExpectedRotationDirection();
+                        const isCorrectDirection = direction === expectedDirection;
+                        
+                        if (isCorrectDirection) {
+                            console.log(`✅ Correct rotation direction started: ${direction === 1 ? 'CW' : 'CCW'}`);
+                        } else {
+                            console.log(`❌ Wrong rotation direction started: ${direction === 1 ? 'CW' : 'CCW'} (expected: ${expectedDirection === 1 ? 'CW' : 'CCW'})`);
+                            // Mark this rotation attempt as wrong direction
+                            this.crystalState.wrongDirectionStarted = true;
+                        }
                     }
             
                     this.crystalState.rotationAccumulated += delta;
@@ -1495,9 +1508,9 @@ class BiometricDataCollector {
                         // Record the completed rotation direction
                         const completedDirection = this.crystalState.rotationDirection;
                         
-                        // Check if this rotation is correct for the current step
+                        // Check if this rotation was started in the correct direction
                         const expectedDirection = this.getExpectedRotationDirection();
-                        const isCorrectRotation = completedDirection === expectedDirection;
+                        const isCorrectRotation = completedDirection === expectedDirection && !this.crystalState.wrongDirectionStarted;
                         
                         if (isCorrectRotation) {
                             // Only count correct rotations in sequence
@@ -1536,6 +1549,7 @@ class BiometricDataCollector {
                         // Reset for next rotation attempt (regardless of correct/wrong)
                         this.crystalState.rotationAccumulated = 0;
                         this.crystalState.rotationDirection = null;
+                        this.crystalState.wrongDirectionStarted = false;
                     }
                 }
             
@@ -1790,6 +1804,7 @@ class BiometricDataCollector {
             rotationRounds: 0,
             rotationSequence: [], // Reset rotation sequence
             rotationCompleted: false, // Reset rotation completion status
+            wrongDirectionStarted: false, // Reset wrong direction flag
             // Preserve trial tracking
             currentTrial: currentTrial,
             stepStartTime: performance.now()
