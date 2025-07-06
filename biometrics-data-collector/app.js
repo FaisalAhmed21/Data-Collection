@@ -1076,9 +1076,6 @@ class BiometricDataCollector {
         }
     }
     
-    // Mobile-only keystroke handling - no desktop keyboard support needed
-    // All keystroke recording is handled through input events for mobile keyboards (Gboard, iOS)
-    
     startTypingTask() {
         this.currentSentence = 0;
         this.lastInputLength = 0; // FIXED: Reset at task start
