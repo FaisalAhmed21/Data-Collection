@@ -58,7 +58,7 @@ class BiometricDataCollector {
         
         this.crystalSteps = [
             { id: 1, instruction: "Tap the crystal exactly 3 times with your index finger", target: 3, type: 'tap' },
-            { id: 2, instruction: "Touch anywhere on crystal, then rotate: CW → CCW → CW (green light after each rotation)", target: 3, type: 'rotate' },
+            { id: 2, instruction: "Touch anywhere on crystal surface, then rotate clockwise for one full rotation. After green light, rotate counter-clockwise for one full rotation. After second green light, rotate clockwise again for one full rotation. After third green light, task is complete.", target: 3, type: 'rotate' },
             { id: 3, instruction: "Pinch to shrink the crystal to 50% size", target: 0.5, type: 'pinch' },
             { id: 4, instruction: "Spread fingers to grow crystal to 150% size", target: 1.5, type: 'spread' },
             { id: 5, instruction: "Apply pressure with 3 fingers simultaneously for 3 seconds", target: 3000, type: 'pressure' }
@@ -1167,9 +1167,6 @@ class BiometricDataCollector {
         }
         
         console.log('✅ Crystal game initialized for all mobile devices');
-        
-        // Test rotation logic
-        this.testRotationLogic();
     }
     
     bindCrystalEvents() {
@@ -1435,9 +1432,8 @@ class BiometricDataCollector {
                     this.crystalState.rotationSequence = []; // Track rotation sequence: CW=1, CCW=-1
                     this.crystalState.rotationCompleted = false; // Track if task is completed
                     crystal.classList.add('active');
-                    this.updateStepProgress(`0/3 (CW → CCW → CW)`);
+                    this.updateStepProgress(`0/3 (Touch crystal, then rotate: CW → CCW → CW)`);
                     console.log('🔄 Rotation started - touch anywhere on crystal surface');
-                    this.debugRotationState(); // Debug initial state
                 }
             
                 else if (phase === 'move') {
@@ -1503,20 +1499,12 @@ class BiometricDataCollector {
                         
                         // Check if we have the correct sequence: CW → CCW → CW
                         if (this.crystalState.rotationRounds >= 3) {
-                            console.log('🔍 Rotation rounds >= 3, checking sequence...');
                             const expectedSequence = [1, -1, 1]; // CW, CCW, CW
                             const actualSequence = this.crystalState.rotationSequence.slice(-3);
-                            
-                            console.log('🔍 Checking rotation sequence...');
-                            console.log('Expected:', expectedSequence.map(d => d === 1 ? 'CW' : 'CCW'));
-                            console.log('Actual:', actualSequence.map(d => d === 1 ? 'CW' : 'CCW'));
-                            console.log('Expected JSON:', JSON.stringify(expectedSequence));
-                            console.log('Actual JSON:', JSON.stringify(actualSequence));
                             
                             if (JSON.stringify(actualSequence) === JSON.stringify(expectedSequence)) {
                                 console.log('✅ Correct rotation sequence achieved: CW → CCW → CW');
                                 this.crystalState.rotationCompleted = true; // Mark as completed
-                                this.debugRotationState(); // Debug current state
                                 this.completeStep();
                             } else {
                                 console.log('❌ Wrong rotation sequence! Need: CW → CCW → CW');
@@ -1527,8 +1515,6 @@ class BiometricDataCollector {
                                 this.crystalState.rotationCompleted = false;
                                 this.updateStepProgress(`0/3 (CW → CCW → CW) - Try again!`);
                             }
-                        } else {
-                            console.log(`🔄 Rotation rounds: ${this.crystalState.rotationRounds}/3`);
                         }
                     }
                 }
@@ -1688,44 +1674,9 @@ class BiometricDataCollector {
         console.log('❌ Wrong rotation direction - try again!');
     }
     
-    // Debug method to check rotation state
-    debugRotationState() {
-        console.log('🔍 Current Rotation State:');
-        console.log('Rounds:', this.crystalState.rotationRounds);
-        console.log('Sequence:', this.crystalState.rotationSequence.map(d => d === 1 ? 'CW' : 'CCW'));
-        console.log('Completed:', this.crystalState.rotationCompleted);
-        console.log('Direction:', this.crystalState.rotationDirection === 1 ? 'CW' : this.crystalState.rotationDirection === -1 ? 'CCW' : 'null');
-        console.log('Accumulated:', this.crystalState.rotationAccumulated);
-    }
-    
-    // Test method to verify rotation logic
-    testRotationLogic() {
-        console.log('🧪 Testing rotation logic...');
-        
-        // Test 1: Correct sequence CW → CCW → CW
-        const testSequence1 = [1, -1, 1]; // CW, CCW, CW
-        const expected1 = [1, -1, 1];
-        const result1 = JSON.stringify(testSequence1) === JSON.stringify(expected1);
-        console.log('Test 1 (Correct sequence):', result1 ? '✅ PASS' : '❌ FAIL');
-        
-        // Test 2: Wrong sequence CW → CW → CW
-        const testSequence2 = [1, 1, 1]; // CW, CW, CW
-        const expected2 = [1, -1, 1];
-        const result2 = JSON.stringify(testSequence2) === JSON.stringify(expected2);
-        console.log('Test 2 (Wrong sequence):', result2 ? '❌ FAIL' : '✅ PASS');
-        
-        // Test 3: Wrong sequence CCW → CCW → CCW
-        const testSequence3 = [-1, -1, -1]; // CCW, CCW, CCW
-        const expected3 = [1, -1, 1];
-        const result3 = JSON.stringify(testSequence3) === JSON.stringify(expected3);
-        console.log('Test 3 (Wrong sequence):', result3 ? '❌ FAIL' : '✅ PASS');
-        
-        console.log('🧪 Rotation logic tests completed');
-    }
+
     
     completeStep() {
-        console.log('🎉 completeStep() called for step:', this.currentCrystalStep);
-        
         const crystal = document.getElementById('crystal');
         crystal.classList.add('success');
         
@@ -1739,8 +1690,6 @@ class BiometricDataCollector {
         const crystalSizeDisplay = document.getElementById('crystal-size-display');
         crystalSizeDisplay.classList.add('completion-highlight');
         setTimeout(() => crystalSizeDisplay.classList.remove('completion-highlight'), 1000);
-        
-        console.log('✅ Step completed - Next button should be enabled');
     }
     
     nextCrystalStep() {
@@ -1837,7 +1786,7 @@ class BiometricDataCollector {
     getInitialProgress(type) {
         const progress = {
             'tap': '0/3',
-            'rotate': '0/3 (Touch & rotate CW→CCW→CW)',
+            'rotate': '0/3 (Touch crystal, then rotate: CW → CCW → CW)',
             'pinch': '100% → 50%',
             'spread': '100% → 150%',
             'pressure': '0s / 3s'
@@ -1852,15 +1801,15 @@ class BiometricDataCollector {
         if (this.currentCrystalStep === 2) {
             const stepStatus = document.getElementById('step-status');
             if (this.crystalState.rotationCompleted) {
-                stepStatus.textContent = 'Perfect! All rotations completed';
+                stepStatus.textContent = 'Perfect! All rotations completed - Next step available';
             } else if (this.crystalState.rotationRounds === 0) {
-                stepStatus.textContent = 'Touch crystal and rotate clockwise';
+                stepStatus.textContent = 'Touch crystal surface, then rotate clockwise for one full rotation';
             } else if (this.crystalState.rotationRounds === 1) {
-                stepStatus.textContent = 'Now rotate counter-clockwise';
+                stepStatus.textContent = 'Green light! Now rotate counter-clockwise for one full rotation';
             } else if (this.crystalState.rotationRounds === 2) {
-                stepStatus.textContent = 'Finally rotate clockwise again';
+                stepStatus.textContent = 'Second green light! Now rotate clockwise again for one full rotation';
             } else {
-                stepStatus.textContent = 'Follow the sequence: CW → CCW → CW';
+                stepStatus.textContent = 'Follow the sequence: CW → CCW → CW (green light after each)';
             }
         }
     }
