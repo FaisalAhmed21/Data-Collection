@@ -6,6 +6,14 @@ class BiometricDataCollector {
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
         
+        // Task progression state management
+        this.taskState = {
+            studyStarted: false,
+            typingCompleted: false,
+            crystalCompleted: false,
+            galleryCompleted: false
+        };
+        
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         this.isAndroid = /Android/.test(navigator.userAgent);
@@ -123,6 +131,7 @@ class BiometricDataCollector {
         this.generateParticipantId();
         this.initializeGallery();
         this.setupPointerTracking();
+        this.updateTaskLocks(); // Initialize task locks
     }
     
     setupPointerTracking() {
@@ -183,8 +192,10 @@ class BiometricDataCollector {
     
     bindEvents() {
         document.getElementById('start-btn').addEventListener('click', () => {
+            this.taskState.studyStarted = true;
             this.switchScreen('typing');
             this.startTypingTask();
+            this.updateTaskLocks();
         });
         
         const typingInput = document.getElementById('typing-input');
@@ -216,7 +227,12 @@ class BiometricDataCollector {
         });
         
         typingInput.addEventListener('input', (e) => {
-            this.handleTypingInput(e);
+            // Only allow typing if study has started and typing is not completed
+            if (this.taskState.studyStarted && !this.taskState.typingCompleted) {
+                this.handleTypingInput(e);
+            } else {
+                console.log('🚫 Typing blocked - study not started or typing already completed');
+            }
         });
         
         typingInput.addEventListener('keydown', (e) => {
@@ -260,6 +276,67 @@ class BiometricDataCollector {
         
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
+    }
+    
+    // Task progression and locking methods
+    updateTaskLocks() {
+        // Lock/unlock typing task
+        const typingInput = document.getElementById('typing-input');
+        const nextSentenceBtn = document.getElementById('next-sentence-btn');
+        
+        if (this.taskState.studyStarted && !this.taskState.typingCompleted) {
+            typingInput.disabled = false;
+            typingInput.style.opacity = '1';
+        } else {
+            typingInput.disabled = true;
+            typingInput.style.opacity = '0.5';
+        }
+        
+        // Lock/unlock crystal game
+        const crystalArea = document.getElementById('crystal-area');
+        const nextCrystalBtn = document.getElementById('next-crystal-btn');
+        
+        if (this.taskState.typingCompleted && !this.taskState.crystalCompleted) {
+            if (crystalArea) {
+                crystalArea.style.pointerEvents = 'auto';
+                crystalArea.style.opacity = '1';
+            }
+        } else {
+            if (crystalArea) {
+                crystalArea.style.pointerEvents = 'none';
+                crystalArea.style.opacity = '0.5';
+            }
+        }
+        
+        // Lock/unlock gallery
+        const galleryItems = document.querySelectorAll('.gallery-item');
+        galleryItems.forEach(item => {
+            if (this.taskState.crystalCompleted && !this.taskState.galleryCompleted) {
+                item.style.pointerEvents = 'auto';
+                item.style.opacity = '1';
+            } else {
+                item.style.pointerEvents = 'none';
+                item.style.opacity = '0.5';
+            }
+        });
+    }
+    
+    lockPreviousTasks() {
+        // Lock typing after completion
+        if (this.taskState.typingCompleted) {
+            const typingInput = document.getElementById('typing-input');
+            typingInput.disabled = true;
+            typingInput.style.opacity = '0.5';
+        }
+        
+        // Lock crystal after completion
+        if (this.taskState.crystalCompleted) {
+            const crystalArea = document.getElementById('crystal-area');
+            if (crystalArea) {
+                crystalArea.style.pointerEvents = 'none';
+                crystalArea.style.opacity = '0.5';
+            }
+        }
     }
     
     switchScreen(screenName) {
@@ -1065,8 +1142,23 @@ class BiometricDataCollector {
         this.currentSentence++;
         
         if (this.currentSentence >= this.sentences.length) {
-            this.switchScreen('crystal');
-            this.startCrystalGame();
+            // Typing task completed - show "Next Task" button
+            this.taskState.typingCompleted = true;
+            const nextBtn = document.getElementById('next-sentence-btn');
+            nextBtn.textContent = 'Next Task';
+            nextBtn.disabled = false;
+            nextBtn.style.backgroundColor = 'var(--color-primary)';
+            nextBtn.style.opacity = '1';
+            
+            // Update event listener to go to crystal game
+            nextBtn.onclick = () => {
+                this.switchScreen('crystal');
+                this.startCrystalGame();
+                this.lockPreviousTasks();
+                this.updateTaskLocks();
+            };
+            
+            console.log('✅ Typing task completed - Next Task button enabled');
         } else {
             this.displayCurrentSentence();
             this.updateTypingProgress();
@@ -1079,6 +1171,23 @@ class BiometricDataCollector {
     }
     
     recordKeystroke(data) {
+        // FINAL iOS safety check to prevent double character recording
+        if (this.isIOS && data.actualChar && data.actualChar !== 'BACKSPACE' && data.actualChar !== 'SHIFT') {
+            const currentTime = performance.now();
+            
+            // Check if this exact character was recorded very recently
+            const recentKeystrokes = this.keystrokeData.slice(-5); // Check last 5 keystrokes
+            const duplicateFound = recentKeystrokes.some(ks => 
+                ks.actualChar === data.actualChar && 
+                (currentTime - ks.timestamp) < 300
+            );
+            
+            if (duplicateFound) {
+                console.log('🚫 iOS FINAL CHECK: Duplicate character BLOCKED:', data.actualChar);
+                return;
+            }
+        }
+        
         // Debug logging for quote characters
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('Recording keystroke with quote:', data.actualChar, 'type:', data.type);
@@ -1104,29 +1213,38 @@ class BiometricDataCollector {
     shouldRecordChar(char, timestamp) {
         const currentTime = performance.now();
         
-        // iOS-specific deduplication
+        // ENHANCED iOS-specific deduplication with multiple layers
         if (this.isIOS) {
+            // Layer 1: Block exact character duplicates within 300ms
             if (this.lastChar === char && this.lastCharTime) {
                 const timeSinceLast = currentTime - this.lastCharTime;
-                
-                // BLOCK: iOS duplicates within 250ms (iOS double-tap issue)
-                if (timeSinceLast < 250) {
-                    console.log('🚫 iOS character duplicate BLOCKED:', char, 'time since last:', timeSinceLast, 'ms');
+                if (timeSinceLast < 300) {
+                    console.log('🚫 iOS Layer 1: Character duplicate BLOCKED:', char, 'time since last:', timeSinceLast, 'ms');
                     return false;
                 }
             }
             
-            // Additional iOS protection: block rapid character input
-            if (this.lastCharTime && (currentTime - this.lastCharTime) < 100) {
-                console.log('🚫 iOS rapid character input BLOCKED:', char, 'time since last:', currentTime - this.lastCharTime, 'ms');
+            // Layer 2: Block rapid input events within 150ms
+            if (this.lastCharTime && (currentTime - this.lastCharTime) < 150) {
+                console.log('🚫 iOS Layer 2: Rapid input BLOCKED:', char, 'time since last:', currentTime - this.lastCharTime, 'ms');
+                return false;
+            }
+            
+            // Layer 3: Block composition-related duplicates
+            if (this.compositionActive && this.lastChar === char) {
+                console.log('🚫 iOS Layer 3: Composition duplicate BLOCKED:', char);
+                return false;
+            }
+            
+            // Layer 4: Block input event duplicates
+            if (this.lastInputEvent && this.lastInputEvent === char && (currentTime - this.lastInputEventTime) < 200) {
+                console.log('🚫 iOS Layer 4: Input event duplicate BLOCKED:', char);
                 return false;
             }
         } else {
-            // Android deduplication - less aggressive
+            // Android deduplication - less aggressive but still effective
             if (this.lastChar === char && this.lastCharTime) {
                 const timeSinceLast = currentTime - this.lastCharTime;
-                
-                // BLOCK: Android duplicates within 150ms
                 if (timeSinceLast < 150) {
                     console.log('🚫 Android character duplicate BLOCKED:', char, 'time since last:', timeSinceLast, 'ms');
                     return false;
@@ -1137,6 +1255,8 @@ class BiometricDataCollector {
         // Update tracking
         this.lastChar = char;
         this.lastCharTime = currentTime;
+        this.lastInputEvent = char;
+        this.lastInputEventTime = currentTime;
         console.log('✅ Character approved for recording:', char, 'at time:', currentTime);
         return true;
     }
@@ -1265,6 +1385,12 @@ class BiometricDataCollector {
         e.preventDefault();
         e.stopPropagation();
         
+        // Only allow crystal interaction if typing task is completed
+        if (!this.taskState.typingCompleted || this.taskState.crystalCompleted) {
+            console.log('🚫 Crystal interaction blocked - typing not completed or crystal already completed');
+            return;
+        }
+        
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
         
@@ -1301,6 +1427,11 @@ class BiometricDataCollector {
         e.preventDefault();
         e.stopPropagation();
         
+        // Only allow crystal interaction if typing task is completed
+        if (!this.taskState.typingCompleted || this.taskState.crystalCompleted) {
+            return;
+        }
+        
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
         
@@ -1332,6 +1463,11 @@ class BiometricDataCollector {
     handleCrystalTouchEnd(e) {
         e.preventDefault();
         e.stopPropagation();
+        
+        // Only allow crystal interaction if typing task is completed
+        if (!this.taskState.typingCompleted || this.taskState.crystalCompleted) {
+            return;
+        }
         
         const timestamp = performance.now();
         const touches = Array.from(e.changedTouches);
@@ -1799,14 +1935,44 @@ class BiometricDataCollector {
     
     nextCrystalStep() {
         if (this.currentCrystalStep >= this.crystalSteps.length) {
-            this.switchScreen('gallery');
+            // Crystal game completed - show "Next Task" button
+            this.taskState.crystalCompleted = true;
+            const nextBtn = document.getElementById('next-crystal-btn');
+            nextBtn.textContent = 'Next Task';
+            nextBtn.disabled = false;
+            nextBtn.style.backgroundColor = 'var(--color-primary)';
+            nextBtn.style.opacity = '1';
+            
+            // Update event listener to go to gallery
+            nextBtn.onclick = () => {
+                this.switchScreen('gallery');
+                this.lockPreviousTasks();
+                this.updateTaskLocks();
+            };
+            
+            console.log('✅ Crystal game completed - Next Task button enabled');
             return;
         }
         
         this.currentCrystalStep++;
         
         if (this.currentCrystalStep > this.crystalSteps.length) {
-            this.switchScreen('gallery');
+            // Crystal game completed - show "Next Task" button
+            this.taskState.crystalCompleted = true;
+            const nextBtn = document.getElementById('next-crystal-btn');
+            nextBtn.textContent = 'Next Task';
+            nextBtn.disabled = false;
+            nextBtn.style.backgroundColor = 'var(--color-primary)';
+            nextBtn.style.opacity = '1';
+            
+            // Update event listener to go to gallery
+            nextBtn.onclick = () => {
+                this.switchScreen('gallery');
+                this.lockPreviousTasks();
+                this.updateTaskLocks();
+            };
+            
+            console.log('✅ Crystal game completed - Next Task button enabled');
             return;
         }
         
@@ -1954,7 +2120,14 @@ class BiometricDataCollector {
             img.loading = 'lazy';
     
             imageContainer.appendChild(img);
-            imageContainer.addEventListener('click', () => this.openImagePopup(index));
+            imageContainer.addEventListener('click', () => {
+                // Only allow gallery interaction if crystal task is completed
+                if (this.taskState.crystalCompleted && !this.taskState.galleryCompleted) {
+                    this.openImagePopup(index);
+                } else {
+                    console.log('🚫 Gallery interaction blocked - crystal task not completed');
+                }
+            });
     
             grid.appendChild(imageContainer);
         });
