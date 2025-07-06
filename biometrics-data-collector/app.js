@@ -284,45 +284,11 @@ class BiometricDataCollector {
         const eventSignature = `${inputType}-${data}-${value.length}-${pos}`;
         
         if (data && inputType === 'insertText') {
-            // ULTRA-STRICT deduplication for all mobile devices
+            // Simplified deduplication - only block true duplicates
             if (this.lastInputEvent === eventSignature && 
                 this.lastInputEventTime && 
-                (currentTime - this.lastInputEventTime) < 500) {
-                console.log('🚫 Mobile duplicate input event BLOCKED (ultra-strict):', data, 'signature:', eventSignature, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
-                return;
-            }
-            
-            if (this.lastChar === data && 
-                this.lastCharTime && 
-                (currentTime - this.lastCharTime) < 500) {
-                console.log('🚫 Mobile duplicate character BLOCKED (ultra-strict):', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
-                return;
-            }
-            
-            if (value === this.lastInputValue && data) {
-                console.log('🚫 Mobile duplicate input event BLOCKED (value unchanged):', data);
-                return;
-            }
-            
-            if (value.length === this.lastInputLength && data && !inputType?.startsWith('delete')) {
-                console.log('🚫 Mobile duplicate input event BLOCKED (length unchanged):', data);
-                return;
-            }
-            
-            if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 200) {
-                console.log('🚫 Mobile input event BLOCKED (rapid input):', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
-                return;
-            }
-            
-            // ENHANCED: Block mobile-specific double input issues with longer cooldown
-            if (this.isMobile && this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 400) {
-                console.log('🚫 Mobile duplicate input BLOCKED (enhanced):', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
-                return;
-            }
-            
-            // ADDITIONAL: Block any rapid character input on mobile
-            if (this.isMobile && this.lastCharTime && (currentTime - this.lastCharTime) < 300) {
-                console.log('🚫 Mobile rapid character input BLOCKED:', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
+                (currentTime - this.lastInputEventTime) < 100) {
+                console.log('🚫 Duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
                 return;
             }
         }
@@ -527,16 +493,8 @@ class BiometricDataCollector {
                         console.log('🔍 Quote processing complete - Final refChar:', refChar);
                     }
                     
-                    // FINAL: Check if character should be recorded (comprehensive deduplication)
+                    // Check if character should be recorded (simplified deduplication)
                     if (this.shouldRecordChar(refChar, timestamp + i)) {
-                        // ADDITIONAL SAFETY: Check if this exact character was just recorded
-                        const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
-                        if (lastKeystroke && 
-                            lastKeystroke.actualChar === refChar && 
-                            (timestamp + i - lastKeystroke.timestamp) < 500) { // 500ms safety window
-                            console.log('🚫 FINAL BLOCK: Character duplicate detected in keystroke data:', refChar);
-                            return;
-                        }
                         
                         console.log('📝 Recording keystroke:', refChar, 'type:', inputType, 'timestamp:', timestamp + i);
                         this.recordKeystroke({
@@ -1100,33 +1058,15 @@ class BiometricDataCollector {
     shouldRecordChar(char, timestamp) {
         const currentTime = performance.now();
         
-        // ULTRA-STRICT mobile deduplication for all Android/iOS versions
-        if (this.lastChar === char) {
+        // Only block actual duplicates, not legitimate characters
+        if (this.lastChar === char && this.lastCharTime) {
             const timeSinceLast = currentTime - this.lastCharTime;
             
-            // BLOCK: Any duplicate character within 400ms (increased for iOS reliability)
-            if (timeSinceLast < 400) {
-                console.log('🚫 Character duplicate BLOCKED (ultra-strict):', char, 'time since last:', timeSinceLast, 'ms');
+            // BLOCK: Only true duplicates within 200ms (reduced from 400ms)
+            if (timeSinceLast < 200) {
+                console.log('🚫 Character duplicate BLOCKED:', char, 'time since last:', timeSinceLast, 'ms');
                 return false;
             }
-            
-            // BLOCK: Duplicates within 800ms for same character (iOS double-tap protection)
-            if (timeSinceLast < 800) {
-                console.log('🚫 Character duplicate BLOCKED (extended protection):', char, 'time since last:', timeSinceLast, 'ms');
-                return false;
-            }
-        }
-        
-        // ADDITIONAL: Block rapid character input (mobile keyboard protection)
-        if (this.lastCharTime && (currentTime - this.lastCharTime) < 100) {
-            console.log('🚫 Character input BLOCKED (rapid input protection):', char, 'time since last:', currentTime - this.lastCharTime, 'ms');
-            return false;
-        }
-        
-        // ENHANCED: iOS-specific protection
-        if (this.isIOS && this.lastCharTime && (currentTime - this.lastCharTime) < 200) {
-            console.log('🚫 iOS character input BLOCKED (enhanced protection):', char, 'time since last:', currentTime - this.lastCharTime, 'ms');
-            return false;
         }
         
         // Update tracking
