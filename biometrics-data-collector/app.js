@@ -2296,9 +2296,7 @@ class BiometricDataCollector {
             alert(`❌ Upload failed for ${filename}: ` + error.message);
         });
     }
-
 }
-
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     new BiometricDataCollector();
