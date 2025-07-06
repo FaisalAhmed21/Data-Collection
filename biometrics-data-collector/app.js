@@ -6,7 +6,13 @@ class BiometricDataCollector {
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
         
-
+        // Task progression state management
+        this.taskState = {
+            studyStarted: false,
+            typingCompleted: false,
+            crystalCompleted: false,
+            galleryCompleted: false
+        };
         
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -133,7 +139,7 @@ class BiometricDataCollector {
         this.generateParticipantId();
         this.initializeGallery();
         this.setupPointerTracking();
-        this.updateTaskLocks(); // Initialize task locks
+        this.updateTaskLocks(); // Lock all tasks at start
     }
     
     setupPointerTracking() {
@@ -193,22 +199,25 @@ class BiometricDataCollector {
 
     
     bindEvents() {
+        // Welcome screen
         document.getElementById('start-btn').addEventListener('click', () => {
+            this.taskState.studyStarted = true;
+            this.taskState.typingCompleted = false;
+            this.taskState.crystalCompleted = false;
+            this.taskState.galleryCompleted = false;
+            this.updateTaskLocks();
             this.switchScreen('typing');
             this.startTypingTask();
         });
         
         const typingInput = document.getElementById('typing-input');
-        
         typingInput.addEventListener('compositionstart', (e) => {
             this.compositionActive = true;
             console.log('Composition started');
         });
-        
         typingInput.addEventListener('compositionupdate', (e) => {
             console.log('Composition update:', e.data);
         });
-        
         typingInput.addEventListener('compositionend', (e) => {
             this.compositionActive = false;
             if (e.data) {
@@ -225,38 +234,15 @@ class BiometricDataCollector {
             }
             console.log('Composition ended:', e.data);
         });
-        
         typingInput.addEventListener('input', (e) => {
             this.handleTypingInput(e);
         });
-        
         typingInput.addEventListener('keydown', (e) => {
             if (this.compositionActive || e.keyCode === 229) {
                 return;
             }
             this.handleKeydown(e);
         });
-        
-        typingInput.addEventListener('keyup', (e) => {
-            // Track SHIFT release
-            if (e.key === 'Shift') {
-                this.updateShiftState(false);
-                this.recordKeystroke({
-                    timestamp: performance.now(),
-                    actualChar: 'SHIFT',
-                    keyCode: 16,
-                    type: 'keyup',
-                    shiftKey: false,
-                    ctrlKey: e.ctrlKey,
-                    altKey: e.altKey,
-                    sentence: this.currentSentence,
-                    position: e.target.selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-            }
-        });
-        
         typingInput.addEventListener('focus', (e) => {
             const rect = e.target.getBoundingClientRect();
             this.currentPointerX = rect.left + rect.width / 2;
@@ -264,31 +250,23 @@ class BiometricDataCollector {
             this.pointerTracking.x = this.currentPointerX;
             this.pointerTracking.y = this.currentPointerY;
         });
-        
         typingInput.addEventListener('click', (e) => {
             this.currentPointerX = e.clientX;
             this.currentPointerY = e.clientY;
             this.pointerTracking.x = e.clientX;
             this.pointerTracking.y = e.clientY;
         });
-        
         typingInput.addEventListener('paste', (e) => e.preventDefault());
-
         typingInput.addEventListener('copy',   e => e.preventDefault());
         typingInput.addEventListener('cut',    e => e.preventDefault());
         typingInput.addEventListener('drop',   e => e.preventDefault());
         typingInput.addEventListener('contextmenu', e => e.preventDefault());
-
-        
         document.getElementById('next-sentence-btn').addEventListener('click', () => this.nextSentence());
-        
         this.bindCrystalEvents();
         document.getElementById('reset-step-btn').addEventListener('click', () => this.resetCrystalStep());
         document.getElementById('next-crystal-btn').addEventListener('click', () => this.nextCrystalStep());
-        
         this.bindGalleryEvents();
         document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
-        
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
     }
@@ -330,58 +308,50 @@ class BiometricDataCollector {
         if (currentBtn) {
             currentBtn.style.display = 'none';
         }
-        
         const crystalBtn = document.getElementById('next-crystal-btn');
         if (crystalBtn) {
             crystalBtn.style.display = 'none';
         }
-        
-        // Create or update the "Next Task" button
         let nextTaskBtn = document.getElementById('next-task-btn');
         if (!nextTaskBtn) {
             nextTaskBtn = document.createElement('button');
             nextTaskBtn.id = 'next-task-btn';
             nextTaskBtn.className = 'next-task-btn';
             nextTaskBtn.textContent = `Next Task: ${taskName}`;
-            
-            // Insert the button in the appropriate location
             if (targetScreen === 'crystal') {
-                // Insert after the typing section
                 const typingSection = document.getElementById('typing-screen');
                 typingSection.appendChild(nextTaskBtn);
             } else if (targetScreen === 'gallery') {
-                // Insert after the crystal section
                 const crystalSection = document.getElementById('crystal-screen');
                 crystalSection.appendChild(nextTaskBtn);
             }
         } else {
             nextTaskBtn.textContent = `Next Task: ${taskName}`;
         }
-        
-        // Set up the click handler
         nextTaskBtn.onclick = () => {
             if (targetScreen === 'crystal') {
+                this.taskState.typingCompleted = true;
+                this.taskState.crystalCompleted = false;
+                this.taskState.galleryCompleted = false;
+                this.updateTaskLocks();
                 this.switchScreen('crystal');
                 this.startCrystalGame();
             } else if (targetScreen === 'gallery') {
+                this.taskState.crystalCompleted = true;
+                this.taskState.galleryCompleted = false;
+                this.updateTaskLocks();
                 this.switchScreen('gallery');
             }
-            
-            // Remove the button after use
             nextTaskBtn.remove();
         };
-        
-        // Show the button with animation
         nextTaskBtn.style.display = 'inline-flex';
         nextTaskBtn.style.opacity = '0';
         nextTaskBtn.style.transform = 'translateY(20px)';
-        
         setTimeout(() => {
             nextTaskBtn.style.transition = 'all 0.5s ease';
             nextTaskBtn.style.opacity = '1';
             nextTaskBtn.style.transform = 'translateY(0)';
         }, 100);
-        
         console.log(`✅ Next Task button shown for: ${taskName}`);
     }
     
@@ -1199,10 +1169,9 @@ class BiometricDataCollector {
     
     nextSentence() {
         this.currentSentence++;
-        
         if (this.currentSentence >= this.sentences.length) {
-            // Show "Next Task" button instead of going directly to crystal
             this.showNextTaskButton('crystal', 'Crystal Forge Game');
+            this.updateTaskLocks(); // Lock typing after completion
         } else {
             this.displayCurrentSentence();
             this.updateTypingProgress();
@@ -1941,22 +1910,16 @@ class BiometricDataCollector {
     completeStep() {
         const crystal = document.getElementById('crystal');
         crystal.classList.add('success');
-        
         setTimeout(() => {
             crystal.classList.remove('success');
         }, 600);
-        
         document.getElementById('step-status').textContent = 'Completed';
-        
-        // Check if this is the final step
         if (this.currentCrystalStep >= this.crystalSteps.length) {
-            // Show "Next Task" button for final step
             this.showNextTaskButton('gallery', 'Gallery Interaction');
+            this.updateTaskLocks(); // Lock crystal after completion
         } else {
-            // Regular step completion - show "Next Step" button
             document.getElementById('next-crystal-btn').disabled = false;
         }
-        
         const sizeIndicator = document.getElementById('size-indicator');
         sizeIndicator.classList.add('completion-highlight');
         setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
@@ -2621,6 +2584,54 @@ class BiometricDataCollector {
             console.error(`❌ Upload failed:`, error);
             alert(`❌ Upload failed for ${filename}: ` + error.message);
         });
+    }
+
+    updateTaskLocks() {
+        // Typing
+        const typingInput = document.getElementById('typing-input');
+        const nextSentenceBtn = document.getElementById('next-sentence-btn');
+        if (typingInput && nextSentenceBtn) {
+            if (this.taskState.studyStarted && !this.taskState.typingCompleted) {
+                typingInput.disabled = false;
+                typingInput.style.opacity = '1';
+                nextSentenceBtn.disabled = false;
+                nextSentenceBtn.style.opacity = '1';
+            } else {
+                typingInput.disabled = true;
+                typingInput.style.opacity = '0.5';
+                nextSentenceBtn.disabled = true;
+                nextSentenceBtn.style.opacity = '0.5';
+            }
+        }
+
+        // Crystal
+        const crystalArea = document.getElementById('crystal-area');
+        const nextCrystalBtn = document.getElementById('next-crystal-btn');
+        if (crystalArea && nextCrystalBtn) {
+            if (this.taskState.typingCompleted && !this.taskState.crystalCompleted) {
+                crystalArea.style.pointerEvents = 'auto';
+                crystalArea.style.opacity = '1';
+                nextCrystalBtn.disabled = false;
+                nextCrystalBtn.style.opacity = '1';
+            } else {
+                crystalArea.style.pointerEvents = 'none';
+                crystalArea.style.opacity = '0.5';
+                nextCrystalBtn.disabled = true;
+                nextCrystalBtn.style.opacity = '0.5';
+            }
+        }
+
+        // Gallery
+        const galleryGrid = document.getElementById('gallery-grid');
+        if (galleryGrid) {
+            if (this.taskState.crystalCompleted && !this.taskState.galleryCompleted) {
+                galleryGrid.style.pointerEvents = 'auto';
+                galleryGrid.style.opacity = '1';
+            } else {
+                galleryGrid.style.pointerEvents = 'none';
+                galleryGrid.style.opacity = '0.5';
+            }
+        }
     }
 }
 // Initialize the application
