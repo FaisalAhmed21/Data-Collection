@@ -6,13 +6,7 @@ class BiometricDataCollector {
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
         
-        // Task progression state management
-        this.taskState = {
-            studyStarted: false,
-            typingCompleted: false,
-            crystalCompleted: false,
-            galleryCompleted: false
-        };
+
         
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -200,10 +194,8 @@ class BiometricDataCollector {
     
     bindEvents() {
         document.getElementById('start-btn').addEventListener('click', () => {
-            this.taskState.studyStarted = true;
             this.switchScreen('typing');
             this.startTypingTask();
-            this.updateTaskLocks();
         });
         
         const typingInput = document.getElementById('typing-input');
@@ -235,12 +227,7 @@ class BiometricDataCollector {
         });
         
         typingInput.addEventListener('input', (e) => {
-            // Only allow typing if study has started and typing is not completed
-            if (this.taskState.studyStarted && !this.taskState.typingCompleted) {
-                this.handleTypingInput(e);
-            } else {
-                console.log('🚫 Typing blocked - study not started or typing already completed');
-            }
+            this.handleTypingInput(e);
         });
         
         typingInput.addEventListener('keydown', (e) => {
@@ -300,77 +287,13 @@ class BiometricDataCollector {
         document.getElementById('next-crystal-btn').addEventListener('click', () => this.nextCrystalStep());
         
         this.bindGalleryEvents();
-        document.getElementById('finish-gallery-btn').addEventListener('click', () => {
-            this.taskState.galleryCompleted = true;
-            this.switchScreen('export');
-            this.lockPreviousTasks();
-            this.updateTaskLocks();
-        });
+        document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
         
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
     }
     
-    // Task progression and locking methods
-    updateTaskLocks() {
-        // Lock/unlock typing task
-        const typingInput = document.getElementById('typing-input');
-        const nextSentenceBtn = document.getElementById('next-sentence-btn');
-        
-        if (this.taskState.studyStarted && !this.taskState.typingCompleted) {
-            typingInput.disabled = false;
-            typingInput.style.opacity = '1';
-        } else {
-            typingInput.disabled = true;
-            typingInput.style.opacity = '0.5';
-        }
-        
-        // Lock/unlock crystal game
-        const crystalArea = document.getElementById('crystal-area');
-        const nextCrystalBtn = document.getElementById('next-crystal-btn');
-        
-        if (this.taskState.typingCompleted && !this.taskState.crystalCompleted) {
-            if (crystalArea) {
-                crystalArea.style.pointerEvents = 'auto';
-                crystalArea.style.opacity = '1';
-            }
-        } else {
-            if (crystalArea) {
-                crystalArea.style.pointerEvents = 'none';
-                crystalArea.style.opacity = '0.5';
-            }
-        }
-        
-        // Lock/unlock gallery
-        const galleryItems = document.querySelectorAll('.gallery-item');
-        galleryItems.forEach(item => {
-            if (this.taskState.crystalCompleted && !this.taskState.galleryCompleted) {
-                item.style.pointerEvents = 'auto';
-                item.style.opacity = '1';
-            } else {
-                item.style.pointerEvents = 'none';
-                item.style.opacity = '0.5';
-            }
-        });
-    }
-    
-    lockPreviousTasks() {
-        // Lock typing after completion
-        if (this.taskState.typingCompleted) {
-            const typingInput = document.getElementById('typing-input');
-            typingInput.disabled = true;
-            typingInput.style.opacity = '0.5';
-        }
-        
-        // Lock crystal after completion
-        if (this.taskState.crystalCompleted) {
-            const crystalArea = document.getElementById('crystal-area');
-            if (crystalArea) {
-                crystalArea.style.pointerEvents = 'none';
-                crystalArea.style.opacity = '0.5';
-            }
-        }
-    }
+
     
     switchScreen(screenName) {
         document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
@@ -378,27 +301,7 @@ class BiometricDataCollector {
         if (targetScreen) {
             targetScreen.classList.add('active');
             this.currentScreen = screenName;
-            
-            // Smooth scroll to the target screen
-            this.smoothScrollToScreen(targetScreen);
         }
-    }
-    
-    smoothScrollToScreen(targetScreen) {
-        // Smooth scroll to the target screen
-        targetScreen.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-            inline: 'nearest'
-        });
-        
-        // Additional smooth scroll for mobile devices
-        setTimeout(() => {
-            window.scrollTo({
-                top: targetScreen.offsetTop,
-                behavior: 'smooth'
-            });
-        }, 100);
     }
     
     // FIXED: Enhanced mobile-friendly keystroke detection using inputType
@@ -1151,7 +1054,12 @@ class BiometricDataCollector {
         input.focus();
         document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
         this.calculateAccuracy();
-        document.getElementById('next-sentence-btn').disabled = true;
+        
+        // Reset button to "Next Sentence" for non-final sentences
+        const nextBtn = document.getElementById('next-sentence-btn');
+        nextBtn.textContent = 'Next Sentence';
+        nextBtn.disabled = true;
+        nextBtn.onclick = () => this.nextSentence();
         
         // FIXED: Reset lastInputLength when starting new sentence
         this.lastInputLength = 0;
@@ -1217,29 +1125,13 @@ class BiometricDataCollector {
         this.currentSentence++;
         
         if (this.currentSentence >= this.sentences.length) {
-            // Typing task completed - hide "Next Sentence" button and show only "Next Task"
-            this.taskState.typingCompleted = true;
+            // Hide the "Next Sentence" button and show "Next Task" button
             const nextBtn = document.getElementById('next-sentence-btn');
             nextBtn.textContent = 'Next Task';
-            nextBtn.disabled = false;
-            nextBtn.style.backgroundColor = 'var(--color-primary)';
-            nextBtn.style.opacity = '1';
-            
-            // Hide the button initially, then show it as "Next Task"
-            nextBtn.style.display = 'none';
-            setTimeout(() => {
-                nextBtn.style.display = 'inline-flex';
-            }, 500);
-            
-            // Update event listener to go to crystal game
             nextBtn.onclick = () => {
                 this.switchScreen('crystal');
                 this.startCrystalGame();
-                this.lockPreviousTasks();
-                this.updateTaskLocks();
             };
-            
-            console.log('✅ Typing task completed - Next Task button enabled');
         } else {
             this.displayCurrentSentence();
             this.updateTypingProgress();
@@ -1548,12 +1440,6 @@ class BiometricDataCollector {
         e.preventDefault();
         e.stopPropagation();
         
-        // Only allow crystal interaction if typing task is completed
-        if (!this.taskState.typingCompleted || this.taskState.crystalCompleted) {
-            console.log('🚫 Crystal interaction blocked - typing not completed or crystal already completed');
-            return;
-        }
-        
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
         
@@ -1590,11 +1476,6 @@ class BiometricDataCollector {
         e.preventDefault();
         e.stopPropagation();
         
-        // Only allow crystal interaction if typing task is completed
-        if (!this.taskState.typingCompleted || this.taskState.crystalCompleted) {
-            return;
-        }
-        
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
         
@@ -1626,11 +1507,6 @@ class BiometricDataCollector {
     handleCrystalTouchEnd(e) {
         e.preventDefault();
         e.stopPropagation();
-        
-        // Only allow crystal interaction if typing task is completed
-        if (!this.taskState.typingCompleted || this.taskState.crystalCompleted) {
-            return;
-        }
         
         const timestamp = performance.now();
         const touches = Array.from(e.changedTouches);
@@ -2003,80 +1879,43 @@ class BiometricDataCollector {
         
         // Check if this is the final step
         if (this.currentCrystalStep >= this.crystalSteps.length) {
-            // Final step completed - hide "Next Step" button and show only "Reset" and "Next Task"
+            // Final step completed - change button to "Next Task"
             const nextBtn = document.getElementById('next-crystal-btn');
             nextBtn.textContent = 'Next Task';
             nextBtn.disabled = false;
-            nextBtn.style.backgroundColor = 'var(--color-primary)';
-            nextBtn.style.opacity = '1';
-            
-            // Hide the button initially, then show it as "Next Task"
-            nextBtn.style.display = 'none';
-            setTimeout(() => {
-                nextBtn.style.display = 'inline-flex';
-            }, 500);
-            
-            console.log('✅ Final crystal step completed - Next Task button enabled');
+            nextBtn.onclick = () => {
+                this.switchScreen('gallery');
+            };
         } else {
             // Regular step completion - show "Next Step" button
             document.getElementById('next-crystal-btn').disabled = false;
-            console.log('✅ Step completed - Next Step button enabled');
         }
         
-        const crystalSizeDisplay = document.getElementById('crystal-size-display');
-        crystalSizeDisplay.classList.add('completion-highlight');
-        setTimeout(() => crystalSizeDisplay.classList.remove('completion-highlight'), 1000);
+        const sizeIndicator = document.getElementById('size-indicator');
+        sizeIndicator.classList.add('completion-highlight');
+        setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
     }
     
     nextCrystalStep() {
         if (this.currentCrystalStep >= this.crystalSteps.length) {
-            // Crystal game completed - show "Next Task" button
-            this.taskState.crystalCompleted = true;
-            const nextBtn = document.getElementById('next-crystal-btn');
-            nextBtn.textContent = 'Next Task';
-            nextBtn.disabled = false;
-            nextBtn.style.backgroundColor = 'var(--color-primary)';
-            nextBtn.style.opacity = '1';
-            
-            // Update event listener to go to gallery
-            nextBtn.onclick = () => {
-                this.switchScreen('gallery');
-                this.lockPreviousTasks();
-                this.updateTaskLocks();
-            };
-            
-            console.log('✅ Crystal game completed - Next Task button enabled');
+            this.switchScreen('gallery');
             return;
         }
         
         this.currentCrystalStep++;
         
         if (this.currentCrystalStep > this.crystalSteps.length) {
-            // Crystal game completed - show "Next Task" button
-            this.taskState.crystalCompleted = true;
-            const nextBtn = document.getElementById('next-crystal-btn');
-            nextBtn.textContent = 'Next Task';
-            nextBtn.disabled = false;
-            nextBtn.style.backgroundColor = 'var(--color-primary)';
-            nextBtn.style.opacity = '1';
-            
-            // Update event listener to go to gallery
-            nextBtn.onclick = () => {
-                this.switchScreen('gallery');
-                this.lockPreviousTasks();
-                this.updateTaskLocks();
-            };
-            
-            console.log('✅ Crystal game completed - Next Task button enabled');
+            this.switchScreen('gallery');
             return;
         }
         
-        // Reset trial counter for new step
-        this.crystalState.currentTrial = 1;
-        console.log(`Moving to step ${this.currentCrystalStep} - Trial reset to 1`);
-        
         this.resetCrystalState();
         this.updateCrystalDisplay();
+        
+        // Reset button text back to "Next Step" for non-final steps
+        const nextBtn = document.getElementById('next-crystal-btn');
+        nextBtn.textContent = 'Next Step';
+        nextBtn.onclick = () => this.nextCrystalStep();
     }
     
     resetCrystalStep() {
@@ -2128,7 +1967,12 @@ class BiometricDataCollector {
         document.getElementById('current-step').textContent = `${this.currentCrystalStep}/5`;
         document.getElementById('step-status').textContent = 'Ready';
         document.getElementById('step-progress').textContent = this.getInitialProgress(step.type);
-        document.getElementById('next-crystal-btn').disabled = true;
+        
+        // Reset button to "Next Step" for non-final steps
+        const nextBtn = document.getElementById('next-crystal-btn');
+        nextBtn.textContent = 'Next Step';
+        nextBtn.disabled = true;
+        nextBtn.onclick = () => this.nextCrystalStep();
     }
     
     getStepTitle(type) {
@@ -2205,14 +2049,7 @@ class BiometricDataCollector {
             img.loading = 'lazy';
     
             imageContainer.appendChild(img);
-            imageContainer.addEventListener('click', () => {
-                // Only allow gallery interaction if crystal task is completed
-                if (this.taskState.crystalCompleted && !this.taskState.galleryCompleted) {
-                    this.openImagePopup(index);
-                } else {
-                    console.log('🚫 Gallery interaction blocked - crystal task not completed');
-                }
-            });
+            imageContainer.addEventListener('click', () => this.openImagePopup(index));
     
             grid.appendChild(imageContainer);
         });
@@ -2353,7 +2190,7 @@ class BiometricDataCollector {
     // 6. Open popup and attach double-tap listener once
     openImagePopup(index) {
         this.currentGalleryImage = index;
-        this.resetZoom(); // Always start with no zoom
+        this.resetZoom();
     
         if (!document.querySelector('.image-popup')) {
             this.createImagePopup();
@@ -2363,27 +2200,9 @@ class BiometricDataCollector {
         const popup = document.querySelector('.image-popup');
         popup.classList.add('active');
         document.body.style.overflow = 'hidden';
-        
-        // Add double-tap listener to reset zoom
-        this.addDoubleTapListener();
     }
     
-    addDoubleTapListener() {
-        const ctr = document.querySelector('.popup-image-container');
-        if (!ctr) return;
-        
-        let lastTap = 0;
-        ctr.addEventListener('touchend', e => {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTap;
-            if (tapLength < 500 && tapLength > 0) {
-                // Double tap detected
-                this.resetZoom();
-                e.preventDefault();
-            }
-            lastTap = currentTime;
-        });
-    }
+
     
     // 7. Build popup DOM and set up controls
     createImagePopup() {
@@ -2425,19 +2244,6 @@ class BiometricDataCollector {
         ctr.addEventListener('wheel', e => {
             e.preventDefault();
             e.deltaY < 0 ? this.zoomIn() : this.zoomOut();
-        });
-        
-        // Double-tap to reset zoom
-        let lastTap = 0;
-        ctr.addEventListener('touchend', e => {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTap;
-            if (tapLength < 500 && tapLength > 0) {
-                // Double tap detected
-                this.resetZoom();
-                e.preventDefault();
-            }
-            lastTap = currentTime;
         });
     
         // mouse pan
@@ -2546,7 +2352,6 @@ class BiometricDataCollector {
         this.galleryZoom.isPanning = false;
         this.updateImageTransform();
         this.updateZoomLevel();
-        console.log('🔍 Zoom reset to 100%');
     }
     
     // 9. Apply translate then scale
