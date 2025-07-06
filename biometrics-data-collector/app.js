@@ -1484,15 +1484,15 @@ class BiometricDataCollector {
                     if (this.crystalState.rotationDirection === null && Math.abs(delta) > minDelta) {
                         this.crystalState.rotationDirection = direction;
                         
-                        // Check if this direction is correct for the current step
+                        // STRICT RULE: Check if this direction is correct for the current step
                         const expectedDirection = this.getExpectedRotationDirection();
                         const isCorrectDirection = direction === expectedDirection;
                         
                         if (isCorrectDirection) {
-                            console.log(`✅ Correct rotation direction started: ${direction === 1 ? 'CW' : 'CCW'}`);
+                            console.log(`✅ CORRECT rotation direction started: ${direction === 1 ? 'CW' : 'CCW'} (Round ${this.crystalState.rotationRounds})`);
                         } else {
-                            console.log(`❌ Wrong rotation direction started: ${direction === 1 ? 'CW' : 'CCW'} (expected: ${expectedDirection === 1 ? 'CW' : 'CCW'})`);
-                            // Mark this rotation attempt as wrong direction
+                            console.log(`❌ WRONG rotation direction started: ${direction === 1 ? 'CW' : 'CCW'} (expected: ${expectedDirection === 1 ? 'CW' : 'CCW'} for Round ${this.crystalState.rotationRounds})`);
+                            // Mark this rotation attempt as wrong direction - NO PROGRESS WILL BE COUNTED
                             this.crystalState.wrongDirectionStarted = true;
                         }
                     }
@@ -1508,12 +1508,12 @@ class BiometricDataCollector {
                         // Record the completed rotation direction
                         const completedDirection = this.crystalState.rotationDirection;
                         
-                        // Check if this rotation was started in the correct direction
+                        // STRICT RULE: Check if this rotation was started in the correct direction
                         const expectedDirection = this.getExpectedRotationDirection();
                         const isCorrectRotation = completedDirection === expectedDirection && !this.crystalState.wrongDirectionStarted;
                         
                         if (isCorrectRotation) {
-                            // Only count correct rotations in sequence
+                            // ONLY correct rotations count - increment progress
                             this.crystalState.rotationSequence.push(completedDirection);
                             this.crystalState.rotationRounds += 1;
                             
@@ -1521,28 +1521,26 @@ class BiometricDataCollector {
                             crystal.classList.add('rotation-feedback');
                             setTimeout(() => crystal.classList.remove('rotation-feedback'), 800);
                             
-                            console.log(`✅ Correct rotation ${this.crystalState.rotationRounds} completed: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
-                            console.log(`📊 Rotation sequence: [${this.crystalState.rotationSequence.map(d => d === 1 ? 'CW' : 'CCW').join(', ')}]`);
+                            console.log(`✅ CORRECT rotation ${this.crystalState.rotationRounds} completed: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
+                            console.log(`📊 Progress updated: ${this.crystalState.rotationRounds}/3`);
                             
                             // Update progress to show completed rotation
                             this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (CW → CCW → CW)`);
                             
-                            // If task is not completed, show guidance for next rotation
-                            if (this.crystalState.rotationRounds < 3) {
-                                const nextDirection = this.getExpectedRotationDirection();
-                                console.log(`🔄 Next expected rotation: ${nextDirection === 1 ? 'CW' : 'CCW'}`);
-                            }
-                            
                             // Check if we have completed all 3 correct rotations
                             if (this.crystalState.rotationRounds >= 3) {
-                                console.log('✅ All 3 correct rotations completed: CW → CCW → CW');
+                                console.log('✅ ALL 3 CORRECT ROTATIONS COMPLETED: CW → CCW → CW');
                                 this.crystalState.rotationCompleted = true; // Mark as completed
                                 this.completeStep();
+                            } else {
+                                // Show guidance for next rotation
+                                const nextDirection = this.getExpectedRotationDirection();
+                                console.log(`🔄 Next required rotation: ${nextDirection === 1 ? 'CW' : 'CCW'} (Round ${this.crystalState.rotationRounds})`);
                             }
                         } else {
-                            // Wrong direction - show feedback but don't count and don't change progress at all
+                            // WRONG direction - show feedback but NO PROGRESS
                             this.showWrongDirectionFeedback();
-                            console.log(`❌ Wrong rotation direction! Expected: ${expectedDirection === 1 ? 'CW' : 'CCW'}, Got: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
+                            console.log(`❌ WRONG rotation direction! Expected: ${expectedDirection === 1 ? 'CW' : 'CCW'} for Round ${this.crystalState.rotationRounds}, Got: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
                             console.log(`📊 Progress unchanged: ${this.crystalState.rotationRounds}/3`);
                         }
                         
@@ -1721,10 +1719,13 @@ class BiometricDataCollector {
     // Helper method to get expected rotation direction based on current step
     getExpectedRotationDirection() {
         const currentRound = this.crystalState.rotationRounds;
-        // Round 0: CW (1), Round 1: CCW (-1), Round 2: CW (1)
-        if (currentRound === 0) return 1; // CW
-        if (currentRound === 1) return -1; // CCW
-        if (currentRound === 2) return 1; // CW
+        // STRICT RULES:
+        // Round 0: ONLY CW (1)
+        // Round 1: ONLY CCW (-1) 
+        // Round 2: ONLY CW (1)
+        if (currentRound === 0) return 1; // ONLY CW allowed
+        if (currentRound === 1) return -1; // ONLY CCW allowed
+        if (currentRound === 2) return 1; // ONLY CW allowed
         return null; // Should not happen
     }
     
@@ -1857,19 +1858,19 @@ class BiometricDataCollector {
     updateStepProgress(progress) {
         document.getElementById('step-progress').textContent = progress;
         
-        // Enhanced guidance for rotation step
+        // STRICT guidance for rotation step
         if (this.currentCrystalStep === 2) {
             const stepStatus = document.getElementById('step-status');
             if (this.crystalState.rotationCompleted) {
                 stepStatus.textContent = 'Perfect! All rotations completed - Next step available';
             } else if (this.crystalState.rotationRounds === 0) {
-                stepStatus.textContent = 'Touch crystal surface, then rotate clockwise for one full rotation';
+                stepStatus.textContent = 'STRICT: Touch crystal, then rotate CLOCKWISE only for one full rotation';
             } else if (this.crystalState.rotationRounds === 1) {
-                stepStatus.textContent = 'Green light! Now rotate counter-clockwise for one full rotation';
+                stepStatus.textContent = 'Green light! STRICT: Now rotate COUNTER-CLOCKWISE only for one full rotation';
             } else if (this.crystalState.rotationRounds === 2) {
-                stepStatus.textContent = 'Second green light! Now rotate clockwise again for one full rotation';
+                stepStatus.textContent = 'Second green light! STRICT: Now rotate CLOCKWISE only for one full rotation';
             } else {
-                stepStatus.textContent = 'Follow the sequence: CW → CCW → CW (green light after each)';
+                stepStatus.textContent = 'STRICT RULES: CW → CCW → CW (only these directions work)';
             }
         }
     }
