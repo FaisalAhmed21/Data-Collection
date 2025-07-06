@@ -1788,6 +1788,7 @@ class BiometricDataCollector {
                     this.crystalState.rotationDirection = null; // 1 = CW, -1 = CCW
                     this.crystalState.rotationAccumulated = 0;
                     this.crystalState.wrongDirectionStarted = false; // Reset wrong direction flag for new attempt
+                    this.crystalState.rotationProcessed = false; // NEW: Prevent double processing
                     // DO NOT reset rotationRounds or rotationSequence - preserve progress
                     // DO NOT reset rotationCompleted - preserve completion status
                     crystal.classList.add('active');
@@ -1806,6 +1807,11 @@ class BiometricDataCollector {
                     // Allow movements even after completion, but don't process them
                     if (this.crystalState.rotationCompleted) {
                         console.log('✅ Rotation task completed - allowing free movement, progress permanently at 3/3');
+                        return;
+                    }
+                    
+                    // NEW: Prevent processing if rotation was already processed this touch
+                    if (this.crystalState.rotationProcessed) {
                         return;
                     }
                     
@@ -1845,6 +1851,9 @@ class BiometricDataCollector {
             
                     // Check for full rotation completion (2π radians = 360 degrees)
                     if (Math.abs(this.crystalState.rotationAccumulated) >= 2 * Math.PI) {
+                        // NEW: Mark as processed to prevent double counting
+                        this.crystalState.rotationProcessed = true;
+                        
                         // Record the completed rotation direction
                         const completedDirection = this.crystalState.rotationDirection;
                         
@@ -2197,6 +2206,7 @@ class BiometricDataCollector {
             rotationSequence: [], // Reset rotation sequence
             rotationCompleted: false, // Reset rotation completion status
             wrongDirectionStarted: false, // Reset wrong direction flag
+            rotationProcessed: false, // NEW: Prevent double processing
             // Preserve trial tracking
             currentTrial: currentTrial,
             stepStartTime: performance.now()
@@ -2381,30 +2391,14 @@ class BiometricDataCollector {
             const change = dist / this.galleryZoom.initialDistance;
             this.galleryZoom.scale = Math.max(0.5, Math.min(3.0, this.galleryZoom.scale * change));
             this.galleryZoom.initialDistance = dist;
-            this.galleryZoom.zoomPersistent = true; // Mark zoom as persistent
             this.updateImageTransform();
             this.updateZoomLevel();
         }
         else if (e.touches.length === 1 && this.galleryZoom.isPanning) {
-            // single-finger pan - enhanced with boundaries
+            // single-finger pan
             const t = e.touches[0];
-            const newTranslateX = t.clientX - this.galleryZoom.startX;
-            const newTranslateY = t.clientY - this.galleryZoom.startY;
-            
-            // Calculate boundaries to prevent over-panning
-            const container = document.querySelector('.popup-image-container');
-            if (container) {
-                const containerRect = container.getBoundingClientRect();
-                const maxTranslateX = (this.galleryZoom.scale - 1) * containerRect.width / 2;
-                const maxTranslateY = (this.galleryZoom.scale - 1) * containerRect.height / 2;
-                
-                this.galleryZoom.translateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, newTranslateX));
-                this.galleryZoom.translateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, newTranslateY));
-            } else {
-                this.galleryZoom.translateX = newTranslateX;
-                this.galleryZoom.translateY = newTranslateY;
-            }
-            
+            this.galleryZoom.translateX = t.clientX - this.galleryZoom.startX;
+            this.galleryZoom.translateY = t.clientY - this.galleryZoom.startY;
             this.updateImageTransform();
         }
     
@@ -2609,7 +2603,6 @@ class BiometricDataCollector {
                     this.galleryZoom.scale = 2.0;
                     this.galleryZoom.translateX = 0;
                     this.galleryZoom.translateY = 0;
-                    this.galleryZoom.zoomPersistent = true; // Mark zoom as persistent
                     this.updateImageTransform();
                     this.updateZoomLevel();
                 }
@@ -2634,7 +2627,6 @@ class BiometricDataCollector {
     // 8. Zoom methods
     zoomIn() {
         this.galleryZoom.scale = Math.min(this.galleryZoom.scale * 1.2, 3.0);
-        this.galleryZoom.zoomPersistent = true; // Mark zoom as persistent
         this.updateImageTransform();
         this.updateZoomLevel();
     }
@@ -2644,7 +2636,6 @@ class BiometricDataCollector {
         if (this.galleryZoom.scale <= 1) {
             this.galleryZoom.translateX = 0;
             this.galleryZoom.translateY = 0;
-            this.galleryZoom.zoomPersistent = false; // Reset persistence when back to normal size
         }
         this.updateImageTransform();
         this.updateZoomLevel();
@@ -2656,7 +2647,6 @@ class BiometricDataCollector {
         this.galleryZoom.translateY = 0;
         this.galleryZoom.isPinching = false;
         this.galleryZoom.isPanning = false;
-        this.galleryZoom.zoomPersistent = false; // Reset zoom persistence
         this.updateImageTransform();
         this.updateZoomLevel();
         console.log('🔍 Zoom reset to 100%');
