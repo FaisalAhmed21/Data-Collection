@@ -198,12 +198,18 @@ html {
   color: var(--color-text);
   background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
-  box-sizing: border-box;
+  /* Ensure proper scaling on all devices */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   padding: 0;
+  /* Ensure proper scaling on all devices */
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 *,
@@ -539,11 +545,35 @@ select.form-control {
   margin-left: auto;
   padding-right: var(--space-16);
   padding-left: var(--space-16);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (min-width: 640px) {
   .container {
     max-width: var(--container-sm);
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding-right: var(--space-12);
+    padding-left: var(--space-12);
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding-right: var(--space-8);
+    padding-left: var(--space-8);
+  }
+}
+
+@media (max-width: 360px) {
+  .container {
+    padding-right: var(--space-6);
+    padding-left: var(--space-6);
   }
 }
 
@@ -1410,71 +1440,130 @@ select.form-control {
   width: 0%;
 }
 
-/* Responsive Design */
+/* Responsive Design for All Screen Sizes */
 @media (max-width: 768px) {
   .screen {
+    padding: var(--space-12);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .welcome-content {
+    text-align: center;
+    max-width: 100%;
     padding: var(--space-16);
   }
 
+  .welcome-content h1 {
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+    margin-bottom: var(--space-16);
+  }
+
+  .welcome-content p {
+    font-size: clamp(0.875rem, 2vw, 1rem);
+    margin-bottom: var(--space-24);
+  }
+
+  .typing-content {
+    max-width: 100%;
+    padding: var(--space-16);
+  }
+
+  .typing-content h2 {
+    font-size: clamp(1.25rem, 4vw, 1.75rem);
+    margin-bottom: var(--space-16);
+  }
+
+  .sentence-display {
+    margin: var(--space-16) 0;
+    padding: var(--space-12);
+  }
+
+  .sentence-display p {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+    line-height: 1.6;
+  }
+
+  .typing-area textarea {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+    min-height: 80px;
+    padding: var(--space-12);
+  }
+
   .crystal-area {
-    width: 280px;
-    height: 280px;
+    width: clamp(200px, 50vw, 280px);
+    height: clamp(200px, 50vw, 280px);
     margin: var(--space-16) auto;
   }
 
   .crystal {
-    width: 200px;
-    height: 200px;
+    width: clamp(140px, 35vw, 200px);
+    height: clamp(140px, 35vw, 200px);
   }
 
   .crystal-feedback {
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-12);
+    gap: var(--space-8);
     margin: var(--space-16) 0;
     padding: var(--space-12);
   }
 
   .feedback-item {
-    padding: var(--space-12);
+    padding: var(--space-8);
   }
 
   .feedback-label {
-    font-size: var(--font-size-xs);
+    font-size: clamp(0.75rem, 2vw, 0.875rem);
   }
 
   .feedback-value {
-    font-size: var(--font-size-md);
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
   }
 
   .crystal-controls {
     flex-direction: column;
-    gap: var(--space-12);
+    gap: var(--space-8);
     margin-top: var(--space-16);
     padding: var(--space-16);
   }
 
   .crystal-step-info h3 {
-    font-size: var(--font-size-lg);
+    font-size: clamp(1rem, 3vw, 1.25rem);
     text-align: center;
+    margin-bottom: var(--space-8);
   }
 
   .crystal-step-info p {
-    font-size: var(--font-size-sm);
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
     text-align: center;
+    line-height: 1.5;
   }
 
   .typing-stats {
     justify-content: center;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .stat {
+    padding: var(--space-8);
   }
 
   .export-actions {
     flex-direction: column;
     align-items: center;
+    gap: var(--space-12);
   }
 
   .gallery-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--space-12);
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
+  }
+
+  .gallery-item {
+    aspect-ratio: 1;
   }
 
   .popup-image-container {
@@ -1486,6 +1575,9 @@ select.form-control {
     bottom: 60px;
     gap: var(--space-8);
     padding: var(--space-6) var(--space-12);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
   }
 
   .zoom-in,
@@ -1493,6 +1585,8 @@ select.form-control {
     width: 32px;
     height: 32px;
     font-size: 1rem;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .zoom-reset {
@@ -1505,38 +1599,202 @@ select.form-control {
   }
 
   .pressure-indicator {
-    width: 200px;
+    width: clamp(150px, 50vw, 200px);
     height: 12px;
     bottom: -60px;
   }
+
+  .btn {
+    padding: var(--space-10) var(--space-16);
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+    min-height: 44px;
+  }
+
+  .btn--lg {
+    padding: var(--space-12) var(--space-20);
+    font-size: clamp(1rem, 3vw, 1.125rem);
+  }
 }
 
-/* Extra small devices */
+/* Extra small devices and very small phones */
 @media (max-width: 480px) {
+  .screen {
+    padding: var(--space-8);
+  }
+
+  .welcome-content {
+    padding: var(--space-12);
+  }
+
+  .welcome-content h1 {
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+  }
+
+  .welcome-content p {
+    font-size: clamp(0.8rem, 1.8vw, 0.9rem);
+  }
+
+  .typing-content {
+    padding: var(--space-12);
+  }
+
+  .typing-content h2 {
+    font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+  }
+
+  .sentence-display p {
+    font-size: clamp(0.8rem, 2.2vw, 0.9rem);
+  }
+
+  .typing-area textarea {
+    font-size: clamp(0.8rem, 2.2vw, 0.9rem);
+    min-height: 60px;
+  }
+
   .crystal-area {
-    width: 240px;
-    height: 240px;
+    width: clamp(160px, 45vw, 240px);
+    height: clamp(160px, 45vw, 240px);
   }
 
   .crystal {
-    width: 160px;
-    height: 160px;
+    width: clamp(100px, 30vw, 160px);
+    height: clamp(100px, 30vw, 160px);
   }
 
   .crystal-feedback {
     grid-template-columns: 1fr;
-    gap: var(--space-8);
+    gap: var(--space-6);
+    padding: var(--space-8);
+  }
+
+  .feedback-item {
+    padding: var(--space-6);
+  }
+
+  .feedback-label {
+    font-size: clamp(0.7rem, 1.8vw, 0.8rem);
+  }
+
+  .feedback-value {
+    font-size: clamp(0.8rem, 2.2vw, 0.9rem);
   }
 
   .crystal-controls {
     padding: var(--space-12);
+    gap: var(--space-6);
   }
 
   .crystal-step-info h3 {
-    font-size: var(--font-size-md);
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
   }
 
   .crystal-step-info p {
-    font-size: var(--font-size-xs);
+    font-size: clamp(0.8rem, 2.2vw, 0.9rem);
+  }
+
+  .btn {
+    padding: var(--space-8) var(--space-12);
+    font-size: clamp(0.8rem, 2.2vw, 0.9rem);
+    min-height: 40px;
+  }
+
+  .btn--lg {
+    padding: var(--space-10) var(--space-16);
+    font-size: clamp(0.9rem, 2.5vw, 1rem);
+  }
+
+  .gallery-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .zoom-controls {
+    bottom: 40px;
+    padding: var(--space-4) var(--space-8);
+  }
+
+  .zoom-in,
+  .zoom-out {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .pressure-indicator {
+    width: clamp(120px, 45vw, 150px);
+    height: 10px;
+    bottom: -50px;
+  }
+}
+
+/* Ultra small devices (very small phones) */
+@media (max-width: 360px) {
+  .screen {
+    padding: var(--space-6);
+  }
+
+  .welcome-content,
+  .typing-content {
+    padding: var(--space-8);
+  }
+
+  .welcome-content h1 {
+    font-size: clamp(1.1rem, 4.5vw, 1.5rem);
+  }
+
+  .welcome-content p {
+    font-size: clamp(0.75rem, 1.6vw, 0.85rem);
+  }
+
+  .typing-content h2 {
+    font-size: clamp(1rem, 3vw, 1.25rem);
+  }
+
+  .crystal-area {
+    width: clamp(140px, 40vw, 200px);
+    height: clamp(140px, 40vw, 200px);
+  }
+
+  .crystal {
+    width: clamp(80px, 25vw, 120px);
+    height: clamp(80px, 25vw, 120px);
+  }
+
+  .crystal-feedback {
+    padding: var(--space-6);
+  }
+
+  .feedback-item {
+    padding: var(--space-4);
+  }
+
+  .crystal-controls {
+    padding: var(--space-8);
+  }
+
+  .btn {
+    padding: var(--space-6) var(--space-10);
+    font-size: clamp(0.75rem, 2vw, 0.85rem);
+    min-height: 36px;
+  }
+
+  .gallery-grid {
+    gap: var(--space-4);
+  }
+
+  .zoom-controls {
+    bottom: 30px;
+    padding: var(--space-3) var(--space-6);
+  }
+
+  .zoom-in,
+  .zoom-out {
+    width: 24px;
+    height: 24px;
+    font-size: 0.8rem;
+    min-width: 36px;
+    min-height: 36px;
   }
 }
