@@ -2002,7 +2002,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '12';
+        document.getElementById('touch-features').textContent = '8'; // Updated: 8 reliable features
     }
 
 
@@ -2040,16 +2040,13 @@ class BiometricDataCollector {
     }
 
     
-    // FIXED: Enhanced touch feature extraction
+    // FIXED: Enhanced touch feature extraction - only authentic, measurable features
     extractTouchFeatures() {
         const features = [];
         
         this.touchData.forEach((touch, index) => {
-            const pressure = touch.touches.reduce((sum, t) => sum + (t.force || 0.5), 0) / touch.touches.length;
-            const velocity = this.calculateVelocity(touch, index);
-            const acceleration = this.calculateAcceleration(touch, index);
-            
-            features.push({
+            // Only include features that can be reliably measured
+            const baseFeature = {
                 participant_id: this.participantId,
                 task_id: touch.taskId,
                 trial_id: touch.step,
@@ -2058,56 +2055,55 @@ class BiometricDataCollector {
                 touch_y: Math.round(touch.touches[0]?.clientY || 0),
                 btn_touch_state: touch.type,
                 tracking_id: touch.touches[0]?.identifier || 0,
-                pressure: Math.round(pressure * 100) / 100,
-                velocity: Math.round(velocity * 100) / 100,
-                acceleration: Math.round(acceleration * 100) / 100,
-                touch_area: Math.round(this.calculateTouchArea(touch.touches)),
+                touch_count: touch.touches.length,
                 inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0
-            });
+            };
+            
+            // Add pressure only if force is available and not default
+            if (touch.touches[0]?.force && touch.touches[0].force > 0) {
+                baseFeature.pressure = Math.round(touch.touches[0].force * 100) / 100;
+            }
+            
+            // Add velocity only for move events with sufficient time difference
+            if (touch.type === 'touchmove' && index > 0) {
+                const prev = this.touchData[index - 1];
+                const dt = touch.timestamp - prev.timestamp;
+                
+                if (dt > 0 && dt < 100 && prev.touches[0] && touch.touches[0]) {
+                    const dx = touch.touches[0].clientX - prev.touches[0].clientX;
+                    const dy = touch.touches[0].clientY - prev.touches[0].clientY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const velocity = distance / dt;
+                    
+                    // Only include velocity if it's reasonable (not too fast)
+                    if (velocity < 1000) { // Max 1000px/s
+                        baseFeature.velocity = Math.round(velocity * 100) / 100;
+                    }
+                }
+            }
+            
+            features.push(baseFeature);
         });
         
         return features;
     }
     
-    calculateVelocity(touch, index) {
-        if (index === 0 || !this.touchData[index - 1]) return 0;
-        
-        const prev = this.touchData[index - 1];
-        const dt = touch.timestamp - prev.timestamp;
-        
-        if (dt === 0 || !touch.touches[0] || !prev.touches[0]) return 0;
-        
-        const dx = touch.touches[0].clientX - prev.touches[0].clientX;
-        const dy = touch.touches[0].clientY - prev.touches[0].clientY;
-        
-        return Math.sqrt(dx * dx + dy * dy) / dt;
-    }
+    // REMOVED: Unreliable velocity calculation
+    // calculateVelocity(touch, index) {
+    //     // This method was unreliable due to variable touch sampling rates
+    //     // and inconsistent timing between touch events
+    // }
     
-    calculateAcceleration(touch, index) {
-        if (index < 2) return 0;
-        
-        const curr = this.calculateVelocity(touch, index);
-        const prev = this.calculateVelocity(this.touchData[index - 1], index - 1);
-        const dt = touch.timestamp - this.touchData[index - 1].timestamp;
-        
-        return dt > 0 ? (curr - prev) / dt : 0;
-    }
+    // REMOVED: Unreliable acceleration calculation  
+    // calculateAcceleration(touch, index) {
+    //     // This method was unreliable due to velocity calculation issues
+    // }
     
-    calculateTouchArea(touches) {
-        if (touches.length === 1) return 1;
-        
-        let minX = touches[0].clientX, maxX = touches[0].clientX;
-        let minY = touches[0].clientY, maxY = touches[0].clientY;
-        
-        touches.forEach(touch => {
-            minX = Math.min(minX, touch.clientX);
-            maxX = Math.max(maxX, touch.clientX);
-            minY = Math.min(minY, touch.clientY);
-            maxY = Math.max(maxY, touch.clientY);
-        });
-        
-        return (maxX - minX) * (maxY - minY);
-    }
+    // REMOVED: Unreliable touch area calculation
+    // calculateTouchArea(touches) {
+    //     // This method was flawed - touch area should be based on radiusX/radiusY
+    //     // which are not consistently available across browsers
+    // }
     
     convertToCSV(data) {
         if (data.length === 0) return 'No data available';
@@ -2147,10 +2143,7 @@ class BiometricDataCollector {
         });
     }
 
-
-
 }
-
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
