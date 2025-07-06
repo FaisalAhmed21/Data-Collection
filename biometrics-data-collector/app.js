@@ -82,6 +82,7 @@ class BiometricDataCollector {
             rotationDirection: null,
             rotationRounds: 0,
             rotationSequence: [],
+            rotationCompleted: false, // Track if rotation task is completed
             currentTrial: 1,
             stepStartTime: null
         };
@@ -1429,12 +1430,19 @@ class BiometricDataCollector {
                     this.crystalState.rotationDirection = null; // 1 = CW, -1 = CCW
                     this.crystalState.rotationAccumulated = 0;
                     this.crystalState.rotationSequence = []; // Track rotation sequence: CW=1, CCW=-1
+                    this.crystalState.rotationCompleted = false; // Track if task is completed
                     crystal.classList.add('active');
                     this.updateStepProgress(`0/3 (CW → CCW → CW)`);
                     console.log('🔄 Rotation started - touch anywhere on crystal surface');
                 }
             
                 else if (phase === 'move') {
+                    // BLOCK: If rotation task is already completed, ignore all movements
+                    if (this.crystalState.rotationCompleted) {
+                        console.log('🚫 Rotation task completed - ignoring additional movements');
+                        return;
+                    }
+                    
                     let delta = angle - this.crystalState.lastAngle;
                     if (delta > Math.PI) delta -= 2 * Math.PI;
                     if (delta < -Math.PI) delta += 2 * Math.PI;
@@ -1496,6 +1504,7 @@ class BiometricDataCollector {
                             
                             if (JSON.stringify(actualSequence) === JSON.stringify(expectedSequence)) {
                                 console.log('✅ Correct rotation sequence achieved: CW → CCW → CW');
+                                this.crystalState.rotationCompleted = true; // Mark as completed
                                 this.completeStep();
                             } else {
                                 console.log('❌ Wrong rotation sequence! Need: CW → CCW → CW');
@@ -1503,6 +1512,7 @@ class BiometricDataCollector {
                                 // Reset to allow correct sequence
                                 this.crystalState.rotationRounds = 0;
                                 this.crystalState.rotationSequence = [];
+                                this.crystalState.rotationCompleted = false;
                                 this.updateStepProgress(`0/3 (CW → CCW → CW) - Try again!`);
                             }
                         }
@@ -1732,6 +1742,7 @@ class BiometricDataCollector {
             rotationDirection: null,
             rotationRounds: 0,
             rotationSequence: [], // Reset rotation sequence
+            rotationCompleted: false, // Reset rotation completion status
             // Preserve trial tracking
             currentTrial: currentTrial,
             stepStartTime: performance.now()
@@ -1787,14 +1798,16 @@ class BiometricDataCollector {
         // Enhanced guidance for rotation step
         if (this.currentCrystalStep === 2) {
             const stepStatus = document.getElementById('step-status');
-            if (this.crystalState.rotationRounds === 0) {
+            if (this.crystalState.rotationCompleted) {
+                stepStatus.textContent = 'Perfect! All rotations completed';
+            } else if (this.crystalState.rotationRounds === 0) {
                 stepStatus.textContent = 'Touch crystal and rotate clockwise';
             } else if (this.crystalState.rotationRounds === 1) {
                 stepStatus.textContent = 'Now rotate counter-clockwise';
             } else if (this.crystalState.rotationRounds === 2) {
                 stepStatus.textContent = 'Finally rotate clockwise again';
-            } else if (this.crystalState.rotationRounds >= 3) {
-                stepStatus.textContent = 'Perfect! All rotations completed';
+            } else {
+                stepStatus.textContent = 'Follow the sequence: CW → CCW → CW';
             }
         }
     }
