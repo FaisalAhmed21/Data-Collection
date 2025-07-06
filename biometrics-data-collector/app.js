@@ -361,9 +361,13 @@ class BiometricDataCollector {
                     const shiftTime = Math.round(totalTime * shiftTimeRatio);
                     const charTime = totalTime - shiftTime;
                     
-                    // Record shift with logical timing
+                    // Ensure shift occurs before character with positive timing
+                    const characterTimestamp = timestamp + i;
+                    const shiftTimestamp = Math.max(characterTimestamp - shiftTime, characterTimestamp - 100); // Ensure minimum 100ms before character
+                    
+                    // Record shift with logical timing (always before character)
                     this.recordKeystroke({
-                        timestamp: timestamp + i - shiftTime,
+                        timestamp: shiftTimestamp,
                         actualChar: 'SHIFT',
                         keyCode: 16,
                         type: inputType,
@@ -373,7 +377,7 @@ class BiometricDataCollector {
                         clientY: this.pointerTracking.y
                     });
                     
-                    console.log(`Shift timing: ${shiftTime}ms before character, ${charTime}ms after shift`);
+                    console.log(`Shift timing: ${characterTimestamp - shiftTimestamp}ms before character, ${charTime}ms after shift`);
                 }
               
 
@@ -395,13 +399,16 @@ class BiometricDataCollector {
                     // Enhanced character handling for all characters including quotes and smart characters
                     let refChar = char;
                     
+                    // Debug: Log the actual character being processed
+                    console.log('Processing character:', char, 'charCode:', char.charCodeAt(0), 'type:', inputType);
+                    
                     // Handle smart quotes and apostrophes (common in mobile keyboards)
-                    if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´') {
+                    if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵') {
                         refChar = "'"; // Single quote/apostrophe - all variants
-                        console.log('Single quote detected:', char, '-> stored as:', refChar);
-                    } else if (char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟') {
+                        console.log('✅ Single quote detected:', char, '-> stored as:', refChar);
+                    } else if (char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟' || char === '″' || char === '‶') {
                         refChar = '"'; // Double quote - all variants
-                        console.log('Double quote detected:', char, '-> stored as:', refChar);
+                        console.log('✅ Double quote detected:', char, '-> stored as:', refChar);
                     } else if (char === '-' || char === '–' || char === '—') {
                         refChar = '-'; // Hyphen/dash
                     } else if (char === '.' || char === '…') {
@@ -500,12 +507,13 @@ class BiometricDataCollector {
                     }
                     
                     // Debug logging for quote characters
-                    if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´') {
-                        console.log('Quote detected:', char, '-> stored as:', refChar);
+                    if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟' || char === '″' || char === '‶') {
+                        console.log('🔍 Quote processing complete - Final refChar:', refChar);
                     }
                     
                     // Check if character should be recorded (deduplication)
                     if (this.shouldRecordChar(refChar, timestamp + i)) {
+                        console.log('📝 Recording keystroke:', refChar, 'type:', inputType, 'timestamp:', timestamp + i);
                         this.recordKeystroke({
                             timestamp: timestamp + i,
                             actualChar: refChar,
@@ -516,6 +524,8 @@ class BiometricDataCollector {
                             clientX: this.pointerTracking.x,
                             clientY: this.pointerTracking.y
                         });
+                    } else {
+                        console.log('❌ Character duplicate ignored:', refChar);
                     }
                 }
                 
@@ -528,15 +538,18 @@ class BiometricDataCollector {
         // Handle other input types like paste, cut, etc.
         else if (inputType && data) {
             let refChar = data;
+            
+            // Debug: Log the actual data being processed
+            console.log('Processing other input data:', data, 'charCode:', data.charCodeAt(0), 'type:', inputType);
     
             if (data === ' ') {
                 refChar = 'SPACE';
-            } else if (data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´') {
+            } else if (data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´' || data === '′' || data === '‵') {
                 refChar = "'"; // Single quote/apostrophe - all variants
-                console.log('Single quote detected:', data, '-> stored as:', refChar);
-            } else if (data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟') {
+                console.log('✅ Single quote detected (other input):', data, '-> stored as:', refChar);
+            } else if (data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶') {
                 refChar = '"'; // Double quote - all variants
-                console.log('Double quote detected:', data, '-> stored as:', refChar);
+                console.log('✅ Double quote detected (other input):', data, '-> stored as:', refChar);
             } else if (data === '–' || data === '—') {
                 refChar = '-'; // En dash and em dash
             } else if (data === '…') {
@@ -623,6 +636,11 @@ class BiometricDataCollector {
                 // For all other characters, use as-is
                 refChar = data;
             }
+            
+            // Debug logging for quote characters
+            if (data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´' || data === '′' || data === '‵' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶') {
+                console.log('🔍 Quote processing complete (other input) - Final refChar:', refChar);
+            }
     
             // Apply shift detection logic for other input types
             const isUpper = data.match(/[A-Z]/);
@@ -651,8 +669,12 @@ class BiometricDataCollector {
                 const shiftTime = Math.round(totalTime * shiftTimeRatio);
                 const charTime = totalTime - shiftTime;
                 
+                // Ensure shift occurs before character with positive timing
+                const characterTimestamp = timestamp;
+                const shiftTimestamp = Math.max(characterTimestamp - shiftTime, characterTimestamp - 100); // Ensure minimum 100ms before character
+                
                 this.recordKeystroke({
-                    timestamp: timestamp - shiftTime,
+                    timestamp: shiftTimestamp,
                     actualChar: 'SHIFT',
                     keyCode: 16,
                     type: inputType,
@@ -662,11 +684,12 @@ class BiometricDataCollector {
                     clientY: this.pointerTracking.y
                 });
                 
-                console.log(`Shift timing (other input): ${shiftTime}ms before character, ${charTime}ms after shift`);
+                console.log(`Shift timing (other input): ${characterTimestamp - shiftTimestamp}ms before character, ${charTime}ms after shift`);
             }
     
             // Check if character should be recorded (deduplication)
             if (this.shouldRecordChar(refChar, timestamp)) {
+                console.log('📝 Recording keystroke (other input):', refChar, 'type:', inputType, 'timestamp:', timestamp);
                 this.recordKeystroke({
                     timestamp,
                     actualChar: refChar,
@@ -677,6 +700,8 @@ class BiometricDataCollector {
                     clientX: this.pointerTracking.x,
                     clientY: this.pointerTracking.y
                 });
+            } else {
+                console.log('❌ Character duplicate ignored (other input):', refChar);
             }
             
             // Update previous character
@@ -1090,6 +1115,33 @@ class BiometricDataCollector {
         }
         
         return chars;
+    }
+    
+    // Helper method to test quote handling specifically
+    testQuoteHandling() {
+        console.log('🔍 Testing quote handling for mobile keyboards (Gboard, iOS):');
+        
+        // Check if quotes are in the recorded data
+        const quotes = this.keystrokeData.filter(k => k.actualChar === "'" || k.actualChar === '"');
+        console.log('Quotes found in keystroke data:', quotes.length);
+        
+        if (quotes.length > 0) {
+            console.log('Quote details:');
+            quotes.forEach((quote, i) => {
+                console.log(`  Quote ${i + 1}: "${quote.actualChar}" at timestamp ${Math.round(quote.timestamp)}ms, type: ${quote.type}`);
+            });
+        } else {
+            console.log('❌ No quotes found in keystroke data!');
+        }
+        
+        // Test character detection
+        const testChars = ["'", "'", "'", "'", "'", "'", "`", "´", "′", "‵", '"', '"', '"', '"', '"', '"', "„", "‟", "″", "‶"];
+        console.log('Testing character detection:');
+        testChars.forEach(char => {
+            console.log(`  "${char}" (${char.charCodeAt(0)}) -> should be normalized`);
+        });
+        
+        return quotes;
     }
     
     // Crystal Game Methods
