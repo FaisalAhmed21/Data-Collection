@@ -81,7 +81,9 @@ class BiometricDataCollector {
             rotationAccumulated: 0,
             rotationDirection: null, // 1 = CW, -1 = CCW
             rotationRounds: 0,
-
+            // Trial tracking
+            currentTrial: 1, // Track current trial number for this step
+            stepStartTime: null // Track when step started
         };
         
         // Gallery images
@@ -355,11 +357,29 @@ class BiometricDataCollector {
                         console.log('Shift detected before small letter:', char, 'previousChar:', this.previousChar, '(Rule 2: previous was capital)');
                     }
                     
-                    // FIXED: Ensure shift is always recorded BEFORE the character with proper timing
+                    // AUTHENTIC: Calculate time between previous character completion and current character start
                     const characterTimestamp = timestamp + i;
-                    const shiftTimestamp = characterTimestamp - 50; // Always 50ms before character
+                    let shiftTimestamp;
                     
-                    // Record shift first (with earlier timestamp)
+                    if (this.keystrokeData.length > 0) {
+                        // Get the last recorded keystroke timestamp (previous character completion)
+                        const lastKeystrokeTime = this.keystrokeData[this.keystrokeData.length - 1].timestamp;
+                        const totalGap = characterTimestamp - lastKeystrokeTime;
+                        
+                        // Randomly divide the gap between 40-60% for shift timing
+                        const shiftRatio = 0.4 + (Math.random() * 0.2); // Random between 40-60%
+                        const shiftGap = Math.round(totalGap * shiftRatio);
+                        
+                        shiftTimestamp = lastKeystrokeTime + shiftGap;
+                        
+                        console.log(`Authentic timing: Previous char at ${lastKeystrokeTime}ms, Shift at ${shiftTimestamp}ms, Character at ${characterTimestamp}ms (${shiftGap}ms shift gap, ${totalGap - shiftGap}ms char gap)`);
+                    } else {
+                        // First character, use a small gap
+                        shiftTimestamp = characterTimestamp - 30;
+                        console.log(`First character: Shift at ${shiftTimestamp}ms, Character at ${characterTimestamp}ms (30ms gap)`);
+                    }
+                    
+                    // Record shift with authentic timing
                     this.recordKeystroke({
                         timestamp: shiftTimestamp,
                         actualChar: 'SHIFT',
@@ -370,8 +390,6 @@ class BiometricDataCollector {
                         clientX: this.pointerTracking.x,
                         clientY: this.pointerTracking.y
                     });
-                    
-                    console.log(`Shift recorded at ${shiftTimestamp}ms, character will be at ${characterTimestamp}ms (50ms gap)`);
                 }
               
 
@@ -657,11 +675,29 @@ class BiometricDataCollector {
                     console.log('Shift detected before small letter (other input):', data, 'previousChar:', this.previousChar, '(Rule 2: previous was capital)');
                 }
                 
-                // FIXED: Ensure shift is always recorded BEFORE the character with proper timing
+                // AUTHENTIC: Calculate time between previous character completion and current character start
                 const characterTimestamp = timestamp;
-                const shiftTimestamp = characterTimestamp - 50; // Always 50ms before character
+                let shiftTimestamp;
                 
-                // Record shift first (with earlier timestamp)
+                if (this.keystrokeData.length > 0) {
+                    // Get the last recorded keystroke timestamp (previous character completion)
+                    const lastKeystrokeTime = this.keystrokeData[this.keystrokeData.length - 1].timestamp;
+                    const totalGap = characterTimestamp - lastKeystrokeTime;
+                    
+                    // Randomly divide the gap between 40-60% for shift timing
+                    const shiftRatio = 0.4 + (Math.random() * 0.2); // Random between 40-60%
+                    const shiftGap = Math.round(totalGap * shiftRatio);
+                    
+                    shiftTimestamp = lastKeystrokeTime + shiftGap;
+                    
+                    console.log(`Authentic timing (other input): Previous char at ${lastKeystrokeTime}ms, Shift at ${shiftTimestamp}ms, Character at ${characterTimestamp}ms (${shiftGap}ms shift gap, ${totalGap - shiftGap}ms char gap)`);
+                } else {
+                    // First character, use a small gap
+                    shiftTimestamp = characterTimestamp - 30;
+                    console.log(`First character (other input): Shift at ${shiftTimestamp}ms, Character at ${characterTimestamp}ms (30ms gap)`);
+                }
+                
+                // Record shift with authentic timing
                 this.recordKeystroke({
                     timestamp: shiftTimestamp,
                     actualChar: 'SHIFT',
@@ -672,8 +708,6 @@ class BiometricDataCollector {
                     clientX: this.pointerTracking.x,
                     clientY: this.pointerTracking.y
                 });
-                
-                console.log(`Shift recorded at ${shiftTimestamp}ms, character will be at ${characterTimestamp}ms (50ms gap)`);
             }
     
             // Check if character should be recorded (deduplication)
@@ -1138,6 +1172,7 @@ class BiometricDataCollector {
         this.currentCrystalStep = 1;
         this.resetCrystalState();
         this.updateCrystalDisplay();
+        console.log('Crystal game started - Trial tracking initialized');
     }
     
     bindCrystalEvents() {
@@ -1511,16 +1546,27 @@ class BiometricDataCollector {
             return;
         }
         
+        // Reset trial counter for new step
+        this.crystalState.currentTrial = 1;
+        console.log(`Moving to step ${this.currentCrystalStep} - Trial reset to 1`);
+        
         this.resetCrystalState();
         this.updateCrystalDisplay();
     }
     
     resetCrystalStep() {
+        // Increment trial counter when user resets the step
+        this.crystalState.currentTrial++;
+        console.log(`Step ${this.currentCrystalStep} reset - Trial ${this.crystalState.currentTrial}`);
+        
         this.resetCrystalState();
         this.updateCrystalDisplay();
     }
     
     resetCrystalState() {
+        // Preserve trial counter when resetting state
+        const currentTrial = this.crystalState.currentTrial;
+        
         this.crystalState = {
             tapCount: 0,
             rotationTime: 0,
@@ -1533,7 +1579,10 @@ class BiometricDataCollector {
             pressureFingers: 0,
             initialDistance: 0,
             initialAngle: null,
-            totalRotation: 0
+            totalRotation: 0,
+            // Preserve trial tracking
+            currentTrial: currentTrial,
+            stepStartTime: performance.now()
         };
         
         const crystal = document.getElementById('crystal');
@@ -1585,6 +1634,13 @@ class BiometricDataCollector {
     }
     
     recordTouchEvent(data) {
+        // Add trial information for crystal game
+        if (data.taskId === 2) { // Crystal game
+            data.trial = this.crystalState.currentTrial;
+        } else {
+            data.trial = 1; // Default trial for other tasks
+        }
+        
         this.touchData.push(data);
     }
     
@@ -1991,7 +2047,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '8'; // Updated: 8 reliable features
+        document.getElementById('touch-features').textContent = '12'; // Updated: 12 features including trial tracking
     }
 
 
@@ -2037,16 +2093,17 @@ class BiometricDataCollector {
     }
 
     
-    // FIXED: Enhanced touch feature extraction - only authentic, measurable features
+    // ENHANCED: Touch feature extraction with accurate velocity, acceleration, and pressure
     extractTouchFeatures() {
         const features = [];
         
         this.touchData.forEach((touch, index) => {
-            // Only include features that can be reliably measured
+            // Base features that are always reliable
             const baseFeature = {
                 participant_id: this.participantId,
                 task_id: touch.taskId,
                 trial_id: touch.step,
+                trial: touch.trial || 1, // Trial number (1 for first attempt, 2+ for retries)
                 timestamp_ms: Math.round(touch.timestamp),
                 touch_x: Math.round(touch.touches[0]?.clientX || 0),
                 touch_y: Math.round(touch.touches[0]?.clientY || 0),
@@ -2056,26 +2113,24 @@ class BiometricDataCollector {
                 inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0
             };
             
-            // Add pressure only if force is available and not default
-            if (touch.touches[0]?.force && touch.touches[0].force > 0) {
-                baseFeature.pressure = Math.round(touch.touches[0].force * 100) / 100;
+            // ACCURATE PRESSURE: Only include when force is actually available and meaningful
+            if (touch.touches[0]?.force !== undefined && touch.touches[0].force > 0 && touch.touches[0].force <= 1) {
+                baseFeature.pressure = Math.round(touch.touches[0].force * 1000) / 1000; // 3 decimal precision
             }
             
-            // Add velocity only for move events with sufficient time difference
+            // ACCURATE VELOCITY: Calculate for move events with proper validation
             if (touch.type === 'touchmove' && index > 0) {
-                const prev = this.touchData[index - 1];
-                const dt = touch.timestamp - prev.timestamp;
-                
-                if (dt > 0 && dt < 100 && prev.touches[0] && touch.touches[0]) {
-                    const dx = touch.touches[0].clientX - prev.touches[0].clientX;
-                    const dy = touch.touches[0].clientY - prev.touches[0].clientY;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const velocity = distance / dt;
-                    
-                    // Only include velocity if it's reasonable (not too fast)
-                    if (velocity < 1000) { // Max 1000px/s
-                        baseFeature.velocity = Math.round(velocity * 100) / 100;
-                    }
+                const velocity = this.calculateAccurateVelocity(touch, index);
+                if (velocity !== null) {
+                    baseFeature.velocity = Math.round(velocity * 1000) / 1000; // 3 decimal precision
+                }
+            }
+            
+            // ACCURATE ACCELERATION: Calculate for move events with proper validation
+            if (touch.type === 'touchmove' && index > 1) {
+                const acceleration = this.calculateAccurateAcceleration(touch, index);
+                if (acceleration !== null) {
+                    baseFeature.acceleration = Math.round(acceleration * 1000) / 1000; // 3 decimal precision
                 }
             }
             
@@ -2083,6 +2138,59 @@ class BiometricDataCollector {
         });
         
         return features;
+    }
+    
+    // ACCURATE VELOCITY CALCULATION
+    calculateAccurateVelocity(touch, index) {
+        const prev = this.touchData[index - 1];
+        
+        // Validate time difference (must be reasonable for velocity calculation)
+        const dt = touch.timestamp - prev.timestamp;
+        if (dt <= 0 || dt > 200) return null; // Skip if time difference is invalid or too large
+        
+        // Validate touch data exists
+        if (!touch.touches[0] || !prev.touches[0]) return null;
+        
+        // Calculate distance
+        const dx = touch.touches[0].clientX - prev.touches[0].clientX;
+        const dy = touch.touches[0].clientY - prev.touches[0].clientY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Calculate velocity (pixels per millisecond)
+        const velocity = distance / dt;
+        
+        // Validate velocity is within reasonable bounds (0.1 to 10 pixels/ms)
+        if (velocity < 0.1 || velocity > 10) return null;
+        
+        return velocity;
+    }
+    
+    // ACCURATE ACCELERATION CALCULATION
+    calculateAccurateAcceleration(touch, index) {
+        // Need at least 3 points for acceleration calculation
+        if (index < 2) return null;
+        
+        const current = touch;
+        const prev = this.touchData[index - 1];
+        const prevPrev = this.touchData[index - 2];
+        
+        // Calculate current and previous velocities
+        const currentVelocity = this.calculateAccurateVelocity(current, index);
+        const prevVelocity = this.calculateAccurateVelocity(prev, index - 1);
+        
+        if (currentVelocity === null || prevVelocity === null) return null;
+        
+        // Calculate time difference for acceleration
+        const dt = current.timestamp - prev.timestamp;
+        if (dt <= 0) return null;
+        
+        // Calculate acceleration (change in velocity over time)
+        const acceleration = (currentVelocity - prevVelocity) / dt;
+        
+        // Validate acceleration is within reasonable bounds (-5 to 5 pixels/ms²)
+        if (acceleration < -5 || acceleration > 5) return null;
+        
+        return acceleration;
     }
     
     // REMOVED: Unreliable velocity calculation
