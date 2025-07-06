@@ -195,9 +195,6 @@ class BiometricDataCollector {
         document.getElementById('participant-id').textContent = this.participantId;
     }
 
-
-
-    
     bindEvents() {
         // Welcome screen
         document.getElementById('start-btn').addEventListener('click', () => {
@@ -270,8 +267,6 @@ class BiometricDataCollector {
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
     }
-    
-
     
     switchScreen(screenName) {
         document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
@@ -452,7 +447,6 @@ class BiometricDataCollector {
             return;
         }
 
-    
         // Handle text insertion
         else if (inputType === 'insertText' && data) {
             for (let i = 0; i < data.length; i++) {
@@ -651,7 +645,6 @@ class BiometricDataCollector {
             }
         }
 
-    
         // Handle other input types like paste, cut, etc.
         else if (inputType && data) {
             let refChar = data;
