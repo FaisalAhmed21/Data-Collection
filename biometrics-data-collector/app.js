@@ -355,17 +355,11 @@ class BiometricDataCollector {
                         console.log('Shift detected before small letter:', char, 'previousChar:', this.previousChar, '(Rule 2: previous was capital)');
                     }
                     
-                    // Logical timing division: Randomly allocate time between shift and character
-                    const totalTime = 150; // Total time for shift + character sequence
-                    const shiftTimeRatio = Math.random() * 0.4 + 0.3; // Random ratio between 30% and 70%
-                    const shiftTime = Math.round(totalTime * shiftTimeRatio);
-                    const charTime = totalTime - shiftTime;
-                    
-                    // Ensure shift occurs before character with positive timing
+                    // FIXED: Ensure shift is always recorded BEFORE the character with proper timing
                     const characterTimestamp = timestamp + i;
-                    const shiftTimestamp = Math.max(characterTimestamp - shiftTime, characterTimestamp - 100); // Ensure minimum 100ms before character
+                    const shiftTimestamp = characterTimestamp - 50; // Always 50ms before character
                     
-                    // Record shift with logical timing (always before character)
+                    // Record shift first (with earlier timestamp)
                     this.recordKeystroke({
                         timestamp: shiftTimestamp,
                         actualChar: 'SHIFT',
@@ -377,7 +371,7 @@ class BiometricDataCollector {
                         clientY: this.pointerTracking.y
                     });
                     
-                    console.log(`Shift timing: ${characterTimestamp - shiftTimestamp}ms before character, ${charTime}ms after shift`);
+                    console.log(`Shift recorded at ${shiftTimestamp}ms, character will be at ${characterTimestamp}ms (50ms gap)`);
                 }
               
 
@@ -663,16 +657,11 @@ class BiometricDataCollector {
                     console.log('Shift detected before small letter (other input):', data, 'previousChar:', this.previousChar, '(Rule 2: previous was capital)');
                 }
                 
-                // Logical timing division: Randomly allocate time between shift and character
-                const totalTime = 150; // Total time for shift + character sequence
-                const shiftTimeRatio = Math.random() * 0.4 + 0.3; // Random ratio between 30% and 70%
-                const shiftTime = Math.round(totalTime * shiftTimeRatio);
-                const charTime = totalTime - shiftTime;
-                
-                // Ensure shift occurs before character with positive timing
+                // FIXED: Ensure shift is always recorded BEFORE the character with proper timing
                 const characterTimestamp = timestamp;
-                const shiftTimestamp = Math.max(characterTimestamp - shiftTime, characterTimestamp - 100); // Ensure minimum 100ms before character
+                const shiftTimestamp = characterTimestamp - 50; // Always 50ms before character
                 
+                // Record shift first (with earlier timestamp)
                 this.recordKeystroke({
                     timestamp: shiftTimestamp,
                     actualChar: 'SHIFT',
@@ -684,7 +673,7 @@ class BiometricDataCollector {
                     clientY: this.pointerTracking.y
                 });
                 
-                console.log(`Shift timing (other input): ${characterTimestamp - shiftTimestamp}ms before character, ${charTime}ms after shift`);
+                console.log(`Shift recorded at ${shiftTimestamp}ms, character will be at ${characterTimestamp}ms (50ms gap)`);
             }
     
             // Check if character should be recorded (deduplication)
@@ -2013,10 +2002,18 @@ class BiometricDataCollector {
         this.keystrokeData.forEach((keystroke, index) => {
             // Process all recorded keystrokes (input events, keydown, composition)
             if (keystroke.type === 'keydown' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete')) {
-                // Calculate flight time (time between keystrokes)
-                const flightTime = index > 0 ? 
-                    Math.round(keystroke.timestamp - this.keystrokeData[index - 1].timestamp) : 
-                    0;
+                // FIXED: Calculate flight time with validation to prevent negative values
+                let flightTime = 0;
+                if (index > 0) {
+                    const timeDiff = keystroke.timestamp - this.keystrokeData[index - 1].timestamp;
+                    // Ensure flight time is never negative
+                    flightTime = Math.max(0, Math.round(timeDiff));
+                    
+                    // Log any potential timing issues for debugging
+                    if (timeDiff < 0) {
+                        console.warn(`⚠️ Negative flight time detected: ${timeDiff}ms between "${this.keystrokeData[index - 1].actualChar}" and "${keystroke.actualChar}". Setting to 0.`);
+                    }
+                }
                 
                 // Determine if this was a deletion
                 const wasDeleted = (keystroke.actualChar === 'BACKSPACE' || 
