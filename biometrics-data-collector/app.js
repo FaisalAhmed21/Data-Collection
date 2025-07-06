@@ -282,14 +282,14 @@ class BiometricDataCollector {
             // ULTRA-STRICT deduplication for all mobile devices
             if (this.lastInputEvent === eventSignature && 
                 this.lastInputEventTime && 
-                (currentTime - this.lastInputEventTime) < 300) {
+                (currentTime - this.lastInputEventTime) < 500) {
                 console.log('🚫 Mobile duplicate input event BLOCKED (ultra-strict):', data, 'signature:', eventSignature, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
                 return;
             }
             
             if (this.lastChar === data && 
                 this.lastCharTime && 
-                (currentTime - this.lastCharTime) < 300) {
+                (currentTime - this.lastCharTime) < 500) {
                 console.log('🚫 Mobile duplicate character BLOCKED (ultra-strict):', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
                 return;
             }
@@ -304,14 +304,20 @@ class BiometricDataCollector {
                 return;
             }
             
-            if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 150) {
+            if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 200) {
                 console.log('🚫 Mobile input event BLOCKED (rapid input):', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
                 return;
             }
             
-            // ADDITIONAL: Block iOS-specific double input issues
-            if (this.isIOS && this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 200) {
-                console.log('🚫 iOS duplicate input BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+            // ENHANCED: Block iOS-specific double input issues with longer cooldown
+            if (this.isIOS && this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 400) {
+                console.log('🚫 iOS duplicate input BLOCKED (enhanced):', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                return;
+            }
+            
+            // ADDITIONAL: Block any rapid character input on iOS
+            if (this.isIOS && this.lastCharTime && (currentTime - this.lastCharTime) < 300) {
+                console.log('🚫 iOS rapid character input BLOCKED:', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
                 return;
             }
         }
@@ -1055,22 +1061,28 @@ class BiometricDataCollector {
         if (this.lastChar === char) {
             const timeSinceLast = currentTime - this.lastCharTime;
             
-            // BLOCK: Any duplicate character within 250ms (increased for mobile reliability)
-            if (timeSinceLast < 250) {
+            // BLOCK: Any duplicate character within 400ms (increased for iOS reliability)
+            if (timeSinceLast < 400) {
                 console.log('🚫 Character duplicate BLOCKED (ultra-strict):', char, 'time since last:', timeSinceLast, 'ms');
                 return false;
             }
             
-            // BLOCK: Duplicates within 500ms for same character (mobile double-tap protection)
-            if (timeSinceLast < 500) {
+            // BLOCK: Duplicates within 800ms for same character (iOS double-tap protection)
+            if (timeSinceLast < 800) {
                 console.log('🚫 Character duplicate BLOCKED (extended protection):', char, 'time since last:', timeSinceLast, 'ms');
                 return false;
             }
         }
         
         // ADDITIONAL: Block rapid character input (mobile keyboard protection)
-        if (this.lastCharTime && (currentTime - this.lastCharTime) < 50) {
+        if (this.lastCharTime && (currentTime - this.lastCharTime) < 100) {
             console.log('🚫 Character input BLOCKED (rapid input protection):', char, 'time since last:', currentTime - this.lastCharTime, 'ms');
+            return false;
+        }
+        
+        // ENHANCED: iOS-specific protection
+        if (this.isIOS && this.lastCharTime && (currentTime - this.lastCharTime) < 200) {
+            console.log('🚫 iOS character input BLOCKED (enhanced protection):', char, 'time since last:', currentTime - this.lastCharTime, 'ms');
             return false;
         }
         
@@ -1437,9 +1449,9 @@ class BiometricDataCollector {
                 }
             
                 else if (phase === 'move') {
-                    // BLOCK: If rotation task is already completed, ignore all movements
+                    // Allow movements even after completion, but don't process them
                     if (this.crystalState.rotationCompleted) {
-                        console.log('🚫 Rotation task completed - ignoring additional movements');
+                        console.log('✅ Rotation task completed - allowing free movement');
                         return;
                     }
                     
@@ -1460,15 +1472,10 @@ class BiometricDataCollector {
                         console.log(`🔄 Rotation direction set: ${direction === 1 ? 'CW' : 'CCW'}`);
                     }
             
-                    // STRICT direction validation - no tolerance for wrong direction
-                    if (this.crystalState.rotationDirection !== null && direction !== this.crystalState.rotationDirection) {
-                        // Block wrong direction rotations completely
-                        if (Math.abs(delta) > 0.05) {
-                            this.showWrongDirectionFeedback();
-                            this.crystalState.lastAngle = angle;
-                            console.log(`❌ Wrong rotation direction! Expected: ${this.crystalState.rotationDirection === 1 ? 'CW' : 'CCW'}, Got: ${direction === 1 ? 'CW' : 'CCW'}`);
-                            return;
-                        }
+                    // Allow any direction during movement, but track the direction
+                    if (this.crystalState.rotationDirection === null && Math.abs(delta) > minDelta) {
+                        this.crystalState.rotationDirection = direction;
+                        console.log(`🔄 Rotation direction set: ${direction === 1 ? 'CW' : 'CCW'}`);
                     }
             
                     this.crystalState.rotationAccumulated += delta;
@@ -1481,41 +1488,41 @@ class BiometricDataCollector {
                     if (Math.abs(this.crystalState.rotationAccumulated) >= 2 * Math.PI) {
                         // Record the completed rotation direction
                         const completedDirection = this.crystalState.rotationDirection;
-                        this.crystalState.rotationSequence.push(completedDirection);
                         
-                        this.crystalState.rotationRounds += 1;
-                        this.crystalState.rotationAccumulated = 0;
-                        this.crystalState.rotationDirection = null;
-            
-                        // Show green light feedback
-                        crystal.classList.add('rotation-feedback');
-                        setTimeout(() => crystal.classList.remove('rotation-feedback'), 800);
+                        // Check if this rotation is correct for the current step
+                        const expectedDirection = this.getExpectedRotationDirection();
+                        const isCorrectRotation = completedDirection === expectedDirection;
                         
-                        console.log(`✅ Rotation ${this.crystalState.rotationRounds} completed: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
-                        console.log(`📊 Rotation sequence: [${this.crystalState.rotationSequence.map(d => d === 1 ? 'CW' : 'CCW').join(', ')}]`);
-                        
-                        // Update progress to show completed rotation
-                        this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (CW → CCW → CW)`);
-                        
-                        // Check if we have the correct sequence: CW → CCW → CW
-                        if (this.crystalState.rotationRounds >= 3) {
-                            const expectedSequence = [1, -1, 1]; // CW, CCW, CW
-                            const actualSequence = this.crystalState.rotationSequence.slice(-3);
+                        if (isCorrectRotation) {
+                            // Only count correct rotations in sequence
+                            this.crystalState.rotationSequence.push(completedDirection);
+                            this.crystalState.rotationRounds += 1;
                             
-                            if (JSON.stringify(actualSequence) === JSON.stringify(expectedSequence)) {
-                                console.log('✅ Correct rotation sequence achieved: CW → CCW → CW');
+                            // Show green light feedback for correct rotation
+                            crystal.classList.add('rotation-feedback');
+                            setTimeout(() => crystal.classList.remove('rotation-feedback'), 800);
+                            
+                            console.log(`✅ Correct rotation ${this.crystalState.rotationRounds} completed: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
+                            console.log(`📊 Rotation sequence: [${this.crystalState.rotationSequence.map(d => d === 1 ? 'CW' : 'CCW').join(', ')}]`);
+                            
+                            // Update progress to show completed rotation
+                            this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (CW → CCW → CW)`);
+                            
+                            // Check if we have completed all 3 correct rotations
+                            if (this.crystalState.rotationRounds >= 3) {
+                                console.log('✅ All 3 correct rotations completed: CW → CCW → CW');
                                 this.crystalState.rotationCompleted = true; // Mark as completed
                                 this.completeStep();
-                            } else {
-                                console.log('❌ Wrong rotation sequence! Need: CW → CCW → CW');
-                                console.log(`Got: [${actualSequence.map(d => d === 1 ? 'CW' : 'CCW').join(' → ')}]`);
-                                // Reset to allow correct sequence
-                                this.crystalState.rotationRounds = 0;
-                                this.crystalState.rotationSequence = [];
-                                this.crystalState.rotationCompleted = false;
-                                this.updateStepProgress(`0/3 (CW → CCW → CW) - Try again!`);
                             }
+                        } else {
+                            // Wrong direction - show feedback but don't count
+                            this.showWrongDirectionFeedback();
+                            console.log(`❌ Wrong rotation direction! Expected: ${expectedDirection === 1 ? 'CW' : 'CCW'}, Got: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
                         }
+                        
+                        // Reset for next rotation attempt
+                        this.crystalState.rotationAccumulated = 0;
+                        this.crystalState.rotationDirection = null;
                     }
                 }
             
@@ -1674,6 +1681,16 @@ class BiometricDataCollector {
         console.log('❌ Wrong rotation direction - try again!');
     }
     
+    // Helper method to get expected rotation direction based on current step
+    getExpectedRotationDirection() {
+        const currentRound = this.crystalState.rotationRounds;
+        // Round 0: CW (1), Round 1: CCW (-1), Round 2: CW (1)
+        if (currentRound === 0) return 1; // CW
+        if (currentRound === 1) return -1; // CCW
+        if (currentRound === 2) return 1; // CW
+        return null; // Should not happen
+    }
+    
 
     
     completeStep() {
@@ -1690,6 +1707,9 @@ class BiometricDataCollector {
         const crystalSizeDisplay = document.getElementById('crystal-size-display');
         crystalSizeDisplay.classList.add('completion-highlight');
         setTimeout(() => crystalSizeDisplay.classList.remove('completion-highlight'), 1000);
+        
+        // Ensure next button stays active permanently once step is completed
+        console.log('✅ Step completed - Next button permanently enabled');
     }
     
     nextCrystalStep() {
