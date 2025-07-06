@@ -1754,8 +1754,7 @@ class BiometricDataCollector {
             
                 break;
             }
-
-                
+    
             case 'pinch':
             case 'spread':
                 if (touches.length === 2) {
