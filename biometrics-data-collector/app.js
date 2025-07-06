@@ -775,8 +775,6 @@ class BiometricDataCollector {
                 console.log('🔍 Quote processing complete (other input) - Final refChar:', refChar);
             }
     
-
-    
             // Check if character should be recorded (deduplication)
             if (this.shouldRecordChar(refChar, timestamp)) {
                 console.log('📝 Recording keystroke (other input):', refChar, 'type:', inputType, 'timestamp:', timestamp);
@@ -808,7 +806,6 @@ class BiometricDataCollector {
         this.calculateAccuracy();
         this.checkSentenceCompletion();
     }
-    
     
     // FIXED: Enhanced character detection with better mobile support
     getActualTypedCharacter(e, inputValue = '') {
@@ -968,8 +965,6 @@ class BiometricDataCollector {
             return specialKeys[e.key];
         }
     
-
-    
         // 3. Handle printable characters
         if (e.key && e.key.length === 1) {
             return e.key;
@@ -987,7 +982,6 @@ class BiometricDataCollector {
         return null;
     }
 
-    
     handleKeydown(e) {
         const timestamp = performance.now();
         
