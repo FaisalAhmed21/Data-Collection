@@ -58,7 +58,7 @@ class BiometricDataCollector {
         
         this.crystalSteps = [
             { id: 1, instruction: "Tap the crystal exactly 3 times with your index finger", target: 3, type: 'tap' },
-            { id: 2, instruction: "Rotate the crystal with one finger: CW → CCW → CW", target: 3, type: 'rotate' },
+            { id: 2, instruction: "Touch anywhere on crystal, then rotate: CW → CCW → CW (green light after each rotation)", target: 3, type: 'rotate' },
             { id: 3, instruction: "Pinch to shrink the crystal to 50% size", target: 0.5, type: 'pinch' },
             { id: 4, instruction: "Spread fingers to grow crystal to 150% size", target: 1.5, type: 'spread' },
             { id: 5, instruction: "Apply pressure with 3 fingers simultaneously for 3 seconds", target: 3000, type: 'pressure' }
@@ -1422,6 +1422,7 @@ class BiometricDataCollector {
                 const angle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX);
             
                 if (phase === 'start') {
+                    // Reset rotation state for new attempt
                     this.crystalState.initialAngle = angle;
                     this.crystalState.lastAngle = angle;
                     this.crystalState.rotationRounds = 0;
@@ -1430,6 +1431,7 @@ class BiometricDataCollector {
                     this.crystalState.rotationSequence = []; // Track rotation sequence: CW=1, CCW=-1
                     crystal.classList.add('active');
                     this.updateStepProgress(`0/3 (CW → CCW → CW)`);
+                    console.log('🔄 Rotation started - touch anywhere on crystal surface');
                 }
             
                 else if (phase === 'move') {
@@ -1438,26 +1440,25 @@ class BiometricDataCollector {
                     if (delta < -Math.PI) delta += 2 * Math.PI;
                     if (!isFinite(delta)) return;
             
-                    // ULTRA-RELIABLE mobile rotation detection with enhanced tolerance
-                    const minDelta = 0.005; // Further reduced threshold for mobile precision
+                    // ULTRA-RELIABLE mobile rotation detection
+                    const minDelta = 0.01; // Minimum movement threshold
                     if (Math.abs(delta) < minDelta) return;
             
                     const direction = Math.sign(delta);
-                    const expectedDirection = (this.crystalState.rotationRounds % 2 === 0) ? 1 : -1;
-            
-                    // Set direction on first move of this round
+                    
+                    // Set direction on first significant move of this round
                     if (this.crystalState.rotationDirection === null && Math.abs(delta) > minDelta) {
                         this.crystalState.rotationDirection = direction;
                         console.log(`🔄 Rotation direction set: ${direction === 1 ? 'CW' : 'CCW'}`);
                     }
             
-                    // ENHANCED direction validation with mobile-friendly tolerance
-                    if (this.crystalState.rotationDirection !== null && direction !== expectedDirection) {
-                        // Allow small direction changes (mobile finger adjustments)
-                        if (Math.abs(delta) > 0.1) { // Increased tolerance for mobile
+                    // STRICT direction validation - no tolerance for wrong direction
+                    if (this.crystalState.rotationDirection !== null && direction !== this.crystalState.rotationDirection) {
+                        // Block wrong direction rotations completely
+                        if (Math.abs(delta) > 0.05) {
                             this.showWrongDirectionFeedback();
                             this.crystalState.lastAngle = angle;
-                            console.log(`❌ Wrong rotation direction! Expected: ${expectedDirection === 1 ? 'CW' : 'CCW'}, Got: ${direction === 1 ? 'CW' : 'CCW'}`);
+                            console.log(`❌ Wrong rotation direction! Expected: ${this.crystalState.rotationDirection === 1 ? 'CW' : 'CCW'}, Got: ${direction === 1 ? 'CW' : 'CCW'}`);
                             return;
                         }
                     }
@@ -1468,6 +1469,7 @@ class BiometricDataCollector {
                     const progress = Math.abs(this.crystalState.rotationAccumulated) / (2 * Math.PI);
                     this.updateStepProgress(`${(this.crystalState.rotationRounds + Math.min(progress, 1)).toFixed(1)}/3 (CW → CCW → CW)`);
             
+                    // Check for full rotation completion
                     if (Math.abs(this.crystalState.rotationAccumulated) >= 2 * Math.PI) {
                         // Record the completed rotation direction
                         const completedDirection = this.crystalState.rotationDirection;
@@ -1477,11 +1479,15 @@ class BiometricDataCollector {
                         this.crystalState.rotationAccumulated = 0;
                         this.crystalState.rotationDirection = null;
             
+                        // Show green light feedback
                         crystal.classList.add('rotation-feedback');
-                        setTimeout(() => crystal.classList.remove('rotation-feedback'), 400);
+                        setTimeout(() => crystal.classList.remove('rotation-feedback'), 800);
                         
                         console.log(`✅ Rotation ${this.crystalState.rotationRounds} completed: ${completedDirection === 1 ? 'CW' : 'CCW'}`);
                         console.log(`📊 Rotation sequence: [${this.crystalState.rotationSequence.map(d => d === 1 ? 'CW' : 'CCW').join(', ')}]`);
+                        
+                        // Update progress to show completed rotation
+                        this.updateStepProgress(`${this.crystalState.rotationRounds}/3 (CW → CCW → CW)`);
             
                         // Check if we have the correct sequence: CW → CCW → CW
                         if (this.crystalState.rotationRounds >= 3) {
@@ -1505,6 +1511,7 @@ class BiometricDataCollector {
             
                 else if (phase === 'end') {
                     crystal.classList.remove('active');
+                    console.log('🔄 Rotation touch ended');
                 }
             
                 break;
@@ -1654,6 +1661,7 @@ class BiometricDataCollector {
         setTimeout(() => {
             crystal.style.filter = '';
         }, 500);
+        console.log('❌ Wrong rotation direction - try again!');
     }
     
     completeStep() {
@@ -1754,7 +1762,7 @@ class BiometricDataCollector {
     getStepTitle(type) {
         const titles = {
             'tap': 'Index Finger Tapping',
-            'rotate': 'One-Finger Rotation',
+            'rotate': 'One-Finger Rotation (CW→CCW→CW)',
             'pinch': 'Pinch to Shrink',
             'spread': 'Spread to Enlarge',
             'pressure': 'Three-Finger Pressure'
@@ -1765,7 +1773,7 @@ class BiometricDataCollector {
     getInitialProgress(type) {
         const progress = {
             'tap': '0/3',
-            'rotate': '0/3',
+            'rotate': '0/3 (Touch & rotate CW→CCW→CW)',
             'pinch': '100% → 50%',
             'spread': '100% → 150%',
             'pressure': '0s / 3s'
@@ -1775,6 +1783,20 @@ class BiometricDataCollector {
     
     updateStepProgress(progress) {
         document.getElementById('step-progress').textContent = progress;
+        
+        // Enhanced guidance for rotation step
+        if (this.currentCrystalStep === 2) {
+            const stepStatus = document.getElementById('step-status');
+            if (this.crystalState.rotationRounds === 0) {
+                stepStatus.textContent = 'Touch crystal and rotate clockwise';
+            } else if (this.crystalState.rotationRounds === 1) {
+                stepStatus.textContent = 'Now rotate counter-clockwise';
+            } else if (this.crystalState.rotationRounds === 2) {
+                stepStatus.textContent = 'Finally rotate clockwise again';
+            } else if (this.crystalState.rotationRounds >= 3) {
+                stepStatus.textContent = 'Perfect! All rotations completed';
+            }
+        }
     }
     
     recordTouchEvent(data) {
