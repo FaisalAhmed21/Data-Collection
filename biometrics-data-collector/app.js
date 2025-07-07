@@ -1972,11 +1972,17 @@ class BiometricDataCollector {
         document.getElementById('step-status').textContent = 'Ready';
         document.getElementById('step-progress').textContent = this.getInitialProgress(step.type);
         const nextCrystalBtn = document.getElementById('next-crystal-btn');
-        if (this.currentCrystalStep < this.crystalSteps.length) {
-            nextCrystalBtn.style.display = 'inline-flex';
-            nextCrystalBtn.disabled = true;
-        } else {
-            nextCrystalBtn.style.display = 'none';
+        // Remove previous click handlers by cloning the node
+        if (nextCrystalBtn) {
+            const newBtn = nextCrystalBtn.cloneNode(true);
+            nextCrystalBtn.parentNode.replaceChild(newBtn, nextCrystalBtn);
+            if (this.currentCrystalStep < this.crystalSteps.length) {
+                newBtn.style.display = 'inline-flex';
+                newBtn.disabled = true;
+                newBtn.onclick = () => this.nextCrystalStep();
+            } else {
+                newBtn.style.display = 'none';
+            }
         }
     }
     
