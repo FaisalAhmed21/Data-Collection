@@ -188,7 +188,7 @@ class BiometricDataCollector {
         this.participantId = `P${timePart}-${randomPart}`;
         document.getElementById('participant-id').textContent = this.participantId;
     }
-
+    
     bindEvents() {
         // Welcome screen
         document.getElementById('start-btn').addEventListener('click', () => {
@@ -489,7 +489,7 @@ class BiometricDataCollector {
             }
             return;
         }
-
+    
         // Handle text insertion
         else if (inputType === 'insertText' && data) {
             for (let i = 0; i < data.length; i++) {
@@ -687,7 +687,7 @@ class BiometricDataCollector {
                 this.previousChar = char;
             }
         }
-
+    
         // Handle other input types like paste, cut, etc.
         else if (inputType && data) {
             let refChar = data;
@@ -1017,7 +1017,7 @@ class BiometricDataCollector {
         // 5. Return null for unidentifiable keys
         return null;
     }
-
+    
     handleKeydown(e) {
         const timestamp = performance.now();
         
@@ -1174,18 +1174,18 @@ class BiometricDataCollector {
         // Only enable next button if 100% accuracy is achieved
         if (typed === target && accuracy === 100) {
             if (this.currentSentence < this.sentences.length - 1) {
-                nextBtn.disabled = false;
-                nextBtn.style.backgroundColor = 'var(--color-primary)';
-                nextBtn.style.opacity = '1';
-            } else {
+            nextBtn.disabled = false;
+            nextBtn.style.backgroundColor = 'var(--color-primary)';
+            nextBtn.style.opacity = '1';
+        } else {
                 nextBtn.style.display = 'none';
                 this.showNextTaskButton('crystal', 'Crystal Forge Game');
             }
         } else {
             if (this.currentSentence < this.sentences.length - 1) {
-                nextBtn.disabled = true;
-                nextBtn.style.backgroundColor = 'var(--color-secondary)';
-                nextBtn.style.opacity = '0.5';
+            nextBtn.disabled = true;
+            nextBtn.style.backgroundColor = 'var(--color-secondary)';
+            nextBtn.style.opacity = '0.5';
             }
         }
     }
@@ -1260,10 +1260,19 @@ class BiometricDataCollector {
                 shiftKey: true,
                 shiftPressed: true
             };
-            // Push SHIFT event
-            this.keystrokeData.push(shiftEvent);
-            // Push capital letter event
-            this.keystrokeData.push(capEvent);
+            // iOS deduplication: ensure no duplicate SHIFT or capital letter events
+            if (this.isIOS) {
+                const recent = this.keystrokeData.slice(-4);
+                if (!recent.some(e => e.actualChar === 'SHIFT' && Math.abs(e.timestamp - shiftEvent.timestamp) < 10)) {
+                    this.keystrokeData.push(shiftEvent);
+                }
+                if (!recent.some(e => e.actualChar === data.actualChar && Math.abs(e.timestamp - capEvent.timestamp) < 10)) {
+                    this.keystrokeData.push(capEvent);
+                }
+            } else {
+                this.keystrokeData.push(shiftEvent);
+                this.keystrokeData.push(capEvent);
+            }
             // Update lastKeystrokeTime
             this.lastKeystrokeTime = capEvent.timestamp;
             this.lastChar = data.actualChar;
@@ -1363,8 +1372,8 @@ class BiometricDataCollector {
             const timeSinceLast = currentTime - this.lastCharTime;
             if (timeSinceLast < dedupWindow) {
                 console.log('🚫 Tight deduplication: Character duplicate BLOCKED:', char, 'time since last:', timeSinceLast, 'ms (window:', dedupWindow.toFixed(1), 'ms)');
-                return false;
-            }
+            return false;
+        }
         }
         // Update tracking
         this.lastChar = char;
@@ -1787,7 +1796,7 @@ class BiometricDataCollector {
             
                 break;
             }
-    
+                
             case 'pinch':
             case 'spread':
                 if (touches.length === 2) {
@@ -1944,19 +1953,19 @@ class BiometricDataCollector {
     
         const crystal = document.getElementById('crystal');
         if (crystal) {
-            crystal.classList.add('success');
-            setTimeout(() => {
-                crystal.classList.remove('success');
-            }, 600);
+        crystal.classList.add('success');
+        setTimeout(() => {
+            crystal.classList.remove('success');
+        }, 600);
         }
-    
+        
         document.getElementById('step-status').textContent = 'Completed';
-    
+        
         const sizeIndicator = document.getElementById('size-indicator');
         if (sizeIndicator) {
-            sizeIndicator.classList.add('completion-highlight');
-            setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
-        }
+        sizeIndicator.classList.add('completion-highlight');
+        setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
+    }
     
         const nextCrystalBtn = document.getElementById('next-crystal-btn');
         if (nextCrystalBtn) {
@@ -1981,8 +1990,8 @@ class BiometricDataCollector {
         if (this.currentCrystalStep < this.crystalSteps.length) {
             this.currentCrystalStep++;
             console.log('[DEBUG] nextCrystalStep incremented, new step:', this.currentCrystalStep);
-            this.resetCrystalState();
-            this.updateCrystalDisplay();
+        this.resetCrystalState();
+        this.updateCrystalDisplay();
         } else {
             // Already at last step, do nothing
             console.log('[DEBUG] nextCrystalStep: already at last step, no action');
@@ -2032,7 +2041,7 @@ class BiometricDataCollector {
     
     updateCrystalDisplay() {
         console.log('[DEBUG] updateCrystalDisplay, current step:', this.currentCrystalStep);
-    
+        
         const step = this.crystalSteps[this.currentCrystalStep - 1];
         document.getElementById('step-title').textContent = `Step ${this.currentCrystalStep}: ${this.getStepTitle(step.type)}`;
         document.getElementById('step-instruction').textContent = step.instruction;
