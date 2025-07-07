@@ -1426,6 +1426,20 @@ class BiometricDataCollector {
         
         console.log('✅ Crystal game initialized for all mobile devices');
     }
+
+    nextCrystalStep() {
+        if (this.currentCrystalStep < this.crystalSteps.length) {
+            this.currentCrystalStep++;
+            this.resetCrystalState();
+            this.updateCrystalDisplay();
+        } else {
+            console.log("All crystal steps completed!");
+            this.taskState.crystalCompleted = true;
+            this.updateTaskLocks();
+            this.showNextTaskButton('gallery', 'Gallery Review');
+        }
+    }
+
     
     bindCrystalEvents() {
         const crystalArea = document.getElementById('crystal-area');
@@ -1891,24 +1905,40 @@ class BiometricDataCollector {
     
     completeStep() {
         console.log('[DEBUG] completeStep, current step:', this.currentCrystalStep);
+    
         const crystal = document.getElementById('crystal');
-        crystal.classList.add('success');
-        setTimeout(() => {
-            crystal.classList.remove('success');
-        }, 600);
+        if (crystal) {
+            crystal.classList.add('success');
+            setTimeout(() => {
+                crystal.classList.remove('success');
+            }, 600);
+        }
+    
         document.getElementById('step-status').textContent = 'Completed';
+    
         const sizeIndicator = document.getElementById('size-indicator');
-        sizeIndicator.classList.add('completion-highlight');
-        setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
+        if (sizeIndicator) {
+            sizeIndicator.classList.add('completion-highlight');
+            setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
+        }
+    
         const nextCrystalBtn = document.getElementById('next-crystal-btn');
-        nextCrystalBtn.style.display = 'inline-flex';
-        nextCrystalBtn.disabled = false;
+        if (nextCrystalBtn) {
+            nextCrystalBtn.style.display = 'inline-flex';
+            nextCrystalBtn.disabled = false;
+            nextCrystalBtn.style.opacity = '1';
+            nextCrystalBtn.style.backgroundColor = 'var(--color-primary)';
+        } else {
+            console.warn('[DEBUG] next-crystal-btn not found in DOM during completeStep');
+        }
+    
         if (this.currentCrystalStep === this.crystalSteps.length) {
-            // Step 5: show Next Task button (do not hide Next Step)
+            // Final step: show Next Task button (do not hide Next Step)
             this.showNextTaskButton('gallery', 'Gallery Interaction');
             this.updateTaskLocks(); // Lock crystal after completion
         }
     }
+
     
     nextCrystalStep() {
         console.log('[DEBUG] nextCrystalStep called, current step:', this.currentCrystalStep);
@@ -1966,16 +1996,25 @@ class BiometricDataCollector {
     
     updateCrystalDisplay() {
         console.log('[DEBUG] updateCrystalDisplay, current step:', this.currentCrystalStep);
+    
         const step = this.crystalSteps[this.currentCrystalStep - 1];
         document.getElementById('step-title').textContent = `Step ${this.currentCrystalStep}: ${this.getStepTitle(step.type)}`;
         document.getElementById('step-instruction').textContent = step.instruction;
         document.getElementById('current-step').textContent = `${this.currentCrystalStep}/5`;
         document.getElementById('step-status').textContent = 'Ready';
         document.getElementById('step-progress').textContent = this.getInitialProgress(step.type);
+    
         const nextCrystalBtn = document.getElementById('next-crystal-btn');
-        nextCrystalBtn.style.display = 'inline-flex';
-        nextCrystalBtn.disabled = true;
+        if (nextCrystalBtn) {
+            nextCrystalBtn.style.display = 'inline-flex';
+            nextCrystalBtn.disabled = true;
+            nextCrystalBtn.style.opacity = '0.5';
+            nextCrystalBtn.style.backgroundColor = 'var(--color-secondary)';
+        } else {
+            console.warn('[DEBUG] next-crystal-btn not found in DOM during updateCrystalDisplay');
+        }
     }
+
     
     getStepTitle(type) {
         const titles = {
