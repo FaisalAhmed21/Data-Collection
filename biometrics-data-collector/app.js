@@ -271,6 +271,7 @@ class BiometricDataCollector {
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
 
         // Restrict cursor movement: always keep cursor at end
+        /*
         typingInput.addEventListener('keydown', (e) => {
             // Prevent arrow keys, Home, End, and selection
             if ([37, 38, 39, 40, 35, 36].includes(e.keyCode) || (e.ctrlKey && (e.key === 'a' || e.key === 'A'))) {
@@ -296,6 +297,7 @@ class BiometricDataCollector {
             // Always keep cursor at end after input
             typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
         });
+        */
     }
     
     switchScreen(screenName) {
@@ -1232,10 +1234,9 @@ class BiometricDataCollector {
         if (
             data.actualChar &&
             data.actualChar.length === 1 &&
-            this.getCharacterCase(data.actualChar) === 'uppercase' &&
-            data.shiftKey === true // Use shiftKey from event if available
+            this.getCharacterCase(data.actualChar) === 'uppercase'
         ) {
-            // Split the flight time randomly (40-60%)
+            // Always insert a synthetic SHIFT event before the uppercase letter
             let split = 0.4 + Math.random() * 0.2; // 0.4 to 0.6
             let shiftFlight = flightTime * split;
             let capFlight = flightTime * (1 - split);
@@ -1356,46 +1357,15 @@ class BiometricDataCollector {
     // Helper method to check if character should be recorded (deduplication)
     shouldRecordChar(char, timestamp) {
         const currentTime = performance.now();
-        
-        // ENHANCED iOS-specific deduplication with multiple layers
-        if (this.isIOS) {
-            // Layer 1: Block exact character duplicates within 300ms
-            if (this.lastChar === char && this.lastCharTime) {
-                const timeSinceLast = currentTime - this.lastCharTime;
-                if (timeSinceLast < 300) {
-                    console.log('🚫 iOS Layer 1: Character duplicate BLOCKED:', char, 'time since last:', timeSinceLast, 'ms');
-            return false;
-                }
-            }
-            
-            // Layer 2: Block rapid input events within 150ms
-            if (this.lastCharTime && (currentTime - this.lastCharTime) < 150) {
-                console.log('🚫 iOS Layer 2: Rapid input BLOCKED:', char, 'time since last:', currentTime - this.lastCharTime, 'ms');
+        // Allow legitimate double letters, but block accidental rapid duplicates (within 30-40ms)
+        const dedupWindow = 30 + Math.random() * 10; // 30-40ms
+        if (this.lastChar === char && this.lastCharTime) {
+            const timeSinceLast = currentTime - this.lastCharTime;
+            if (timeSinceLast < dedupWindow) {
+                console.log('🚫 Tight deduplication: Character duplicate BLOCKED:', char, 'time since last:', timeSinceLast, 'ms (window:', dedupWindow.toFixed(1), 'ms)');
                 return false;
-            }
-            
-            // Layer 3: Block composition-related duplicates
-            if (this.compositionActive && this.lastChar === char) {
-                console.log('🚫 iOS Layer 3: Composition duplicate BLOCKED:', char);
-                return false;
-            }
-            
-            // Layer 4: Block input event duplicates
-            if (this.lastInputEvent && this.lastInputEvent === char && (currentTime - this.lastInputEventTime) < 200) {
-                console.log('🚫 iOS Layer 4: Input event duplicate BLOCKED:', char);
-                return false;
-            }
-        } else {
-            // Android deduplication - less aggressive but still effective
-            if (this.lastChar === char && this.lastCharTime) {
-                const timeSinceLast = currentTime - this.lastCharTime;
-                if (timeSinceLast < 150) {
-                    console.log('🚫 Android character duplicate BLOCKED:', char, 'time since last:', timeSinceLast, 'ms');
-                    return false;
-                }
             }
         }
-        
         // Update tracking
         this.lastChar = char;
         this.lastCharTime = currentTime;
