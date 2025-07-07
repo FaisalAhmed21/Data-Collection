@@ -1912,14 +1912,15 @@ class BiometricDataCollector {
     
     nextCrystalStep() {
         console.log('[DEBUG] nextCrystalStep called, current step:', this.currentCrystalStep);
-        if (this.currentCrystalStep >= this.crystalSteps.length) {
+        if (this.currentCrystalStep < this.crystalSteps.length) {
+            this.currentCrystalStep++;
+            console.log('[DEBUG] nextCrystalStep incremented, new step:', this.currentCrystalStep);
+            this.resetCrystalState();
+            this.updateCrystalDisplay();
+        } else {
             // Already at last step, do nothing
-            return;
+            console.log('[DEBUG] nextCrystalStep: already at last step, no action');
         }
-        this.currentCrystalStep++;
-        console.log('[DEBUG] nextCrystalStep incremented, new step:', this.currentCrystalStep);
-        this.resetCrystalState();
-        this.updateCrystalDisplay();
     }
     
     resetCrystalStep() {
