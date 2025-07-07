@@ -1120,19 +1120,24 @@ class BiometricDataCollector {
     checkSentenceCompletion() {
         const typed = document.getElementById('typing-input').value.trim();
         const target = this.sentences[this.currentSentence].trim();
-        
         const nextBtn = document.getElementById('next-sentence-btn');
         const accuracy = this.calculateAccuracy();
-        
         // Only enable next button if 100% accuracy is achieved
         if (typed === target && accuracy === 100) {
-            nextBtn.disabled = false;
-            nextBtn.style.backgroundColor = 'var(--color-primary)';
-            nextBtn.style.opacity = '1';
+            if (this.currentSentence < this.sentences.length - 1) {
+                nextBtn.disabled = false;
+                nextBtn.style.backgroundColor = 'var(--color-primary)';
+                nextBtn.style.opacity = '1';
+            } else {
+                nextBtn.style.display = 'none';
+                this.showNextTaskButton('crystal', 'Crystal Forge Game');
+            }
         } else {
-            nextBtn.disabled = true;
-            nextBtn.style.backgroundColor = 'var(--color-secondary)';
-            nextBtn.style.opacity = '0.5';
+            if (this.currentSentence < this.sentences.length - 1) {
+                nextBtn.disabled = true;
+                nextBtn.style.backgroundColor = 'var(--color-secondary)';
+                nextBtn.style.opacity = '0.5';
+            }
         }
     }
     
