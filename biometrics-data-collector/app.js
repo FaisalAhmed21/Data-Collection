@@ -1901,11 +1901,10 @@ class BiometricDataCollector {
         sizeIndicator.classList.add('completion-highlight');
         setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
         const nextCrystalBtn = document.getElementById('next-crystal-btn');
-        if (this.currentCrystalStep < this.crystalSteps.length) {
-            nextCrystalBtn.style.display = 'inline-flex';
-            nextCrystalBtn.disabled = false;
-        } else {
-            nextCrystalBtn.style.display = 'none';
+        nextCrystalBtn.style.display = 'inline-flex';
+        nextCrystalBtn.disabled = false;
+        if (this.currentCrystalStep === this.crystalSteps.length) {
+            // Step 5: show Next Task button (do not hide Next Step)
             this.showNextTaskButton('gallery', 'Gallery Interaction');
             this.updateTaskLocks(); // Lock crystal after completion
         }
@@ -1914,17 +1913,11 @@ class BiometricDataCollector {
     nextCrystalStep() {
         console.log('[DEBUG] nextCrystalStep called, current step:', this.currentCrystalStep);
         if (this.currentCrystalStep >= this.crystalSteps.length) {
-            // This should not happen since we show Next Task button in completeStep
-            this.switchScreen('gallery');
+            // Already at last step, do nothing
             return;
         }
         this.currentCrystalStep++;
         console.log('[DEBUG] nextCrystalStep incremented, new step:', this.currentCrystalStep);
-        if (this.currentCrystalStep > this.crystalSteps.length) {
-            // This should not happen since we show Next Task button in completeStep
-            this.switchScreen('gallery');
-            return;
-        }
         this.resetCrystalState();
         this.updateCrystalDisplay();
     }
@@ -1979,12 +1972,8 @@ class BiometricDataCollector {
         document.getElementById('step-status').textContent = 'Ready';
         document.getElementById('step-progress').textContent = this.getInitialProgress(step.type);
         const nextCrystalBtn = document.getElementById('next-crystal-btn');
-        if (this.currentCrystalStep < this.crystalSteps.length) {
-            nextCrystalBtn.style.display = 'inline-flex';
-            nextCrystalBtn.disabled = true;
-        } else {
-            nextCrystalBtn.style.display = 'none';
-        }
+        nextCrystalBtn.style.display = 'inline-flex';
+        nextCrystalBtn.disabled = true;
     }
     
     getStepTitle(type) {
