@@ -982,24 +982,21 @@ select.form-control {
   flex-direction: row;
   align-items: flex-start;
   justify-content: flex-start;
-  min-width: unset;
-  min-height: unset;
-  margin: 0 0 32px 0;
   width: 100%;
+  margin: 0 0 32px 0;
+  padding: 0;
 }
 
 .crystal-area {
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
-  min-width: unset;
-  min-height: unset;
-  margin: 0 24px 0 64px;
+  margin: 0;
 }
 
 .crystal {
-  width: 320px;
-  height: 320px;
+  width: 180px;
+  height: 180px;
   cursor: pointer;
   transition: transform 0.3s var(--ease-standard), filter 0.3s var(--ease-standard);
   transform-origin: center;
@@ -1007,8 +1004,8 @@ select.form-control {
 }
 
 .crystal-inner {
-  width: 300px;
-  height: 300px;
+  width: 160px;
+  height: 160px;
   background: linear-gradient(135deg,
     rgba(0, 31, 63, 0.8) 0%,
     rgba(255, 215, 0, 0.9) 50%,
@@ -1036,8 +1033,8 @@ select.form-control {
 }
 
 .crystal-glow {
-  width: 340px;
-  height: 340px;
+  width: 200px;
+  height: 200px;
   position: absolute;
   top: -30px;
   left: -30px;
