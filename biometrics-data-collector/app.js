@@ -5,13 +5,15 @@ class BiometricDataCollector {
         this.currentSentence = 0;
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
-         // Task progression state management
+        
+        // Task progression state management
         this.taskState = {
             studyStarted: false,
             typingCompleted: false,
             crystalCompleted: false,
             galleryCompleted: false
         };
+        
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         this.isAndroid = /Android/.test(navigator.userAgent);
@@ -1889,15 +1891,25 @@ class BiometricDataCollector {
             crystal.classList.remove('success');
         }, 600);
         document.getElementById('step-status').textContent = 'Completed';
-        if (this.currentCrystalStep >= this.crystalSteps.length) {
-            this.showNextTaskButton('gallery', 'Gallery Interaction');
-            this.updateTaskLocks(); // Lock crystal after completion
-        } else {
-            document.getElementById('next-crystal-btn').disabled = false;
-        }
         const sizeIndicator = document.getElementById('size-indicator');
         sizeIndicator.classList.add('completion-highlight');
         setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
+
+        const nextCrystalBtn = document.getElementById('next-crystal-btn');
+        if (this.currentCrystalStep < this.crystalSteps.length) {
+            // Steps 1-4: show Next Step button
+            if (nextCrystalBtn) {
+                nextCrystalBtn.style.display = 'inline-flex';
+                nextCrystalBtn.disabled = false;
+            }
+        } else {
+            // Step 5: hide Next Step, show Next Task
+            if (nextCrystalBtn) {
+                nextCrystalBtn.style.display = 'none';
+            }
+            this.showNextTaskButton('gallery', 'Gallery Interaction');
+            this.updateTaskLocks(); // Lock crystal after completion
+        }
     }
     
     nextCrystalStep() {
