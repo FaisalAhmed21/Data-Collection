@@ -1974,13 +1974,18 @@ class BiometricDataCollector {
     
     updateCrystalDisplay() {
         const step = this.crystalSteps[this.currentCrystalStep - 1];
-        
         document.getElementById('step-title').textContent = `Step ${this.currentCrystalStep}: ${this.getStepTitle(step.type)}`;
         document.getElementById('step-instruction').textContent = step.instruction;
         document.getElementById('current-step').textContent = `${this.currentCrystalStep}/5`;
         document.getElementById('step-status').textContent = 'Ready';
         document.getElementById('step-progress').textContent = this.getInitialProgress(step.type);
-        document.getElementById('next-crystal-btn').disabled = true;
+        const nextCrystalBtn = document.getElementById('next-crystal-btn');
+        if (this.currentCrystalStep < this.crystalSteps.length) {
+            nextCrystalBtn.style.display = 'inline-flex';
+            nextCrystalBtn.disabled = true;
+        } else {
+            nextCrystalBtn.style.display = 'none';
+        }
     }
     
     getStepTitle(type) {
