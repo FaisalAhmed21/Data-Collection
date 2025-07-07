@@ -1207,6 +1207,10 @@ class BiometricDataCollector {
     }
     
     recordKeystroke(data) {
+        // Always log quote keystrokes for debugging
+        if (data.actualChar === "'" || data.actualChar === '"') {
+            console.log('[QUOTE] Keystroke captured:', data);
+        }
         // FINAL iOS safety check to prevent double character recording
         if (this.isIOS && data.actualChar && data.actualChar !== 'BACKSPACE' && data.actualChar !== 'SHIFT') {
             const currentTime = performance.now();
@@ -2555,6 +2559,11 @@ class BiometricDataCollector {
                     refChar = keystroke.actualChar;
                 }
                 
+                // Debug: log quote features
+                if (refChar === "'" || refChar === '"') {
+                    console.log('[QUOTE] Feature exported:', refChar, keystroke);
+                }
+                
                 features.push({
                     participant_id: this.participantId,
                     task_id: 1, // Typing task
@@ -2611,7 +2620,8 @@ class BiometricDataCollector {
             headers.join(','),
             ...data.map(row => headers.map(header => {
                 const value = row[header];
-                return typeof value === 'string' ? `"${value}"` : value;
+                // Properly escape double quotes for CSV
+                return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
             }).join(','))
         ].join('\n');
         
