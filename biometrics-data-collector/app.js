@@ -1083,24 +1083,15 @@ class BiometricDataCollector {
         input.focus();
         document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
         this.calculateAccuracy();
-        document.getElementById('next-sentence-btn').disabled = true;
-        
-        // FIXED: Reset lastInputLength when starting new sentence
-        this.lastInputLength = 0;
-        // FIXED: Reset previousChar when starting new sentence
-        this.previousChar = null;
-        // Reset backspace tracking for new sentence
-        this.lastBackspaceTime = 0;
-        // Reset character tracking for new sentence
-        this.lastCharTime = 0;
-        this.lastChar = null;
-        
-        // Reset mobile input tracking for new sentence
-        this.lastInputValue = '';
-        this.lastInputLength = 0;
-        this.inputEventCount = 0;
-        this.lastInputEvent = null;
-        this.lastInputEventTime = 0;
+        const nextBtn = document.getElementById('next-sentence-btn');
+        if (this.currentSentence < this.sentences.length - 1) {
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.disabled = true;
+            nextBtn.style.backgroundColor = 'var(--color-secondary)';
+            nextBtn.style.opacity = '0.5';
+        } else {
+            nextBtn.style.display = 'none';
+        }
     }
     
     calculateAccuracy() {
