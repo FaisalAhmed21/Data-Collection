@@ -406,48 +406,49 @@ class BiometricDataCollector {
         const eventSignature = `${inputType}-${data}-${value.length}-${pos}`;
         
         if (data && inputType === 'insertText') {
-            // Special handling for quotes - less aggressive deduplication
+            // Special handling for quotes - COMPLETE BYPASS of deduplication
             const isQuote = data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´' || data === '′' || data === '‵' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶';
             
             if (isQuote) {
                 console.log('🔍 Quote input detected:', data, 'charCode:', data.charCodeAt(0), 'type:', inputType);
-            }
-            
-            // iOS-specific deduplication to prevent double character recording
-            if (this.isIOS) {
-                // For quotes, use much more lenient deduplication
-                const dedupWindow = isQuote ? 50 : 300; // 50ms for quotes vs 300ms for others
-                
-                // Check for exact same input event within dedup window
-                if (this.lastInputEvent === eventSignature && 
-                    this.lastInputEventTime && 
-                    (currentTime - this.lastInputEventTime) < dedupWindow) {
-                    console.log('🚫 iOS duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
-                    return;
-                }
-                
-                // Check for same character within dedup window
-                if (this.lastChar === data && 
-                    this.lastCharTime && 
-                    (currentTime - this.lastCharTime) < dedupWindow) {
-                    console.log('🚫 iOS duplicate character BLOCKED:', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
-                    return;
-                }
-                
-                // Check for rapid input events (iOS keyboard lag) - more lenient for quotes
-                const rapidWindow = isQuote ? 100 : 150; // 100ms for quotes vs 150ms for others
-                if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < rapidWindow) {
-                    console.log('🚫 iOS rapid input BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
-                    return;
-                }
+                console.log('✅ QUOTE BYPASS: Skipping all deduplication for quote character');
+                // Skip all deduplication for quotes - they are too important to miss
             } else {
-                // Android deduplication - less aggressive for quotes
-                const dedupWindow = isQuote ? 30 : 100; // 30ms for quotes vs 100ms for others
-                if (this.lastInputEvent === eventSignature && 
-                    this.lastInputEventTime && 
-                    (currentTime - this.lastInputEventTime) < dedupWindow) {
-                    console.log('🚫 Android duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
-                    return;
+                // iOS-specific deduplication to prevent double character recording
+                if (this.isIOS) {
+                    // For quotes, use much more lenient deduplication
+                    const dedupWindow = 300; // 300ms for non-quotes
+                    
+                    // Check for exact same input event within dedup window
+                    if (this.lastInputEvent === eventSignature && 
+                        this.lastInputEventTime && 
+                        (currentTime - this.lastInputEventTime) < dedupWindow) {
+                        console.log('🚫 iOS duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                        return;
+                    }
+                    
+                    // Check for same character within dedup window
+                    if (this.lastChar === data && 
+                        this.lastCharTime && 
+                        (currentTime - this.lastCharTime) < dedupWindow) {
+                        console.log('🚫 iOS duplicate character BLOCKED:', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
+                        return;
+                    }
+                    
+                    // Check for rapid input events (iOS keyboard lag)
+                    if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 150) {
+                        console.log('🚫 iOS rapid input BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                        return;
+                    }
+                } else {
+                    // Android deduplication
+                    const dedupWindow = 100; // 100ms for non-quotes
+                    if (this.lastInputEvent === eventSignature && 
+                        this.lastInputEventTime && 
+                        (currentTime - this.lastInputEventTime) < dedupWindow) {
+                        console.log('🚫 Android duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                        return;
+                    }
                 }
             }
         }
@@ -459,14 +460,19 @@ class BiometricDataCollector {
         }
         
         // Additional iOS protection: block composition events that might cause duplicates
-        // More lenient for quotes
-        if (this.isIOS && inputType === 'insertText' && this.lastInputEventTime) {
+        // COMPLETE BYPASS for quotes
+        if (this.isIOS && inputType === 'insertText' && this.lastInputEventTime && data) {
             const isQuote = data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´' || data === '′' || data === '‵' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶';
-            const timeSinceLast = currentTime - this.lastInputEventTime;
-            const compositionWindow = isQuote ? 25 : 50; // 25ms for quotes vs 50ms for others
-            if (timeSinceLast < compositionWindow) {
-                console.log('🚫 iOS composition duplicate BLOCKED:', data, 'time since last:', timeSinceLast, 'ms');
-                return;
+            
+            if (isQuote) {
+                console.log('✅ QUOTE BYPASS: Skipping iOS composition check for quote');
+            } else {
+                const timeSinceLast = currentTime - this.lastInputEventTime;
+                const compositionWindow = 50; // 50ms for non-quotes
+                if (timeSinceLast < compositionWindow) {
+                    console.log('🚫 iOS composition duplicate BLOCKED:', data, 'time since last:', timeSinceLast, 'ms');
+                    return;
+                }
             }
         }
         
@@ -669,18 +675,37 @@ class BiometricDataCollector {
                     }
                     
                     // Check if character should be recorded (simplified deduplication)
-                    // For quotes, use more lenient deduplication
+                    // COMPLETE BYPASS for quotes
                     const isQuote = refChar === "'" || refChar === '"';
-                    if (this.shouldRecordChar(refChar, timestamp + i, isQuote)) {
+                    if (isQuote) {
+                        console.log('✅ QUOTE BYPASS: Skipping shouldRecordChar check for quote');
+                        // Skip deduplication for quotes - they are too important to miss
+                        
+                        // Record quote immediately without any deduplication checks
+                        console.log('📝 Recording quote keystroke (bypassed):', refChar, 'type:', inputType, 'timestamp:', timestamp + i);
+                        this.recordKeystroke({
+                            timestamp: timestamp + i,
+                            actualChar: refChar,
+                            keyCode: char.charCodeAt(0),
+                            type: inputType,
+                            sentence: this.currentSentence,
+                            position: pos - data.length + i,
+                            clientX: this.pointerTracking.x,
+                            clientY: this.pointerTracking.y
+                        });
+                        
+                        // Update last character and time for mobile deduplication
+                        this.lastChar = refChar;
+                        this.lastCharTime = timestamp + i;
+                    } else if (this.shouldRecordChar(refChar, timestamp + i, false)) {
                         
                         // Final iOS safety check: prevent duplicate in keystroke data
-                        // More lenient for quotes
                         if (this.isIOS) {
                             const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
-                            const quoteDedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
+                            const dedupWindow = 300; // 300ms for non-quotes
                             if (lastKeystroke && 
                                 lastKeystroke.actualChar === refChar && 
-                                (timestamp + i - lastKeystroke.timestamp) < quoteDedupWindow) {
+                                (timestamp + i - lastKeystroke.timestamp) < dedupWindow) {
                                 console.log('🚫 iOS final duplicate BLOCKED in keystroke data:', refChar);
                                 return;
                             }
@@ -833,18 +858,37 @@ class BiometricDataCollector {
             }
             
             // Check if character should be recorded (simplified deduplication)
-            // For quotes, use more lenient deduplication
+            // COMPLETE BYPASS for quotes
             const isQuote = refChar === "'" || refChar === '"';
-            if (this.shouldRecordChar(refChar, timestamp, isQuote)) {
+            if (isQuote) {
+                console.log('✅ QUOTE BYPASS: Skipping shouldRecordChar check for quote (other input)');
+                // Skip deduplication for quotes - they are too important to miss
+                
+                // Record quote immediately without any deduplication checks
+                console.log('📝 Recording quote keystroke (bypassed, other input):', refChar, 'type:', inputType, 'timestamp:', timestamp);
+                this.recordKeystroke({
+                    timestamp: timestamp,
+                    actualChar: refChar,
+                    keyCode: data.charCodeAt(0),
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos - 1,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+                
+                // Update last character and time for mobile deduplication
+                this.lastChar = refChar;
+                this.lastCharTime = timestamp;
+            } else if (this.shouldRecordChar(refChar, timestamp, false)) {
                 
                 // Final iOS safety check: prevent duplicate in keystroke data
-                // More lenient for quotes
                 if (this.isIOS) {
                     const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
-                    const quoteDedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
+                    const dedupWindow = 300; // 300ms for non-quotes
                     if (lastKeystroke && 
                         lastKeystroke.actualChar === refChar && 
-                        (timestamp - lastKeystroke.timestamp) < quoteDedupWindow) {
+                        (timestamp - lastKeystroke.timestamp) < dedupWindow) {
                         console.log('🚫 iOS final duplicate BLOCKED in keystroke data (other input):', refChar);
                         return;
                     }
@@ -1270,21 +1314,26 @@ class BiometricDataCollector {
             console.log('[QUOTE] Keystroke captured:', data);
         }
         // FINAL iOS safety check to prevent double character recording
-        // More lenient for quotes to ensure they are captured
+        // COMPLETE BYPASS for quotes
         if (this.isIOS && data.actualChar && data.actualChar !== 'BACKSPACE' && data.actualChar !== 'SHIFT') {
             const currentTime = performance.now();
             const isQuote = data.actualChar === "'" || data.actualChar === '"';
-            const dedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
             
-            // Check if this exact character was recorded very recently
-            const recentKeystrokes = this.keystrokeData.slice(-5); // Check last 5 keystrokes
-            const duplicateFound = recentKeystrokes.some(ks => 
-                ks.actualChar === data.actualChar && 
-                (currentTime - ks.timestamp) < dedupWindow
-            );
-            if (duplicateFound) {
-                console.log('🚫 iOS FINAL CHECK: Duplicate character BLOCKED:', data.actualChar, 'window:', dedupWindow, 'ms');
-                return;
+            if (isQuote) {
+                console.log('✅ QUOTE BYPASS: Skipping iOS final safety check for quote');
+            } else {
+                const dedupWindow = 300; // 300ms for non-quotes
+                
+                // Check if this exact character was recorded very recently
+                const recentKeystrokes = this.keystrokeData.slice(-5); // Check last 5 keystrokes
+                const duplicateFound = recentKeystrokes.some(ks => 
+                    ks.actualChar === data.actualChar && 
+                    (currentTime - ks.timestamp) < dedupWindow
+                );
+                if (duplicateFound) {
+                    console.log('🚫 iOS FINAL CHECK: Duplicate character BLOCKED:', data.actualChar, 'window:', dedupWindow, 'ms');
+                    return;
+                }
             }
         }
 
@@ -1497,14 +1546,15 @@ class BiometricDataCollector {
             console.log(`  "${char}" (${char.charCodeAt(0)}) -> should be normalized`);
         });
         
-        // Test deduplication windows for quotes
-        console.log('Quote deduplication windows:');
-        console.log('  iOS input event dedup: 50ms (vs 300ms for others)');
-        console.log('  iOS rapid input dedup: 100ms (vs 150ms for others)');
-        console.log('  iOS composition dedup: 25ms (vs 50ms for others)');
-        console.log('  iOS final keystroke dedup: 100ms (vs 300ms for others)');
-        console.log('  Android input event dedup: 30ms (vs 100ms for others)');
-        console.log('  shouldRecordChar dedup: 15-20ms (vs 30-40ms for others)');
+        // Test quote bypass system
+        console.log('Quote bypass system status:');
+        console.log('  ✅ COMPLETE BYPASS: All deduplication skipped for quotes');
+        console.log('  ✅ iOS input event dedup: BYPASSED for quotes');
+        console.log('  ✅ iOS rapid input dedup: BYPASSED for quotes');
+        console.log('  ✅ iOS composition dedup: BYPASSED for quotes');
+        console.log('  ✅ iOS final keystroke dedup: BYPASSED for quotes');
+        console.log('  ✅ shouldRecordChar dedup: BYPASSED for quotes');
+        console.log('  ✅ Android input event dedup: BYPASSED for quotes');
         
         return quotes;
     }
