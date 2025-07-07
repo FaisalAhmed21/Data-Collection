@@ -72,7 +72,7 @@ class BiometricDataCollector {
         
         this.crystalSteps = [
             { id: 1, instruction: "Tap the crystal exactly 3 times with your index finger", target: 3, type: 'tap' },
-            { id: 2, instruction: "Touch anywhere on crystal surface, then rotate clockwise for one full rotation. After green light, rotate counter-clockwise for one full rotation. After second green light, rotate clockwise again for one full rotation. After third green light, task is complete.", target: 3, type: 'rotate' },
+            { id: 2, instruction: "Touch anywhere on crystal surface, then rotate clockwise for one full rotation with one finger. After green light, rotate counter-clockwise for one full rotation. After second green light, rotate clockwise again for one full rotation. After third green light, task is complete.", target: 3, type: 'rotate' },
             { id: 3, instruction: "Pinch to shrink the crystal to 50% size", target: 0.5, type: 'pinch' },
             { id: 4, instruction: "Spread fingers to grow crystal to 150% size", target: 1.5, type: 'spread' },
             { id: 5, instruction: "Apply pressure with 3 fingers simultaneously for 3 seconds", target: 3000, type: 'pressure' }
@@ -269,6 +269,33 @@ class BiometricDataCollector {
         document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
+
+        // Restrict cursor movement: always keep cursor at end
+        typingInput.addEventListener('keydown', (e) => {
+            // Prevent arrow keys, Home, End, and selection
+            if ([37, 38, 39, 40, 35, 36].includes(e.keyCode) || (e.ctrlKey && (e.key === 'a' || e.key === 'A'))) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        typingInput.addEventListener('mousedown', (e) => {
+            // Prevent mouse click from moving cursor
+            e.preventDefault();
+            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+            return false;
+        });
+        typingInput.addEventListener('mouseup', (e) => {
+            // Always set cursor at end after mouse up
+            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+        });
+        typingInput.addEventListener('select', (e) => {
+            // Prevent text selection
+            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+        });
+        typingInput.addEventListener('input', (e) => {
+            // Always keep cursor at end after input
+            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+        });
     }
     
     switchScreen(screenName) {
@@ -2047,7 +2074,7 @@ class BiometricDataCollector {
     getStepTitle(type) {
         const titles = {
             'tap': 'Index Finger Tapping',
-            'rotate': 'Two-Finger Rotation',
+            'rotate': 'One Finger Rotation',
             'pinch': 'Pinch to Shrink',
             'spread': 'Spread to Enlarge',
             'pressure': 'Three-Finger Pressure'
