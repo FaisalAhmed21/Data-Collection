@@ -71,7 +71,7 @@ class BiometricDataCollector {
         ];
         
         this.crystalSteps = [
-            { id: 1, instruction: "Tap the crystal exactly 3 times with your index finger", target: 3, type: 'tap' },
+            { id: 1, instruction: "Tap the crystal exactly 3 times with your finger", target: 3, type: 'tap' },
             { id: 2, instruction: "Touch anywhere on crystal surface, then rotate clockwise for one full rotation with one finger. After green light, rotate counter-clockwise for one full rotation. After second green light, rotate clockwise again for one full rotation. After third green light, task is complete.", target: 3, type: 'rotate' },
             { id: 3, instruction: "Pinch to shrink the crystal to 50% size", target: 0.5, type: 'pinch' },
             { id: 4, instruction: "Spread fingers to grow crystal to 150% size", target: 1.5, type: 'spread' },
@@ -2084,7 +2084,7 @@ class BiometricDataCollector {
     
     getStepTitle(type) {
         const titles = {
-            'tap': 'Index Finger Tapping',
+            'tap': 'Finger Tapping',
             'rotate': 'One Finger Rotation',
             'pinch': 'Pinch to Shrink',
             'spread': 'Spread to Enlarge',
