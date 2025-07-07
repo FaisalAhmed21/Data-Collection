@@ -991,7 +991,7 @@ select.form-control {
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
-  margin: 12px 0 0 16px;
+  margin: 32px 0 0 16px; /* Increase top margin for lower crystal */
 }
 
 .crystal {
@@ -1904,14 +1904,14 @@ select.form-control {
 
 /* Move feedback and controls lower */
 .crystal-feedback {
-  margin-top: 56px;
+  margin-top: 16px;
 }
 .crystal-controls {
-  margin-top: 48px;
+  margin-top: 16px;
 }
 
 /* Move next-task-btn higher for visibility */
 .next-task-btn {
   margin-top: 0 !important;
-  margin-bottom: 40px !important;
+  margin-bottom: 24px !important;
 }
