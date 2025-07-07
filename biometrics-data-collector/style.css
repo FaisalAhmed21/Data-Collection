@@ -951,9 +951,11 @@ select.form-control {
 }
 
 .crystal-content {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 80vh;
 }
 
 .crystal-step-info {
@@ -974,24 +976,16 @@ select.form-control {
 .crystal-container {
   display: flex;
   justify-content: center;
-  margin: var(--space-32) 0;
+  align-items: center;
+  min-height: 420px;
+  margin-bottom: 32px;
 }
 
 .crystal-area {
-  position: relative;
-  width: 400px;
-  height: 400px;
   display: flex;
-  align-items: center;
   justify-content: center;
-  background: radial-gradient(circle, rgba(0, 31, 63, 0.1) 0%, transparent 70%);
-  border-radius: 50%;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
-  cursor: pointer;
+  align-items: center;
+  min-height: 340px;
 }
 
 .crystal {
