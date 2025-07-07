@@ -308,6 +308,17 @@ class BiometricDataCollector {
             // Smooth scroll to the target screen
             this.smoothScrollToScreen(targetScreen);
         }
+        // Update feature counts on export screen
+        if (screenName === 'export') {
+            // Keystroke features
+            const keystrokeFeatures = this.extractKeystrokeFeatures();
+            const keystrokeFeatureCount = keystrokeFeatures.length > 0 ? Object.keys(keystrokeFeatures[0]).length : 0;
+            document.getElementById('keystroke-features').textContent = keystrokeFeatureCount;
+            // Touch features
+            const touchFeatures = this.extractTouchFeatures();
+            const touchFeatureCount = touchFeatures.length > 0 ? Object.keys(touchFeatures[0]).length : 0;
+            document.getElementById('touch-features').textContent = touchFeatureCount;
+        }
     }
     
     smoothScrollToScreen(targetScreen) {
