@@ -256,7 +256,15 @@ class BiometricDataCollector {
         this.bindCrystalEvents();
         document.getElementById('reset-step-btn').addEventListener('click', () => this.resetCrystalStep());
         const nextCrystalBtn = document.getElementById('next-crystal-btn');
-        nextCrystalBtn.addEventListener('click', () => this.nextCrystalStep());
+        if (!nextCrystalBtn) {
+            console.error('[DEBUG] next-crystal-btn not found in DOM when attaching handler!');
+        } else {
+            nextCrystalBtn.addEventListener('click', () => {
+                console.log('[DEBUG] Next Step button clicked');
+                this.nextCrystalStep();
+            });
+            console.log('[DEBUG] Next Step button handler attached');
+        }
         this.bindGalleryEvents();
         document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
@@ -1882,6 +1890,7 @@ class BiometricDataCollector {
 
     
     completeStep() {
+        console.log('[DEBUG] completeStep, current step:', this.currentCrystalStep);
         const crystal = document.getElementById('crystal');
         crystal.classList.add('success');
         setTimeout(() => {
@@ -1903,12 +1912,14 @@ class BiometricDataCollector {
     }
     
     nextCrystalStep() {
+        console.log('[DEBUG] nextCrystalStep called, current step:', this.currentCrystalStep);
         if (this.currentCrystalStep >= this.crystalSteps.length) {
             // This should not happen since we show Next Task button in completeStep
             this.switchScreen('gallery');
             return;
         }
         this.currentCrystalStep++;
+        console.log('[DEBUG] nextCrystalStep incremented, new step:', this.currentCrystalStep);
         if (this.currentCrystalStep > this.crystalSteps.length) {
             // This should not happen since we show Next Task button in completeStep
             this.switchScreen('gallery');
@@ -1960,6 +1971,7 @@ class BiometricDataCollector {
     }
     
     updateCrystalDisplay() {
+        console.log('[DEBUG] updateCrystalDisplay, current step:', this.currentCrystalStep);
         const step = this.crystalSteps[this.currentCrystalStep - 1];
         document.getElementById('step-title').textContent = `Step ${this.currentCrystalStep}: ${this.getStepTitle(step.type)}`;
         document.getElementById('step-instruction').textContent = step.instruction;
