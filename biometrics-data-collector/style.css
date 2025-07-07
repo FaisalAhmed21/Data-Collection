@@ -979,21 +979,22 @@ select.form-control {
 
 .crystal-container {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
   min-width: unset;
   min-height: unset;
   margin: 0 0 32px 0;
+  width: 100%;
 }
 
 .crystal-area {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   min-width: unset;
   min-height: unset;
-  margin: 0;
+  margin: 0 24px 0 0;
 }
 
 .crystal {
@@ -1171,7 +1172,7 @@ select.form-control {
 
 .crystal-controls {
   display: flex;
-  flex-direction: row;
+  flex-direction: row !important;
   justify-content: center;
   align-items: center;
   gap: var(--space-16);
@@ -1185,7 +1186,7 @@ select.form-control {
 
 @media (max-width: 600px) {
   .crystal-controls {
-    flex-direction: column;
+    flex-direction: row !important;
     gap: var(--space-12);
     padding: var(--space-12);
   }
