@@ -2552,11 +2552,7 @@ class BiometricDataCollector {
                 if (keystroke.isSynthetic && keystroke.actualChar === 'SHIFT') {
                     refChar = 'SHIFT';
                 } else if (keystroke.actualChar && keystroke.actualChar.length === 1) {
-                    const charCase = this.getCharacterCase(keystroke.actualChar);
-                    if (charCase === 'uppercase' && keystroke.shiftPressed) {
-                        // Add SHIFT before capital letter
-                        refChar = `SHIFT${keystroke.actualChar}`;
-                    }
+                    refChar = keystroke.actualChar;
                 }
                 
                 features.push({
