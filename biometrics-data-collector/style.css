@@ -995,8 +995,8 @@ select.form-control {
 }
 
 .crystal {
-  width: 180px;
-  height: 180px;
+  width: 260px;
+  height: 260px;
   cursor: pointer;
   transition: transform 0.3s var(--ease-standard), filter 0.3s var(--ease-standard);
   transform-origin: center;
@@ -1004,8 +1004,8 @@ select.form-control {
 }
 
 .crystal-inner {
-  width: 160px;
-  height: 160px;
+  width: 240px;
+  height: 240px;
   background: linear-gradient(135deg,
     rgba(0, 31, 63, 0.8) 0%,
     rgba(255, 215, 0, 0.9) 50%,
@@ -1033,8 +1033,8 @@ select.form-control {
 }
 
 .crystal-glow {
-  width: 200px;
-  height: 200px;
+  width: 280px;
+  height: 280px;
   position: absolute;
   top: -30px;
   left: -30px;
