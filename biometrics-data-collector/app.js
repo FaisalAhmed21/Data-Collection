@@ -18,10 +18,8 @@ class BiometricDataCollector {
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         this.isAndroid = /Android/.test(navigator.userAgent);
         this.isMobile = this.isIOS || this.isAndroid;
-        
         this.keystrokeData = [];
         this.touchData = [];
-        
         this.currentPointerX = window.innerWidth / 2;
         this.currentPointerY = window.innerHeight / 2;
         this.pointerTracking = {
@@ -32,14 +30,11 @@ class BiometricDataCollector {
         this.compositionActive = false;
         this.lastInputLength = 0;
         this.previousChar = null;
-        
         this.lastBackspaceTime = 0;
         this.backspaceCooldown = 100;
-        
         this.lastCharTime = 0;
         this.lastChar = null;
         this.charCooldown = 50;
-        
         this.lastInputValue = '';
         this.lastInputLength = 0;
         this.inputEventCount = 0;
@@ -54,7 +49,6 @@ class BiometricDataCollector {
         this.lastKeystrokeTime = 0;
         this.currentCase = 'lowercase'; // Track current case state
         this.flightTimeData = []; // Store flight times between keystrokes
-        
         this.galleryZoom = {
             scale: 1,
             isPanning: false,
