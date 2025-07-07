@@ -255,7 +255,8 @@ class BiometricDataCollector {
         document.getElementById('next-sentence-btn').addEventListener('click', () => this.nextSentence());
         this.bindCrystalEvents();
         document.getElementById('reset-step-btn').addEventListener('click', () => this.resetCrystalStep());
-        document.getElementById('next-crystal-btn').addEventListener('click', () => this.nextCrystalStep());
+        const nextCrystalBtn = document.getElementById('next-crystal-btn');
+        nextCrystalBtn.addEventListener('click', () => this.nextCrystalStep());
         this.bindGalleryEvents();
         document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
@@ -1890,18 +1891,12 @@ class BiometricDataCollector {
         const sizeIndicator = document.getElementById('size-indicator');
         sizeIndicator.classList.add('completion-highlight');
         setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
-
         const nextCrystalBtn = document.getElementById('next-crystal-btn');
         if (this.currentCrystalStep < this.crystalSteps.length) {
-            // Steps 1-4: enable Next Step button
-            if (nextCrystalBtn) {
-                nextCrystalBtn.disabled = false;
-            }
+            nextCrystalBtn.style.display = 'inline-flex';
+            nextCrystalBtn.disabled = false;
         } else {
-            // Step 5: hide Next Step, show Next Task
-            if (nextCrystalBtn) {
-                nextCrystalBtn.style.display = 'none';
-            }
+            nextCrystalBtn.style.display = 'none';
             this.showNextTaskButton('gallery', 'Gallery Interaction');
             this.updateTaskLocks(); // Lock crystal after completion
         }
