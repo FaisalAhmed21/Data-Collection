@@ -1170,44 +1170,72 @@ class BiometricDataCollector {
         // FINAL iOS safety check to prevent double character recording
         if (this.isIOS && data.actualChar && data.actualChar !== 'BACKSPACE' && data.actualChar !== 'SHIFT') {
             const currentTime = performance.now();
-            
             // Check if this exact character was recorded very recently
             const recentKeystrokes = this.keystrokeData.slice(-5); // Check last 5 keystrokes
             const duplicateFound = recentKeystrokes.some(ks => 
                 ks.actualChar === data.actualChar && 
                 (currentTime - ks.timestamp) < 300
             );
-            
             if (duplicateFound) {
                 console.log('🚫 iOS FINAL CHECK: Duplicate character BLOCKED:', data.actualChar);
                 return;
             }
         }
-        
+
         // Calculate flight time (time between keystrokes)
         const currentTime = performance.now();
+        let prevKeystrokeTime = this.lastKeystrokeTime > 0 ? this.lastKeystrokeTime : currentTime;
+        let flightTime = 0;
         if (this.lastKeystrokeTime > 0 && data.actualChar !== 'SHIFT') {
-            const flightTime = currentTime - this.lastKeystrokeTime;
-            data.flightTime = flightTime;
-            
-            // Store flight time data for analysis
-            this.flightTimeData.push({
-                timestamp: currentTime,
-                flightTime: flightTime,
-                fromChar: this.lastChar,
-                toChar: data.actualChar,
-                sentence: this.currentSentence
-            });
-            
-            console.log(`✈️ Flight time: ${flightTime.toFixed(2)}ms (${this.lastChar} → ${data.actualChar})`);
+            flightTime = currentTime - this.lastKeystrokeTime;
         }
-        
-        // Enhanced SHIFT handling
+
+        // Enhanced SHIFT handling for capital letters
+        if (
+            data.actualChar &&
+            data.actualChar.length === 1 &&
+            this.getCharacterCase(data.actualChar) === 'uppercase' &&
+            data.shiftKey === true // Use shiftKey from event if available
+        ) {
+            // Split the flight time randomly (40-60%)
+            let split = 0.4 + Math.random() * 0.2; // 0.4 to 0.6
+            let shiftFlight = flightTime * split;
+            let capFlight = flightTime * (1 - split);
+            // Synthetic SHIFT event
+            const shiftEvent = {
+                ...data,
+                actualChar: 'SHIFT',
+                keyCode: 16,
+                type: 'keydown',
+                timestamp: prevKeystrokeTime + shiftFlight,
+                flightTime: Math.round(shiftFlight),
+                shiftKey: true,
+                shiftPressed: true,
+                isSynthetic: true
+            };
+            // Capital letter event
+            const capEvent = {
+                ...data,
+                timestamp: prevKeystrokeTime + shiftFlight + capFlight,
+                flightTime: Math.round(capFlight),
+                shiftKey: true,
+                shiftPressed: true
+            };
+            // Push SHIFT event
+            this.keystrokeData.push(shiftEvent);
+            // Push capital letter event
+            this.keystrokeData.push(capEvent);
+            // Update lastKeystrokeTime
+            this.lastKeystrokeTime = capEvent.timestamp;
+            this.lastChar = data.actualChar;
+            return;
+        }
+
+        // Enhanced SHIFT handling for actual SHIFT key
         if (data.actualChar === 'SHIFT') {
             data.shiftAction = this.shiftPressed ? 'release' : 'press';
             data.shiftDuration = this.shiftPressed ? (currentTime - this.shiftPressTime) : 0;
             data.caseTransition = this.getCaseTransition(data);
-            
             console.log(`🔤 SHIFT ${data.shiftAction}: ${data.caseTransition}, duration: ${data.shiftDuration.toFixed(2)}ms`);
         } else if (data.actualChar && data.actualChar !== 'BACKSPACE') {
             // Add SHIFT context to regular characters
@@ -1215,12 +1243,12 @@ class BiometricDataCollector {
             data.characterCase = this.getCharacterCase(data.actualChar);
             data.caseTransition = this.getCaseTransition(data);
         }
-        
+
         // Update last keystroke time
         if (data.actualChar !== 'SHIFT') {
             this.lastKeystrokeTime = currentTime;
         }
-        
+
         // Debug logging for quote characters
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('Recording keystroke with quote:', data.actualChar, 'type:', data.type);
@@ -1229,7 +1257,7 @@ class BiometricDataCollector {
         if (data.actualChar === 'Backspace') {
             console.log('Recording backspace keystroke:', data.type, 'timestamp:', data.timestamp);
         }
-        
+
         this.keystrokeData.push(data);
     }
     
