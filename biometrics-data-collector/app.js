@@ -395,6 +395,35 @@ class BiometricDataCollector {
     
     // FIXED: Enhanced mobile-friendly keystroke detection using inputType
     handleTypingInput(e) {
+        const inputValue = e.target.value;
+        // Robustly detect and record all new characters, including quotes and smart quotes
+        if (typeof this.lastInputValue !== 'string') this.lastInputValue = '';
+        let newChars = '';
+        if (inputValue.length > this.lastInputValue.length) {
+            // Find the new character(s) typed
+            newChars = inputValue.slice(this.lastInputValue.length);
+        } else if (inputValue.length < this.lastInputValue.length) {
+            // Handle backspace or deletion
+            // (Optional: record backspace event here if needed)
+        }
+        for (let i = 0; i < newChars.length; i++) {
+            const char = newChars[i];
+            this.recordKeystroke({
+                timestamp: performance.now(),
+                actualChar: char,
+                keyCode: char.charCodeAt(0),
+                type: 'insertText',
+                sentence: this.currentSentence,
+                position: e.target.selectionStart || 0,
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y
+            });
+            if (char === "'" || char === '"' || char === '‘' || char === '’' || char === '“' || char === '”') {
+                console.log('[QUOTE] Typed and stored:', char);
+            }
+        }
+        this.lastInputValue = inputValue;
+    
         const { inputType, data } = e;
         const inputEl = e.target;
         const value = inputEl.value;
