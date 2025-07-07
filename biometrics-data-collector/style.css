@@ -1373,13 +1373,13 @@ select.form-control {
 
 .zoom-controls {
   position: absolute;
-  bottom: 70px;
+  bottom: 110px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: var(--space-12);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(30, 30, 30, 0.85); /* Darker, more opaque for visibility */
   padding: var(--space-8) var(--space-16);
   border-radius: var(--radius-full);
   backdrop-filter: blur(10px);
@@ -1434,6 +1434,9 @@ select.form-control {
   width: calc(100% - 80px);
   justify-content: space-between;
   transform: none;
+  position: absolute;
+  bottom: 60px; /* Move arrows higher above the bottom */
+  z-index: 11;
 }
 
 .popup-prev {
@@ -1457,6 +1460,7 @@ select.form-control {
     left: 8px;
     right: 8px;
     width: calc(100% - 16px);
+    bottom: 40px;
   }
 }
 
@@ -1695,12 +1699,8 @@ select.form-control {
   }
 
   .zoom-controls {
-    bottom: 60px;
-    gap: var(--space-8);
-    padding: var(--space-6) var(--space-12);
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
+    bottom: 90px;
+    background: rgba(30, 30, 30, 0.92);
   }
 
   .zoom-in,
