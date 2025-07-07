@@ -502,6 +502,10 @@ class BiometricDataCollector {
                     console.log('Mobile backspace duplicate ignored:', inputType, 'time since last:', currentTime - this.lastBackspaceTime);
                 }
             }
+            
+            // Update accuracy and check sentence completion after backspace
+            this.calculateAccuracy();
+            this.checkSentenceCompletion();
             return;
         }
     
@@ -865,6 +869,10 @@ class BiometricDataCollector {
                 console.log('❌ Character duplicate ignored (other input):', refChar);
             }
         }
+        
+        // Update accuracy and check sentence completion after any input
+        this.calculateAccuracy();
+        this.checkSentenceCompletion();
     }
     
     // FIXED: Enhanced character detection with better mobile support
@@ -1106,6 +1114,10 @@ class BiometricDataCollector {
             } else {
                 console.log('Desktop backspace duplicate ignored, time since last:', currentTime - this.lastBackspaceTime);
             }
+            
+            // Update accuracy and check sentence completion after backspace
+            this.calculateAccuracy();
+            this.checkSentenceCompletion();
             return;  // Don't record further
         }
         
@@ -1128,6 +1140,10 @@ class BiometricDataCollector {
                 clientY: this.pointerTracking.y
             });
         }
+        
+        // Update accuracy and check sentence completion after any keydown
+        this.calculateAccuracy();
+        this.checkSentenceCompletion();
     }
     
     startTypingTask() {
@@ -1175,8 +1191,17 @@ class BiometricDataCollector {
         const typed = document.getElementById('typing-input').value;
         const target = this.sentences[this.currentSentence];
         
+        // Debug logging for accuracy calculation
+        console.log('🔍 Accuracy calculation:', {
+            typed: `"${typed}"`,
+            target: `"${target}"`,
+            typedLength: typed.length,
+            targetLength: target.length
+        });
+        
         if (typed === target) {
-          document.getElementById('accuracy').textContent = '100%';
+            document.getElementById('accuracy').textContent = '100%';
+            console.log('✅ Perfect match - 100% accuracy');
             return 100;
         }
         
@@ -1191,6 +1216,7 @@ class BiometricDataCollector {
         
         const accuracy = Math.round((correct / target.length) * 100);
         document.getElementById('accuracy').textContent = `${accuracy}%`;
+        console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
         return accuracy;
     }
     
