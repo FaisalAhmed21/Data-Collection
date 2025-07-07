@@ -5,8 +5,7 @@ class BiometricDataCollector {
         this.currentSentence = 0;
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
-        
-        // Task progression state management
+         // Task progression state management
         this.taskState = {
             studyStarted: false,
             typingCompleted: false,
