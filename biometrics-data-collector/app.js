@@ -2568,9 +2568,11 @@ class BiometricDataCollector {
                 const wasDeleted = (keystroke.actualChar === 'BACKSPACE' || 
                                   keystroke.type.startsWith('delete')) ? 1 : 0;
                 
-                // SHIFT handling: Include SHIFT in ref_char before capital letters
+                // SHIFT handling: Include SHIFT in ref_char before capital letters and for synthetic SHIFT events
                 let refChar = keystroke.actualChar || 'unknown';
-                if (keystroke.actualChar && keystroke.actualChar.length === 1) {
+                if (keystroke.isSynthetic && keystroke.actualChar === 'SHIFT') {
+                    refChar = 'SHIFT';
+                } else if (keystroke.actualChar && keystroke.actualChar.length === 1) {
                     const charCase = this.getCharacterCase(keystroke.actualChar);
                     if (charCase === 'uppercase' && keystroke.shiftPressed) {
                         // Add SHIFT before capital letter
