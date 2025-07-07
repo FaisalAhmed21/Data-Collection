@@ -1421,9 +1421,43 @@ select.form-control {
 .zoom-level {
   color: white;
   font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-sm);
-  min-width: 50px;
+  font-size: 12px;
+  min-width: 32px;
+  max-width: 48px;
   text-align: center;
+  padding: 2px 4px;
+}
+
+.popup-nav {
+  left: 40px;
+  right: 40px;
+  width: calc(100% - 80px);
+  justify-content: space-between;
+  transform: none;
+}
+
+.popup-prev {
+  position: absolute;
+  left: 0;
+}
+
+.popup-next {
+  position: absolute;
+  right: 0;
+}
+
+@media (max-width: 600px) {
+  .zoom-level {
+    font-size: 10px;
+    min-width: 24px;
+    max-width: 32px;
+    padding: 1px 2px;
+  }
+  .popup-nav {
+    left: 8px;
+    right: 8px;
+    width: calc(100% - 16px);
+  }
 }
 
 /* Export Screen */
