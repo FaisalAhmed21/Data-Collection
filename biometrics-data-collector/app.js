@@ -1893,9 +1893,8 @@ class BiometricDataCollector {
 
         const nextCrystalBtn = document.getElementById('next-crystal-btn');
         if (this.currentCrystalStep < this.crystalSteps.length) {
-            // Steps 1-4: show Next Step button
+            // Steps 1-4: enable Next Step button
             if (nextCrystalBtn) {
-                nextCrystalBtn.style.display = 'inline-flex';
                 nextCrystalBtn.disabled = false;
             }
         } else {
@@ -1914,15 +1913,12 @@ class BiometricDataCollector {
             this.switchScreen('gallery');
             return;
         }
-        
         this.currentCrystalStep++;
-        
         if (this.currentCrystalStep > this.crystalSteps.length) {
             // This should not happen since we show Next Task button in completeStep
             this.switchScreen('gallery');
             return;
         }
-        
         this.resetCrystalState();
         this.updateCrystalDisplay();
     }
