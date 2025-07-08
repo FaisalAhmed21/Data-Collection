@@ -1964,6 +1964,9 @@ select.form-control {
   flex-direction: column;
   align-items: center;
   transition: transform 0.2s;
+  height: 44vh;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .custom-keyboard-row {
@@ -2013,5 +2016,7 @@ select.form-control {
   }
   #custom-keyboard-container {
     padding-bottom: 12px;
+    height: 48vh;
+    max-height: 70vh;
   }
 }
