@@ -1191,33 +1191,20 @@ class BiometricDataCollector {
     calculateAccuracy() {
         const typed = document.getElementById('typing-input').value;
         const target = this.sentences[this.currentSentence];
-        
-        // Debug logging for accuracy calculation
-        console.log('🔍 Accuracy calculation:', {
-            typed: `"${typed}"`,
-            target: `"${target}"`,
-            typedLength: typed.length,
-            targetLength: target.length
-        });
-        
+        // Compare exactly, including all whitespace and symbols
         if (typed === target) {
-          document.getElementById('accuracy').textContent = '100%';
-            console.log('✅ Perfect match - 100% accuracy');
+            document.getElementById('accuracy').textContent = '100%';
             return 100;
         }
-        
         let correct = 0;
         const minLength = Math.min(typed.length, target.length);
-        
         for (let i = 0; i < minLength; i++) {
             if (typed[i] === target[i]) {
                 correct++;
             }
         }
-        
         const accuracy = Math.round((correct / target.length) * 100);
         document.getElementById('accuracy').textContent = `${accuracy}%`;
-        console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
         return accuracy;
     }
     
@@ -2803,14 +2790,14 @@ class BiometricDataCollector {
                 ['q','w','e','r','t','y','u','i','o','p'],
                 ['a','s','d','f','g','h','j','k','l'],
                 ['⇧','z','x','c','v','b','n','m','⌫'],
-                ['?123',' ','⏎']
+                ['?123',' ','\.','⏎']
             ],
             numbers: [
                 ['~','`','!','@','#','$','%','^','&','*'],
-                ['(',')','_','+','=','{','}','[',']','<'],
+                ['(','-','_','+','=','{','}','[',']','<'],
                 ['>','/','\\','|',':',';','\'','"',',','.'],
                 ['?','!','—','–','·','•','¶','§','⌫'],
-                ['ABC',' ','⏎']
+                ['ABC',' ','\.','⏎']
             ],
             symbols: [
                 // Not used, but kept for extensibility
