@@ -2851,13 +2851,13 @@ class BiometricDataCollector {
                         e.preventDefault();
                         btn.classList.add('active');
                         showKeyPopup(btn, key);
-                        handleKeyPress(key);
+                        handleKeyPress.call(this, key, e);
                     });
                     btn.addEventListener('mousedown', e => {
                         e.preventDefault();
                         btn.classList.add('active');
                         showKeyPopup(btn, key);
-                        handleKeyPress(key);
+                        handleKeyPress.call(this, key, e);
                     });
                     btn.addEventListener('touchend', e => {
                         btn.classList.remove('active');
@@ -2878,7 +2878,6 @@ class BiometricDataCollector {
         }
 
         function handleKeyPress(key, event) {
-            // Only record keystrokes for actual key presses (not layout, shift, etc.)
             const isCharKey = !["⇧", "⌫", "⏎", "?123", "ABC", " "].includes(key);
             const timestamp = performance.now();
             let refChar = key;
@@ -2886,7 +2885,6 @@ class BiometricDataCollector {
             if (key === '⏎') refChar = 'ENTER';
             if (key === '⌫') refChar = 'BACKSPACE';
             if (key === '⇧') refChar = 'SHIFT';
-            // Get touch/mouse position
             let clientX = 0, clientY = 0;
             if (event && event.touches && event.touches[0]) {
                 clientX = event.touches[0].clientX;
@@ -2894,6 +2892,42 @@ class BiometricDataCollector {
             } else if (event && event.clientX !== undefined) {
                 clientX = event.clientX;
                 clientY = event.clientY;
+            }
+            // Update input value for each key type
+            if (key === '⌫') {
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                if (start > 0) {
+                    input.value = input.value.slice(0, start-1) + input.value.slice(end);
+                    input.setSelectionRange(start-1, start-1);
+                }
+            } else if (key === '⏎') {
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                input.value = input.value.slice(0, start) + '\n' + input.value.slice(end);
+                input.setSelectionRange(start+1, start+1);
+            } else if (key === '⇧') {
+                shift = !shift;
+                renderKeyboard();
+            } else if (key === '?123') {
+                currentLayout = 'numbers';
+                shift = false;
+                renderKeyboard();
+            } else if (key === 'ABC') {
+                currentLayout = 'letters';
+                shift = false;
+                renderKeyboard();
+            } else {
+                // Regular key
+                const char = shift && currentLayout==='letters' && key.length===1 ? key.toUpperCase() : key;
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                input.value = input.value.slice(0, start) + char + input.value.slice(end);
+                input.setSelectionRange(start+char.length, start+char.length);
+                if (shift && currentLayout==='letters') {
+                    shift = false;
+                    renderKeyboard();
+                }
             }
             // Record keystroke only for actual key presses
             if (isCharKey || ['SPACE','ENTER','BACKSPACE','SHIFT'].includes(refChar)) {
@@ -2908,6 +2942,8 @@ class BiometricDataCollector {
                     clientY
                 });
             }
+            // Trigger input event for keystroke capture
+            input.dispatchEvent(new Event('input', {bubbles:true}));
         }
 
         // Show/hide keyboard
