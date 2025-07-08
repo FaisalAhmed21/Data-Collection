@@ -1958,29 +1958,26 @@ select.form-control {
   background: #f8f9fa;
   border-top: 2px solid #ccc;
   z-index: 1000;
-  padding: 16px 0 32px 0;
+  padding: 10px 0 10px 0;
   box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
   transition: transform 0.2s;
-  height: 44vh;
-  max-height: 60vh;
-  overflow-y: auto;
 }
 
 .custom-keyboard-row {
   display: flex;
   justify-content: center;
-  margin: 8px 0;
+  margin: 6px 0;
 }
 
 .custom-key {
-  min-width: 56px;
-  min-height: 72px;
-  margin: 0 6px;
-  padding: 0 18px;
-  font-size: 2rem;
+  min-width: 48px;
+  min-height: 60px;
+  margin: 0 4px;
+  padding: 0 14px;
+  font-size: 1.5rem;
   background: #fff;
   border: 1.5px solid #bbb;
   border-radius: 12px;
@@ -2000,23 +1997,21 @@ select.form-control {
 }
 
 .custom-key.wide {
-  min-width: 110px;
+  min-width: 90px;
 }
 
 .custom-key.extra-wide {
-  min-width: 180px;
+  min-width: 140px;
 }
 
 @media (max-width: 600px) {
   .custom-key {
-    min-width: 38px;
-    min-height: 48px;
-    font-size: 1.25rem;
-    padding: 0 10px;
+    min-width: 32px;
+    min-height: 40px;
+    font-size: 1.1rem;
+    padding: 0 7px;
   }
   #custom-keyboard-container {
-    padding-bottom: 12px;
-    height: 48vh;
-    max-height: 70vh;
+    padding-bottom: 6px;
   }
 }
