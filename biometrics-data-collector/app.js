@@ -2880,8 +2880,7 @@ class BiometricDataCollector {
         }
 
         function handleKeyPress(key, event) {
-            const isCharKey = !["⇧", "⌫", "⏎", "?123", "ABC", " "].includes(key);
-            const timestamp = performance.now();
+            // Always update input value and cursor for every key
             let refChar = key;
             if (key === ' ') refChar = 'SPACE';
             if (key === '⏎') refChar = 'ENTER';
@@ -2895,7 +2894,6 @@ class BiometricDataCollector {
                 clientX = event.clientX;
                 clientY = event.clientY;
             }
-            // Update input value for each key type
             if (key === '⌫') {
                 const start = input.selectionStart;
                 const end = input.selectionEnd;
@@ -2915,12 +2913,14 @@ class BiometricDataCollector {
                 currentLayout = 'numbers';
                 shift = false;
                 renderKeyboard();
+                return; // Don't record layout switch
             } else if (key === 'ABC') {
                 currentLayout = 'letters';
                 shift = false;
                 renderKeyboard();
+                return; // Don't record layout switch
             } else {
-                // Regular key
+                // Regular key (letters, numbers, symbols, space, etc.)
                 const char = shift && currentLayout==='letters' && key.length===1 ? key.toUpperCase() : key;
                 const start = input.selectionStart;
                 const end = input.selectionEnd;
@@ -2931,20 +2931,18 @@ class BiometricDataCollector {
                     renderKeyboard();
                 }
             }
-            // Record keystroke only for actual key presses
-            if (isCharKey || ['SPACE','ENTER','BACKSPACE','SHIFT'].includes(refChar)) {
-                this.recordKeystroke({
-                    timestamp,
-                    actualChar: refChar,
-                    keyCode: refChar.length === 1 ? refChar.charCodeAt(0) : 0,
-                    type: 'custom-key',
-                    sentence: this.currentSentence,
-                    position: input.selectionStart || 0,
-                    clientX,
-                    clientY
-                });
-            }
-            // Trigger input event for keystroke capture
+            // Always record keystroke for all keys except layout switches
+            this.recordKeystroke({
+                timestamp: performance.now(),
+                actualChar: refChar,
+                keyCode: refChar.length === 1 ? refChar.charCodeAt(0) : 0,
+                type: 'custom-key',
+                sentence: this.currentSentence,
+                position: input.selectionStart || 0,
+                clientX,
+                clientY
+            });
+            // Trigger input event for keystroke capture and accuracy update
             input.dispatchEvent(new Event('input', {bubbles:true}));
         }
 
