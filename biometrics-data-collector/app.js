@@ -1213,6 +1213,11 @@ class BiometricDataCollector {
         const normalize = str => str.trim().replace(/\s+/g, ' ').replace(/[\u200B-\u200D\uFEFF]/g, '');
         const normTyped = normalize(typed);
         const normTarget = normalize(target);
+        // Debug logging
+        console.log('[ACCURACY DEBUG] Raw typed:', JSON.stringify(typed));
+        console.log('[ACCURACY DEBUG] Raw target:', JSON.stringify(target));
+        console.log('[ACCURACY DEBUG] Normalized typed:', JSON.stringify(normTyped));
+        console.log('[ACCURACY DEBUG] Normalized target:', JSON.stringify(normTarget));
         if (normTyped === normTarget) {
             document.getElementById('accuracy').textContent = '100%';
             return 100;
