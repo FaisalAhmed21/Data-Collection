@@ -2944,9 +2944,7 @@ class BiometricDataCollector {
                     clientY
                 });
             }
-            // Trigger input event for keystroke capture and accuracy update
-            input.dispatchEvent(new Event('input', {bubbles:true}));
-            // Also update accuracy immediately after every key press
+            // Always update accuracy after updating input value
             this.calculateAccuracy();
         }
 
