@@ -2656,6 +2656,30 @@ class BiometricDataCollector {
         const features = [];
         
         this.touchData.forEach((touch, index) => {
+            // Compute task_step_label
+            let task_step_label = '';
+            if (touch.taskId === 2) {
+                // Crystal Forge Game: 1(step)
+                task_step_label = `1(${touch.step || 1})`;
+            } else if (touch.taskId === 3) {
+                // Gallery Interaction: 2
+                task_step_label = '2';
+            } else {
+                task_step_label = '';
+            }
+
+            // Compute pressure: average of all available force values (if any), else fallback
+            let pressure = 0.5;
+            if (Array.isArray(touch.touches) && touch.touches.length > 0) {
+                const validForces = touch.touches
+                    .map(t => typeof t.force === 'number' && t.force > 0 && t.force <= 1 ? t.force : null)
+                    .filter(f => f !== null);
+                if (validForces.length > 0) {
+                    // Use average of all valid forces
+                    pressure = Math.round((validForces.reduce((a, b) => a + b, 0) / validForces.length) * 1000) / 1000;
+                }
+            }
+
             // Base features that are always reliable across all devices
             const baseFeature = {
                 participant_id: this.participantId,
@@ -2665,18 +2689,10 @@ class BiometricDataCollector {
                 touch_x: Math.round(touch.touches[0]?.clientX || 0),
                 touch_y: Math.round(touch.touches[0]?.clientY || 0),
                 btn_touch_state: touch.type,
-                inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0
+                inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0,
+                pressure: pressure,
+                task_step_label: task_step_label
             };
-            
-            // RELIABLE PRESSURE: Only include when force is actually available and meaningful
-            // Most mobile devices don't support pressure/force, so we'll use a default value
-            if (touch.touches[0]?.force !== undefined && touch.touches[0].force > 0 && touch.touches[0].force <= 1) {
-                baseFeature.pressure = Math.round(touch.touches[0].force * 1000) / 1000; // 3 decimal precision
-            } else {
-                // Use default pressure value for devices that don't support force
-                baseFeature.pressure = 0.5; // Default pressure value
-            }
-            
             features.push(baseFeature);
         });
         
