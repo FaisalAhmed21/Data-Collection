@@ -2850,11 +2850,22 @@ class BiometricDataCollector {
                     }
                     btn.addEventListener('touchstart', e => {
                         e.preventDefault();
+                        btn.classList.add('active');
                         handleKeyPress(key);
                     });
                     btn.addEventListener('mousedown', e => {
                         e.preventDefault();
+                        btn.classList.add('active');
                         handleKeyPress(key);
+                    });
+                    btn.addEventListener('touchend', e => {
+                        btn.classList.remove('active');
+                    });
+                    btn.addEventListener('mouseup', e => {
+                        btn.classList.remove('active');
+                    });
+                    btn.addEventListener('mouseleave', e => {
+                        btn.classList.remove('active');
                     });
                     rowDiv.appendChild(btn);
                 });
