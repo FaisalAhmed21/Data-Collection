@@ -2806,8 +2806,9 @@ class BiometricDataCollector {
             ],
             numbers: [
                 ['1','2','3','4','5','6','7','8','9','0'],
-                ['-','/',';',';',':','(',')','$','&','@','"'],
-                ['.','\\',',','?','!','\'','⌫'],
+                ['~','!','@','#','$','%','^','&','*','('],
+                [')','_','+','=','-','[',']','{','}',';'],
+                ["'",':','\"',',','.','/','<','>','?','\\','|','`','⌫'],
                 ['ABC',' ','⏎']
             ],
             symbols: [
@@ -2888,16 +2889,12 @@ class BiometricDataCollector {
             } else if (key === '⇧') {
                 shift = !shift;
                 renderKeyboard();
-            } else if (key === '123') {
+            } else if (key === '?123') {
                 currentLayout = 'numbers';
                 shift = false;
                 renderKeyboard();
             } else if (key === 'ABC') {
                 currentLayout = 'letters';
-                shift = false;
-                renderKeyboard();
-            } else if (key === '#+=') {
-                currentLayout = 'symbols';
                 shift = false;
                 renderKeyboard();
             } else {
