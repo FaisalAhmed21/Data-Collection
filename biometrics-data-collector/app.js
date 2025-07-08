@@ -1207,14 +1207,18 @@ class BiometricDataCollector {
     }
 
     calculateAccuracy() {
-        const typed = document.getElementById('typing-input').value;
-        const target = this.sentences[this.currentSentence];
-        if (typed === target) {
+        let typed = document.getElementById('typing-input').value;
+        let target = this.sentences[this.currentSentence];
+        // Normalize: trim, collapse spaces, remove invisible chars
+        const normalize = str => str.trim().replace(/\s+/g, ' ').replace(/[\u200B-\u200D\uFEFF]/g, '');
+        const normTyped = normalize(typed);
+        const normTarget = normalize(target);
+        if (normTyped === normTarget) {
             document.getElementById('accuracy').textContent = '100%';
             return 100;
         }
-        const dist = this.levenshtein(typed, target);
-        const accuracy = Math.max(0, Math.round((1 - dist / Math.max(target.length, 1)) * 100));
+        const dist = this.levenshtein(normTyped, normTarget);
+        const accuracy = Math.max(0, Math.round((1 - dist / Math.max(normTarget.length, 1)) * 100));
         document.getElementById('accuracy').textContent = `${accuracy}%`;
         return accuracy;
     }
