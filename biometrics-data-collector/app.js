@@ -134,6 +134,7 @@ class BiometricDataCollector {
         this.initializeGallery();
         this.setupPointerTracking();
         this.updateTaskLocks(); // Lock all tasks at start
+        this.setupCustomKeyboard(); // <-- Add this line
     }
     
     setupPointerTracking() {
@@ -2635,6 +2636,9 @@ class BiometricDataCollector {
                     console.log('[QUOTE] Feature exported:', refChar, keystroke);
                 }
                 
+                // Add first_frame_touch_x and first_frame_touch_y (reliable on both platforms)
+                const firstFrameTouchX = Math.round(keystroke.clientX || this.currentPointerX);
+                const firstFrameTouchY = Math.round(keystroke.clientY || this.currentPointerY);
                 features.push({
                     participant_id: this.participantId,
                     task_id: 1, // Typing task
@@ -2643,7 +2647,9 @@ class BiometricDataCollector {
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
                     was_deleted: wasDeleted,
-                    flight_time_ms: flightTime
+                    flight_time_ms: flightTime,
+                    first_frame_touch_x: firstFrameTouchX,
+                    first_frame_touch_y: firstFrameTouchY
                 });
             }
         });
@@ -2783,6 +2789,157 @@ class BiometricDataCollector {
                 galleryGrid.style.opacity = '0.5';
             }
         }
+    }
+
+    setupCustomKeyboard() {
+        const input = document.getElementById('typing-input');
+        const keyboardContainer = document.getElementById('custom-keyboard-container');
+        if (!input || !keyboardContainer) return;
+
+        // Keyboard layouts
+        const layouts = {
+            letters: [
+                ['q','w','e','r','t','y','u','i','o','p'],
+                ['a','s','d','f','g','h','j','k','l'],
+                ['⇧','z','x','c','v','b','n','m','⌫'],
+                ['123','@',' ','⏎']
+            ],
+            numbers: [
+                ['1','2','3','4','5','6','7','8','9','0'],
+                ['-','/',';',';',':','(',')','$','&','@','"'],
+                ['#+=','.','\\',',','?','!','\'','⌫'],
+                ['ABC',' ','⏎']
+            ],
+            symbols: [
+                ['[',']','{','}','#','%','^','*','+','='],
+                ['_','\\','|','~','<','>','€','£','¥','•'],
+                ['123','.',',','?','!','\'','⌫'],
+                ['ABC',' ','⏎']
+            ]
+        };
+        let currentLayout = 'letters';
+        let shift = false;
+
+        function renderKeyboard() {
+            keyboardContainer.innerHTML = '';
+            layouts[currentLayout].forEach((row, rowIdx) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'custom-keyboard-row';
+                row.forEach(key => {
+                    const btn = document.createElement('button');
+                    btn.className = 'custom-key';
+                    if (key === ' '){
+                        btn.classList.add('extra-wide');
+                        btn.textContent = '';
+                        btn.innerHTML = '<span style="font-size:1.2em;">⎵</span>';
+                    } else if (key === '⌫') {
+                        btn.classList.add('wide');
+                        btn.textContent = '⌫';
+                    } else if (key === '⏎') {
+                        btn.classList.add('wide');
+                        btn.textContent = '⏎';
+                    } else if (key === '⇧') {
+                        btn.classList.add('wide');
+                        btn.textContent = shift ? '⇧' : '⇧';
+                        btn.style.fontWeight = shift ? 'bold' : 'normal';
+                    } else if (['123','#+=','ABC'].includes(key)) {
+                        btn.classList.add('wide');
+                        btn.textContent = key;
+                    } else {
+                        btn.textContent = shift && currentLayout==='letters' && key.length===1 ? key.toUpperCase() : key;
+                    }
+                    btn.addEventListener('touchstart', e => {
+                        e.preventDefault();
+                        handleKeyPress(key);
+                    });
+                    btn.addEventListener('mousedown', e => {
+                        e.preventDefault();
+                        handleKeyPress(key);
+                    });
+                    rowDiv.appendChild(btn);
+                });
+                keyboardContainer.appendChild(rowDiv);
+            });
+        }
+
+        function handleKeyPress(key) {
+            if (key === '⌫') {
+                // Backspace
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                if (start > 0) {
+                    input.value = input.value.slice(0, start-1) + input.value.slice(end);
+                    input.setSelectionRange(start-1, start-1);
+                }
+            } else if (key === '⏎') {
+                // Enter
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                input.value = input.value.slice(0, start) + '\n' + input.value.slice(end);
+                input.setSelectionRange(start+1, start+1);
+            } else if (key === '⇧') {
+                shift = !shift;
+                renderKeyboard();
+            } else if (key === '123') {
+                currentLayout = 'numbers';
+                shift = false;
+                renderKeyboard();
+            } else if (key === 'ABC') {
+                currentLayout = 'letters';
+                shift = false;
+                renderKeyboard();
+            } else if (key === '#+=') {
+                currentLayout = 'symbols';
+                shift = false;
+                renderKeyboard();
+            } else {
+                // Regular key
+                const char = shift && currentLayout==='letters' && key.length===1 ? key.toUpperCase() : key;
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                input.value = input.value.slice(0, start) + char + input.value.slice(end);
+                input.setSelectionRange(start+char.length, start+char.length);
+                if (shift && currentLayout==='letters') {
+                    shift = false;
+                    renderKeyboard();
+                }
+            }
+            // Trigger input event for keystroke capture
+            input.dispatchEvent(new Event('input', {bubbles:true}));
+        }
+
+        // Show/hide keyboard
+        function showKeyboard() {
+            keyboardContainer.style.display = 'flex';
+            setTimeout(() => {
+                keyboardContainer.scrollIntoView({behavior:'smooth', block:'end'});
+            }, 100);
+        }
+        function hideKeyboard() {
+            keyboardContainer.style.display = 'none';
+        }
+
+        // Prevent system keyboard
+        input.setAttribute('readonly', 'readonly');
+        input.addEventListener('touchstart', e => {
+            e.preventDefault();
+            input.removeAttribute('readonly');
+            input.focus();
+            showKeyboard();
+        });
+        input.addEventListener('focus', e => {
+            showKeyboard();
+        });
+        input.addEventListener('blur', e => {
+            setTimeout(hideKeyboard, 100);
+        });
+        // Hide keyboard when leaving typing screen
+        document.addEventListener('click', e => {
+            if (!document.getElementById('typing-screen').classList.contains('active')) {
+                hideKeyboard();
+            }
+        });
+        renderKeyboard();
     }
 }
 // Initialize the application
