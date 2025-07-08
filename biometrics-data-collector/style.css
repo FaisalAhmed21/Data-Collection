@@ -1958,32 +1958,30 @@ select.form-control {
   background: #f8f9fa;
   border-top: 2px solid #ccc;
   z-index: 1000;
-  padding: 14px 0 14px 0;
+  padding: 4px 0 4px 0;
   box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
   transition: transform 0.2s;
-  height: 52vh;
-  max-height: 70vh;
 }
 
 .custom-keyboard-row {
   display: flex;
   justify-content: center;
-  margin: 6px 0;
+  margin: 3px 0;
 }
 
 .custom-key {
-  min-width: 48px;
-  min-height: 60px;
-  margin: 0 4px;
-  padding: 0 14px;
-  font-size: 1.5rem;
+  min-width: 38px;
+  min-height: 44px;
+  margin: 0 2px;
+  padding: 0 8px;
+  font-size: 1.15rem;
   background: #fff;
-  border: 1.5px solid #bbb;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
   color: #222;
   outline: none;
   user-select: none;
@@ -1994,28 +1992,34 @@ select.form-control {
 .custom-key:active,
 .custom-key.active {
   background: #d0e6ff;
-  box-shadow: 0 0 12px 2px #90caff, 0 2px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 0 8px 1px #90caff, 0 1px 2px rgba(0,0,0,0.08);
   filter: brightness(1.08);
 }
 
 .custom-key.wide {
-  min-width: 90px;
+  min-width: 70px;
 }
 
 .custom-key.extra-wide {
-  min-width: 140px;
+  min-width: 120px;
+}
+
+/* Make the spacebar extra wide */
+.custom-key.extra-wide.spacebar {
+  min-width: 220px;
 }
 
 @media (max-width: 600px) {
   .custom-key {
-    min-width: 32px;
-    min-height: 40px;
-    font-size: 1.1rem;
-    padding: 0 7px;
+    min-width: 28px;
+    min-height: 32px;
+    font-size: 0.95rem;
+    padding: 0 4px;
   }
   #custom-keyboard-container {
-    padding-bottom: 8px;
-    height: 56vh;
-    max-height: 80vh;
+    padding-bottom: 2px;
+  }
+  .custom-key.extra-wide.spacebar {
+    min-width: 120px;
   }
 }
