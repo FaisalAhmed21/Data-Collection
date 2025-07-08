@@ -2931,19 +2931,23 @@ class BiometricDataCollector {
                     renderKeyboard();
                 }
             }
-            // Always record keystroke for all keys except layout switches
-            this.recordKeystroke({
-                timestamp: performance.now(),
-                actualChar: refChar,
-                keyCode: refChar.length === 1 ? refChar.charCodeAt(0) : 0,
-                type: 'custom-key',
-                sentence: this.currentSentence,
-                position: input.selectionStart || 0,
-                clientX,
-                clientY
-            });
+            // Only skip keystroke recording for layout switches
+            if (key !== '?123' && key !== 'ABC') {
+                this.recordKeystroke({
+                    timestamp: performance.now(),
+                    actualChar: refChar,
+                    keyCode: refChar.length === 1 ? refChar.charCodeAt(0) : 0,
+                    type: 'custom-key',
+                    sentence: this.currentSentence,
+                    position: input.selectionStart || 0,
+                    clientX,
+                    clientY
+                });
+            }
             // Trigger input event for keystroke capture and accuracy update
             input.dispatchEvent(new Event('input', {bubbles:true}));
+            // Also update accuracy immediately after every key press
+            this.calculateAccuracy();
         }
 
         // Show/hide keyboard
@@ -2957,17 +2961,26 @@ class BiometricDataCollector {
             keyboardContainer.style.display = 'none';
         }
 
-        // Prevent system keyboard
+        // Only set readonly before first use to prevent system keyboard
         input.setAttribute('readonly', 'readonly');
+        let customKeyboardActivated = false;
         input.addEventListener('touchstart', e => {
-            e.preventDefault();
-            input.removeAttribute('readonly');
+            if (!customKeyboardActivated) {
+                input.removeAttribute('readonly');
+                customKeyboardActivated = true;
+            }
             input.focus();
             showKeyboard();
         });
         input.addEventListener('focus', e => {
+            if (!customKeyboardActivated) {
+                input.removeAttribute('readonly');
+                customKeyboardActivated = true;
+            }
             showKeyboard();
         });
+        // Do NOT set readonly again after first use
+        // Do NOT override cursor position except when inserting/deleting
         input.addEventListener('blur', e => {
             setTimeout(hideKeyboard, 100);
         });
