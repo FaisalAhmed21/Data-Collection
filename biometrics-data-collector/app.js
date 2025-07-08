@@ -1188,22 +1188,33 @@ class BiometricDataCollector {
         }
     }
     
+    // Levenshtein distance helper
+    levenshtein(a, b) {
+        const matrix = Array(a.length + 1).fill(null).map(() => Array(b.length + 1).fill(null));
+        for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+        for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= a.length; i++) {
+            for (let j = 1; j <= b.length; j++) {
+                const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j] + 1,      // deletion
+                    matrix[i][j - 1] + 1,      // insertion
+                    matrix[i - 1][j - 1] + cost // substitution
+                );
+            }
+        }
+        return matrix[a.length][b.length];
+    }
+
     calculateAccuracy() {
         const typed = document.getElementById('typing-input').value;
         const target = this.sentences[this.currentSentence];
-        // Compare exactly, including all whitespace and symbols
         if (typed === target) {
             document.getElementById('accuracy').textContent = '100%';
             return 100;
         }
-        let correct = 0;
-        const minLength = Math.min(typed.length, target.length);
-        for (let i = 0; i < minLength; i++) {
-            if (typed[i] === target[i]) {
-                correct++;
-            }
-        }
-        const accuracy = Math.round((correct / target.length) * 100);
+        const dist = this.levenshtein(typed, target);
+        const accuracy = Math.max(0, Math.round((1 - dist / Math.max(target.length, 1)) * 100));
         document.getElementById('accuracy').textContent = `${accuracy}%`;
         return accuracy;
     }
@@ -2790,14 +2801,14 @@ class BiometricDataCollector {
                 ['q','w','e','r','t','y','u','i','o','p'],
                 ['a','s','d','f','g','h','j','k','l'],
                 ['⇧','z','x','c','v','b','n','m','⌫'],
-                ['?123',' ','\.','⏎']
+                ['?123',' ','\.','-','⏎']
             ],
             numbers: [
                 ['~','`','!','@','#','$','%','^','&','*'],
                 ['(','-','_','+','=','{','}','[',']','<'],
                 ['>','/','\\','|',':',';','\'','"',',','.'],
                 ['?','!','—','–','·','•','¶','§','⌫'],
-                ['ABC',' ','\.','⏎']
+                ['ABC',' ','\.','-','⏎']
             ],
             symbols: [
                 // Not used, but kept for extensibility
