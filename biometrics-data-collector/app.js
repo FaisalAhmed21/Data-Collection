@@ -1213,20 +1213,24 @@ class BiometricDataCollector {
         const normalize = str => str.trim().replace(/\s+/g, ' ').replace(/[\u200B-\u200D\uFEFF]/g, '');
         const normTyped = normalize(typed);
         const normTarget = normalize(target);
+        console.log('[ACCURACY DEBUG] normTyped:', JSON.stringify(normTyped));
+        console.log('[ACCURACY DEBUG] normTarget:', JSON.stringify(normTarget));
+        if (normTyped.length === 0) {
+            document.getElementById('accuracy').textContent = '0%';
+            return 0;
+        }
+        if (normTyped === normTarget) {
+            document.getElementById('accuracy').textContent = '100%';
+            return 100;
+        }
         let correct = 0;
         for (let i = 0; i < normTyped.length && i < normTarget.length; i++) {
             if (normTyped[i] === normTarget[i]) {
                 correct++;
             }
+            console.log(`[ACCURACY DEBUG] Compare pos ${i}: typed='${normTyped[i]}' target='${normTarget[i]}' ${normTyped[i] === normTarget[i] ? '✓' : '✗'}`);
         }
-        let accuracy = 0;
-        if (normTyped.length > 0) {
-            accuracy = Math.round((correct / normTyped.length) * 100);
-        }
-        // If fully matched, force 100%
-        if (normTyped === normTarget) {
-            accuracy = 100;
-        }
+        let accuracy = Math.round((correct / normTyped.length) * 100);
         document.getElementById('accuracy').textContent = `${accuracy}%`;
         return accuracy;
     }
