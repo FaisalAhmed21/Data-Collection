@@ -1213,17 +1213,20 @@ class BiometricDataCollector {
         const normalize = str => str.trim().replace(/\s+/g, ' ').replace(/[\u200B-\u200D\uFEFF]/g, '');
         const normTyped = normalize(typed);
         const normTarget = normalize(target);
-        // Debug logging
-        console.log('[ACCURACY DEBUG] Raw typed:', JSON.stringify(typed));
-        console.log('[ACCURACY DEBUG] Raw target:', JSON.stringify(target));
-        console.log('[ACCURACY DEBUG] Normalized typed:', JSON.stringify(normTyped));
-        console.log('[ACCURACY DEBUG] Normalized target:', JSON.stringify(normTarget));
-        if (normTyped === normTarget) {
-            document.getElementById('accuracy').textContent = '100%';
-            return 100;
+        let correct = 0;
+        for (let i = 0; i < normTyped.length && i < normTarget.length; i++) {
+            if (normTyped[i] === normTarget[i]) {
+                correct++;
+            }
         }
-        const dist = this.levenshtein(normTyped, normTarget);
-        const accuracy = Math.max(0, Math.round((1 - dist / Math.max(normTarget.length, 1)) * 100));
+        let accuracy = 0;
+        if (normTyped.length > 0) {
+            accuracy = Math.round((correct / normTyped.length) * 100);
+        }
+        // If fully matched, force 100%
+        if (normTyped === normTarget) {
+            accuracy = 100;
+        }
         document.getElementById('accuracy').textContent = `${accuracy}%`;
         return accuracy;
     }
@@ -2802,6 +2805,39 @@ class BiometricDataCollector {
         const input = document.getElementById('typing-input');
         const keyboardContainer = document.getElementById('custom-keyboard-container');
         if (!input || !keyboardContainer) return;
+
+        // Prevent system keyboard from showing
+        input.setAttribute('readonly', 'readonly');
+        input.setAttribute('inputmode', 'none');
+        input.setAttribute('tabindex', '0');
+        // Prevent system keyboard on focus/tap
+        input.addEventListener('focus', e => {
+            input.blur(); // Immediately blur to prevent system keyboard
+            setTimeout(() => input.blur(), 10);
+        });
+        input.addEventListener('touchstart', e => {
+            e.preventDefault();
+            input.blur();
+        });
+        input.addEventListener('mousedown', e => {
+            e.preventDefault();
+            input.blur();
+        });
+        // Show custom keyboard on click/tap
+        const showKeyboard = () => {
+            keyboardContainer.style.display = 'flex';
+            setTimeout(() => {
+                keyboardContainer.scrollIntoView({behavior:'smooth', block:'end'});
+            }, 100);
+        };
+        document.getElementById('typing-input').addEventListener('click', showKeyboard);
+        document.getElementById('typing-input').addEventListener('touchend', showKeyboard);
+        // Hide keyboard when leaving typing screen
+        document.addEventListener('click', e => {
+            if (!document.getElementById('typing-screen').classList.contains('active')) {
+                keyboardContainer.style.display = 'none';
+            }
+        });
 
         // Keyboard layouts
         const layouts = {
