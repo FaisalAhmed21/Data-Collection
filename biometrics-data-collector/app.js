@@ -2913,12 +2913,14 @@ class BiometricDataCollector {
                 if (start > 0) {
                     input.value = input.value.slice(0, start-1) + input.value.slice(end);
                     input.setSelectionRange(start-1, start-1);
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
                 }
             } else if (key === '⏎') {
                 const start = input.selectionStart;
                 const end = input.selectionEnd;
                 input.value = input.value.slice(0, start) + '\n' + input.value.slice(end);
                 input.setSelectionRange(start+1, start+1);
+                input.dispatchEvent(new Event('input', { bubbles: true }));
             } else if (key === '⇧') {
                 shift = !shift;
                 renderKeyboard();
@@ -2939,6 +2941,7 @@ class BiometricDataCollector {
                 const end = input.selectionEnd;
                 input.value = input.value.slice(0, start) + char + input.value.slice(end);
                 input.setSelectionRange(start+char.length, start+char.length);
+                input.dispatchEvent(new Event('input', { bubbles: true }));
                 if (shift && currentLayout==='letters') {
                     shift = false;
                     renderKeyboard();
