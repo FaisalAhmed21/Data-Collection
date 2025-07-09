@@ -187,7 +187,12 @@ class BiometricDataCollector {
         const randomPart = Math.random().toString(36).substring(2, 5);
     
         this.participantId = `P${timePart}-${randomPart}`;
-        document.getElementById('participant-id').textContent = this.participantId;
+        const pidElem = document.getElementById('participant-id');
+        if (pidElem) {
+            pidElem.textContent = this.participantId;
+        } else {
+            console.error('[ERROR] participant-id element not found in DOM when generating participant ID!');
+        }
     }
     
     bindEvents() {
@@ -3065,6 +3070,11 @@ class BiometricDataCollector {
     }
 }
 // Initialize the application
-document.addEventListener('DOMContentLoaded', () => {
-    new BiometricDataCollector();
-});
+function waitForParticipantIdAndInit() {
+    if (document.getElementById('participant-id')) {
+        new BiometricDataCollector();
+    } else {
+        setTimeout(waitForParticipantIdAndInit, 50);
+    }
+}
+document.addEventListener('DOMContentLoaded', waitForParticipantIdAndInit);
