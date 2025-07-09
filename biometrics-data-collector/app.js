@@ -187,12 +187,7 @@ class BiometricDataCollector {
         const randomPart = Math.random().toString(36).substring(2, 5);
     
         this.participantId = `P${timePart}-${randomPart}`;
-        const pidElem = document.getElementById('participant-id');
-        if (pidElem) {
-            pidElem.textContent = this.participantId;
-        } else {
-            console.error('[ERROR] participant-id element not found in DOM when generating participant ID!');
-        }
+        document.getElementById('participant-id').textContent = this.participantId;
     }
     
     bindEvents() {
@@ -1281,6 +1276,7 @@ class BiometricDataCollector {
     }
     
     recordKeystroke(data) {
+        console.log('[KEYSTROKE]', data); // Debug log for all keystrokes
         // Always log quote keystrokes for debugging
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('[QUOTE] Keystroke captured:', data);
@@ -2811,57 +2807,6 @@ class BiometricDataCollector {
         const keyboardContainer = document.getElementById('custom-keyboard-container');
         if (!input || !keyboardContainer) return;
 
-        // Only block system keyboard when typing screen is active
-        function blockSystemKeyboard() {
-            input.setAttribute('readonly', 'readonly');
-            input.setAttribute('inputmode', 'none');
-            input.setAttribute('tabindex', '0');
-            input.addEventListener('focus', blurInput, true);
-            input.addEventListener('touchstart', preventInputFocus, true);
-            input.addEventListener('mousedown', preventInputFocus, true);
-        }
-        function unblockSystemKeyboard() {
-            input.removeAttribute('readonly');
-            input.removeAttribute('inputmode');
-            input.removeAttribute('tabindex');
-            input.removeEventListener('focus', blurInput, true);
-            input.removeEventListener('touchstart', preventInputFocus, true);
-            input.removeEventListener('mousedown', preventInputFocus, true);
-        }
-        function blurInput(e) {
-            input.blur();
-            setTimeout(() => input.blur(), 10);
-        }
-        function preventInputFocus(e) {
-            e.preventDefault();
-            input.blur();
-        }
-        // Show/hide custom keyboard only when typing screen is active
-        const showKeyboard = () => {
-            if (document.getElementById('typing-screen').classList.contains('active')) {
-                keyboardContainer.style.display = 'flex';
-                setTimeout(() => {
-                    keyboardContainer.scrollIntoView({behavior:'smooth', block:'end'});
-                }, 100);
-            }
-        };
-        input.addEventListener('click', showKeyboard);
-        input.addEventListener('touchend', showKeyboard);
-        document.addEventListener('click', e => {
-            if (!document.getElementById('typing-screen').classList.contains('active')) {
-                keyboardContainer.style.display = 'none';
-            }
-        });
-        // Listen for screen changes to block/unblock system keyboard
-        const observer = new MutationObserver(() => {
-            if (document.getElementById('typing-screen').classList.contains('active')) {
-                blockSystemKeyboard();
-            } else {
-                unblockSystemKeyboard();
-            }
-        });
-        observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
-
         // Keyboard layouts
         const layouts = {
             letters: [
@@ -2885,8 +2830,6 @@ class BiometricDataCollector {
         let currentLayout = 'letters';
         let shift = false;
 
-        // Fix: ensure handleKeyPress uses the correct 'this' (the BiometricDataCollector instance)
-        const self = this;
         function renderKeyboard() {
             keyboardContainer.innerHTML = '';
             layouts[currentLayout].forEach((row, rowIdx) => {
@@ -2915,18 +2858,17 @@ class BiometricDataCollector {
                     } else {
                         btn.textContent = shift && currentLayout==='letters' && key.length===1 ? key.toUpperCase() : key;
                     }
-                    // Use arrow function to preserve 'self' context
                     btn.addEventListener('touchstart', e => {
                         e.preventDefault();
                         btn.classList.add('active');
                         showKeyPopup(btn, key);
-                        handleKeyPress(key, e);
+                        handleKeyPress.call(this, key, e);
                     });
                     btn.addEventListener('mousedown', e => {
                         e.preventDefault();
                         btn.classList.add('active');
                         showKeyPopup(btn, key);
-                        handleKeyPress(key, e);
+                        handleKeyPress.call(this, key, e);
                     });
                     btn.addEventListener('touchend', e => {
                         btn.classList.remove('active');
@@ -2945,8 +2887,9 @@ class BiometricDataCollector {
                 keyboardContainer.appendChild(rowDiv);
             });
         }
-        // Arrow function to ensure 'self' context
-        const handleKeyPress = (key, event) => {
+
+        function handleKeyPress(key, event) {
+            // Always update input value and cursor for every key
             let refChar = key;
             if (key === ' ') refChar = 'SPACE';
             if (key === '⏎') refChar = 'ENTER';
@@ -2979,13 +2922,14 @@ class BiometricDataCollector {
                 currentLayout = 'numbers';
                 shift = false;
                 renderKeyboard();
-                return;
+                return; // Don't record layout switch
             } else if (key === 'ABC') {
                 currentLayout = 'letters';
                 shift = false;
                 renderKeyboard();
-                return;
+                return; // Don't record layout switch
             } else {
+                // Regular key (letters, numbers, symbols, space, etc.)
                 const char = shift && currentLayout==='letters' && key.length===1 ? key.toUpperCase() : key;
                 const start = input.selectionStart;
                 const end = input.selectionEnd;
@@ -2995,21 +2939,24 @@ class BiometricDataCollector {
                     shift = false;
                     renderKeyboard();
                 }
+                refChar = char; // Ensure refChar is the actual character inserted
             }
+            // Only skip keystroke recording for layout switches
             if (key !== '?123' && key !== 'ABC') {
-                self.recordKeystroke({
+                this.recordKeystroke({
                     timestamp: performance.now(),
                     actualChar: refChar,
                     keyCode: refChar.length === 1 ? refChar.charCodeAt(0) : 0,
                     type: 'custom-key',
-                    sentence: self.currentSentence,
+                    sentence: this.currentSentence,
                     position: input.selectionStart || 0,
                     clientX,
                     clientY
                 });
             }
-            self.calculateAccuracy();
-        };
+            // Always update accuracy after updating input value
+            this.calculateAccuracy();
+        }
 
         // Show/hide keyboard
         function showKeyboard() {
@@ -3070,11 +3017,6 @@ class BiometricDataCollector {
     }
 }
 // Initialize the application
-function waitForParticipantIdAndInit() {
-    if (document.getElementById('participant-id')) {
-        new BiometricDataCollector();
-    } else {
-        setTimeout(waitForParticipantIdAndInit, 50);
-    }
-}
-document.addEventListener('DOMContentLoaded', waitForParticipantIdAndInit);
+document.addEventListener('DOMContentLoaded', () => {
+    new BiometricDataCollector();
+});
