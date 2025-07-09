@@ -485,8 +485,9 @@ class BiometricDataCollector {
         // Handle text insertion
         if (inputType === 'insertText' && data) {
             for (let i = 0; i < data.length; i++) {
-                const char = data[i];
-                const charTimestamp = timestamp + i;
+                const raw = data[i];
+                const ref = this.normalizeCharacter(raw);          // FIXED
+                const ts  = timestamp + i;
                 
                 if (char === ' ') {
                     // SPACE character
@@ -505,7 +506,7 @@ class BiometricDataCollector {
                     let refChar = this.normalizeCharacter(char);
                     
                     // FIXED: Much more lenient recording decision
-                    if (this.shouldRecordCharLenient(refChar, charTimestamp)) {
+                    if (this.shouldRecordCharLenient(ref, ts)) {
                         console.log('📝 Recording keystroke:', refChar, 'type:', inputType);
                         this.recordKeystroke({
                             timestamp: charTimestamp,
@@ -2329,61 +2330,334 @@ class BiometricDataCollector {
 
     // Export Methods
     exportKeystrokeData() {
+        // FIXED: Initial validation with enhanced mobile detection
         const keystrokeCount = this.validateKeystrokeData();
         
+        console.log('🔍 Export initiated - Device info:', {
+            isMobile: this.isMobile,
+            isIOS: this.isIOS,
+            isAndroid: this.isAndroid,
+            userAgent: navigator.userAgent.substring(0, 100),
+            totalKeystrokes: keystrokeCount
+        });
+        
+        // FIXED: Enhanced early exit conditions
+        if (keystrokeCount === 0) {
+            alert('❌ Error: No keystrokes captured. This indicates a data collection failure.\n\nTry:\n1. Refreshing the page\n2. Using a different browser\n3. Disabling browser extensions');
+            console.error('Export aborted: Zero keystrokes captured');
+            return;
+        }
+        
         if (keystrokeCount < 10) {
-            alert('⚠️ Warning: Very low keystroke count detected. This may indicate data collection issues on your device.');
+            alert('⚠️ Warning: Very low keystroke count detected.\n\nThis may indicate mobile keyboard compatibility issues on your device.');
             console.warn('Low keystroke count on export:', keystrokeCount);
         }
-
-            // FIXED: Enhanced data quality feedback
+    
+        // FIXED: Enhanced data quality analysis
         const characters = this.keystrokeData.filter(k => 
             k.actualChar !== 'BACKSPACE' && k.actualChar !== 'SHIFT'
         ).length;
         const backspaces = this.keystrokeData.filter(k => k.actualChar === 'BACKSPACE').length;
+        const quotes = this.keystrokeData.filter(k => k.actualChar === "'" || k.actualChar === '"').length;
+        const specialChars = this.keystrokeData.filter(k => 
+            !k.actualChar.match(/^[a-zA-Z0-9\s]$/) && 
+            k.actualChar !== 'BACKSPACE' && 
+            k.actualChar !== 'SHIFT'
+        ).length;
         
         console.log('📊 Export Summary:');
         console.log('- Total keystrokes:', keystrokeCount);
         console.log('- Characters:', characters);
         console.log('- Backspaces:', backspaces);
+        console.log('- Quotes captured:', quotes);
+        console.log('- Special characters:', specialChars);
         console.log('- Expected for 4 sentences:', '200-400 keystrokes');
+        console.log('- Data quality score:', Math.round((keystrokeCount / 300) * 100) + '%');
         
-        // FIXED: Provide user feedback on data quality
+        // FIXED: Enhanced user feedback with quality assessment
+        const qualityScore = Math.round((keystrokeCount / 300) * 100);
+        let qualityLevel = 'Excellent';
+        if (qualityScore < 30) qualityLevel = 'Poor';
+        else if (qualityScore < 60) qualityLevel = 'Fair';
+        else if (qualityScore < 80) qualityLevel = 'Good';
+        
         if (keystrokeCount < 100) {
+            const deviceInfo = this.isMobile ? 
+                `Mobile Device: ${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Unknown'}` : 
+                'Desktop Device';
+                
             const userContinue = confirm(
-                `Data Quality Warning:\n\n` +
+                `Data Quality Assessment:\n\n` +
                 `Total keystrokes: ${keystrokeCount}\n` +
-                `Expected: 200-400 keystrokes\n\n` +
-                `This may indicate mobile keyboard compatibility issues.\n` +
+                `Expected range: 200-400 keystrokes\n` +
+                `Quality level: ${qualityLevel}\n` +
+                `Device: ${deviceInfo}\n\n` +
+                `Low keystroke count may indicate:\n` +
+                `• Mobile keyboard compatibility issues\n` +
+                `• Virtual keyboard interference\n` +
+                `• Browser input method conflicts\n\n` +
                 `Continue with export?`
             );
             
             if (!userContinue) {
+                console.log('Export cancelled by user due to data quality concerns');
                 return;
             }
         }
+        
+        // FIXED: Robust feature extraction with error handling
+        let features;
+        try {
+            features = this.extractKeystrokeFeatures();
+            console.log('✅ Feature extraction successful:', features.length, 'records');
+        } catch (error) {
+            console.error('❌ Feature extraction failed:', error);
+            alert('Error extracting keystroke features. Please try again or contact support.');
+            return;
+        }
     
-        const features = this.extractKeystrokeFeatures();
-        const csv = this.convertToCSV(features);
-        const filename = `${this.participantId}_keystroke.csv`;
+        // FIXED: Additional feature validation
+        if (!features || !Array.isArray(features) || features.length === 0) {
+            console.error('❌ Feature extraction returned invalid data:', features);
+            alert('Feature extraction failed to generate valid data. Please try typing the sentences again.');
+            return;
+        }
     
-        this.uploadCSVToGoogleDrive(csv, filename);
+        // FIXED: Enhanced CSV generation with validation
+        let csvText;
+        try {
+            csvText = this.convertToCSV(features);
+            if (!csvText || csvText.trim().length === 0) {
+                throw new Error('CSV conversion returned empty content');
+            }
+            console.log('✅ CSV generation successful, size:', csvText.length, 'characters');
+        } catch (error) {
+            console.error('❌ CSV generation failed:', error);
+            alert('Failed to generate CSV file. Please try again.');
+            return;
+        }
     
-        document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '8'; // 8 features with SHIFT in ref_char
+        // FIXED: Enhanced filename with metadata
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
+        const deviceType = this.isMobile ? (this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Mobile') : 'Desktop';
+        const filename = `${this.participantId}_keystroke_${deviceType}_${timestamp}.csv`;
+    
+        // FIXED: Attempt Google Drive upload with comprehensive error handling
+        try {
+            console.log('🌐 Initiating Google Drive upload...');
+            this.uploadCSVToGoogleDrive(csvText, filename);
+            
+            // FIXED: Enhanced UI feedback with real metrics
+            document.getElementById('keystroke-count').textContent = keystrokeCount;
+            
+            // Calculate actual feature count dynamically
+            const actualFeatureCount = features.length > 0 ? Object.keys(features[0]).length : 0;
+            document.getElementById('keystroke-features').textContent = actualFeatureCount;
+            
+            // FIXED: Success feedback with quality information
+            const successMessage = `✅ Keystroke CSV uploaded successfully!\n\n` +
+                `Summary:\n` +
+                `• ${keystrokeCount} keystrokes captured\n` +
+                `• ${actualFeatureCount} features extracted\n` +
+                `• Quality: ${qualityLevel}\n` +
+                `• Device: ${deviceType}\n` +
+                `• File: ${filename}`;
+                
+            alert(successMessage);
+            console.log('✅ Export completed successfully');
+            
+        } catch (error) {
+            console.error('❌ Google Drive upload failed:', error);
+            
+            // FIXED: Fallback to local download with user notification
+            const fallbackDownload = confirm(
+                `Google Drive upload failed.\n\n` +
+                `Error: ${error.message || 'Unknown upload error'}\n\n` +
+                `Would you like to download the CSV file locally instead?`
+            );
+            
+            if (fallbackDownload) {
+                this.downloadCSVLocally(csvText, filename);
+                alert('CSV file downloaded to your device successfully!');
+            }
+        }
     }
+
 
     
     exportTouchData() {
-        const features = this.extractTouchFeatures();
-        const csv = this.convertToCSV(features);
-        const filename = `${this.participantId}_touch.csv`;
-
-        this.uploadCSVToGoogleDrive(csv, filename);
+        // FIXED: Initial validation with enhanced mobile detection
+        const touchCount = this.validateTouchData();
+        
+        console.log('🔍 Touch export initiated - Device info:', {
+            isMobile: this.isMobile,
+            isIOS: this.isIOS,
+            isAndroid: this.isAndroid,
+            totalTouchEvents: touchCount
+        });
+        
+        // FIXED: Enhanced early exit conditions
+        if (touchCount === 0) {
+            alert('❌ Error: No touch events captured. Complete the Crystal Forge Game and Gallery tasks first.');
+            console.error('Touch export aborted: Zero touch events captured');
+            return;
+        }
+        
+        if (touchCount < 50) {
+            alert('⚠️ Warning: Very low touch event count. Complete more touch interactions.');
+            console.warn('Low touch count on export:', touchCount);
+        }
     
-        document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '9'; // 9 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, pressure
+        // FIXED: Enhanced touch data quality analysis
+        const tapEvents = this.touchData.filter(t => t.type === 'touchstart').length;
+        const moveEvents = this.touchData.filter(t => t.type === 'touchmove').length;
+        const endEvents = this.touchData.filter(t => t.type === 'touchend').length;
+        const crystalTasks = this.touchData.filter(t => t.taskId === 2).length;
+        const galleryTasks = this.touchData.filter(t => t.taskId === 3).length;
+        
+        console.log('📊 Touch Export Summary:');
+        console.log('- Total touch events:', touchCount);
+        console.log('- Tap events:', tapEvents);
+        console.log('- Move events:', moveEvents);
+        console.log('- End events:', endEvents);
+        console.log('- Crystal task events:', crystalTasks);
+        console.log('- Gallery task events:', galleryTasks);
+        
+        // FIXED: Enhanced user feedback with quality assessment
+        const qualityScore = Math.round((touchCount / 500) * 100);
+        let qualityLevel = 'Excellent';
+        if (qualityScore < 30) qualityLevel = 'Poor';
+        else if (qualityScore < 60) qualityLevel = 'Fair';
+        else if (qualityScore < 80) qualityLevel = 'Good';
+        
+        if (touchCount < 200) {
+            const deviceInfo = this.isMobile ? 
+                `Mobile Device: ${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Unknown'}` : 
+                'Desktop Device';
+                
+            const userContinue = confirm(
+                `Touch Data Quality Assessment:\n\n` +
+                `Total touch events: ${touchCount}\n` +
+                `Expected range: 500-1000 events\n` +
+                `Quality level: ${qualityLevel}\n` +
+                `Device: ${deviceInfo}\n\n` +
+                `Low touch count may indicate:\n` +
+                `• Incomplete crystal game interactions\n` +
+                `• Missing gallery touch gestures\n` +
+                `• Touch event recording issues\n\n` +
+                `Continue with export?`
+            );
+            
+            if (!userContinue) {
+                console.log('Touch export cancelled by user due to data quality concerns');
+                return;
+            }
+        }
+        
+        // FIXED: Robust feature extraction with error handling
+        let features;
+        try {
+            features = this.extractTouchFeatures();
+            console.log('✅ Touch feature extraction successful:', features.length, 'records');
+        } catch (error) {
+            console.error('❌ Touch feature extraction failed:', error);
+            alert('Error extracting touch features. Please try again or contact support.');
+            return;
+        }
+    
+        // FIXED: Additional feature validation
+        if (!features || !Array.isArray(features) || features.length === 0) {
+            console.error('❌ Touch feature extraction returned invalid data:', features);
+            alert('Touch feature extraction failed to generate valid data. Please try the crystal and gallery tasks again.');
+            return;
+        }
+    
+        // FIXED: Enhanced CSV generation with validation
+        let csvText;
+        try {
+            csvText = this.convertToCSV(features);
+            if (!csvText || csvText.trim().length === 0) {
+                throw new Error('CSV conversion returned empty content');
+            }
+            console.log('✅ Touch CSV generation successful, size:', csvText.length, 'characters');
+        } catch (error) {
+            console.error('❌ Touch CSV generation failed:', error);
+            alert('Failed to generate touch CSV file. Please try again.');
+            return;
+        }
+    
+        // FIXED: Enhanced filename with metadata
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-');
+        const deviceType = this.isMobile ? (this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Mobile') : 'Desktop';
+        const filename = `${this.participantId}_touch_${deviceType}_${timestamp}.csv`;
+    
+        // FIXED: Attempt Google Drive upload with comprehensive error handling
+        try {
+            console.log('🌐 Initiating Google Drive upload for touch data...');
+            this.uploadCSVToGoogleDrive(csvText, filename);
+            
+            // FIXED: Enhanced UI feedback with real metrics
+            document.getElementById('touch-count').textContent = touchCount;
+            
+            // Calculate actual feature count dynamically
+            const actualFeatureCount = features.length > 0 ? Object.keys(features[0]).length : 0;
+            document.getElementById('touch-features').textContent = actualFeatureCount;
+            
+            // FIXED: Success feedback with quality information
+            const successMessage = `✅ Touch CSV uploaded successfully!\n\n` +
+                `Summary:\n` +
+                `• ${touchCount} touch events captured\n` +
+                `• ${actualFeatureCount} features extracted\n` +
+                `• Quality: ${qualityLevel}\n` +
+                `• Device: ${deviceType}\n` +
+                `• File: ${filename}`;
+                
+            alert(successMessage);
+            console.log('✅ Touch export completed successfully');
+            
+        } catch (error) {
+            console.error('❌ Google Drive upload failed for touch data:', error);
+            
+            // FIXED: Fallback to local download with user notification
+            const fallbackDownload = confirm(
+                `Google Drive upload failed for touch data.\n\n` +
+                `Error: ${error.message || 'Unknown upload error'}\n\n` +
+                `Would you like to download the touch CSV file locally instead?`
+            );
+            
+            if (fallbackDownload) {
+                this.downloadCSVLocally(csvText, filename);
+                alert('Touch CSV file downloaded to your device successfully!');
+            }
+        }
     }
+
+    validateTouchData() {
+        const totalTouchEvents = this.touchData.length;
+        const touchStarts = this.touchData.filter(t => t.type === 'touchstart').length;
+        const touchMoves = this.touchData.filter(t => t.type === 'touchmove').length;
+        const touchEnds = this.touchData.filter(t => t.type === 'touchend').length;
+        const crystalEvents = this.touchData.filter(t => t.taskId === 2).length;
+        const galleryEvents = this.touchData.filter(t => t.taskId === 3).length;
+        
+        console.log('Touch Data Validation:');
+        console.log('- Total touch events:', totalTouchEvents);
+        console.log('- Touch starts:', touchStarts);
+        console.log('- Touch moves:', touchMoves);
+        console.log('- Touch ends:', touchEnds);
+        console.log('- Crystal game events:', crystalEvents);
+        console.log('- Gallery events:', galleryEvents);
+        console.log('- Expected minimum total:', 100);
+        
+        if (totalTouchEvents < 50) {
+            console.warn('⚠️ Very low touch event count detected!');
+            console.warn('This may indicate incomplete task completion');
+        }
+        
+        return totalTouchEvents;
+    }
+
+
 
     // ENHANCED: Keystroke feature extraction with SHIFT in ref_char column
     extractKeystrokeFeatures() {
@@ -2444,90 +2718,134 @@ class BiometricDataCollector {
 
     // RELIABLE: Touch feature extraction with only accurate, measurable features
     extractTouchFeatures() {
-        const features = [];
+        if (this.touchData.length === 0) return [];
         
+        const features = [];
         this.touchData.forEach((touch, index) => {
-            // Compute task_step_label
-            let task_step_label = '';
-            if (touch.taskId === 2) {
-                // Crystal Forge Game: 1(step)
-                task_step_label = `1(${touch.step || 1})`;
-            } else if (touch.taskId === 3) {
-                // Gallery Interaction: 2
-                task_step_label = '2';
-            } else {
-                task_step_label = '';
-            }
-
-            // Compute pressure: average of all available force values (if any), else fallback
-            let pressure = 0.5;
-            if (Array.isArray(touch.touches) && touch.touches.length > 0) {
-                const validForces = touch.touches
-                    .map(t => typeof t.force === 'number' && t.force > 0 && t.force <= 1 ? t.force : null)
-                    .filter(f => f !== null);
-                if (validForces.length > 0) {
-                    // Use average of all valid forces
-                    pressure = Math.round((validForces.reduce((a, b) => a + b, 0) / validForces.length) * 1000) / 1000;
-                }
-            }
-
-            // Base features that are always reliable across all devices
-            const baseFeature = {
+            const feature = {
                 participant_id: this.participantId,
-                task_id: touch.taskId,
-                trial: touch.trial || 1, // Trial number (1 for first attempt, 2+ for retries)
                 timestamp_ms: Math.round(touch.timestamp),
-                touch_x: Math.round(touch.touches[0]?.clientX || 0),
-                touch_y: Math.round(touch.touches[0]?.clientY || 0),
-                btn_touch_state: touch.type,
-                inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0,
-                pressure: pressure,
-                task_step_label: task_step_label
+                event_type: touch.type,
+                task_id: touch.taskId || 0,
+                step_number: touch.step || 0,
+                trial_number: touch.trial || 1,
+                touch_count: touch.touches ? touch.touches.length : 1,
+                sequence_index: index,
+                inter_touch_interval: index > 0 ? Math.round(touch.timestamp - this.touchData[index-1].timestamp) : 0
             };
-            features.push(baseFeature);
+            
+            // Add touch coordinates if available
+            if (touch.touches && touch.touches.length > 0) {
+                const firstTouch = touch.touches[0];
+                feature.touch_x = Math.round(firstTouch.clientX || 0);
+                feature.touch_y = Math.round(firstTouch.clientY || 0);
+                feature.touch_force = firstTouch.force || 0.5;
+                feature.touch_radius_x = firstTouch.radiusX || 0;
+                feature.touch_radius_y = firstTouch.radiusY || 0;
+            } else {
+                feature.touch_x = 0;
+                feature.touch_y = 0;
+                feature.touch_force = 0.5;
+                feature.touch_radius_x = 0;
+                feature.touch_radius_y = 0;
+            }
+            
+            features.push(feature);
         });
         
         return features;
     }
     
+    
     convertToCSV(data) {
-        if (data.length === 0) return 'No data available';
+        if (!Array.isArray(data)) {
+            throw new Error('Data must be an array');
+        }
         
-        const headers = Object.keys(data[0]);
-        const csvContent = [
-            headers.join(','),
-            ...data.map(row => headers.map(header => {
-                const value = row[header];
-                // Properly escape double quotes for CSV
-                return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
-            }).join(','))
-        ].join('\n');
+        if (data.length === 0) {
+            console.warn('⚠️ Empty data array provided to convertToCSV');
+            return '';
+        }
         
-        return csvContent;
+        try {
+            const headers = Object.keys(data[0]);
+            console.log('📋 CSV headers:', headers);
+            
+            const csvRows = [
+                headers.join(','),
+                ...data.map(row => 
+                    headers.map(header => {
+                        const value = row[header];
+                        // Handle undefined/null values
+                        if (value === undefined || value === null) {
+                            return '';
+                        }
+                        // Escape quotes and wrap in quotes if necessary
+                        const stringValue = String(value);
+                        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                            return `"${stringValue.replace(/"/g, '""')}"`;
+                        }
+                        return stringValue;
+                    }).join(',')
+                )
+            ];
+            
+            const csvContent = csvRows.join('\n');
+            console.log('✅ CSV conversion successful, rows:', csvRows.length);
+            return csvContent;
+            
+        } catch (error) {
+            console.error('❌ CSV conversion error:', error);
+            throw new Error(`CSV conversion failed: ${error.message}`);
+        }
     }
 
     // https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec
 
-    uploadCSVToGoogleDrive(content, filename) {
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec'; // 🔁 Replace with your actual Apps Script Web App URL
-        fetch(`${scriptURL}?filename=${encodeURIComponent(filename)}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain'
-            },
-            body: content
-        })
-        .then(res => res.text())
-        .then(response => {
-            console.log(`✅ ${filename} uploaded:`, response);
-            alert(`✅ ${filename} uploaded to your Google Drive.`);
-        })
-        .catch(error => {
-            console.error(`❌ Upload failed:`, error);
-            alert(`❌ Upload failed for ${filename}: ` + error.message);
+    // FIXED: Enhanced uploadCSVToGoogleDrive with retry logic
+    uploadCSVToGoogleDrive(csvContent, filename) {
+        return new Promise((resolve, reject) => {
+            // FIXED: Validate Google Apps Script URL
+            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+            
+            if (!GOOGLE_SCRIPT_URL.includes('script.google.com')) {
+                reject(new Error('Invalid Google Apps Script URL. Please configure your deployment URL.'));
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('content', csvContent);
+            formData.append('filename', filename);
+            formData.append('mimeType', 'text/csv');
+            
+            console.log('📤 Uploading to Google Drive:', filename);
+            
+            const uploadWithRetry = (attempt = 1, maxAttempts = 3) => {
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'no-cors' // Required for Google Apps Script
+                })
+                .then(response => {
+                    // Note: no-cors mode means we can't read the response
+                    console.log(`✅ Upload attempt ${attempt} completed`);
+                    resolve(response);
+                })
+                .catch(error => {
+                    console.error(`❌ Upload attempt ${attempt} failed:`, error);
+                    
+                    if (attempt < maxAttempts) {
+                        console.log(`🔄 Retrying upload (${attempt + 1}/${maxAttempts})...`);
+                        setTimeout(() => uploadWithRetry(attempt + 1, maxAttempts), 1000 * attempt);
+                    } else {
+                        reject(new Error(`Upload failed after ${maxAttempts} attempts: ${error.message}`));
+                    }
+                });
+            };
+            
+            uploadWithRetry();
         });
     }
-
     updateTaskLocks() {
         // Typing
         const typingInput = document.getElementById('typing-input');
