@@ -25,7 +25,24 @@
                 </div>
                 <button id="start-btn" class="btn btn--primary btn--lg" disabled>START STUDY</button>
                 <div class="welcome-visuals">
-                    <div class="animated-graphic"></div>
+                    <div class="animated-graphic">
+                        <!-- Replace crystal with abstract animated SVG using teal/purple -->
+                        <svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <ellipse cx="45" cy="45" rx="38" ry="28" fill="url(#tealPurpleGradient)"/>
+                            <ellipse cx="55" cy="40" rx="18" ry="10" fill="#20CFCF" opacity="0.7">
+                                <animate attributeName="rx" values="18;22;18" dur="2s" repeatCount="indefinite"/>
+                            </ellipse>
+                            <ellipse cx="35" cy="50" rx="12" ry="7" fill="#7B2FF2" opacity="0.5">
+                                <animate attributeName="ry" values="7;11;7" dur="2s" repeatCount="indefinite"/>
+                            </ellipse>
+                            <defs>
+                                <linearGradient id="tealPurpleGradient" x1="0" y1="0" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#20CFCF"/>
+                                    <stop offset="1" stop-color="#7B2FF2"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
                     <p class="engage-message">Your participation helps advance science! <span class="emoji">🚀🔬</span></p>
                 </div>
             </div>
