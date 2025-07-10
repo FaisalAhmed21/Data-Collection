@@ -1209,7 +1209,6 @@ class BiometricDataCollector {
         const typed = document.getElementById('typing-input').value;
         const target = this.sentences[this.currentSentence];
         
-        // Debug logging for accuracy calculation
         console.log('🔍 Accuracy calculation:', {
             typed: `"${typed}"`,
             target: `"${target}"`,
@@ -1236,21 +1235,31 @@ class BiometricDataCollector {
             document.getElementById('accuracy').textContent = `${accuracy}%`;
             console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
         }
+    
+        // NEW: Enable/disable Next Sentence button based on accuracy
+        const nextButton = document.getElementById('next-sentence-btn');
+        if (nextButton) {
+            if (accuracy === 100) {
+                nextButton.disabled = false;
+                nextButton.classList.remove('btn--disabled');
+            } else {
+                nextButton.disabled = true;
+                nextButton.classList.add('btn--disabled');
+            }
+        }
+    
         // Animate accuracy ring
         const accuracyRing = document.getElementById('accuracy-ring');
         const accuracyValue = document.getElementById('accuracy');
         const encourage = document.querySelector('.accuracy-encourage');
+    
         if (accuracyRing && accuracyValue) {
-            let percent = 0;
-            if (typeof accuracy === 'number') {
-                percent = Math.max(0, Math.min(accuracy, 100));
-            } else {
-                percent = parseInt(accuracyValue.textContent) || 0;
-            }
+            let percent = Math.max(0, Math.min(accuracy, 100));
             const circumference = 2 * Math.PI * 26;
             const offset = circumference * (1 - percent / 100);
             accuracyRing.setAttribute('stroke-dasharray', circumference);
             accuracyRing.setAttribute('stroke-dashoffset', offset);
+    
             if (encourage) {
                 if (percent === 100) {
                     encourage.textContent = 'Perfect! 🎉';
@@ -1267,8 +1276,10 @@ class BiometricDataCollector {
                 }
             }
         }
+    
         return accuracy;
     }
+
     
     checkSentenceCompletion() {
         const typed = document.getElementById('typing-input').value;
