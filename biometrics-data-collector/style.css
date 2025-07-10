@@ -1909,3 +1909,171 @@ select.form-control {
   margin-top: 0 !important;
   margin-bottom: 24px !important;
 }
+
+/* Consent Section Styles */
+.consent-section {
+  margin: var(--space-24) 0 var(--space-16) 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+.consent-label input[type="checkbox"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+.custom-checkbox {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--color-primary);
+  border-radius: 6px;
+  background: var(--color-background);
+  display: inline-block;
+  position: relative;
+  transition: border-color 0.2s;
+  margin-top: 2px;
+}
+.consent-label input[type="checkbox"]:checked + .custom-checkbox {
+  border-color: var(--color-success);
+  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-primary) 100%);
+}
+.custom-checkbox::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 7px;
+  height: 13px;
+  border: solid var(--color-primary);
+  border-width: 0 3px 3px 0;
+  opacity: 0;
+  transform: scale(0.7) rotate(45deg);
+  transition: opacity 0.2s, border-color 0.2s;
+}
+.consent-label input[type="checkbox"]:checked + .custom-checkbox::after {
+  opacity: 1;
+  border-color: #fff;
+}
+.consent-text {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  max-width: 420px;
+  margin-left: var(--space-8);
+}
+
+/* Welcome Visuals & Engagement */
+.welcome-visuals {
+  margin-top: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12);
+}
+.animated-graphic {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  box-shadow: 0 4px 24px rgba(0,31,63,0.18), 0 1.5px 8px var(--color-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  animation: pulse-welcome 1.8s infinite;
+}
+@keyframes pulse-welcome {
+  0%, 100% { box-shadow: 0 4px 24px rgba(0,31,63,0.18), 0 1.5px 8px var(--color-secondary); transform: scale(1); }
+  50% { box-shadow: 0 8px 40px rgba(0,31,63,0.28), 0 2.5px 16px var(--color-secondary); transform: scale(1.08); }
+}
+.engage-message {
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-top: var(--space-8);
+}
+.welcome-highlight {
+  color: var(--color-primary);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-16);
+}
+.emoji {
+  font-size: 1.3em;
+  vertical-align: middle;
+}
+
+/* Attractive Accuracy Stat Box */
+.accuracy-stat {
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+  box-shadow: 0 4px 24px rgba(0,31,63,0.10), 0 1.5px 8px var(--color-secondary);
+  border: 2px solid var(--color-primary);
+  border-radius: 18px;
+  min-width: 140px;
+  min-height: 140px;
+  position: relative;
+  transition: box-shadow 0.3s;
+}
+.accuracy-ring {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 8px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.accuracy-bg {
+  stroke: #e0e7ef;
+  opacity: 0.5;
+}
+.accuracy-fg {
+  stroke: var(--color-success);
+  stroke-linecap: round;
+  stroke-dasharray: 163.36;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.accuracy-value {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3em;
+  font-weight: bold;
+  color: var(--color-primary);
+  z-index: 2;
+  pointer-events: none;
+}
+.accuracy-encourage {
+  color: var(--color-success);
+  font-size: var(--font-size-sm);
+  margin-top: 4px;
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+@media (max-width: 600px) {
+  .accuracy-stat {
+    min-width: 110px;
+    min-height: 110px;
+    padding: var(--space-8);
+  }
+  .accuracy-ring {
+    width: 44px;
+    height: 44px;
+  }
+}
