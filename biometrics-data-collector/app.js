@@ -1275,8 +1275,8 @@ class BiometricDataCollector {
     }
     
     checkSentenceCompletion() {
-        const typed = document.getElementById('typing-input').value.trim();
-        const target = this.sentences[this.currentSentence].trim();
+        const typed = document.getElementById('typing-input').value;
+        const target = this.sentences[this.currentSentence];
         const nextBtn = document.getElementById('next-sentence-btn');
         const accuracy = this.calculateAccuracy();
         // Only enable next button and show fireworks if 100% accuracy is achieved
@@ -1288,15 +1288,24 @@ class BiometricDataCollector {
             }
             if (this.currentSentence < this.sentences.length - 1) {
                 nextBtn.disabled = false;
+                nextBtn.style.display = 'inline-flex';
                 nextBtn.style.backgroundColor = 'var(--color-primary)';
                 nextBtn.style.opacity = '1';
             } else {
-                nextBtn.style.display = 'none';
-                this.showNextTaskButton('crystal', 'Crystal Forge Game');
+                nextBtn.style.display = 'inline-flex';
+                nextBtn.disabled = false;
+                nextBtn.style.backgroundColor = 'var(--color-primary)';
+                nextBtn.style.opacity = '1';
             }
         } else {
             if (this.currentSentence < this.sentences.length - 1) {
                 nextBtn.disabled = true;
+                nextBtn.style.display = 'inline-flex';
+                nextBtn.style.backgroundColor = 'var(--color-secondary)';
+                nextBtn.style.opacity = '0.5';
+            } else {
+                nextBtn.disabled = true;
+                nextBtn.style.display = 'inline-flex';
                 nextBtn.style.backgroundColor = 'var(--color-secondary)';
                 nextBtn.style.opacity = '0.5';
             }
@@ -1307,14 +1316,18 @@ class BiometricDataCollector {
         this.currentSentence++;
         this._fireworksShown = false; // Reset fireworks flag for next sentence
         if (this.currentSentence >= this.sentences.length) {
-            // Test quote handling after typing task completion
-            console.log('🔍 Typing task completed - final quote handling test:');
-            this.testQuoteHandling();
+            // Typing task completed
             this.showNextTaskButton('crystal', 'Crystal Forge Game');
             this.updateTaskLocks(); // Lock typing after completion
         } else {
             this.displayCurrentSentence();
             this.updateTypingProgress();
+            // Always show and disable the next button until 100% accuracy
+            const nextBtn = document.getElementById('next-sentence-btn');
+            nextBtn.disabled = true;
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.style.backgroundColor = 'var(--color-secondary)';
+            nextBtn.style.opacity = '0.5';
         }
     }
     
