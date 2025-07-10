@@ -12,11 +12,22 @@
         <div id="welcome-screen" class="screen active">
             <div class="welcome-content">
                 <h1>Behavioral Biometrics Study</h1>
-                <p>This application collects keystroke dynamics and touch gesture data for research purposes.</p>
+                <p class="welcome-highlight">Unlock the secrets of your unique typing and gestures!<br><span class="emoji">🧠✨</span></p>
                 <div class="participant-info">
                     <p>Participant ID: <span id="participant-id">-</span></p>
                 </div>
-                <button id="start-btn" class="btn btn--primary btn--lg">START STUDY</button>
+                <div class="consent-section">
+                    <label class="consent-label">
+                        <input type="checkbox" id="consent-checkbox">
+                        <span class="custom-checkbox"></span>
+                        <span class="consent-text">I agree to share my typing and gesture data anonymously for research purposes, with the understanding that my privacy will be fully respected and my information will be securely protected.</span>
+                    </label>
+                </div>
+                <button id="start-btn" class="btn btn--primary btn--lg" disabled>START STUDY</button>
+                <div class="welcome-visuals">
+                    <div class="animated-graphic"></div>
+                    <p class="engage-message">Your participation helps advance science! <span class="emoji">🚀🔬</span></p>
+                </div>
             </div>
         </div>
 
@@ -38,9 +49,16 @@
                 </div>
                 
                 <div class="typing-stats">
-                    <div class="stat">
-                        <span class="stat-label">Accuracy:</span>
-                        <span id="accuracy" class="stat-value">100%</span>
+                    <div class="stat accuracy-stat">
+                        <div class="accuracy-ring">
+                            <svg width="60" height="60">
+                                <circle class="accuracy-bg" cx="30" cy="30" r="26" stroke-width="6" fill="none"/>
+                                <circle class="accuracy-fg" id="accuracy-ring" cx="30" cy="30" r="26" stroke-width="6" fill="none"/>
+                            </svg>
+                            <span id="accuracy" class="stat-value accuracy-value">100%</span>
+                        </div>
+                        <span class="stat-label">Accuracy</span>
+                        <span class="accuracy-encourage">Keep going! <span class="emoji">💪</span></span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Progress:</span>
