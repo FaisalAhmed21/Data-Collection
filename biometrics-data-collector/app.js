@@ -262,6 +262,12 @@ class BiometricDataCollector {
             }
             this.handleKeydown(e);
         });
+        typingInput.addEventListener('keyup', (e) => {
+            if (this.compositionActive || e.keyCode === 229) {
+                return;
+            }
+            this.handleKeyup(e);
+        });
         typingInput.addEventListener('focus', (e) => {
             const rect = e.target.getBoundingClientRect();
             this.currentPointerX = rect.left + rect.width / 2;
@@ -1081,6 +1087,12 @@ class BiometricDataCollector {
     handleKeydown(e) {
         const timestamp = performance.now();
         
+        // Store dwell time timestamp for key+shift combo
+        if (e.key.length === 1) {
+            const dwellKey = e.key + (e.shiftKey ? '_SHIFT' : '');
+            this.keyDownTimestamps[dwellKey] = timestamp;
+        }
+        
         // Enhanced SHIFT tracking
         if (e.key === 'Shift') {
             this.updateShiftState(true);
@@ -1170,6 +1182,116 @@ class BiometricDataCollector {
         }
         
         // Update accuracy and check sentence completion after any keydown
+        this.calculateAccuracy();
+        this.checkSentenceCompletion();
+    }
+    
+    handleKeyup(e) {
+        const timestamp = performance.now();
+        
+        // Calculate dwell time for key+shift combo
+        let dwellTime = 0;
+        if (e.key.length === 1) {
+            const dwellKey = e.key + (e.shiftKey ? '_SHIFT' : '');
+            const downTime = this.keyDownTimestamps[dwellKey];
+            if (downTime) {
+                dwellTime = timestamp - downTime;
+                delete this.keyDownTimestamps[dwellKey];
+            }
+        }
+        
+        // Enhanced SHIFT tracking
+        if (e.key === 'Shift') {
+            this.updateShiftState(false);
+            this.recordKeystroke({
+                timestamp,
+                actualChar: 'SHIFT',
+                keyCode: 16,
+                type: 'keyup',
+                shiftKey: true,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
+                sentence: this.currentSentence,
+                position: e.target.selectionStart || 0,
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y,
+                dwell_time_ms: dwellTime
+            });
+            return;
+        }
+        
+        // Block navigation keys
+        const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (restrictedKeys.includes(e.key)) {
+            e.preventDefault();
+            return;
+        }
+        
+        // Block copy-paste
+        if (e.ctrlKey && ['v', 'x', 'c'].includes(e.key.toLowerCase())) {
+            e.preventDefault();
+            return;
+        }
+        
+        // Get the actual typed character
+        const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
+
+        if (actualCharacter === 'Backspace' || actualCharacter === 'backspace') {
+            // Only record Backspace once on keyup with deduplication
+            const currentTime = performance.now();
+            
+            // Check if enough time has passed since last backspace to avoid duplicates
+            if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
+                this.recordKeystroke({
+                    timestamp,
+                    actualChar: 'BACKSPACE',
+                    keyCode: 8,
+                    type: 'keyup',
+                    shiftKey: e.shiftKey,
+                    ctrlKey: e.ctrlKey,
+                    altKey: e.altKey,
+                    sentence: this.currentSentence,
+                    position: e.target.selectionStart || 0,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y,
+                    dwell_time_ms: dwellTime
+                });
+                console.log('Desktop backspace recorded at time:', currentTime);
+                
+                // Update last backspace time
+                this.lastBackspaceTime = currentTime;
+            } else {
+                console.log('Desktop backspace duplicate ignored, time since last:', currentTime - this.lastBackspaceTime);
+            }
+            
+            // Update accuracy and check sentence completion after backspace
+            this.calculateAccuracy();
+            this.checkSentenceCompletion();
+            return;  // Don't record further
+        }
+        
+                
+        // Only record if we have a valid character
+        if (actualCharacter) {
+            console.log('Key released:', e.key, 'KeyCode:', e.keyCode, 'Detected:', actualCharacter, 'Dwell time:', dwellTime);
+            
+            this.recordKeystroke({
+                timestamp,
+                actualChar: actualCharacter,
+                keyCode: e.keyCode,
+                type: 'keyup',
+                shiftKey: e.shiftKey,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
+                sentence: this.currentSentence,
+                position: e.target.selectionStart || 0,
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y,
+                dwell_time_ms: dwellTime
+            });
+        }
+        
+        // Update accuracy and check sentence completion after any keyup
         this.calculateAccuracy();
         this.checkSentenceCompletion();
     }
@@ -1361,6 +1483,11 @@ class BiometricDataCollector {
         let flightTime = 0;
         if (this.lastKeystrokeTime > 0 && data.actualChar !== 'SHIFT') {
             flightTime = currentTime - this.lastKeystrokeTime;
+        }
+
+        // Store dwell time if provided
+        if (typeof data.dwell_time_ms === 'number') {
+            data.dwell_time_ms = Math.round(data.dwell_time_ms);
         }
 
         // Enhanced SHIFT handling for capital letters
@@ -2701,7 +2828,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '8'; // 8 features with SHIFT in ref_char
+        document.getElementById('keystroke-features').textContent = '9'; // 9 features including dwell_time_ms
     }
 
     
@@ -2713,7 +2840,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '9'; // 9 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, pressure
+        document.getElementById('touch-features').textContent = '10'; // 10 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, num_touch_points, path_length_px
     }
 
     // ENHANCED: Keystroke feature extraction with SHIFT in ref_char column
@@ -2789,7 +2916,7 @@ class BiometricDataCollector {
             // Base features that are always reliable across all devices
             const baseFeature = {
                 participant_id: this.participantId,
-                task_id: touch.taskId,
+                task_id: task_step_label,
                 trial: touch.trial || 1, // Trial number (1 for first attempt, 2+ for retries)
                 timestamp_ms: Math.round(touch.timestamp),
                 touch_x: Math.round(touch.touches[0]?.clientX || 0),
@@ -2797,8 +2924,7 @@ class BiometricDataCollector {
                 btn_touch_state: touch.type,
                 inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0,
                 num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
-                path_length_px: this.gesturePathLength[`${touch.trial || 1}_${touch.step || 1}`] || 0,
-                task_step_label: task_step_label
+                path_length_px: this.gesturePathLength[`${touch.trial || 1}_${touch.step || 1}`] || 0
             };
             features.push(baseFeature);
         });
