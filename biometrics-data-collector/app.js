@@ -2341,6 +2341,12 @@ class BiometricDataCollector {
             const change = dist / this.galleryZoom.initialDistance;
             const newScale = Math.max(1, Math.min(3.0, this.galleryZoom.scale * change));
             // Adjust translation to keep the zoom centered on pinch midpoint
+
+            if (newScale <= 1.1) {
+                // Trigger zoom reset if user pinches out
+                this.resetZoom();
+                return;
+            }
             const ctr = document.querySelector('.popup-image-container');
             const img = document.querySelector('.popup-image');
             if (img && ctr) {
@@ -2399,6 +2405,12 @@ class BiometricDataCollector {
         if (e.touches.length < 2) {
             this.galleryZoom.isPinching = false;
             // Do not auto-reset zoom or translation after pinch in
+            if (this.galleryZoom.scale > 1.0) {
+                this.galleryZoom.isPanning = true;
+            } 
+            else {
+                this.resetZoom();
+            }
         }
         // end pan
         if (e.touches.length === 0) {
