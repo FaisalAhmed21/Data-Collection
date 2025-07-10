@@ -1086,6 +1086,8 @@ class BiometricDataCollector {
     
     handleKeydown(e) {
         const timestamp = performance.now();
+        this.keyDownTimestamps[e.code] = timestamp;
+
         
         // Store dwell time timestamp for key+shift combo
         if (e.key.length === 1) {
@@ -2934,19 +2936,29 @@ class BiometricDataCollector {
     
     convertToCSV(data) {
         if (data.length === 0) return 'No data available';
-        
+    
         const headers = Object.keys(data[0]);
+    
+        const escapeCsv = value => {
+            if (typeof value === 'string') {
+                // Escape inner double quotes by doubling them
+                const escaped = value.replace(/"/g, '""');
+                // Wrap everything in double quotes (safe even for apostrophes or commas)
+                return `"${escaped}"`;
+            }
+            return value;
+        };
+    
         const csvContent = [
-            headers.join(','),
-            ...data.map(row => headers.map(header => {
-                const value = row[header];
-                // Properly escape double quotes for CSV
-                return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
-            }).join(','))
+            headers.join(','), // header row
+            ...data.map(row => 
+                headers.map(header => escapeCsv(row[header])).join(',')
+            )
         ].join('\n');
-        
+    
         return csvContent;
     }
+
 
     // https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec
 
