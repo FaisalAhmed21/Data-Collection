@@ -1,24 +1,26 @@
 :root {
   /* Updated Navy & Gold Color Palette */
   --color-background: #FFFFFF;
-  --color-surface: #FFFFFF;
+  --color-surface: #F7FAFC; /* Very light teal-tinted background */
   --color-text: #1A2236;
   --color-text-secondary: #6B7A90;
   --color-primary: #20CFCF;                       /* Vibrant Teal */
   --color-primary-hover: #1AB1B1;
   --color-primary-active: #179A9A;
-  --color-secondary: #7B2FF2;                     /* Modern Purple Accent */
-  --color-secondary-hover: #A259F7;
-  --color-secondary-active: #5F1BB2;
-  --color-border: rgba(32, 207, 207, 0.2);
+  --color-secondary: #E6F7FA; /* Soft light teal for containers */
+  --color-secondary-hover: #D0F0F7;
+  --color-secondary-active: #B8E6F0;
+  --color-accent: #7B2FF2; /* Modern Purple for highlights */
+  --color-accent-light: #F3F0FA; /* Very light purple for backgrounds */
+  --color-border: rgba(32, 207, 207, 0.15);
   --color-btn-primary-text: #FFFFFF;
-  --color-card-border: rgba(32, 207, 207, 0.12);
-  --color-card-border-inner: rgba(32, 207, 207, 0.12);
+  --color-card-border: rgba(32, 207, 207, 0.10);
+  --color-card-border-inner: rgba(32, 207, 207, 0.10);
   --color-error: #FF4F64;
   --color-success: #20CFCF;
   --color-warning: #FFB86B;
   --color-info: #7B2FF2;
-  --color-focus-ring: rgba(32, 207, 207, 0.4);
+  --color-focus-ring: rgba(32, 207, 207, 0.18);
   --color-select-caret: #20CFCF;
 
   /* Common style patterns */
@@ -2102,4 +2104,47 @@ select.form-control {
   0% { transform: scale(0.5); opacity: 0; }
   60% { transform: scale(1.1); opacity: 1; }
   100% { transform: scale(1); opacity: 0.95; }
+}
+
+/* Use light backgrounds for containers and cards */
+.container, .typing-content, .crystal-content, .gallery-content, .export-content, .card, .stat, .feedback-item, .sentence-display {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+
+/* Use soft teal for secondary containers */
+.participant-info, .consent-section, .crystal-step-info, .gallery-container, .export-stats, .completion-message {
+  background: var(--color-secondary) !important;
+  color: var(--color-text) !important;
+}
+
+/* Use very light purple for accent backgrounds if needed */
+.accuracy-stat, .crystal-feedback {
+  background: var(--color-accent-light) !important;
+  color: var(--color-text) !important;
+}
+
+/* Buttons and highlights keep the vibrant accent colors */
+.btn--primary, .next-task-btn {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%) !important;
+  color: #fff !important;
+}
+
+/* Ensure all text is dark on light backgrounds for readability */
+.stat-label, .stat-value, .feedback-label, .feedback-value, .form-label, .consent-text, .engage-message, .welcome-highlight, .task-instruction {
+  color: var(--color-text) !important;
+}
+
+/* Remove strong color backgrounds from .accuracy-ring, .progress-bar, etc. Use accent only for the ring/line itself */
+.accuracy-ring svg, .progress-bar {
+  background: transparent !important;
+}
+.progress-fill {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+}
+
+/* Card borders and shadows remain subtle */
+.card, .stat, .feedback-item, .sentence-display {
+  border: 1px solid var(--color-card-border);
+  box-shadow: var(--shadow-sm);
 }
