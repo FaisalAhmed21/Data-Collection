@@ -873,16 +873,16 @@ class BiometricDataCollector {
                 
                 // Final iOS safety check: prevent duplicate in keystroke data
                 // More lenient for quotes
-                if (this.isIOS) {
-                    const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
-                    const quoteDedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
-                    if (lastKeystroke && 
-                        lastKeystroke.actualChar === refChar && 
-                        (timestamp - lastKeystroke.timestamp) < quoteDedupWindow) {
-                        console.log('🚫 iOS final duplicate BLOCKED in keystroke data (other input):', refChar);
-                        return;
-                    }
-                }
+                // if (this.isIOS) {
+                //     const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
+                //     const quoteDedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
+                //     if (lastKeystroke && 
+                //         lastKeystroke.actualChar === refChar && 
+                //         (timestamp - lastKeystroke.timestamp) < quoteDedupWindow) {
+                //         console.log('🚫 iOS final duplicate BLOCKED in keystroke data (other input):', refChar);
+                //         return;
+                //     }
+                // }
                 
                 console.log('📝 Recording keystroke (other input):', refChar, 'type:', inputType, 'timestamp:', timestamp);
                 this.recordKeystroke({
@@ -1485,12 +1485,12 @@ class BiometricDataCollector {
             flightTime = currentTime - this.lastKeystrokeTime;
         }
 
-        // Store dwell time if provided
-        if (typeof data.dwell_time_ms === 'number' && !data.isSynthetic) {
+        if (typeof data.dwell_time_ms === 'number' && !isNaN(data.dwell_time_ms)) {
             data.dwell_time_ms = Math.round(data.dwell_time_ms);
         } else {
-            delete data.dwell_time_ms;
+            data.dwell_time_ms = 0;  // ✅ Default to 0 if missing
         }
+
 
         // Enhanced SHIFT handling for capital letters
         if (
