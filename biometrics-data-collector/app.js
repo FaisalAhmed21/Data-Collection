@@ -1089,10 +1089,7 @@ class BiometricDataCollector {
         this.keyDownTimestamps[e.code] = timestamp;
 
         
-        // Store dwell time timestamp for key+shift combo
-        if (e.key.length === 1) {
-            this.keyDownTimestamps[e.code] = timestamp;
-        }
+        this.keyDownTimestamps[e.code] = timestamp;
         
         // Enhanced SHIFT tracking
         if (e.key === 'Shift') {
