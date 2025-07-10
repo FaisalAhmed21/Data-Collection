@@ -2032,9 +2032,9 @@ class BiometricDataCollector {
         }
         
         if (size < 0.7) {
-            crystal.style.filter = 'hue-rotate(180deg) brightness(0.8)';
+            crystal.style.filter = 'brightness(0.9)';
         } else if (size > 1.3) {
-            crystal.style.filter = 'hue-rotate(60deg) brightness(1.3)';
+            crystal.style.filter = 'brightness(1.1)';
         } else {
             crystal.style.filter = 'none';
         }
@@ -2072,7 +2072,7 @@ class BiometricDataCollector {
     
     showWrongDirectionFeedback() {
         const crystal = document.getElementById('crystal');
-        crystal.style.filter = 'hue-rotate(180deg) brightness(0.7)';
+        crystal.style.filter = 'drop-shadow(0 0 8px #FF4F64)';
         setTimeout(() => {
             crystal.style.filter = '';
         }, 500);
