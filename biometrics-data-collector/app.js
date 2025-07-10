@@ -1192,13 +1192,12 @@ class BiometricDataCollector {
         
         // Calculate dwell time for key+shift combo
         let dwellTime = 0;
-        if (e.key.length === 1) {
-            const downTime = this.keyDownTimestamps[e.code];
-            if (downTime) {
-                dwellTime = timestamp - downTime;
-                delete this.keyDownTimestamps[e.code];
-            }
+        const downTime = this.keyDownTimestamps[e.code];
+        if (downTime) {
+            dwellTime = timestamp - downTime;
+            delete this.keyDownTimestamps[e.code];
         }
+
         
         // Enhanced SHIFT tracking
         if (e.key === 'Shift') {
@@ -1458,9 +1457,10 @@ class BiometricDataCollector {
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('[QUOTE] Keystroke captured:', data);
         }
+        const isQuote = data.actualChar === "'" || data.actualChar === '"';
         // FINAL iOS safety check to prevent double character recording
         // More lenient for quotes to ensure they are captured
-        if (this.isIOS && data.actualChar && data.actualChar !== 'BACKSPACE' && data.actualChar !== 'SHIFT') {
+        if (this.isIOS && data.actualChar && data.actualChar !== 'BACKSPACE' && data.actualChar !== 'SHIFT' && !isQuote) {
             const currentTime = performance.now();
             const isQuote = data.actualChar === "'" || data.actualChar === '"';
             const dedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
