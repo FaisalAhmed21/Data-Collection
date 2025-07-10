@@ -125,6 +125,18 @@ class BiometricDataCollector {
             'https://picsum.photos/800/600?random=20'
         ];
         
+        // Add to BiometricDataCollector constructor:
+        this.crystalZoom = {
+          scale: 1,
+          isPanning: false,
+          isPinching: false,
+          startX: 0,
+          startY: 0,
+          translateX: 0,
+          translateY: 0,
+          lastTapTime: 0
+        };
+        
         this.init();
     }
     
@@ -1290,21 +1302,18 @@ class BiometricDataCollector {
         const target = this.sentences[this.currentSentence];
         const nextBtn = document.getElementById('next-sentence-btn');
         const accuracy = this.calculateAccuracy();
+        // Only enable next button and show fireworks if 100% accuracy is achieved
         if (typed === target && accuracy === 100) {
+            nextBtn.disabled = false;
+            nextBtn.classList.add('next-task-btn--deep');
             if (!this._fireworksShown) {
                 showFireworks('.typing-content');
                 this._fireworksShown = true;
                 setTimeout(() => { this._fireworksShown = false; }, 2000);
             }
-            nextBtn.disabled = false;
-            nextBtn.style.display = 'inline-flex';
-            nextBtn.style.backgroundColor = 'var(--color-primary)';
-            nextBtn.style.opacity = '1';
         } else {
             nextBtn.disabled = true;
-            nextBtn.style.display = 'inline-flex';
-            nextBtn.style.backgroundColor = 'var(--color-secondary)';
-            nextBtn.style.opacity = '0.5';
+            nextBtn.classList.remove('next-task-btn--deep');
         }
     }
     
@@ -1652,6 +1661,35 @@ class BiometricDataCollector {
             crystalArea.style.webkitOverflowScrolling = 'touch';
             crystalArea.style.webkitTransform = 'translateZ(0)';
         }
+        
+        // In bindCrystalEvents(), add pan and double-tap logic:
+        crystalArea.addEventListener('touchstart', e => {
+          if (e.touches.length === 1 && this.crystalZoom.scale > 1) {
+            this.crystalZoom.startX = e.touches[0].clientX - this.crystalZoom.translateX;
+            this.crystalZoom.startY = e.touches[0].clientY - this.crystalZoom.translateY;
+            e.preventDefault();
+          }
+          // Double-tap to reset zoom
+          const now = Date.now();
+          const dt = now - this.crystalZoom.lastTapTime;
+          if (dt > 0 && dt < 300) {
+            this.resetCrystalZoom();
+          }
+          this.crystalZoom.lastTapTime = now;
+        }, { passive: false });
+        crystalArea.addEventListener('touchmove', e => {
+          if (this.crystalZoom.isPanning) {
+            this.crystalZoom.translateX = e.touches[0].clientX - this.crystalZoom.startX;
+            this.crystalZoom.translateY = e.touches[0].clientY - this.crystalZoom.startY;
+            this.updateCrystalTransform();
+            e.preventDefault();
+          }
+        }, { passive: false });
+        crystalArea.addEventListener('touchend', e => {
+          if (this.crystalZoom.isPanning) {
+            this.crystalZoom.isPanning = false;
+          }
+        }, { passive: false });
     }
     
     handleCrystalTouchStart(e) {
@@ -1679,7 +1717,6 @@ class BiometricDataCollector {
         });
         
         // Add visual feedback
-        const crystalArea = document.getElementById('crystal-area');
         crystalArea.classList.add('touching');
         
         // Enhanced error handling for mobile devices
@@ -1747,7 +1784,6 @@ class BiometricDataCollector {
         });
         
         // Remove visual feedback
-        const crystalArea = document.getElementById('crystal-area');
         crystalArea.classList.remove('touching');
         
         // Enhanced error handling for mobile devices
@@ -1941,7 +1977,8 @@ class BiometricDataCollector {
                         this.crystalState.isSpreading = step.type === 'spread';
                         this.crystalState.initialDistance = this.getDistance(touches[0], touches[1]);
                         crystal.classList.add('active');
-                        console.log(`🔄 ${step.type} started - initial distance: ${Math.round(this.crystalState.initialDistance)}px`);
+                        this.crystalZoom.isPinching = true;
+                        this.crystalZoom.initialDistance = this.getDistance(touches[0], touches[1]);
                     } else if (phase === 'move' && (this.crystalState.isPinching || this.crystalState.isSpreading)) {
                         const currentDistance = this.getDistance(touches[0], touches[1]);
                         
@@ -1949,10 +1986,14 @@ class BiometricDataCollector {
                         if (currentDistance < 15) return; // Reduced minimum distance for mobile
                         
                         const scale = currentDistance / this.crystalState.initialDistance;
-                        const newSize = Math.max(0.2, Math.min(2.5, scale)); // Wider range for mobile
+                        const newSize = Math.max(0.5, Math.min(2.5, scale)); // Wider range for mobile
                         
                         this.updateCrystalSize(newSize);
                         this.updateStepProgress(`${Math.round(newSize * 100)}%`);
+                        
+                        // Set persistent zoom
+                        this.crystalZoom.scale = newSize;
+                        this.updateCrystalTransform();
                         
                         // ENHANCED completion detection with mobile-friendly tolerance
                         const targetTolerance = 0.12; // Optimized tolerance for mobile precision
@@ -1965,6 +2006,7 @@ class BiometricDataCollector {
                     this.crystalState.isPinching = false;
                     this.crystalState.isSpreading = false;
                     crystal.classList.remove('active');
+                    this.crystalZoom.isPinching = false;
                     console.log(`🔄 ${step.type} ended`);
                 }
                 break;
@@ -2015,26 +2057,27 @@ class BiometricDataCollector {
         const percentage = Math.round(size * 100);
         crystalSizeDisplay.textContent = `${percentage}%`;
         
+        const sizeStatus = document.getElementById('step-status');
         if (size <= 0.6) {
             crystal.classList.add('shrinking');
             crystalSizeDisplay.classList.add('shrink-highlight');
+            sizeStatus.textContent = 'Crystal is too small! Try to enlarge.';
+            sizeStatus.style.color = '#1A6DD0'; // Deep blue
             setTimeout(() => {
                 crystal.classList.remove('shrinking');
                 crystalSizeDisplay.classList.remove('shrink-highlight');
-            }, 500);
+                sizeStatus.style.color = '';
+            }, 1000);
         } else if (size >= 1.4) {
             crystal.classList.add('enlarging');
             crystalSizeDisplay.classList.add('enlarge-highlight');
+            sizeStatus.textContent = 'Crystal is too big! Try to shrink.';
+            sizeStatus.style.color = '#20CFCF'; // Bright teal
             setTimeout(() => {
                 crystal.classList.remove('enlarging');
                 crystalSizeDisplay.classList.remove('enlarge-highlight');
-            }, 500);
-        }
-        
-        if (size < 0.7) {
-            crystal.style.filter = 'brightness(0.9)';
-        } else if (size > 1.3) {
-            crystal.style.filter = 'brightness(1.1)';
+                sizeStatus.style.color = '';
+            }, 1000);
         } else {
             crystal.style.filter = 'none';
         }
@@ -2231,9 +2274,9 @@ class BiometricDataCollector {
             } else if (this.crystalState.rotationRounds === 0) {
                 stepStatus.textContent = 'STRICT: Touch crystal, then rotate CLOCKWISE only for one full rotation';
             } else if (this.crystalState.rotationRounds === 1) {
-                stepStatus.textContent = 'Green light! STRICT: Now rotate COUNTER-CLOCKWISE only for one full rotation';
+                stepStatus.textContent = 'Teal highlight! STRICT: Now rotate COUNTER-CLOCKWISE only for one full rotation';
             } else if (this.crystalState.rotationRounds === 2) {
-                stepStatus.textContent = 'Second green light! STRICT: Now rotate CLOCKWISE only for one full rotation';
+                stepStatus.textContent = 'Second teal highlight! STRICT: Now rotate CLOCKWISE only for one full rotation';
             } else {
                 stepStatus.textContent = 'STRICT RULES: CW → CCW → CW (only these directions work)';
             }
@@ -2845,6 +2888,18 @@ class BiometricDataCollector {
                 galleryGrid.style.opacity = '0.5';
             }
         }
+    }
+
+    updateCrystalTransform() {
+      const crystal = document.getElementById('crystal');
+      crystal.style.transform = `scale(${this.crystalZoom.scale}) translate(${this.crystalZoom.translateX || 0}px, ${this.crystalZoom.translateY || 0}px)`;
+    }
+
+    resetCrystalZoom() {
+      this.crystalZoom.scale = 1;
+      this.crystalZoom.translateX = 0;
+      this.crystalZoom.translateY = 0;
+      this.updateCrystalTransform();
     }
 }
 // Initialize the application
