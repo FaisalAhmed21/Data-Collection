@@ -125,6 +125,12 @@ class BiometricDataCollector {
             'https://picsum.photos/800/600?random=20'
         ];
         
+        // --- Dwell Time Tracking for Keystrokes ---
+        // Add to constructor:
+        this.keyDownTimestamps = {}; // { key: timestamp }
+        this.gesturePath = {}; // { trial_step: [ {x, y} ] }
+        this.gesturePathLength = {}; // { trial_step: pathLength }
+        
         this.init();
     }
     
@@ -2252,6 +2258,21 @@ class BiometricDataCollector {
             data.trial = 1; // Default trial for other tasks
         }
         
+        // In recordTouchEvent, update gesturePath and gesturePathLength
+        const trialStep = `${data.trial || 1}_${data.step || 1}`;
+        if (!this.gesturePath[trialStep]) {
+            this.gesturePath[trialStep] = [];
+            this.gesturePathLength[trialStep] = 0;
+        }
+        const x = Math.round(data.touches[0]?.clientX || 0);
+        const y = Math.round(data.touches[0]?.clientY || 0);
+        const last = this.gesturePath[trialStep][this.gesturePath[trialStep].length - 1];
+        if (last) {
+            const dx = x - last.x;
+            const dy = y - last.y;
+            this.gesturePathLength[trialStep] += Math.sqrt(dx * dx + dy * dy);
+        }
+        this.gesturePath[trialStep].push({ x, y });
         this.touchData.push(data);
     }
     
@@ -2739,7 +2760,8 @@ class BiometricDataCollector {
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
                     was_deleted: wasDeleted,
-                    flight_time_ms: flightTime
+                    flight_time_ms: flightTime,
+                    dwell_time_ms: typeof keystroke.dwell_time_ms === 'number' ? Math.round(keystroke.dwell_time_ms) : ''
                 });
             }
         });
@@ -2764,18 +2786,6 @@ class BiometricDataCollector {
                 task_step_label = '';
             }
 
-            // Compute pressure: average of all available force values (if any), else fallback
-            let pressure = 0.5;
-            if (Array.isArray(touch.touches) && touch.touches.length > 0) {
-                const validForces = touch.touches
-                    .map(t => typeof t.force === 'number' && t.force > 0 && t.force <= 1 ? t.force : null)
-                    .filter(f => f !== null);
-                if (validForces.length > 0) {
-                    // Use average of all valid forces
-                    pressure = Math.round((validForces.reduce((a, b) => a + b, 0) / validForces.length) * 1000) / 1000;
-                }
-            }
-
             // Base features that are always reliable across all devices
             const baseFeature = {
                 participant_id: this.participantId,
@@ -2786,7 +2796,8 @@ class BiometricDataCollector {
                 touch_y: Math.round(touch.touches[0]?.clientY || 0),
                 btn_touch_state: touch.type,
                 inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0,
-                pressure: pressure,
+                num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
+                path_length_px: this.gesturePathLength[`${touch.trial || 1}_${touch.step || 1}`] || 0,
                 task_step_label: task_step_label
             };
             features.push(baseFeature);
