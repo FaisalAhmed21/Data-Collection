@@ -1288,8 +1288,14 @@ class BiometricDataCollector {
         const accuracy = this.calculateAccuracy();
         // Only enable next button and show fireworks if 100% accuracy is achieved
         if (typed === target && accuracy === 100) {
-            nextBtn.disabled = false;
-            nextBtn.classList.add('next-task-btn--deep');
+            if (this.currentSentence === this.sentences.length - 1) {
+                // Last sentence: hide next sentence button, show next task button
+                nextBtn.style.display = 'none';
+                this.showNextTaskButton('crystal', 'Crystal Forge Game');
+            } else {
+                nextBtn.disabled = false;
+                nextBtn.classList.add('next-task-btn--deep');
+            }
             if (!this._fireworksShown) {
                 showFireworks('.typing-content');
                 this._fireworksShown = true;
@@ -1298,6 +1304,7 @@ class BiometricDataCollector {
         } else {
             nextBtn.disabled = true;
             nextBtn.classList.remove('next-task-btn--deep');
+            nextBtn.style.display = 'inline-flex';
         }
     }
     
