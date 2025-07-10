@@ -619,51 +619,6 @@ select.form-control {
   flex-direction: column;
 }
 
-@media (min-width: 640px) {
-  .container {
-    max-width: var(--container-sm);
-  }
-}
-
-@media (max-width: 768px) {
-  .container {
-    padding-right: var(--space-12);
-    padding-left: var(--space-12);
-  }
-}
-
-@media (max-width: 480px) {
-  .container {
-    padding-right: var(--space-8);
-    padding-left: var(--space-8);
-  }
-}
-
-@media (max-width: 360px) {
-  .container {
-    padding-right: var(--space-6);
-    padding-left: var(--space-6);
-  }
-}
-
-@media (min-width: 768px) {
-  .container {
-    max-width: var(--container-md);
-  }
-}
-
-@media (min-width: 1024px) {
-  .container {
-    max-width: var(--container-lg);
-  }
-}
-
-@media (min-width: 1280px) {
-  .container {
-    max-width: var(--container-xl);
-  }
-}
-
 /* Utility classes */
 .flex {
   display: flex;
@@ -950,13 +905,13 @@ select.form-control {
   letter-spacing: 0.5px;
 }
 
+/* Universal Crystal Container */
 .crystal-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   min-height: 80vh;
-  text-align: center;
+  width: 100%;
+  padding: clamp(1rem, 4vw, 2rem);
 }
 
 .crystal-step-info {
@@ -977,35 +932,37 @@ select.form-control {
   margin-bottom: var(--space-8);
 }
 
+/* Universal Crystal Container - Removed old positioning */
 .crystal-container {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: flex-start;
+  display: grid;
+  place-items: center;
   width: 100%;
-  margin: 0 0 32px 0;
+  margin: 0;
   padding: 0;
 }
 
+/* Universal Crystal Area Sizing and Centering */
 .crystal-area {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  margin: 32px 0 0 16px; /* Increase top margin for lower crystal */
+  display: grid;
+  place-items: center;
+  width: clamp(200px, 25vw + 100px, 300px);
+  height: clamp(200px, 25vw + 100px, 300px);
+  margin: 0 auto;
 }
 
+/* Universal Crystal Sizing */
 .crystal {
-  width: 260px;
-  height: 260px;
+  width: clamp(160px, 20vw + 80px, 240px);
+  height: clamp(160px, 20vw + 80px, 240px);
   cursor: pointer;
   transition: transform 0.3s var(--ease-standard), filter 0.3s var(--ease-standard);
   transform-origin: center;
-  border-radius: 50%; /* 👈 Makes it circular */
+  border-radius: 50%;
 }
 
 .crystal-inner {
-  width: 240px;
-  height: 240px;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(135deg,
     rgba(0, 31, 63, 0.8) 0%,
     rgba(255, 215, 0, 0.9) 50%,
@@ -1033,13 +990,13 @@ select.form-control {
 }
 
 .crystal-glow {
-  width: 280px;
-  height: 280px;
+  width: 120%;
+  height: 120%;
   position: absolute;
-  top: -30px;
-  left: -30px;
-  right: -30px;
-  bottom: -30px;
+  top: -10%;
+  left: -10%;
+  right: -10%;
+  bottom: -10%;
   background: radial-gradient(circle, rgba(0, 31, 63, 0.4) 0%, transparent 70%);
   border-radius: 50%;
   opacity: 0;
@@ -1056,9 +1013,14 @@ select.form-control {
   margin-top: 10px;
   color: #888;
 }
-.direction-indicator.clockwise { color: green; }
-.direction-indicator.counter-clockwise { color: orange; }
 
+.direction-indicator.clockwise { 
+  color: green; 
+}
+
+.direction-indicator.counter-clockwise { 
+  color: orange; 
+}
 
 .crystal.shrinking {
   animation: crystal-shrink 0.8s var(--ease-standard);
@@ -1070,6 +1032,35 @@ select.form-control {
 
 .crystal.success {
   animation: crystal-success 0.6s var(--ease-standard);
+}
+
+/* Fallback for older browsers */
+.crystal-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Grid rules will override where supported */
+  display: grid;
+  place-items: center;
+}
+
+.crystal-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Grid rules will override where supported */
+  display: grid;
+  place-items: center;
+}
+
+.crystal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Grid rules will override where supported */
+  display: grid;
+  place-items: center;
 }
 
 @keyframes crystal-shrink {
@@ -1619,17 +1610,6 @@ select.form-control {
     padding: var(--space-12);
   }
 
-  .crystal-area {
-    width: clamp(200px, 50vw, 280px);
-    height: clamp(200px, 50vw, 280px);
-    margin: var(--space-16) auto;
-  }
-
-  .crystal {
-    width: clamp(140px, 35vw, 200px);
-    height: clamp(140px, 35vw, 200px);
-  }
-
   .crystal-feedback {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-8);
@@ -1780,17 +1760,6 @@ select.form-control {
     font-size: clamp(0.8rem, 2.2vw, 0.9rem);
     min-height: 60px;
   }
-
-  .crystal-area {
-    width: clamp(160px, 45vw, 240px);
-    height: clamp(160px, 45vw, 240px);
-  }
-
-  .crystal {
-    width: clamp(100px, 30vw, 160px);
-    height: clamp(100px, 30vw, 160px);
-  }
-
   .crystal-feedback {
     grid-template-columns: 1fr;
     gap: var(--space-6);
@@ -1889,16 +1858,7 @@ select.form-control {
     font-size: clamp(1rem, 3vw, 1.25rem);
   }
 
-  .crystal-area {
-    width: clamp(140px, 40vw, 200px);
-    height: clamp(140px, 40vw, 200px);
-  }
-
-  .crystal {
-    width: clamp(80px, 25vw, 120px);
-    height: clamp(80px, 25vw, 120px);
-  }
-
+  
   .crystal-feedback {
     padding: var(--space-6);
   }
