@@ -2339,7 +2339,19 @@ class BiometricDataCollector {
             // pinch-to-zoom
             const dist = this.getDistance(e.touches[0], e.touches[1]);
             const change = dist / this.galleryZoom.initialDistance;
-            this.galleryZoom.scale = Math.max(1, Math.min(3.0, this.galleryZoom.scale * change));
+            const newScale = Math.max(1, Math.min(3.0, this.galleryZoom.scale * change));
+            // Adjust translation to keep the zoom centered on pinch midpoint
+            const ctr = document.querySelector('.popup-image-container');
+            const img = document.querySelector('.popup-image');
+            if (img && ctr) {
+                const rect = ctr.getBoundingClientRect();
+                const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+                const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+                const scaleChange = newScale / this.galleryZoom.scale;
+                this.galleryZoom.translateX = (this.galleryZoom.translateX - midX) * scaleChange + midX;
+                this.galleryZoom.translateY = (this.galleryZoom.translateY - midY) * scaleChange + midY;
+            }
+            this.galleryZoom.scale = newScale;
             this.galleryZoom.initialDistance = dist;
             this.updateImageTransform();
             this.updateZoomLevel();
@@ -2347,8 +2359,8 @@ class BiometricDataCollector {
                 this.galleryZoom.isPanning = true;
             }
         }
-        else if (e.touches.length === 1 && this.galleryZoom.isPanning) {
-            // single-finger pan
+        else if (e.touches.length === 1 && this.galleryZoom.isPanning && this.galleryZoom.scale > 1) {
+            // single-finger pan after zoom
             const t = e.touches[0];
             this.galleryZoom.translateX = t.clientX - this.galleryZoom.startX;
             this.galleryZoom.translateY = t.clientY - this.galleryZoom.startY;
@@ -2386,7 +2398,7 @@ class BiometricDataCollector {
         // end pinch
         if (e.touches.length < 2) {
             this.galleryZoom.isPinching = false;
-            // Do not auto-reset zoom after pinch in
+            // Do not auto-reset zoom or translation after pinch in
         }
         // end pan
         if (e.touches.length === 0) {
