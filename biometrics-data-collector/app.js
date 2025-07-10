@@ -200,6 +200,28 @@ class BiometricDataCollector {
             this.switchScreen('typing');
             this.startTypingTask();
         });
+        // Consent checkbox logic
+        const consentCheckbox = document.getElementById('consent-checkbox');
+        const startBtn = document.getElementById('start-btn');
+        if (consentCheckbox && startBtn) {
+            consentCheckbox.addEventListener('change', function() {
+                startBtn.disabled = !this.checked;
+                if (this.checked) {
+                    startBtn.classList.remove('btn--disabled');
+                } else {
+                    startBtn.classList.add('btn--disabled');
+                }
+            });
+        }
+        // Block clipboard copy, cut, and paste in typing input (commented out for now)
+        /*
+        const typingInput = document.getElementById('typing-input');
+        if (typingInput) {
+            typingInput.addEventListener('copy', function(e) { e.preventDefault(); });
+            typingInput.addEventListener('cut', function(e) { e.preventDefault(); });
+            typingInput.addEventListener('paste', function(e) { e.preventDefault(); });
+        }
+        */
         
         const typingInput = document.getElementById('typing-input');
         typingInput.addEventListener('compositionstart', (e) => {
@@ -1199,24 +1221,56 @@ class BiometricDataCollector {
             targetLength: target.length
         });
         
+        let accuracy = 0;
         if (typed === target) {
-          document.getElementById('accuracy').textContent = '100%';
+            document.getElementById('accuracy').textContent = '100%';
+            accuracy = 100;
             console.log('✅ Perfect match - 100% accuracy');
-            return 100;
+        } else {
+            let correct = 0;
+            const minLength = Math.min(typed.length, target.length);
+            
+            for (let i = 0; i < minLength; i++) {
+                if (typed[i] === target[i]) {
+                    correct++;
+                }
+            }
+            
+            accuracy = Math.round((correct / target.length) * 100);
+            document.getElementById('accuracy').textContent = `${accuracy}%`;
+            console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
         }
-        
-        let correct = 0;
-        const minLength = Math.min(typed.length, target.length);
-        
-        for (let i = 0; i < minLength; i++) {
-            if (typed[i] === target[i]) {
-                correct++;
+        // Animate accuracy ring
+        const accuracyRing = document.getElementById('accuracy-ring');
+        const accuracyValue = document.getElementById('accuracy');
+        const encourage = document.querySelector('.accuracy-encourage');
+        if (accuracyRing && accuracyValue) {
+            let percent = 0;
+            if (typeof accuracy === 'number') {
+                percent = Math.max(0, Math.min(accuracy, 100));
+            } else {
+                percent = parseInt(accuracyValue.textContent) || 0;
+            }
+            const circumference = 2 * Math.PI * 26;
+            const offset = circumference * (1 - percent / 100);
+            accuracyRing.setAttribute('stroke-dasharray', circumference);
+            accuracyRing.setAttribute('stroke-dashoffset', offset);
+            if (encourage) {
+                if (percent === 100) {
+                    encourage.textContent = 'Perfect! 🎉';
+                    encourage.style.color = 'var(--color-success)';
+                } else if (percent >= 80) {
+                    encourage.textContent = 'Great job! Almost there!';
+                    encourage.style.color = 'var(--color-primary)';
+                } else if (percent >= 50) {
+                    encourage.textContent = 'Keep going! 💪';
+                    encourage.style.color = 'var(--color-warning)';
+                } else {
+                    encourage.textContent = 'You can do it!';
+                    encourage.style.color = 'var(--color-error)';
+                }
             }
         }
-        
-        const accuracy = Math.round((correct / target.length) * 100);
-        document.getElementById('accuracy').textContent = `${accuracy}%`;
-        console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
         return accuracy;
     }
     
