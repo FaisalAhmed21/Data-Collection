@@ -972,13 +972,10 @@ select.form-control {
 .crystal-inner {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg,
-    rgba(0, 31, 63, 0.8) 0%,
-    rgba(255, 215, 0, 0.9) 50%,
-    rgba(0, 31, 63, 0.7) 100%);
+  background: linear-gradient(135deg, #20CFCF 0%, #AEEBFB 100%);
   border-radius: 50%;
   box-shadow:
-    0 0 30px rgba(0, 31, 63, 0.5),
+    0 0 30px rgba(32, 207, 207, 0.25),
     inset 0 0 30px rgba(255, 255, 255, 0.2);
   position: relative;
   overflow: hidden;
@@ -1006,7 +1003,7 @@ select.form-control {
   left: -10%;
   right: -10%;
   bottom: -10%;
-  background: radial-gradient(circle, rgba(0, 31, 63, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(32, 207, 207, 0.25) 0%, transparent 70%);
   border-radius: 50%;
   opacity: 0;
   transition: opacity 0.3s var(--ease-standard);
@@ -1024,11 +1021,11 @@ select.form-control {
 }
 
 .direction-indicator.clockwise { 
-  color: green; 
+  color: #20CFCF; 
 }
 
 .direction-indicator.counter-clockwise { 
-  color: orange; 
+  color: #3EC6E0; 
 }
 
 .crystal.shrinking {
@@ -1094,12 +1091,12 @@ select.form-control {
 
 /* Crystal size display highlight effects */
 .feedback-value.shrink-highlight {
-  color: var(--color-error);
+  color: #3EC6E0;
   animation: pulse-shrink 0.5s ease-in-out;
 }
 
 .feedback-value.enlarge-highlight {
-  color: var(--color-success);
+  color: #20CFCF;
   animation: pulse-enlarge 0.5s ease-in-out;
 }
 
@@ -1554,7 +1551,7 @@ select.form-control {
 
 .pressure-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-success), var(--color-primary), var(--color-warning));
+  background: linear-gradient(90deg, #20CFCF, #AEEBFB);
   border-radius: var(--radius-full);
   transition: width 0.1s ease-out;
   width: 0%;
@@ -2154,4 +2151,43 @@ select.form-control {
 .card, .stat, .feedback-item, .sentence-display {
   border: 1px solid var(--color-card-border);
   box-shadow: var(--shadow-sm);
+}
+
+.consent-card {
+  background: var(--color-secondary);
+  border: 1.5px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-24) var(--space-20);
+  max-width: 480px;
+  margin: 0 auto var(--space-16) auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.consent-heading {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  margin-bottom: var(--space-12);
+}
+.consent-body {
+  margin-bottom: var(--space-16);
+}
+.consent-summary {
+  font-size: var(--font-size-lg);
+  color: var(--color-text);
+  margin-bottom: var(--space-8);
+}
+.consent-main {
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-8);
+}
+.consent-checkbox-center {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: var(--space-16) 0 0 0;
 }
