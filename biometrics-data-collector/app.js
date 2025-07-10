@@ -1264,19 +1264,15 @@ class BiometricDataCollector {
                 if (percent === 100) {
                     encourage.textContent = 'Perfect! 🎉';
                     encourage.style.color = 'var(--color-success)';
-                    nextButton.classList.add('btn--deepened'); // NEW LINE
                 } else if (percent >= 80) {
                     encourage.textContent = 'Great job! Almost there!';
                     encourage.style.color = 'var(--color-primary)';
-                    nextButton.classList.remove('btn--deepened'); // NEW LINE
                 } else if (percent >= 50) {
                     encourage.textContent = 'Keep going! 💪';
                     encourage.style.color = 'var(--color-warning)';
-                    nextButton.classList.remove('btn--deepened'); // NEW LINE
                 } else {
                     encourage.textContent = 'You can do it!';
                     encourage.style.color = 'var(--color-error)';
-                    nextButton.classList.remove('btn--deepened'); // NEW LINE
                 }
             }
         }
