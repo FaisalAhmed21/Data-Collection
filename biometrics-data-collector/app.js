@@ -127,7 +127,7 @@ class BiometricDataCollector {
         
         // --- Dwell Time Tracking for Keystrokes ---
         // Add to constructor:
-        this.keyDownTimestamps = {}; // { key: timestamp }
+        this.keyDownTimestamps = {}; // { code: timestamp }
         this.gesturePath = {}; // { trial_step: [ {x, y} ] }
         this.gesturePathLength = {}; // { trial_step: pathLength }
         
@@ -1089,8 +1089,7 @@ class BiometricDataCollector {
         
         // Store dwell time timestamp for key+shift combo
         if (e.key.length === 1) {
-            const dwellKey = e.key + (e.shiftKey ? '_SHIFT' : '');
-            this.keyDownTimestamps[dwellKey] = timestamp;
+            this.keyDownTimestamps[e.code] = timestamp;
         }
         
         // Enhanced SHIFT tracking
@@ -1192,11 +1191,10 @@ class BiometricDataCollector {
         // Calculate dwell time for key+shift combo
         let dwellTime = 0;
         if (e.key.length === 1) {
-            const dwellKey = e.key + (e.shiftKey ? '_SHIFT' : '');
-            const downTime = this.keyDownTimestamps[dwellKey];
+            const downTime = this.keyDownTimestamps[e.code];
             if (downTime) {
                 dwellTime = timestamp - downTime;
-                delete this.keyDownTimestamps[dwellKey];
+                delete this.keyDownTimestamps[e.code];
             }
         }
         
@@ -1486,8 +1484,10 @@ class BiometricDataCollector {
         }
 
         // Store dwell time if provided
-        if (typeof data.dwell_time_ms === 'number') {
+        if (typeof data.dwell_time_ms === 'number' && !data.isSynthetic) {
             data.dwell_time_ms = Math.round(data.dwell_time_ms);
+        } else {
+            delete data.dwell_time_ms;
         }
 
         // Enhanced SHIFT handling for capital letters
