@@ -1199,14 +1199,10 @@ class BiometricDataCollector {
         document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
         this.calculateAccuracy();
         const nextBtn = document.getElementById('next-sentence-btn');
-        if (this.currentSentence < this.sentences.length - 1) {
-            nextBtn.style.display = 'inline-flex';
-            nextBtn.disabled = true;
-            nextBtn.style.backgroundColor = 'var(--color-secondary)';
-            nextBtn.style.opacity = '0.5';
-        } else {
-            nextBtn.style.display = 'none';
-        }
+        nextBtn.disabled = true;
+        nextBtn.style.display = 'inline-flex';
+        nextBtn.style.backgroundColor = 'var(--color-secondary)';
+        nextBtn.style.opacity = '0.5';
     }
     
     calculateAccuracy() {
@@ -1279,55 +1275,33 @@ class BiometricDataCollector {
         const target = this.sentences[this.currentSentence];
         const nextBtn = document.getElementById('next-sentence-btn');
         const accuracy = this.calculateAccuracy();
-        // Only enable next button and show fireworks if 100% accuracy is achieved
         if (typed === target && accuracy === 100) {
             if (!this._fireworksShown) {
                 showFireworks('.typing-content');
                 this._fireworksShown = true;
                 setTimeout(() => { this._fireworksShown = false; }, 2000);
             }
-            if (this.currentSentence < this.sentences.length - 1) {
-                nextBtn.disabled = false;
-                nextBtn.style.display = 'inline-flex';
-                nextBtn.style.backgroundColor = 'var(--color-primary)';
-                nextBtn.style.opacity = '1';
-            } else {
-                nextBtn.style.display = 'inline-flex';
-                nextBtn.disabled = false;
-                nextBtn.style.backgroundColor = 'var(--color-primary)';
-                nextBtn.style.opacity = '1';
-            }
+            nextBtn.disabled = false;
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.style.backgroundColor = 'var(--color-primary)';
+            nextBtn.style.opacity = '1';
         } else {
-            if (this.currentSentence < this.sentences.length - 1) {
-                nextBtn.disabled = true;
-                nextBtn.style.display = 'inline-flex';
-                nextBtn.style.backgroundColor = 'var(--color-secondary)';
-                nextBtn.style.opacity = '0.5';
-            } else {
-                nextBtn.disabled = true;
-                nextBtn.style.display = 'inline-flex';
-                nextBtn.style.backgroundColor = 'var(--color-secondary)';
-                nextBtn.style.opacity = '0.5';
-            }
+            nextBtn.disabled = true;
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.style.backgroundColor = 'var(--color-secondary)';
+            nextBtn.style.opacity = '0.5';
         }
     }
     
     nextSentence() {
         this.currentSentence++;
-        this._fireworksShown = false; // Reset fireworks flag for next sentence
+        this._fireworksShown = false;
         if (this.currentSentence >= this.sentences.length) {
-            // Typing task completed
             this.showNextTaskButton('crystal', 'Crystal Forge Game');
-            this.updateTaskLocks(); // Lock typing after completion
+            this.updateTaskLocks();
         } else {
             this.displayCurrentSentence();
             this.updateTypingProgress();
-            // Always show and disable the next button until 100% accuracy
-            const nextBtn = document.getElementById('next-sentence-btn');
-            nextBtn.disabled = true;
-            nextBtn.style.display = 'inline-flex';
-            nextBtn.style.backgroundColor = 'var(--color-secondary)';
-            nextBtn.style.opacity = '0.5';
         }
     }
     
