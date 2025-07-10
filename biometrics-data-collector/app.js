@@ -1226,6 +1226,11 @@ class BiometricDataCollector {
             document.getElementById('accuracy').textContent = '100%';
             accuracy = 100;
             console.log('✅ Perfect match - 100% accuracy');
+            if (accuracy === 100 && !this._fireworksShown) {
+                showFireworks('.typing-content');
+                this._fireworksShown = true;
+                setTimeout(() => { this._fireworksShown = false; }, 2000);
+            }
         } else {
             let correct = 0;
             const minLength = Math.min(typed.length, target.length);
@@ -2111,6 +2116,7 @@ class BiometricDataCollector {
             this.showNextTaskButton('gallery', 'Gallery Interaction');
             this.updateTaskLocks(); // Lock crystal after completion
         }
+        showFireworks('.crystal-content');
     }
 
     
