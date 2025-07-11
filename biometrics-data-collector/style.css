@@ -2234,3 +2234,41 @@ select.form-control {
 .card p, .card span, .card label {
   color: var(--color-text) !important;
 }
+
+.gallery-content h2 {
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 8px;
+  padding-right: 8px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  margin: 0 auto 16px auto;
+  max-width: 100vw;
+}
+
+@media (max-width: 768px) {
+  .gallery-content h2 {
+    font-size: clamp(1.2rem, 5vw, 2rem);
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .gallery-content {
+    padding-left: 0;
+    padding-right: 0;
+    max-width: 100vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-content h2 {
+    font-size: clamp(1rem, 6vw, 1.5rem);
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  .gallery-content {
+    padding-left: 0;
+    padding-right: 0;
+    max-width: 100vw;
+  }
+}
