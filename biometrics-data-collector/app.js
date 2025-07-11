@@ -125,9 +125,7 @@ class BiometricDataCollector {
             'https://picsum.photos/800/600?random=20'
         ];
         
-        // --- Dwell Time Tracking for Keystrokes ---
-        // Add to constructor:
-        this.keyDownTimestamps = {}; // { code: timestamp }
+
         this.gesturePath = {}; // { trial_step: [ {x, y} ] }
         this.gesturePathLength = {}; // { trial_step: pathLength }
         
@@ -219,17 +217,13 @@ class BiometricDataCollector {
                 }
             });
         }
-        // Block clipboard copy, cut, and paste in typing input (commented out for now)
-        /*
+        // Block clipboard copy, cut, and paste in typing input
         const typingInput = document.getElementById('typing-input');
         if (typingInput) {
             typingInput.addEventListener('copy', function(e) { e.preventDefault(); });
             typingInput.addEventListener('cut', function(e) { e.preventDefault(); });
             typingInput.addEventListener('paste', function(e) { e.preventDefault(); });
         }
-        */
-        
-        const typingInput = document.getElementById('typing-input');
         typingInput.addEventListener('compositionstart', (e) => {
             this.compositionActive = true;
             console.log('Composition started');
@@ -1086,10 +1080,6 @@ class BiometricDataCollector {
     
     handleKeydown(e) {
         const timestamp = performance.now();
-        this.keyDownTimestamps[e.code] = timestamp;
-
-        
-        this.keyDownTimestamps[e.code] = timestamp;
         
         // Enhanced SHIFT tracking
         if (e.key === 'Shift') {
@@ -1187,13 +1177,8 @@ class BiometricDataCollector {
     handleKeyup(e) {
         const timestamp = performance.now();
         
-        // Calculate dwell time for key+shift combo
-        let dwellTime = 0;
-        const downTime = this.keyDownTimestamps[e.code];
-        if (downTime) {
-            dwellTime = timestamp - downTime;
-            delete this.keyDownTimestamps[e.code];
-        }
+
+
 
         
         // Enhanced SHIFT tracking
@@ -1210,8 +1195,7 @@ class BiometricDataCollector {
                 sentence: this.currentSentence,
                 position: e.target.selectionStart || 0,
                 clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y,
-                dwell_time_ms: dwellTime
+                clientY: this.pointerTracking.y
             });
             return;
         }
@@ -1249,8 +1233,7 @@ class BiometricDataCollector {
                     sentence: this.currentSentence,
                     position: e.target.selectionStart || 0,
                     clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y,
-                    dwell_time_ms: dwellTime
+                    clientY: this.pointerTracking.y
                 });
                 console.log('Desktop backspace recorded at time:', currentTime);
                 
@@ -1269,7 +1252,7 @@ class BiometricDataCollector {
                 
         // Only record if we have a valid character
         if (actualCharacter) {
-            console.log('Key released:', e.key, 'KeyCode:', e.keyCode, 'Detected:', actualCharacter, 'Dwell time:', dwellTime);
+            console.log('Key released:', e.key, 'KeyCode:', e.keyCode, 'Detected:', actualCharacter);
             
             this.recordKeystroke({
                 timestamp,
@@ -1282,8 +1265,7 @@ class BiometricDataCollector {
                 sentence: this.currentSentence,
                 position: e.target.selectionStart || 0,
                 clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y,
-                dwell_time_ms: dwellTime
+                clientY: this.pointerTracking.y
             });
         }
         
@@ -1420,11 +1402,7 @@ class BiometricDataCollector {
                 nextBtn.disabled = false;
                 nextBtn.classList.add('next-task-btn--deep');
             }
-            if (!this._fireworksShown) {
-                showFireworks('.typing-content');
-                this._fireworksShown = true;
-                setTimeout(() => { this._fireworksShown = false; }, 2000);
-            }
+
         } else {
             nextBtn.disabled = true;
             nextBtn.classList.remove('next-task-btn--deep');
@@ -1434,7 +1412,6 @@ class BiometricDataCollector {
     
     nextSentence() {
         this.currentSentence++;
-        this._fireworksShown = false;
         if (this.currentSentence >= this.sentences.length) {
             this.showNextTaskButton('crystal', 'Crystal Forge Game');
             this.updateTaskLocks();
@@ -1482,11 +1459,7 @@ class BiometricDataCollector {
             flightTime = currentTime - this.lastKeystrokeTime;
         }
 
-        if (typeof data.dwell_time_ms === 'number' && !isNaN(data.dwell_time_ms)) {
-            data.dwell_time_ms = Math.round(data.dwell_time_ms);
-        } else {
-            data.dwell_time_ms = 0;  // ✅ Default to 0 if missing
-        }
+
 
 
         // Enhanced SHIFT handling for capital letters
@@ -2250,7 +2223,7 @@ class BiometricDataCollector {
             this.showNextTaskButton('gallery', 'Gallery Interaction');
             this.updateTaskLocks(); // Lock crystal after completion
         }
-        showFireworks('.crystal-content');
+
     }
 
     
@@ -2827,7 +2800,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '9'; // 9 features including dwell_time_ms
+        document.getElementById('keystroke-features').textContent = '8'; // 8 features: participant_id, task_id, timestamp_ms, ref_char, touch_x, touch_y, was_deleted, flight_time_ms
     }
 
     
@@ -2886,8 +2859,7 @@ class BiometricDataCollector {
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
                     was_deleted: wasDeleted,
-                    flight_time_ms: flightTime,
-                    dwell_time_ms: typeof keystroke.dwell_time_ms === 'number' ? Math.round(keystroke.dwell_time_ms) : ''
+                    flight_time_ms: flightTime
                 });
             }
         });
