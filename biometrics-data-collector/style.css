@@ -2345,16 +2345,17 @@ h1, h2, h3, h4, h5, h6, p, span, label, div, button, input, textarea, select {
   }
 }
 
-/* Complete text selection prevention for typing input */
+/* Complete text selection prevention for typing input - ALLOWS CURSOR MOVEMENT */
 #typing-input {
-  -webkit-user-select: none !important;
-  -moz-user-select: none !important;
-  -ms-user-select: none !important;
-  user-select: none !important;
+  /* REMOVED: user-select: none - this was blocking cursor movement */
   -webkit-touch-callout: none !important;
   -webkit-tap-highlight-color: transparent !important;
-  -webkit-touch-callout: none !important;
   pointer-events: auto !important;
+  /* Allow cursor movement but prevent text selection */
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
 }
 
 #typing-input::selection {
