@@ -366,44 +366,6 @@ class BiometricDataCollector {
                 return false;
             });
             
-            typingInput.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Always set cursor at end
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
-                return false;
-            });
-            
-            typingInput.addEventListener('mouseup', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Always set cursor at end
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
-            });
-            
-            typingInput.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Always set cursor at end
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
-                return false;
-            });
-            
-            typingInput.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Always set cursor at end
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
-            });
-            
             typingInput.addEventListener('select', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -480,11 +442,6 @@ class BiometricDataCollector {
                 }
                 
                 this.lastInputValue = currentValue;
-                
-                // Always keep cursor at end after input
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
             }.bind(this));
             
             if (navigator.clipboard) {
@@ -548,29 +505,6 @@ class BiometricDataCollector {
                 return;
             }
             this.handleKeyup(e);
-        });
-        typingInput.addEventListener('focus', (e) => {
-            const rect = e.target.getBoundingClientRect();
-            this.currentPointerX = rect.left + rect.width / 2;
-            this.currentPointerY = rect.top + rect.height / 2;
-            this.pointerTracking.x = this.currentPointerX;
-            this.pointerTracking.y = this.currentPointerY;
-            
-            // Always set cursor at end when focused
-            setTimeout(() => {
-                typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-            }, 0);
-        });
-        typingInput.addEventListener('click', (e) => {
-            this.currentPointerX = e.clientX;
-            this.currentPointerY = e.clientY;
-            this.pointerTracking.x = e.clientX;
-            this.pointerTracking.y = e.clientY;
-            
-            // Always set cursor at end when clicked
-            setTimeout(() => {
-                typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-            }, 0);
         });
         typingInput.addEventListener('paste', (e) => {
             e.preventDefault();
@@ -645,6 +579,36 @@ class BiometricDataCollector {
         document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
+        
+        typingInput.addEventListener('keyup', (e) => {
+            if (this.compositionActive || e.keyCode === 229) {
+                return;
+            }
+            this.handleKeyup(e);
+        });
+        
+        // ADDED BACK: Focus event for pointer tracking only (no cursor forcing)
+        typingInput.addEventListener('focus', (e) => {
+            const rect = e.target.getBoundingClientRect();
+            this.currentPointerX = rect.left + rect.width / 2;
+            this.currentPointerY = rect.top + rect.height / 2;
+            this.pointerTracking.x = this.currentPointerX;
+            this.pointerTracking.y = this.currentPointerY;
+        });
+        
+        // ADDED BACK: Click event for pointer tracking only (no cursor forcing)
+        typingInput.addEventListener('click', (e) => {
+            this.currentPointerX = e.clientX;
+            this.currentPointerY = e.clientY;
+            this.pointerTracking.x = e.clientX;
+            this.pointerTracking.y = e.clientY;
+        });
+        
+        typingInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        });
     }
     
     switchScreen(screenName) {
