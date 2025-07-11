@@ -2025,24 +2025,24 @@ class BiometricDataCollector {
         const facets = [];
         const centerX = 200; // Crystal center X
         const centerY = 200; // Crystal center Y
-        const baseRadius = 90; // Increased base distance from center
+        const baseRadius = 45; // Reduced radius to keep facets within crystal
         
-        // Create 10 facets in a visually appealing pattern
+        // Create 10 facets positioned within the crystal
         for (let i = 0; i < 10; i++) {
             let radius, angle;
             
-            // Create different layers of facets
+            // Create different layers of facets within the crystal
             if (i < 4) {
-                // Inner ring - 4 facets
-                radius = baseRadius * 0.7;
+                // Inner ring - 4 facets (closest to center)
+                radius = baseRadius * 0.4;
                 angle = (i * Math.PI * 2) / 4;
             } else if (i < 8) {
                 // Middle ring - 4 facets
-                radius = baseRadius * 1.1;
+                radius = baseRadius * 0.7;
                 angle = ((i - 4) * Math.PI * 2) / 4 + Math.PI / 4; // Offset by 45 degrees
             } else {
-                // Outer ring - 2 facets
-                radius = baseRadius * 1.5;
+                // Outer ring - 2 facets (still within crystal)
+                radius = baseRadius * 0.9;
                 angle = ((i - 8) * Math.PI * 2) / 2;
             }
             
@@ -2053,7 +2053,7 @@ class BiometricDataCollector {
                 id: i,
                 x: Math.round(x),
                 y: Math.round(y),
-                radius: 18, // Increased touch radius for easier interaction
+                radius: 15, // Slightly smaller radius to fit within crystal
                 active: false,
                 tapped: false,
                 sequence: i,
@@ -3500,13 +3500,13 @@ class BiometricDataCollector {
             const existingHighlights = document.querySelectorAll('.facet-highlight');
             existingHighlights.forEach(el => el.remove());
             
-            // Create highlight for next facet
+            // Create highlight for next facet with smaller size to stay within crystal
             const highlight = document.createElement('div');
             highlight.className = 'facet-highlight';
-            highlight.style.left = `${nextFacet.x - nextFacet.radius - 4}px`;
-            highlight.style.top = `${nextFacet.y - nextFacet.radius - 4}px`;
-            highlight.style.width = `${(nextFacet.radius + 4) * 2}px`;
-            highlight.style.height = `${(nextFacet.radius + 4) * 2}px`;
+            highlight.style.left = `${nextFacet.x - nextFacet.radius - 3}px`; // Reduced offset
+            highlight.style.top = `${nextFacet.y - nextFacet.radius - 3}px`; // Reduced offset
+            highlight.style.width = `${(nextFacet.radius + 3) * 2}px`; // Smaller highlight
+            highlight.style.height = `${(nextFacet.radius + 3) * 2}px`; // Smaller highlight
             
             const crystalArea = document.getElementById('crystal-area');
             crystalArea.appendChild(highlight);
