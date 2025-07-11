@@ -359,58 +359,6 @@ class BiometricDataCollector {
         }
         const typingInput = document.getElementById('typing-input');
         if (typingInput) {
-            // COMPREHENSIVE TEXT SELECTION PREVENTION
-            typingInput.addEventListener('selectstart', function(e) { 
-                e.preventDefault(); 
-                e.stopPropagation();
-                return false;
-            });
-            
-            typingInput.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Always set cursor at end
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
-                return false;
-            });
-            
-            typingInput.addEventListener('mouseup', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Always set cursor at end
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
-            });
-            
-            typingInput.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Always set cursor at end
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
-                return false;
-            });
-            
-            typingInput.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Always set cursor at end
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
-            });
-            
-            typingInput.addEventListener('select', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Prevent text selection
-                typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-            });
-            
             typingInput.addEventListener('copy', function(e) { 
                 e.preventDefault(); 
                 e.stopPropagation();
@@ -443,13 +391,6 @@ class BiometricDataCollector {
             });
             
             typingInput.addEventListener('keydown', function(e) {
-                // Prevent arrow keys, Home, End, and selection
-                if ([37, 38, 39, 40, 35, 36].includes(e.keyCode) || (e.ctrlKey && (e.key === 'a' || e.key === 'A'))) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                }
-                
                 if (e.ctrlKey || e.metaKey) {
                     if (e.key === 'c' || e.key === 'C' || 
                         e.key === 'v' || e.key === 'V' || 
@@ -467,6 +408,35 @@ class BiometricDataCollector {
                     return false;
                 }
             });
+            
+            /*
+            typingInput.addEventListener('selectstart', function(e) { 
+                e.preventDefault(); 
+                return false;
+            });
+            
+            typingInput.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                setTimeout(() => {
+                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                }, 0);
+                return false;
+            });
+            
+            typingInput.addEventListener('mouseup', function(e) {
+                setTimeout(() => {
+                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                }, 0);
+            });
+            
+            typingInput.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                setTimeout(() => {
+                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                }, 0);
+                return false;
+            });
+            */
             
             typingInput.addEventListener('compositionstart', function(e) {
                 console.log('Composition started - monitoring for clipboard content');
@@ -486,11 +456,6 @@ class BiometricDataCollector {
                 }
                 
                 this.lastInputValue = currentValue;
-                
-                // Always keep cursor at end after input
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
             }.bind(this));
             
             if (navigator.clipboard) {
@@ -561,22 +526,12 @@ class BiometricDataCollector {
             this.currentPointerY = rect.top + rect.height / 2;
             this.pointerTracking.x = this.currentPointerX;
             this.pointerTracking.y = this.currentPointerY;
-            
-            // Always set cursor at end when focused
-            setTimeout(() => {
-                typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-            }, 0);
         });
         typingInput.addEventListener('click', (e) => {
             this.currentPointerX = e.clientX;
             this.currentPointerY = e.clientY;
             this.pointerTracking.x = e.clientX;
             this.pointerTracking.y = e.clientY;
-            
-            // Always set cursor at end when clicked
-            setTimeout(() => {
-                typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-            }, 0);
         });
         typingInput.addEventListener('paste', (e) => {
             e.preventDefault();
@@ -611,9 +566,9 @@ class BiometricDataCollector {
                 this.showCopyBlockedFeedback();
                 return false;
             }.bind(this));
+            /*
             sentenceDisplay.addEventListener('selectstart', function(e) { 
                 e.preventDefault(); 
-                e.stopPropagation();
                 return false;
             });
             sentenceDisplay.addEventListener('contextmenu', function(e) { 
@@ -624,14 +579,13 @@ class BiometricDataCollector {
             }.bind(this));
             sentenceDisplay.addEventListener('mousedown', function(e) { 
                 e.preventDefault(); 
-                e.stopPropagation();
                 return false;
             });
             sentenceDisplay.addEventListener('touchstart', function(e) { 
                 e.preventDefault(); 
-                e.stopPropagation();
                 return false;
             });
+            */
         }
         
         document.getElementById('next-sentence-btn').addEventListener('click', () => this.nextSentence());
@@ -651,6 +605,35 @@ class BiometricDataCollector {
         document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
+
+        // Restrict cursor movement: always keep cursor at end
+        /*
+        typingInput.addEventListener('keydown', (e) => {
+            // Prevent arrow keys, Home, End, and selection
+            if ([37, 38, 39, 40, 35, 36].includes(e.keyCode) || (e.ctrlKey && (e.key === 'a' || e.key === 'A'))) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        typingInput.addEventListener('mousedown', (e) => {
+            // Prevent mouse click from moving cursor
+            e.preventDefault();
+            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+            return false;
+        });
+        typingInput.addEventListener('mouseup', (e) => {
+            // Always set cursor at end after mouse up
+            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+        });
+        typingInput.addEventListener('select', (e) => {
+            // Prevent text selection
+            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+        });
+        typingInput.addEventListener('input', (e) => {
+            // Always keep cursor at end after input
+            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+        });
+        */
     }
     
     switchScreen(screenName) {
@@ -827,12 +810,10 @@ class BiometricDataCollector {
             console.log(`📱 Mobile input event: "${data}" | Event #${this.inputEventCount} | Signature: ${eventSignature}`);
         }
     
-        // FIXED: Improved backspace handling - only record once per backspace action
         if (inputType && inputType.startsWith('delete')) {
             if (inputType === 'deleteContentBackward' || inputType === 'deleteContent' || inputType === 'deleteWordBackward') {
                 const currentTime = performance.now();
                 
-                // STRICT backspace deduplication - only record if enough time has passed
                 if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
                     this.recordKeystroke({
                         timestamp: timestamp - 0.5,
@@ -988,7 +969,8 @@ class BiometricDataCollector {
                         refChar = char;
                     }
                     
-                    // FIXED: Improved SHIFT logic - only record SHIFT when transitioning from lowercase to uppercase
+                    // SPECIAL CASE: Handle SHIFT logic for case changes
+                    // Only record SHIFT if going from lowercase to uppercase, not from uppercase to lowercase
                     if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
                         // Check if previous character was lowercase
                         if (this.previousChar && this.previousChar === this.previousChar.toLowerCase() && this.previousChar.match(/[a-z]/)) {
@@ -1153,20 +1135,20 @@ class BiometricDataCollector {
             } else if (data === 'π' || data === 'μ' || data === 'σ' || data === 'τ') {
                 refChar = data; // More Greek letters
             } else if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
-                // FIXED: Improved SHIFT logic for other input types
+                // SPECIAL CASE: Handle SHIFT logic for case changes
                 // Check if previous character was lowercase
                 if (this.previousChar && this.previousChar === this.previousChar.toLowerCase() && this.previousChar.match(/[a-z]/)) {
                     // Going from lowercase to uppercase - record SHIFT first, then the letter
-                    this.recordKeystroke({
+                this.recordKeystroke({
                         timestamp: timestamp - 0.5,
-                        actualChar: 'SHIFT',
-                        keyCode: 16,
-                        type: inputType,
-                        sentence: this.currentSentence,
-                        position: pos - 1,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
+                    actualChar: 'SHIFT',
+                    keyCode: 16,
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos - 1,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
                 }
                 // Record the uppercase letter
                 refChar = data;
@@ -1184,6 +1166,19 @@ class BiometricDataCollector {
             // For quotes, use more lenient deduplication
             const isQuote = refChar === "'" || refChar === '"';
             if (this.shouldRecordChar(refChar, timestamp, isQuote)) {
+                
+                // Final iOS safety check: prevent duplicate in keystroke data
+                // More lenient for quotes
+                // if (this.isIOS) {
+                //     const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
+                //     const quoteDedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
+                //     if (lastKeystroke && 
+                //         lastKeystroke.actualChar === refChar && 
+                //         (timestamp - lastKeystroke.timestamp) < quoteDedupWindow) {
+                //         console.log('🚫 iOS final duplicate BLOCKED in keystroke data (other input):', refChar);
+                //         return;
+                //     }
+                // }
                 
                 console.log('📝 Recording keystroke (other input):', refChar, 'type:', inputType, 'timestamp:', timestamp);
                 this.recordKeystroke({
@@ -1424,10 +1419,10 @@ class BiometricDataCollector {
         const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
 
         if (actualCharacter === 'Backspace' || actualCharacter === 'backspace') {
-            // FIXED: Only record Backspace once on keydown with strict deduplication
+            // Only record Backspace once on keydown with deduplication
             const currentTime = performance.now();
             
-            // STRICT backspace deduplication - only record if enough time has passed
+            // Check if enough time has passed since last backspace to avoid duplicates
             if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
                 this.recordKeystroke({
                     timestamp,
@@ -1484,6 +1479,10 @@ class BiometricDataCollector {
     handleKeyup(e) {
         const timestamp = performance.now();
         
+
+
+
+        
         // Enhanced SHIFT tracking
         if (e.key === 'Shift') {
             this.updateShiftState(false);
@@ -1520,10 +1519,10 @@ class BiometricDataCollector {
         const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
 
         if (actualCharacter === 'Backspace' || actualCharacter === 'backspace') {
-            // FIXED: Only record Backspace once on keyup with strict deduplication
+            // Only record Backspace once on keyup with deduplication
             const currentTime = performance.now();
             
-            // STRICT backspace deduplication - only record if enough time has passed
+            // Check if enough time has passed since last backspace to avoid duplicates
             if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
                 this.recordKeystroke({
                     timestamp,
@@ -1735,7 +1734,6 @@ class BiometricDataCollector {
             console.log('[QUOTE] Keystroke captured:', data);
         }
         const isQuote = data.actualChar === "'" || data.actualChar === '"';
-        
         // FINAL iOS safety check to prevent double character recording
         // More lenient for quotes to ensure they are captured
         if (this.isIOS && data.actualChar && data.actualChar !== 'BACKSPACE' && data.actualChar !== 'SHIFT' && !isQuote) {
@@ -1763,20 +1761,60 @@ class BiometricDataCollector {
             flightTime = currentTime - this.lastKeystrokeTime;
         }
 
-        // FIXED: Improved SHIFT handling - prevent duplicate SHIFT recording
-        if (data.actualChar === 'SHIFT') {
-            // Check if we already recorded a SHIFT recently
-            const recentKeystrokes = this.keystrokeData.slice(-3); // Check last 3 keystrokes
-            const recentShift = recentKeystrokes.find(ks => 
-                ks.actualChar === 'SHIFT' && 
-                (currentTime - ks.timestamp) < 50 // 50ms window for SHIFT deduplication
-            );
-            
-            if (recentShift) {
-                console.log('🚫 SHIFT duplicate BLOCKED - recent SHIFT found:', recentShift.timestamp);
-                return;
+
+
+
+        // Enhanced SHIFT handling for capital letters
+        if (
+            data.actualChar &&
+            data.actualChar.length === 1 &&
+            this.getCharacterCase(data.actualChar) === 'uppercase'
+        ) {
+            // Always insert a synthetic SHIFT event before the uppercase letter
+            let split = 0.4 + Math.random() * 0.2; // 0.4 to 0.6
+            let shiftFlight = flightTime * split;
+            let capFlight = flightTime * (1 - split);
+            // Synthetic SHIFT event
+            const shiftEvent = {
+                ...data,
+                actualChar: 'SHIFT',
+                keyCode: 16,
+                type: 'keydown',
+                timestamp: prevKeystrokeTime + shiftFlight,
+                flightTime: Math.round(shiftFlight),
+                shiftKey: true,
+                shiftPressed: true,
+                isSynthetic: true
+            };
+            // Capital letter event
+            const capEvent = {
+                ...data,
+                timestamp: prevKeystrokeTime + shiftFlight + capFlight,
+                flightTime: Math.round(capFlight),
+                shiftKey: true,
+                shiftPressed: true
+            };
+            // iOS deduplication: ensure no duplicate SHIFT or capital letter events
+            if (this.isIOS) {
+                const recent = this.keystrokeData.slice(-4);
+                if (!recent.some(e => e.actualChar === 'SHIFT' && Math.abs(e.timestamp - shiftEvent.timestamp) < 10)) {
+                    this.keystrokeData.push(shiftEvent);
+                }
+                if (!recent.some(e => e.actualChar === data.actualChar && Math.abs(e.timestamp - capEvent.timestamp) < 10)) {
+                    this.keystrokeData.push(capEvent);
+                }
+            } else {
+                this.keystrokeData.push(shiftEvent);
+                this.keystrokeData.push(capEvent);
             }
-            
+            // Update lastKeystrokeTime
+            this.lastKeystrokeTime = capEvent.timestamp;
+            this.lastChar = data.actualChar;
+            return;
+        }
+
+        // Enhanced SHIFT handling for actual SHIFT key
+        if (data.actualChar === 'SHIFT') {
             data.shiftAction = this.shiftPressed ? 'release' : 'press';
             data.shiftDuration = this.shiftPressed ? (currentTime - this.shiftPressTime) : 0;
             data.caseTransition = this.getCaseTransition(data);
@@ -1786,21 +1824,6 @@ class BiometricDataCollector {
             data.shiftPressed = this.shiftPressed;
             data.characterCase = this.getCharacterCase(data.actualChar);
             data.caseTransition = this.getCaseTransition(data);
-        }
-
-        // FIXED: Improved backspace handling - prevent duplicate backspace recording
-        if (data.actualChar === 'BACKSPACE') {
-            // Check if we already recorded a BACKSPACE recently
-            const recentKeystrokes = this.keystrokeData.slice(-3); // Check last 3 keystrokes
-            const recentBackspace = recentKeystrokes.find(ks => 
-                ks.actualChar === 'BACKSPACE' && 
-                (currentTime - ks.timestamp) < this.backspaceCooldown
-            );
-            
-            if (recentBackspace) {
-                console.log('🚫 BACKSPACE duplicate BLOCKED - recent BACKSPACE found:', recentBackspace.timestamp);
-                return;
-            }
         }
 
         // Update last keystroke time
@@ -1813,7 +1836,7 @@ class BiometricDataCollector {
             console.log('Recording keystroke with quote:', data.actualChar, 'type:', data.type);
         }
         // Debug logging for backspace
-        if (data.actualChar === 'BACKSPACE') {
+        if (data.actualChar === 'Backspace') {
             console.log('Recording backspace keystroke:', data.type, 'timestamp:', data.timestamp);
         }
 
