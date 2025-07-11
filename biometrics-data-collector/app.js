@@ -322,6 +322,16 @@ class BiometricDataCollector {
         if (browserInfoElement) {
             browserInfoElement.textContent = `${this.deviceInfo.browser_name} ${this.deviceInfo.browser_version}`;
         }
+
+        // Column 1: Phone Model, Column 2: Browser Name
+        const phoneModelElement = document.getElementById('phone-model'); // Column 1
+        const browserNameElement = document.getElementById('browser-name'); // Column 2
+        if (phoneModelElement) {
+          phoneModelElement.textContent = this.deviceInfo.device_model;
+        }
+        if (browserNameElement) {
+          browserNameElement.textContent = this.deviceInfo.browser_name;
+        }
     }
     
     bindEvents() {
@@ -399,6 +409,7 @@ class BiometricDataCollector {
                 }
             });
             
+            /*
             typingInput.addEventListener('selectstart', function(e) { 
                 e.preventDefault(); 
                 return false;
@@ -425,6 +436,7 @@ class BiometricDataCollector {
                 }, 0);
                 return false;
             });
+            */
             
             typingInput.addEventListener('compositionstart', function(e) {
                 console.log('Composition started - monitoring for clipboard content');
@@ -554,6 +566,7 @@ class BiometricDataCollector {
                 this.showCopyBlockedFeedback();
                 return false;
             }.bind(this));
+            /*
             sentenceDisplay.addEventListener('selectstart', function(e) { 
                 e.preventDefault(); 
                 return false;
@@ -572,6 +585,7 @@ class BiometricDataCollector {
                 e.preventDefault(); 
                 return false;
             });
+            */
         }
         
         document.getElementById('next-sentence-btn').addEventListener('click', () => this.nextSentence());
@@ -3088,7 +3102,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '9'; // 9 features: participant_id, task_id, timestamp_ms, ref_char, touch_x, touch_y, was_deleted, flight_time_ms, platform
+        document.getElementById('keystroke-features').textContent = '10'; // 10 features: participant_id, task_id, timestamp_ms, ref_char, touch_x, touch_y, was_deleted, flight_time_ms, device_model, browser_name
     }
 
     
@@ -3100,45 +3114,30 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '11'; // 11 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, num_touch_points, path_length_px, platform
+        document.getElementById('touch-features').textContent = '12'; // 12 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, num_touch_points, path_length_px, device_model, browser_name
     }
 
-    // ENHANCED: Keystroke feature extraction with SHIFT in ref_char column
+    // ENHANCED: Keystroke feature extraction with device model and browser name as separate columns
     extractKeystrokeFeatures() {
         const features = [];
         
         this.keystrokeData.forEach((keystroke, index) => {
-            // Process all recorded keystrokes (input events, keydown, composition, SHIFT)
             if (keystroke.type === 'keydown' || keystroke.type === 'keyup' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete')) {
-                
-                // Use enhanced flight time calculation if available
                 let flightTime = keystroke.flightTime || 0;
                 if (flightTime === 0 && index > 0) {
                     const timeDiff = keystroke.timestamp - this.keystrokeData[index - 1].timestamp;
                     flightTime = Math.max(0, Math.round(timeDiff));
-                    
                     if (timeDiff < 0) {
                         console.warn(`⚠️ Negative flight time detected: ${timeDiff}ms between "${this.keystrokeData[index - 1].actualChar}" and "${keystroke.actualChar}". Setting to 0.`);
                     }
                 }
-                
-                // Determine if this was a deletion
-                const wasDeleted = (keystroke.actualChar === 'BACKSPACE' || 
-                                  keystroke.type.startsWith('delete')) ? 1 : 0;
-                
-                // SHIFT handling: Include SHIFT in ref_char before capital letters and for synthetic SHIFT events
+                const wasDeleted = (keystroke.actualChar === 'BACKSPACE' || keystroke.type.startsWith('delete')) ? 1 : 0;
                 let refChar = keystroke.actualChar || 'unknown';
                 if (keystroke.isSynthetic && keystroke.actualChar === 'SHIFT') {
                     refChar = 'SHIFT';
                 } else if (keystroke.actualChar && keystroke.actualChar.length === 1) {
                     refChar = keystroke.actualChar;
                 }
-                
-                // Debug: log quote features
-                if (refChar === "'" || refChar === '"') {
-                    console.log('[QUOTE] Feature exported:', refChar, keystroke);
-                }
-                
                 features.push({
                     participant_id: this.participantId,
                     task_id: 1,
@@ -3148,32 +3147,26 @@ class BiometricDataCollector {
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
                     was_deleted: wasDeleted,
                     flight_time_ms: flightTime,
-                    platform: this.deviceInfo.platform
+                    device_model: this.deviceInfo.device_model, // Column 9
+                    browser_name: this.deviceInfo.browser_name  // Column 10
                 });
             }
         });
-        
         return features;
     }
 
-    // RELIABLE: Touch feature extraction with only accurate, measurable features
+    // RELIABLE: Touch feature extraction with device model and browser name as separate columns
     extractTouchFeatures() {
         const features = [];
-        
         this.touchData.forEach((touch, index) => {
-            // Compute task_step_label
             let task_step_label = '';
             if (touch.taskId === 2) {
-                // Crystal Forge Game: 1(step)
                 task_step_label = `1(${touch.step || 1})`;
             } else if (touch.taskId === 3) {
-                // Gallery Interaction: 2
                 task_step_label = '2';
             } else {
                 task_step_label = '';
             }
-
-            // Base features that are always reliable across all devices
             const baseFeature = {
                 participant_id: this.participantId,
                 task_id: task_step_label,
@@ -3185,11 +3178,11 @@ class BiometricDataCollector {
                 inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0,
                 num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
                 path_length_px: this.gesturePathLength[`${touch.trial || 1}_${touch.step || 1}`] || 0,
-                platform: this.deviceInfo.platform
+                device_model: this.deviceInfo.device_model, // Column 9
+                browser_name: this.deviceInfo.browser_name  // Column 10
             };
             features.push(baseFeature);
         });
-        
         return features;
     }
     
