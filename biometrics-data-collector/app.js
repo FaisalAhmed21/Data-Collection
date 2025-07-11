@@ -73,7 +73,7 @@ class BiometricDataCollector {
             { id: 2, instruction: "Touch anywhere on crystal surface, then rotate clockwise for one full rotation with one finger. After green light, rotate counter-clockwise for one full rotation. After second green light, rotate clockwise again for one full rotation. After third green light, task is complete.", target: 3, type: 'rotate' },
             { id: 3, instruction: "Pinch to shrink the crystal to 50% size", target: 0.5, type: 'pinch' },
             { id: 4, instruction: "Spread fingers to grow crystal to 150% size", target: 1.5, type: 'spread' },
-            { id: 5, instruction: "Apply pressure with 3 fingers simultaneously for 3 seconds", target: 3000, type: 'pressure' }
+            { id: 5, instruction: "Tap the crystal facets in the order they light up. Follow the sequence to activate all 25 facets.", target: 25, type: 'facet_tap' }
         ];
         
         this.crystalState = {
@@ -97,7 +97,12 @@ class BiometricDataCollector {
             rotationCompleted: false, // Track if rotation task is completed
             wrongDirectionStarted: false, // Track if wrong direction was started
             currentTrial: 1,
-            stepStartTime: null
+            stepStartTime: null,
+            // Facet tapping state
+            facets: [],
+            currentFacetIndex: 0,
+            tappedFacets: new Set(),
+            facetSequence: []
         };
         
         this.galleryImages = [
@@ -2015,6 +2020,49 @@ class BiometricDataCollector {
         console.log('✅ Crystal game initialized for all mobile devices');
     }
 
+    // Generate facet positions around the crystal
+    generateFacets() {
+        const facets = [];
+        const centerX = 200; // Crystal center X
+        const centerY = 200; // Crystal center Y
+        const baseRadius = 80; // Base distance from center
+        
+        // Create 25 facets in a visually appealing pattern
+        for (let i = 0; i < 25; i++) {
+            let radius, angle;
+            
+            // Create different layers of facets
+            if (i < 8) {
+                // Inner ring - 8 facets
+                radius = baseRadius * 0.6;
+                angle = (i * Math.PI * 2) / 8;
+            } else if (i < 16) {
+                // Middle ring - 8 facets
+                radius = baseRadius * 1.0;
+                angle = ((i - 8) * Math.PI * 2) / 8 + Math.PI / 8; // Offset by 22.5 degrees
+            } else {
+                // Outer ring - 9 facets
+                radius = baseRadius * 1.4;
+                angle = ((i - 16) * Math.PI * 2) / 9;
+            }
+            
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius;
+            
+            facets.push({
+                id: i,
+                x: Math.round(x),
+                y: Math.round(y),
+                radius: 12,
+                active: false,
+                tapped: false,
+                sequence: i
+            });
+        }
+        
+        return facets;
+    }
+
     nextCrystalStep() {
         if (this.currentCrystalStep < this.crystalSteps.length) {
             this.currentCrystalStep++;
@@ -2408,6 +2456,50 @@ class BiometricDataCollector {
                     }
                 }
                 break;
+                
+            case 'facet_tap':
+                if (phase === 'start' && touches.length === 1) {
+                    const touch = touches[0];
+                    const tappedFacet = this.findTappedFacet(touch.clientX, touch.clientY);
+                    
+                    if (tappedFacet) {
+                        // Check if this is the correct facet in sequence
+                        if (tappedFacet.sequence === this.crystalState.currentFacetIndex) {
+                            // Correct facet tapped
+                            tappedFacet.tapped = true;
+                            this.crystalState.tappedFacets.add(tappedFacet.id);
+                            this.crystalState.currentFacetIndex++;
+                            
+                            // Visual feedback
+                            this.highlightFacet(tappedFacet, 'success');
+                            
+                            // Update progress
+                            this.updateStepProgress(`${this.crystalState.currentFacetIndex}/${step.target}`);
+                            
+                            console.log(`✅ Facet ${tappedFacet.id} tapped correctly - Progress: ${this.crystalState.currentFacetIndex}/${step.target}`);
+                            
+                            // Check if all facets are tapped
+                            if (this.crystalState.currentFacetIndex >= step.target) {
+                                console.log(`✅ All facets tapped! Task completed.`);
+                                this.completeStep();
+                            } else {
+                                // Highlight next facet
+                                this.highlightNextFacet();
+                            }
+                        } else {
+                            // Wrong facet tapped
+                            this.highlightFacet(tappedFacet, 'error');
+                            console.log(`❌ Wrong facet tapped: ${tappedFacet.id}, expected: ${this.crystalState.currentFacetIndex}`);
+                            
+                            // Show error feedback
+                            crystal.classList.add('error-feedback');
+                            setTimeout(() => {
+                                crystal.classList.remove('error-feedback');
+                            }, 300);
+                        }
+                    }
+                }
+                break;
         }
     }
     
@@ -2569,18 +2661,38 @@ class BiometricDataCollector {
             pressureFingers: 0,
             initialDistance: 0,
             initialAngle: null,
-            totalRotation: 0
+            totalRotation: 0,
+            lastAngle: null,
+            rotationAccumulated: 0,
+            rotationDirection: null,
+            rotationRounds: 0,
+            rotationSequence: [],
+            rotationCompleted: false,
+            wrongDirectionStarted: false,
+            currentTrial: currentTrial,
+            stepStartTime: null,
+            // Facet tapping state
+            facets: [],
+            currentFacetIndex: 0,
+            tappedFacets: new Set(),
+            facetSequence: []
         };
         
         const crystal = document.getElementById('crystal');
         crystal.style.transform = 'scale(1)';
         crystal.style.setProperty('--current-scale', 1);
         crystal.style.filter = 'none';
-        crystal.classList.remove('active', 'shrinking', 'enlarging', 'success', 'tap-feedback', 'rotation-feedback');
+        crystal.classList.remove('active', 'shrinking', 'enlarging', 'success', 'tap-feedback', 'rotation-feedback', 'error-feedback');
         
         document.getElementById('crystal-size-display').textContent = '100%';
         document.getElementById('crystal-size-display').classList.remove('shrink-highlight', 'enlarge-highlight', 'completion-highlight');
         this.hidePressureIndicator();
+        
+        // Initialize facets for step 5
+        if (this.currentCrystalStep === 5) {
+            this.crystalState.facets = this.generateFacets();
+            this.renderFacets();
+        }
     }
     
     updateCrystalDisplay() {
@@ -2602,6 +2714,12 @@ class BiometricDataCollector {
         } else {
             console.warn('[DEBUG] next-crystal-btn not found in DOM during updateCrystalDisplay');
         }
+        
+        // Initialize facets for step 5
+        if (this.currentCrystalStep === 5) {
+            this.crystalState.facets = this.generateFacets();
+            this.renderFacets();
+        }
     }
 
     
@@ -2611,7 +2729,8 @@ class BiometricDataCollector {
             'rotate': 'One Finger Rotation',
             'pinch': 'Pinch to Shrink',
             'spread': 'Spread to Enlarge',
-            'pressure': 'Three-Finger Pressure'
+            'pressure': 'Three-Finger Pressure',
+            'facet_tap': 'Crystal Facet Tapping'
         };
         return titles[type] || 'Unknown';
     }
@@ -2622,7 +2741,8 @@ class BiometricDataCollector {
             'rotate': '0/3',
             'pinch': '100% → 50%',
             'spread': '100% → 150%',
-            'pressure': '0s / 3s'
+            'pressure': '0s / 3s',
+            'facet_tap': '0/25'
         };
         return progress[type] || '0/0';
     }
@@ -3298,6 +3418,102 @@ class BiometricDataCollector {
                 galleryGrid.style.opacity = '0.5';
             }
         }
+    }
+
+    // Facet tapping helper methods
+    findTappedFacet(touchX, touchY) {
+        const crystalArea = document.getElementById('crystal-area');
+        const rect = crystalArea.getBoundingClientRect();
+        const relativeX = touchX - rect.left;
+        const relativeY = touchY - rect.top;
+        
+        // Find which facet was tapped
+        for (const facet of this.crystalState.facets) {
+            const distance = Math.sqrt(
+                Math.pow(relativeX - facet.x, 2) + 
+                Math.pow(relativeY - facet.y, 2)
+            );
+            
+            if (distance <= facet.radius) {
+                return facet;
+            }
+        }
+        
+        return null;
+    }
+    
+    highlightFacet(facet, type) {
+        // Remove existing facet elements
+        const existingFacets = document.querySelectorAll('.crystal-facet');
+        existingFacets.forEach(el => el.remove());
+        
+        // Create new facet element with appropriate styling
+        const facetElement = document.createElement('div');
+        facetElement.className = `crystal-facet ${type}`;
+        facetElement.style.left = `${facet.x - facet.radius}px`;
+        facetElement.style.top = `${facet.y - facet.radius}px`;
+        facetElement.style.width = `${facet.radius * 2}px`;
+        facetElement.style.height = `${facet.radius * 2}px`;
+        
+        const crystalArea = document.getElementById('crystal-area');
+        crystalArea.appendChild(facetElement);
+        
+        // Remove highlight after animation
+        setTimeout(() => {
+            if (facetElement.parentNode) {
+                facetElement.remove();
+            }
+        }, 500);
+    }
+    
+    highlightNextFacet() {
+        if (this.crystalState.currentFacetIndex < this.crystalState.facets.length) {
+            const nextFacet = this.crystalState.facets[this.crystalState.currentFacetIndex];
+            
+            // Remove existing highlights
+            const existingHighlights = document.querySelectorAll('.facet-highlight');
+            existingHighlights.forEach(el => el.remove());
+            
+            // Create highlight for next facet
+            const highlight = document.createElement('div');
+            highlight.className = 'facet-highlight';
+            highlight.style.left = `${nextFacet.x - nextFacet.radius - 4}px`;
+            highlight.style.top = `${nextFacet.y - nextFacet.radius - 4}px`;
+            highlight.style.width = `${(nextFacet.radius + 4) * 2}px`;
+            highlight.style.height = `${(nextFacet.radius + 4) * 2}px`;
+            
+            const crystalArea = document.getElementById('crystal-area');
+            crystalArea.appendChild(highlight);
+        }
+    }
+    
+    renderFacets() {
+        // Remove existing facets
+        const existingFacets = document.querySelectorAll('.crystal-facet, .facet-highlight');
+        existingFacets.forEach(el => el.remove());
+        
+        // Render all facets
+        this.crystalState.facets.forEach(facet => {
+            const facetElement = document.createElement('div');
+            facetElement.className = 'crystal-facet';
+            
+            if (facet.tapped) {
+                facetElement.classList.add('tapped');
+            } else if (facet.sequence === this.crystalState.currentFacetIndex) {
+                facetElement.classList.add('active');
+            }
+            
+            facetElement.style.left = `${facet.x - facet.radius}px`;
+            facetElement.style.top = `${facet.y - facet.radius}px`;
+            facetElement.style.width = `${facet.radius * 2}px`;
+            facetElement.style.height = `${facet.radius * 2}px`;
+            
+            const crystalArea = document.getElementById('crystal-area');
+            crystalArea.appendChild(facetElement);
+        });
+        
+        // Highlight next facet
+        this.highlightNextFacet();
     }
 }
 // Initialize the application
