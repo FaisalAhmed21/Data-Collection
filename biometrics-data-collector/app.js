@@ -6,7 +6,6 @@ class BiometricDataCollector {
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
         
-        // Task progression state management
         this.taskState = {
             studyStarted: false,
             typingCompleted: false,
@@ -42,13 +41,12 @@ class BiometricDataCollector {
         this.lastInputEventTime = 0;
         this.inputEventCooldown = 50;
         
-        // SHIFT and flight time tracking
         this.shiftPressed = false;
         this.shiftPressTime = 0;
         this.shiftReleaseTime = 0;
         this.lastKeystrokeTime = 0;
-        this.currentCase = 'lowercase'; // Track current case state
-        this.flightTimeData = []; // Store flight times between keystrokes
+        this.currentCase = 'lowercase';
+        this.flightTimeData = [];
         this.galleryZoom = {
             scale: 1,
             isPanning: false,
@@ -126,10 +124,132 @@ class BiometricDataCollector {
         ];
         
 
-        this.gesturePath = {}; // { trial_step: [ {x, y} ] }
-        this.gesturePathLength = {}; // { trial_step: pathLength }
+        this.gesturePath = {};
+        this.gesturePathLength = {};
+        
+        this.deviceInfo = this.detectDeviceInfo();
         
         this.init();
+    }
+    
+    detectDeviceInfo() {
+        const userAgent = navigator.userAgent;
+        
+        let deviceInfo = {
+            device_type: 'unknown',
+            device_model: 'unknown',
+            browser_name: 'unknown',
+            browser_version: 'unknown',
+            os_name: 'unknown',
+            os_version: 'unknown',
+            platform: 'unknown'
+        };
+        
+        if (/iPad|iPhone|iPod/.test(userAgent)) {
+            deviceInfo.device_type = 'iOS';
+            deviceInfo.os_name = 'iOS';
+            
+            const iosMatch = userAgent.match(/OS (\d+_\d+)/);
+            if (iosMatch) {
+                deviceInfo.os_version = iosMatch[1].replace('_', '.');
+            }
+            
+            if (/iPhone/.test(userAgent)) {
+                if (/iPhone OS 17_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 15 Pro Max';
+                else if (/iPhone OS 16_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 14 Pro Max';
+                else if (/iPhone OS 15_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 13 Pro Max';
+                else if (/iPhone OS 14_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 12 Pro Max';
+                else if (/iPhone OS 13_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 11 Pro Max';
+                else deviceInfo.device_model = 'iPhone (Unknown Model)';
+            }
+            else if (/iPad/.test(userAgent)) {
+                deviceInfo.device_model = 'iPad';
+            }
+        }
+        else if (/Android/.test(userAgent)) {
+            deviceInfo.device_type = 'Android';
+            deviceInfo.os_name = 'Android';
+            
+            const androidMatch = userAgent.match(/Android (\d+\.?\d*)/);
+            if (androidMatch) {
+                deviceInfo.os_version = androidMatch[1];
+            }
+            
+            const modelMatch = userAgent.match(/\(Linux.*?;\s*([^;]+)\s*Build/);
+            if (modelMatch) {
+                const model = modelMatch[1].trim();
+                if (model.includes('SM-')) {
+                    const samsungMatch = model.match(/SM-([A-Z0-9]+)/);
+                    if (samsungMatch) {
+                        const modelCode = samsungMatch[1];
+                        switch(modelCode) {
+                            case 'G991': deviceInfo.device_model = 'Samsung Galaxy S21'; break;
+                            case 'G998': deviceInfo.device_model = 'Samsung Galaxy S21 Ultra'; break;
+                            case 'G996': deviceInfo.device_model = 'Samsung Galaxy S21+'; break;
+                            case 'G781': deviceInfo.device_model = 'Samsung Galaxy S20 FE'; break;
+                            case 'G970': deviceInfo.device_model = 'Samsung Galaxy S10e'; break;
+                            case 'G973': deviceInfo.device_model = 'Samsung Galaxy S10'; break;
+                            case 'G975': deviceInfo.device_model = 'Samsung Galaxy S10+'; break;
+                            case 'N976': deviceInfo.device_model = 'Samsung Galaxy Note 10+'; break;
+                            default: deviceInfo.device_model = `Samsung Galaxy (${modelCode})`;
+                        }
+                    }
+                } else if (model.includes('Pixel')) {
+                    deviceInfo.device_model = model;
+                } else if (model.includes('OnePlus')) {
+                    deviceInfo.device_model = model;
+                } else {
+                    deviceInfo.device_model = model;
+                }
+            }
+        }
+        else {
+            deviceInfo.device_type = 'Mobile';
+            deviceInfo.device_model = 'Unknown Mobile Device';
+            deviceInfo.os_name = 'Unknown';
+            deviceInfo.os_version = 'Unknown';
+        }
+        
+        if (/Chrome/.test(userAgent) && !/Edge/.test(userAgent)) {
+            deviceInfo.browser_name = 'Chrome';
+            const chromeMatch = userAgent.match(/Chrome\/(\d+\.\d+)/);
+            if (chromeMatch) {
+                deviceInfo.browser_version = chromeMatch[1];
+            }
+        } else if (/Firefox/.test(userAgent)) {
+            deviceInfo.browser_name = 'Firefox';
+            const firefoxMatch = userAgent.match(/Firefox\/(\d+\.\d+)/);
+            if (firefoxMatch) {
+                deviceInfo.browser_version = firefoxMatch[1];
+            }
+        } else if (/Safari/.test(userAgent) && !/Chrome/.test(userAgent)) {
+            deviceInfo.browser_name = 'Safari';
+            const safariMatch = userAgent.match(/Version\/(\d+\.\d+)/);
+            if (safariMatch) {
+                deviceInfo.browser_version = safariMatch[1];
+            }
+        } else if (/Edge/.test(userAgent)) {
+            deviceInfo.browser_name = 'Edge';
+            const edgeMatch = userAgent.match(/Edge\/(\d+\.\d+)/);
+            if (edgeMatch) {
+                deviceInfo.browser_version = edgeMatch[1];
+            }
+        } else if (/Opera/.test(userAgent)) {
+            deviceInfo.browser_name = 'Opera';
+            const operaMatch = userAgent.match(/Opera\/(\d+\.\d+)/);
+            if (operaMatch) {
+                deviceInfo.browser_version = operaMatch[1];
+            }
+        } else {
+            deviceInfo.browser_name = 'Unknown Browser';
+            deviceInfo.browser_version = 'Unknown';
+        }
+        
+        deviceInfo.platform = `${deviceInfo.device_model} (${deviceInfo.browser_name})`;
+        
+        console.log('Device Info:', deviceInfo);
+        
+        return deviceInfo;
     }
     
     init() {
@@ -137,7 +257,7 @@ class BiometricDataCollector {
         this.generateParticipantId();
         this.initializeGallery();
         this.setupPointerTracking();
-        this.updateTaskLocks(); // Lock all tasks at start
+        this.updateTaskLocks();
     }
     
     setupPointerTracking() {
@@ -191,10 +311,20 @@ class BiometricDataCollector {
     
         this.participantId = `P${timePart}-${randomPart}`;
         document.getElementById('participant-id').textContent = this.participantId;
+        
+        const deviceInfoElement = document.getElementById('device-info');
+        const browserInfoElement = document.getElementById('browser-info');
+        
+        if (deviceInfoElement) {
+            deviceInfoElement.textContent = `${this.deviceInfo.device_model} (${this.deviceInfo.os_name} ${this.deviceInfo.os_version})`;
+        }
+        
+        if (browserInfoElement) {
+            browserInfoElement.textContent = `${this.deviceInfo.browser_name} ${this.deviceInfo.browser_version}`;
+        }
     }
     
     bindEvents() {
-        // Welcome screen
         document.getElementById('start-btn').addEventListener('click', () => {
             this.taskState.studyStarted = true;
             this.taskState.typingCompleted = false;
@@ -217,10 +347,8 @@ class BiometricDataCollector {
                 }
             });
         }
-        // Comprehensive clipboard blocking for all input methods
         const typingInput = document.getElementById('typing-input');
         if (typingInput) {
-            // Block all clipboard events
             typingInput.addEventListener('copy', function(e) { 
                 e.preventDefault(); 
                 e.stopPropagation();
@@ -240,23 +368,19 @@ class BiometricDataCollector {
                 return false;
             }.bind(this));
             
-            // Block drag and drop
             typingInput.addEventListener('drop', function(e) { 
                 e.preventDefault(); 
                 e.stopPropagation();
                 return false;
             });
             
-            // Block context menu (right-click)
             typingInput.addEventListener('contextmenu', function(e) { 
                 e.preventDefault(); 
                 e.stopPropagation();
                 return false;
             });
             
-            // Block keyboard shortcuts for copy/paste
             typingInput.addEventListener('keydown', function(e) {
-                // Block Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+A
                 if (e.ctrlKey || e.metaKey) {
                     if (e.key === 'c' || e.key === 'C' || 
                         e.key === 'v' || e.key === 'V' || 
@@ -268,7 +392,6 @@ class BiometricDataCollector {
                     }
                 }
                 
-                // Block Shift+Insert (paste)
                 if (e.shiftKey && e.key === 'Insert') {
                     e.preventDefault();
                     e.stopPropagation();
@@ -276,16 +399,13 @@ class BiometricDataCollector {
                 }
             });
             
-            // Block selection and cursor movement
             typingInput.addEventListener('selectstart', function(e) { 
                 e.preventDefault(); 
                 return false;
             });
             
             typingInput.addEventListener('mousedown', function(e) {
-                // Prevent text selection
                 e.preventDefault();
-                // Always place cursor at end
                 setTimeout(() => {
                     typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
                 }, 0);
@@ -293,40 +413,30 @@ class BiometricDataCollector {
             });
             
             typingInput.addEventListener('mouseup', function(e) {
-                // Always place cursor at end
                 setTimeout(() => {
                     typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
                 }, 0);
             });
             
-            // Block touch selection on mobile
             typingInput.addEventListener('touchstart', function(e) {
-                // Prevent text selection on touch
                 e.preventDefault();
-                // Always place cursor at end
                 setTimeout(() => {
                     typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
                 }, 0);
                 return false;
             });
             
-            // Block IME composition that might include clipboard content
             typingInput.addEventListener('compositionstart', function(e) {
-                // Allow composition but monitor for suspicious content
                 console.log('Composition started - monitoring for clipboard content');
             });
             
-            // Monitor input for suspicious patterns (multiple characters at once)
             typingInput.addEventListener('input', function(e) {
                 const currentValue = e.target.value;
                 const previousValue = this.lastInputValue || '';
                 
-                // Check if multiple characters were added at once (potential paste)
                 if (currentValue.length > previousValue.length + 1) {
                     console.log('Potential paste detected - blocking');
-                    // Revert to previous value
                     e.target.value = previousValue;
-                    // Place cursor at end
                     setTimeout(() => {
                         typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
                     }, 0);
@@ -336,9 +446,7 @@ class BiometricDataCollector {
                 this.lastInputValue = currentValue;
             }.bind(this));
             
-            // Disable clipboard API access
             if (navigator.clipboard) {
-                // Override clipboard methods
                 const originalWriteText = navigator.clipboard.writeText;
                 const originalReadText = navigator.clipboard.readText;
                 
@@ -353,7 +461,6 @@ class BiometricDataCollector {
                 };
             }
             
-            // Block document.execCommand clipboard operations
             const originalExecCommand = document.execCommand;
             document.execCommand = function(command, ...args) {
                 if (command === 'copy' || command === 'cut' || command === 'paste') {
@@ -414,7 +521,6 @@ class BiometricDataCollector {
             this.pointerTracking.x = e.clientX;
             this.pointerTracking.y = e.clientY;
         });
-        // Additional clipboard blocking (redundant but extra protection)
         typingInput.addEventListener('paste', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -440,7 +546,6 @@ class BiometricDataCollector {
             e.stopPropagation();
             return false;
         });
-        // Protect sentence display from copying
         const sentenceDisplay = document.querySelector('.sentence-display');
         if (sentenceDisplay) {
             sentenceDisplay.addEventListener('copy', function(e) { 
@@ -527,13 +632,10 @@ class BiometricDataCollector {
             // Smooth scroll to the target screen
             this.smoothScrollToScreen(targetScreen);
         }
-        // Update feature counts on export screen
         if (screenName === 'export') {
-            // Keystroke features
             const keystrokeFeatures = this.extractKeystrokeFeatures();
             const keystrokeFeatureCount = keystrokeFeatures.length > 0 ? Object.keys(keystrokeFeatures[0]).length : 0;
             document.getElementById('keystroke-features').textContent = keystrokeFeatureCount;
-            // Touch features
             const touchFeatures = this.extractTouchFeatures();
             const touchFeatureCount = touchFeatures.length > 0 ? Object.keys(touchFeatures[0]).length : 0;
             document.getElementById('touch-features').textContent = touchFeatureCount;
@@ -541,14 +643,12 @@ class BiometricDataCollector {
     }
     
     smoothScrollToScreen(targetScreen) {
-        // Smooth scroll to the target screen
         targetScreen.scrollIntoView({
             behavior: 'smooth',
             block: 'start',
             inline: 'nearest'
         });
         
-        // Additional smooth scroll for mobile devices
         setTimeout(() => {
             window.scrollTo({
                 top: targetScreen.offsetTop,
@@ -558,7 +658,6 @@ class BiometricDataCollector {
     }
     
     showNextTaskButton(targetScreen, taskName) {
-        // Hide the current "Next" button
         const currentBtn = document.getElementById('next-sentence-btn');
         if (currentBtn) {
             currentBtn.style.display = 'none';
@@ -1424,12 +1523,12 @@ class BiometricDataCollector {
                     clientX: this.pointerTracking.x,
                     clientY: this.pointerTracking.y
                 });
-                console.log('Desktop backspace recorded at time:', currentTime);
+                console.log('Backspace recorded at time:', currentTime);
                 
                 // Update last backspace time
                 this.lastBackspaceTime = currentTime;
             } else {
-                console.log('Desktop backspace duplicate ignored, time since last:', currentTime - this.lastBackspaceTime);
+                console.log('Backspace duplicate ignored, time since last:', currentTime - this.lastBackspaceTime);
             }
             
             // Update accuracy and check sentence completion after backspace
@@ -2989,7 +3088,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '8'; // 8 features: participant_id, task_id, timestamp_ms, ref_char, touch_x, touch_y, was_deleted, flight_time_ms
+        document.getElementById('keystroke-features').textContent = '9'; // 9 features: participant_id, task_id, timestamp_ms, ref_char, touch_x, touch_y, was_deleted, flight_time_ms, platform
     }
 
     
@@ -3001,7 +3100,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '10'; // 10 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, num_touch_points, path_length_px
+        document.getElementById('touch-features').textContent = '11'; // 11 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, num_touch_points, path_length_px, platform
     }
 
     // ENHANCED: Keystroke feature extraction with SHIFT in ref_char column
@@ -3042,13 +3141,14 @@ class BiometricDataCollector {
                 
                 features.push({
                     participant_id: this.participantId,
-                    task_id: 1, // Typing task
+                    task_id: 1,
                     timestamp_ms: Math.round(keystroke.timestamp),
                     ref_char: refChar,
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
                     was_deleted: wasDeleted,
-                    flight_time_ms: flightTime
+                    flight_time_ms: flightTime,
+                    platform: this.deviceInfo.platform
                 });
             }
         });
@@ -3077,14 +3177,15 @@ class BiometricDataCollector {
             const baseFeature = {
                 participant_id: this.participantId,
                 task_id: task_step_label,
-                trial: touch.trial || 1, // Trial number (1 for first attempt, 2+ for retries)
+                trial: touch.trial || 1,
                 timestamp_ms: Math.round(touch.timestamp),
                 touch_x: Math.round(touch.touches[0]?.clientX || 0),
                 touch_y: Math.round(touch.touches[0]?.clientY || 0),
                 btn_touch_state: touch.type,
                 inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0,
                 num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
-                path_length_px: this.gesturePathLength[`${touch.trial || 1}_${touch.step || 1}`] || 0
+                path_length_px: this.gesturePathLength[`${touch.trial || 1}_${touch.step || 1}`] || 0,
+                platform: this.deviceInfo.platform
             };
             features.push(baseFeature);
         });
