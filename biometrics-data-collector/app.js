@@ -728,6 +728,8 @@ class BiometricDataCollector {
                 this.taskState.typingCompleted = true;
                 this.taskState.crystalCompleted = false;
                 this.taskState.galleryCompleted = false;
+                // FIXED: Reset Shift key state when moving to crystal game
+                this.resetShiftKeyState();
                 this.updateTaskLocks();
                 this.switchScreen('crystal');
                 this.startCrystalGame();
@@ -1546,6 +1548,9 @@ class BiometricDataCollector {
         this.lastInputEvent = null;
         this.lastInputEventTime = 0;
         
+        // FIXED: Reset Shift key state at task start
+        this.resetShiftKeyState();
+        
         this.displayCurrentSentence();
         this.updateTypingProgress();
         
@@ -1564,6 +1569,10 @@ class BiometricDataCollector {
         // Test Next Sentence button
         console.log('🔍 Testing Next Sentence button:');
         this.testNextSentenceButton();
+        
+        // Test Shift key reset
+        console.log('🔍 Testing Shift key reset:');
+        this.testShiftKeyReset();
     }
     
     // NEW: Test function for Shift key detection
@@ -1634,6 +1643,34 @@ class BiometricDataCollector {
             }
         } else {
             console.log('  - Next Sentence button not found in DOM!');
+        }
+    }
+    
+    // NEW: Test function for Shift key state reset
+    testShiftKeyReset() {
+        console.log('🔤 Shift key reset test:');
+        console.log('  - Current Shift state:', {
+            shiftPressed: this.shiftPressed,
+            shiftPressTime: this.shiftPressTime,
+            shiftReleaseTime: this.shiftReleaseTime,
+            currentCase: this.currentCase
+        });
+        
+        // Test reset
+        this.resetShiftKeyState();
+        
+        console.log('  - Shift state after reset:', {
+            shiftPressed: this.shiftPressed,
+            shiftPressTime: this.shiftPressTime,
+            shiftReleaseTime: this.shiftReleaseTime,
+            currentCase: this.currentCase
+        });
+        
+        // Test Shift key events in data
+        const shiftEvents = this.keystrokeData.filter(k => k.actualChar === '↑');
+        console.log('  - Shift events in keystroke data:', shiftEvents.length);
+        if (shiftEvents.length > 0) {
+            console.log('  - Recent Shift events:', shiftEvents.slice(-3));
         }
     }
     
@@ -1787,6 +1824,8 @@ class BiometricDataCollector {
             this.updateTaskLocks();
         } else {
             console.log('✅ Moving to next sentence:', this.currentSentence + 1);
+            // FIXED: Reset Shift key state when moving to next sentence
+            this.resetShiftKeyState();
             this.displayCurrentSentence();
             this.updateTypingProgress();
         }
@@ -1918,6 +1957,24 @@ class BiometricDataCollector {
             this.shiftPressed = false;
             this.shiftReleaseTime = currentTime;
             console.log('🔤 SHIFT released at:', currentTime);
+        }
+    }
+    
+    // NEW: Reset Shift key state to ensure it's not stuck
+    resetShiftKeyState() {
+        console.log('🔄 Resetting Shift key state');
+        this.shiftPressed = false;
+        this.shiftPressTime = 0;
+        this.shiftReleaseTime = 0;
+        this.currentCase = 'lowercase';
+        
+        // Force release any stuck Shift key on the system
+        if (this.isMobile) {
+            // For mobile, we can't directly control the keyboard state
+            console.log('📱 Mobile device - Shift state reset to false');
+        } else {
+            // For desktop, we can try to ensure Shift is released
+            console.log('🖥️ Desktop device - Shift state reset to false');
         }
     }
     
@@ -3410,10 +3467,15 @@ class BiometricDataCollector {
         console.log('6️⃣ Next Sentence Button Test:');
         this.testNextSentenceButton();
         
+        // Test 7: Shift key reset functionality
+        console.log('7️⃣ Shift Key Reset Test:');
+        this.testShiftKeyReset();
+        
         console.log('=====================================');
         console.log('✅ Test complete! Check console for results.');
         console.log('💡 Try clicking/tapping in the input field to test cursor movement!');
         console.log('💡 Try completing a sentence to test Next Sentence button!');
+        console.log('💡 Try pressing Shift key to test reset functionality!');
         
         return {
             shiftCount: shiftEvents.length,
