@@ -13,10 +13,15 @@
             <div class="welcome-content">
                 <h1>Behavioral Biometrics Study</h1>
                 <p class="welcome-highlight">Unlock the secrets of your unique typing and gestures!<br><span class="emoji">🧠✨</span></p>
-                <div class="participant-info">
-                    <p>Participant ID: <span id="participant-id">-</span></p>
-                    <p>Device: <span id="device-info">-</span></p>
-                    <p>Browser: <span id="browser-info">-</span></p>
+                <div class="participant-info" style="display: flex; gap: 32px; justify-content: center; align-items: flex-start;">
+                    <div style="flex:1; min-width:120px;">
+                        <p><strong>Column 9: Device Model</strong></p>
+                        <p><span id="phone-model">-</span></p>
+                    </div>
+                    <div style="flex:1; min-width:120px;">
+                        <p><strong>Column 10: Browser Name</strong></p>
+                        <p><span id="browser-name">-</span></p>
+                    </div>
                 </div>
                 <div class="consent-section">
                     <div class="consent-card">
@@ -170,12 +175,38 @@
                     <div class="stat-card">
                         <h4>Keystroke Data</h4>
                         <p><span id="keystroke-count">0</span> keystrokes recorded</p>
-                        <p><span id="keystroke-features">8</span> features extracted</p>
+                        <p><span id="keystroke-features">10</span> features extracted</p>
+                        <ul style="text-align:left; font-size:13px; margin:8px 0 0 0; padding-left:18px;">
+                            <li>1. participant_id</li>
+                            <li>2. task_id</li>
+                            <li>3. timestamp_ms</li>
+                            <li>4. ref_char</li>
+                            <li>5. touch_x</li>
+                            <li>6. touch_y</li>
+                            <li>7. was_deleted</li>
+                            <li>8. flight_time_ms</li>
+                            <li>9. device_model</li>
+                            <li>10. browser_name</li>
+                        </ul>
                     </div>
                     <div class="stat-card">
                         <h4>Touch Data (Combined)</h4>
                         <p><span id="touch-count">0</span> touch events recorded</p>
-                        <p><span id="touch-features">10</span> features extracted</p>
+                        <p><span id="touch-features">12</span> features extracted</p>
+                        <ul style="text-align:left; font-size:13px; margin:8px 0 0 0; padding-left:18px;">
+                            <li>1. participant_id</li>
+                            <li>2. task_id</li>
+                            <li>3. trial</li>
+                            <li>4. timestamp_ms</li>
+                            <li>5. touch_x</li>
+                            <li>6. touch_y</li>
+                            <li>7. btn_touch_state</li>
+                            <li>8. inter_touch_timing</li>
+                            <li>9. num_touch_points</li>
+                            <li>10. path_length_px</li>
+                            <li>11. device_model</li>
+                            <li>12. browser_name</li>
+                        </ul>
                     </div>
                 </div>
                 
