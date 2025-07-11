@@ -359,55 +359,56 @@ class BiometricDataCollector {
         }
         const typingInput = document.getElementById('typing-input');
         if (typingInput) {
-            // SIMPLIFIED TEXT SELECTION PREVENTION - ALLOWS NATURAL CURSOR MOVEMENT
+            // COMPREHENSIVE TEXT SELECTION PREVENTION
             typingInput.addEventListener('selectstart', function(e) { 
                 e.preventDefault(); 
                 e.stopPropagation();
                 return false;
             });
             
-            // Allow natural cursor movement on mouse/touch events
             typingInput.addEventListener('mousedown', function(e) {
-                // Allow natural cursor positioning - don't prevent default
-                // Only prevent text selection after cursor is set
+                e.preventDefault();
+                e.stopPropagation();
+                // Always set cursor at end
                 setTimeout(() => {
-                    const currentPos = typingInput.selectionStart || 0;
-                    typingInput.setSelectionRange(currentPos, currentPos);
-                }, 10);
+                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                }, 0);
+                return false;
             });
             
             typingInput.addEventListener('mouseup', function(e) {
-                // Prevent text selection after cursor positioning
+                e.preventDefault();
+                e.stopPropagation();
+                // Always set cursor at end
                 setTimeout(() => {
-                    const currentPos = typingInput.selectionStart || 0;
-                    typingInput.setSelectionRange(currentPos, currentPos);
-                }, 10);
+                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                }, 0);
             });
             
-            // Touch events for mobile - allow natural cursor movement
             typingInput.addEventListener('touchstart', function(e) {
-                // Allow natural cursor positioning - don't prevent default
-                // Only prevent text selection after cursor is set
+                e.preventDefault();
+                e.stopPropagation();
+                // Always set cursor at end
                 setTimeout(() => {
-                    const currentPos = typingInput.selectionStart || 0;
-                    typingInput.setSelectionRange(currentPos, currentPos);
-                }, 10);
+                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                }, 0);
+                return false;
             });
             
             typingInput.addEventListener('touchend', function(e) {
-                // Prevent text selection after cursor positioning
+                e.preventDefault();
+                e.stopPropagation();
+                // Always set cursor at end
                 setTimeout(() => {
-                    const currentPos = typingInput.selectionStart || 0;
-                    typingInput.setSelectionRange(currentPos, currentPos);
-                }, 10);
+                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                }, 0);
             });
             
             typingInput.addEventListener('select', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 // Prevent text selection
-                const currentPos = typingInput.selectionStart || 0;
-                typingInput.setSelectionRange(currentPos, currentPos);
+                typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
             });
             
             typingInput.addEventListener('copy', function(e) { 
@@ -441,9 +442,14 @@ class BiometricDataCollector {
                 return false;
             });
             
-            // ADDED: Separate keydown listener for copy/paste blocking only (allows arrow keys)
             typingInput.addEventListener('keydown', function(e) {
-                // Block copy-paste and select all
+                // Prevent arrow keys, Home, End, and selection
+                if ([37, 38, 39, 40, 35, 36].includes(e.keyCode) || (e.ctrlKey && (e.key === 'a' || e.key === 'A'))) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                
                 if (e.ctrlKey || e.metaKey) {
                     if (e.key === 'c' || e.key === 'C' || 
                         e.key === 'v' || e.key === 'V' || 
@@ -481,10 +487,10 @@ class BiometricDataCollector {
                 
                 this.lastInputValue = currentValue;
                 
-                // COMMENTED OUT: Always keep cursor at end after input - removed to allow cursor movement
-                // setTimeout(() => {
-                //     typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                // }, 0);
+                // Always keep cursor at end after input
+                setTimeout(() => {
+                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                }, 0);
             }.bind(this));
             
             if (navigator.clipboard) {
@@ -548,6 +554,29 @@ class BiometricDataCollector {
                 return;
             }
             this.handleKeyup(e);
+        });
+        typingInput.addEventListener('focus', (e) => {
+            const rect = e.target.getBoundingClientRect();
+            this.currentPointerX = rect.left + rect.width / 2;
+            this.currentPointerY = rect.top + rect.height / 2;
+            this.pointerTracking.x = this.currentPointerX;
+            this.pointerTracking.y = this.currentPointerY;
+            
+            // Always set cursor at end when focused
+            setTimeout(() => {
+                typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+            }, 0);
+        });
+        typingInput.addEventListener('click', (e) => {
+            this.currentPointerX = e.clientX;
+            this.currentPointerY = e.clientY;
+            this.pointerTracking.x = e.clientX;
+            this.pointerTracking.y = e.clientY;
+            
+            // Always set cursor at end when clicked
+            setTimeout(() => {
+                typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+            }, 0);
         });
         typingInput.addEventListener('paste', (e) => {
             e.preventDefault();
@@ -622,45 +651,6 @@ class BiometricDataCollector {
         document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
-        
-        typingInput.addEventListener('keyup', (e) => {
-            if (this.compositionActive || e.keyCode === 229) {
-                return;
-            }
-            this.handleKeyup(e);
-        });
-        
-        // Enhanced focus event for pointer tracking only (no cursor forcing)
-        typingInput.addEventListener('focus', (e) => {
-            const rect = e.target.getBoundingClientRect();
-            this.currentPointerX = rect.left + rect.width / 2;
-            this.currentPointerY = rect.top + rect.height / 2;
-            this.pointerTracking.x = this.currentPointerX;
-            this.pointerTracking.y = this.currentPointerY;
-        });
-        
-        // Enhanced click event for pointer tracking only (no cursor forcing)
-        typingInput.addEventListener('click', (e) => {
-            this.currentPointerX = e.clientX;
-            this.currentPointerY = e.clientY;
-            this.pointerTracking.x = e.clientX;
-            this.pointerTracking.y = e.clientY;
-        });
-        
-        // Enhanced input event for pointer tracking during typing
-        typingInput.addEventListener('input', (e) => {
-            // Update pointer position during typing for better accuracy
-            this.currentPointerX = e.clientX || this.currentPointerX;
-            this.currentPointerY = e.clientY || this.currentPointerY;
-            this.pointerTracking.x = this.currentPointerX;
-            this.pointerTracking.y = this.currentPointerY;
-        });
-        
-        typingInput.addEventListener('paste', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        });
     }
     
     switchScreen(screenName) {
@@ -728,8 +718,6 @@ class BiometricDataCollector {
                 this.taskState.typingCompleted = true;
                 this.taskState.crystalCompleted = false;
                 this.taskState.galleryCompleted = false;
-                // FIXED: Reset Shift key state when moving to crystal game
-                this.resetShiftKeyState();
                 this.updateTaskLocks();
                 this.switchScreen('crystal');
                 this.startCrystalGame();
@@ -839,23 +827,29 @@ class BiometricDataCollector {
             console.log(`📱 Mobile input event: "${data}" | Event #${this.inputEventCount} | Signature: ${eventSignature}`);
         }
     
-        // FIXED: Improved backspace handling - record every backspace (NO DEDUPLICATION)
+        // FIXED: Improved backspace handling - only record once per backspace action
         if (inputType && inputType.startsWith('delete')) {
             if (inputType === 'deleteContentBackward' || inputType === 'deleteContent' || inputType === 'deleteWordBackward') {
                 const currentTime = performance.now();
                 
-                // NO DEDUPLICATION - record every backspace
-                this.recordKeystroke({
-                    timestamp: timestamp - 0.5,
-                    actualChar: 'BACKSPACE',
-                    keyCode: 8,
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-                console.log('Mobile backspace recorded:', inputType, 'at time:', currentTime);
+                // STRICT backspace deduplication - only record if enough time has passed
+                if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
+                    this.recordKeystroke({
+                        timestamp: timestamp - 0.5,
+                        actualChar: 'BACKSPACE',
+                        keyCode: 8,
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                    console.log('Mobile backspace recorded:', inputType, 'at time:', currentTime);
+                    
+                    this.lastBackspaceTime = currentTime;
+                } else {
+                    console.log('Mobile backspace duplicate ignored:', inputType, 'time since last:', currentTime - this.lastBackspaceTime);
+                }
             }
             
             // Update accuracy and check sentence completion after backspace
@@ -994,8 +988,28 @@ class BiometricDataCollector {
                         refChar = char;
                     }
                     
-                    // Do NOT insert synthetic SHIFT events for case changes anymore
-                    // Just record the character as-is
+                    // FIXED: Improved SHIFT logic - only record SHIFT when transitioning from lowercase to uppercase
+                    if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
+                        // Check if previous character was lowercase
+                        if (this.previousChar && this.previousChar === this.previousChar.toLowerCase() && this.previousChar.match(/[a-z]/)) {
+                            // Going from lowercase to uppercase - record SHIFT first, then the letter
+                            this.recordKeystroke({
+                                timestamp: timestamp + i - 0.5,
+                                actualChar: 'SHIFT',
+                                keyCode: 16,
+                                type: inputType,
+                                sentence: this.currentSentence,
+                                position: pos - data.length + i,
+                                clientX: this.pointerTracking.x,
+                                clientY: this.pointerTracking.y
+                            });
+                        }
+                        // Record the uppercase letter
+                        refChar = char;
+                    } else if (char === char.toLowerCase() && char.match(/[a-z]/)) {
+                        // Lowercase letter - no SHIFT needed
+                        refChar = char;
+                    }
                     
                     // Debug logging for quote characters
                     if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟' || char === '″' || char === '‶') {
@@ -1138,12 +1152,28 @@ class BiometricDataCollector {
                 refChar = data; // Greek letters
             } else if (data === 'π' || data === 'μ' || data === 'σ' || data === 'τ') {
                 refChar = data; // More Greek letters
-            } else {
+            } else if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
+                // FIXED: Improved SHIFT logic for other input types
+                // Check if previous character was lowercase
+                if (this.previousChar && this.previousChar === this.previousChar.toLowerCase() && this.previousChar.match(/[a-z]/)) {
+                    // Going from lowercase to uppercase - record SHIFT first, then the letter
+                    this.recordKeystroke({
+                        timestamp: timestamp - 0.5,
+                        actualChar: 'SHIFT',
+                        keyCode: 16,
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - 1,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                }
+                // Record the uppercase letter
+                refChar = data;
+            } else if (data === data.toLowerCase() && data.match(/[a-z]/)) {
+                // Lowercase letter - no SHIFT needed
                 refChar = data;
             }
-            
-            // Do NOT insert synthetic SHIFT events for case changes anymore
-            // Just record the character as-is
             
             // Debug logging for quote characters
             if (data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´' || data === '′' || data === '‵' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶') {
@@ -1325,10 +1355,10 @@ class BiometricDataCollector {
             'σ':            'σ',         // Greek sigma
             'τ':            'τ',         // Greek tau
             'Escape':       'escape',
-            'ArrowLeft':    '←',         // Left arrow as Unicode
-            'ArrowRight':   '→',         // Right arrow as Unicode
-            'ArrowUp':      '↑',         // Up arrow as Unicode
-            'ArrowDown':    '↓',         // Down arrow as Unicode
+            'ArrowLeft':    'arrowleft',
+            'ArrowRight':   'arrowright',
+            'ArrowUp':      'arrowup',
+            'ArrowDown':    'arrowdown',
             'Delete':       'delete',
             'Home':         'home',
             'End':          'end'
@@ -1358,15 +1388,12 @@ class BiometricDataCollector {
     handleKeydown(e) {
         const timestamp = performance.now();
         
-        // ENHANCED SHIFT tracking with better debugging
-        console.log('🔍 Keydown event:', e.key, 'keyCode:', e.keyCode, 'shiftKey:', e.shiftKey);
-        
-        if (e.key === 'Shift' || e.keyCode === 16) {
-            console.log('✅ SHIFT key detected on keydown!');
+        // Enhanced SHIFT tracking
+        if (e.key === 'Shift') {
             this.updateShiftState(true);
             this.recordKeystroke({
                 timestamp,
-                actualChar: '↑',  // Changed from 'SHIFT' to '↑' (up arrow)
+                actualChar: 'SHIFT',
                 keyCode: 16,
                 type: 'keydown',
                 shiftKey: true,
@@ -1380,12 +1407,12 @@ class BiometricDataCollector {
             return;
         }
         
-        // COMMENTED OUT: Block navigation keys - cursor restriction removed
-        // const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-        // if (restrictedKeys.includes(e.key)) {
-        //     e.preventDefault();
-        //     return;
-        // }
+        // Block navigation keys
+        const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (restrictedKeys.includes(e.key)) {
+            e.preventDefault();
+            return;
+        }
         
         // Block copy-paste
         if (e.ctrlKey && ['v', 'x', 'c'].includes(e.key.toLowerCase())) {
@@ -1397,21 +1424,31 @@ class BiometricDataCollector {
         const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
 
         if (actualCharacter === 'Backspace' || actualCharacter === 'backspace') {
-            // FIXED: Record Backspace every time (NO DEDUPLICATION)
-            this.recordKeystroke({
-                timestamp,
-                actualChar: 'BACKSPACE',
-                keyCode: 8,
-                type: 'keydown',
-                shiftKey: e.shiftKey,
-                ctrlKey: e.ctrlKey,
-                altKey: e.altKey,
-                sentence: this.currentSentence,
-                position: e.target.selectionStart || 0,
-                clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y
-            });
-            console.log('Desktop backspace recorded at time:', timestamp);
+            // FIXED: Only record Backspace once on keydown with strict deduplication
+            const currentTime = performance.now();
+            
+            // STRICT backspace deduplication - only record if enough time has passed
+            if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
+                this.recordKeystroke({
+                    timestamp,
+                    actualChar: 'BACKSPACE',
+                    keyCode: 8,
+                    type: 'keydown',
+                    shiftKey: e.shiftKey,
+                    ctrlKey: e.ctrlKey,
+                    altKey: e.altKey,
+                    sentence: this.currentSentence,
+                    position: e.target.selectionStart || 0,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+                console.log('Desktop backspace recorded at time:', currentTime);
+                
+                // Update last backspace time
+                this.lastBackspaceTime = currentTime;
+            } else {
+                console.log('Desktop backspace duplicate ignored, time since last:', currentTime - this.lastBackspaceTime);
+            }
             
             // Update accuracy and check sentence completion after backspace
             this.calculateAccuracy();
@@ -1447,15 +1484,12 @@ class BiometricDataCollector {
     handleKeyup(e) {
         const timestamp = performance.now();
         
-        // ENHANCED SHIFT tracking with better debugging
-        console.log('🔍 Keyup event:', e.key, 'keyCode:', e.keyCode, 'shiftKey:', e.shiftKey);
-        
-        if (e.key === 'Shift' || e.keyCode === 16) {
-            console.log('✅ SHIFT key detected on keyup!');
+        // Enhanced SHIFT tracking
+        if (e.key === 'Shift') {
             this.updateShiftState(false);
             this.recordKeystroke({
                 timestamp,
-                actualChar: '↑',  // Changed from 'SHIFT' to '↑' (up arrow)
+                actualChar: 'SHIFT',
                 keyCode: 16,
                 type: 'keyup',
                 shiftKey: true,
@@ -1469,12 +1503,12 @@ class BiometricDataCollector {
             return;
         }
         
-        // COMMENTED OUT: Block navigation keys - cursor restriction removed
-        // const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-        // if (restrictedKeys.includes(e.key)) {
-        //     e.preventDefault();
-        //     return;
-        // }
+        // Block navigation keys
+        const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (restrictedKeys.includes(e.key)) {
+            e.preventDefault();
+            return;
+        }
         
         // Block copy-paste
         if (e.ctrlKey && ['v', 'x', 'c'].includes(e.key.toLowerCase())) {
@@ -1486,21 +1520,31 @@ class BiometricDataCollector {
         const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
 
         if (actualCharacter === 'Backspace' || actualCharacter === 'backspace') {
-            // FIXED: Record Backspace every time (NO DEDUPLICATION)
-            this.recordKeystroke({
-                timestamp,
-                actualChar: 'BACKSPACE',
-                keyCode: 8,
-                type: 'keyup',
-                shiftKey: e.shiftKey,
-                ctrlKey: e.ctrlKey,
-                altKey: e.altKey,
-                sentence: this.currentSentence,
-                position: e.target.selectionStart || 0,
-                clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y
-            });
-            console.log('Backspace recorded at time:', timestamp);
+            // FIXED: Only record Backspace once on keyup with strict deduplication
+            const currentTime = performance.now();
+            
+            // STRICT backspace deduplication - only record if enough time has passed
+            if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
+                this.recordKeystroke({
+                    timestamp,
+                    actualChar: 'BACKSPACE',
+                    keyCode: 8,
+                    type: 'keyup',
+                    shiftKey: e.shiftKey,
+                    ctrlKey: e.ctrlKey,
+                    altKey: e.altKey,
+                    sentence: this.currentSentence,
+                    position: e.target.selectionStart || 0,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+                console.log('Backspace recorded at time:', currentTime);
+                
+                // Update last backspace time
+                this.lastBackspaceTime = currentTime;
+            } else {
+                console.log('Backspace duplicate ignored, time since last:', currentTime - this.lastBackspaceTime);
+            }
             
             // Update accuracy and check sentence completion after backspace
             this.calculateAccuracy();
@@ -1548,130 +1592,12 @@ class BiometricDataCollector {
         this.lastInputEvent = null;
         this.lastInputEventTime = 0;
         
-        // FIXED: Reset Shift key state at task start
-        this.resetShiftKeyState();
-        
         this.displayCurrentSentence();
         this.updateTypingProgress();
         
         // Test quote handling for debugging
         console.log('🔍 Starting typing task - quote handling test:');
         this.testQuoteHandling();
-        
-        // Test Shift key detection
-        console.log('🔍 Testing Shift key detection:');
-        this.testShiftKeyDetection();
-        
-        // Test cursor movement
-        console.log('🔍 Testing cursor movement:');
-        this.testCursorMovement();
-        
-        // Test Next Sentence button
-        console.log('🔍 Testing Next Sentence button:');
-        this.testNextSentenceButton();
-        
-        // Test Shift key reset
-        console.log('🔍 Testing Shift key reset:');
-        this.testShiftKeyReset();
-    }
-    
-    // NEW: Test function for Shift key detection
-    testShiftKeyDetection() {
-        console.log('🔤 Shift key detection test:');
-        console.log('  - Press Shift key to test detection');
-        console.log('  - Should see "✅ SHIFT key detected on keydown!" and "✅ SHIFT key detected on keyup!"');
-        console.log('  - Should record "↑" in keystroke data');
-        
-        // Check if Shift key events are being captured
-        const shiftEvents = this.keystrokeData.filter(k => k.actualChar === '↑');
-        console.log('  - Current Shift events in data:', shiftEvents.length);
-        
-        if (shiftEvents.length > 0) {
-            console.log('  - Recent Shift events:', shiftEvents.slice(-3));
-        }
-    }
-    
-    // NEW: Test function for cursor movement
-    testCursorMovement() {
-        console.log('🖱️ Cursor movement test:');
-        const typingInput = document.getElementById('typing-input');
-        if (typingInput) {
-            console.log('  - Input value length:', typingInput.value.length);
-            console.log('  - Current cursor position:', typingInput.selectionStart);
-            console.log('  - Input is focused:', document.activeElement === typingInput);
-            console.log('  - User-select CSS:', getComputedStyle(typingInput).userSelect);
-            console.log('  - Pointer events CSS:', getComputedStyle(typingInput).pointerEvents);
-            
-            // Test cursor positioning
-            console.log('  - Testing cursor positioning...');
-            const testPositions = [0, Math.floor(typingInput.value.length / 2), typingInput.value.length];
-            testPositions.forEach(pos => {
-                typingInput.setSelectionRange(pos, pos);
-                console.log(`    Position ${pos}: cursor at ${typingInput.selectionStart}`);
-            });
-            
-            // Reset cursor to end
-            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-        } else {
-            console.log('  - Typing input not found!');
-        }
-    }
-    
-    // NEW: Test function for Next Sentence button
-    testNextSentenceButton() {
-        console.log('🔘 Next Sentence button test:');
-        const nextBtn = document.getElementById('next-sentence-btn');
-        if (nextBtn) {
-            console.log('  - Button found in DOM');
-            console.log('  - Button disabled:', nextBtn.disabled);
-            console.log('  - Button display:', nextBtn.style.display);
-            console.log('  - Button classes:', nextBtn.className);
-            console.log('  - Button text:', nextBtn.textContent);
-            console.log('  - Button onclick:', nextBtn.onclick);
-            
-            // Test if event listener is attached
-            const events = getEventListeners ? getEventListeners(nextBtn) : 'getEventListeners not available';
-            console.log('  - Event listeners:', events);
-            
-            // Test button click simulation
-            console.log('  - Testing button click simulation...');
-            try {
-                nextBtn.click();
-                console.log('  - Button click simulation successful');
-            } catch (error) {
-                console.log('  - Button click simulation failed:', error);
-            }
-        } else {
-            console.log('  - Next Sentence button not found in DOM!');
-        }
-    }
-    
-    // NEW: Test function for Shift key state reset
-    testShiftKeyReset() {
-        console.log('🔤 Shift key reset test:');
-        console.log('  - Current Shift state:', {
-            shiftPressed: this.shiftPressed,
-            shiftPressTime: this.shiftPressTime,
-            shiftReleaseTime: this.shiftReleaseTime,
-            currentCase: this.currentCase
-        });
-        
-        // Test reset
-        this.resetShiftKeyState();
-        
-        console.log('  - Shift state after reset:', {
-            shiftPressed: this.shiftPressed,
-            shiftPressTime: this.shiftPressTime,
-            shiftReleaseTime: this.shiftReleaseTime,
-            currentCase: this.currentCase
-        });
-        
-        // Test Shift key events in data
-        const shiftEvents = this.keystrokeData.filter(k => k.actualChar === '↑');
-        console.log('  - Shift events in keystroke data:', shiftEvents.length);
-        if (shiftEvents.length > 0) {
-            console.log('  - Recent Shift events:', shiftEvents.slice(-3));
-        }
     }
     
     displayCurrentSentence() {
@@ -1719,7 +1645,17 @@ class BiometricDataCollector {
             console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
         }
     
-        // REMOVED: Button control logic moved to checkSentenceCompletion() only
+        // NEW: Enable/disable Next Sentence button based on accuracy
+        const nextButton = document.getElementById('next-sentence-btn');
+        if (nextButton) {
+            if (accuracy === 100) {
+                nextButton.disabled = false;
+                nextButton.classList.remove('btn--disabled');
+            } else {
+                nextButton.disabled = true;
+                nextButton.classList.add('btn--disabled');
+            }
+        }
     
         // Animate accuracy ring
         const accuracyRing = document.getElementById('accuracy-ring');
@@ -1759,73 +1695,30 @@ class BiometricDataCollector {
         const target = this.sentences[this.currentSentence];
         const nextBtn = document.getElementById('next-sentence-btn');
         const accuracy = this.calculateAccuracy();
-        
-        console.log('🔍 Sentence completion check:', {
-            currentSentence: this.currentSentence,
-            totalSentences: this.sentences.length,
-            typed: `"${typed}"`,
-            target: `"${target}"`,
-            accuracy: accuracy,
-            isComplete: typed === target && accuracy === 100,
-            isLastSentence: this.currentSentence === this.sentences.length - 1
-        });
-        
         // Only enable next button and show fireworks if 100% accuracy is achieved
         if (typed === target && accuracy === 100) {
             if (this.currentSentence === this.sentences.length - 1) {
                 // Last sentence: hide next sentence button, show next task button
-                console.log('✅ Last sentence completed - hiding Next Sentence button, showing Next Task button');
                 nextBtn.style.display = 'none';
-                nextBtn.disabled = true;
                 this.showNextTaskButton('crystal', 'Crystal Forge Game');
             } else {
-                // Not last sentence: enable next sentence button
-                console.log('✅ Sentence completed - enabling Next Sentence button');
                 nextBtn.disabled = false;
-                nextBtn.style.display = 'inline-flex';
                 nextBtn.classList.add('next-task-btn--deep');
-                nextBtn.classList.remove('btn--disabled');
             }
+
         } else {
-            // Sentence not complete: disable next sentence button
-            console.log('❌ Sentence not complete - disabling Next Sentence button');
             nextBtn.disabled = true;
-            nextBtn.style.display = 'inline-flex';
             nextBtn.classList.remove('next-task-btn--deep');
-            nextBtn.classList.add('btn--disabled');
+            nextBtn.style.display = 'inline-flex';
         }
-        
-        // Debug button state
-        console.log('🔍 Next Sentence button state:', {
-            disabled: nextBtn.disabled,
-            display: nextBtn.style.display,
-            classes: nextBtn.className,
-            text: nextBtn.textContent
-        });
     }
     
     nextSentence() {
-        console.log('🔄 Next Sentence button clicked!');
-        console.log('🔍 Current state before increment:', {
-            currentSentence: this.currentSentence,
-            totalSentences: this.sentences.length
-        });
-        
         this.currentSentence++;
-        
-        console.log('🔍 State after increment:', {
-            currentSentence: this.currentSentence,
-            totalSentences: this.sentences.length
-        });
-        
         if (this.currentSentence >= this.sentences.length) {
-            console.log('✅ All sentences completed - showing Next Task button');
             this.showNextTaskButton('crystal', 'Crystal Forge Game');
             this.updateTaskLocks();
         } else {
-            console.log('✅ Moving to next sentence:', this.currentSentence + 1);
-            // FIXED: Reset Shift key state when moving to next sentence
-            this.resetShiftKeyState();
             this.displayCurrentSentence();
             this.updateTypingProgress();
         }
@@ -1845,8 +1738,7 @@ class BiometricDataCollector {
         
         // FINAL iOS safety check to prevent double character recording
         // More lenient for quotes to ensure they are captured
-        // EXCLUDE: Shift (↑), Backspace, and Space from deduplication
-        if (this.isIOS && data.actualChar && data.actualChar !== 'BACKSPACE' && data.actualChar !== '↑' && data.actualChar !== 'SPACE' && !isQuote) {
+        if (this.isIOS && data.actualChar && data.actualChar !== 'BACKSPACE' && data.actualChar !== 'SHIFT' && !isQuote) {
             const currentTime = performance.now();
             const isQuote = data.actualChar === "'" || data.actualChar === '"';
             const dedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
@@ -1867,13 +1759,24 @@ class BiometricDataCollector {
         const currentTime = performance.now();
         let prevKeystrokeTime = this.lastKeystrokeTime > 0 ? this.lastKeystrokeTime : currentTime;
         let flightTime = 0;
-        if (this.lastKeystrokeTime > 0 && data.actualChar !== '↑') {
+        if (this.lastKeystrokeTime > 0 && data.actualChar !== 'SHIFT') {
             flightTime = currentTime - this.lastKeystrokeTime;
         }
 
-        // FIXED: Improved SHIFT handling - NO DEDUPLICATION for Shift key
-        if (data.actualChar === '↑') {
-            // NO DEDUPLICATION - record every Shift press/release
+        // FIXED: Improved SHIFT handling - prevent duplicate SHIFT recording
+        if (data.actualChar === 'SHIFT') {
+            // Check if we already recorded a SHIFT recently
+            const recentKeystrokes = this.keystrokeData.slice(-3); // Check last 3 keystrokes
+            const recentShift = recentKeystrokes.find(ks => 
+                ks.actualChar === 'SHIFT' && 
+                (currentTime - ks.timestamp) < 50 // 50ms window for SHIFT deduplication
+            );
+            
+            if (recentShift) {
+                console.log('🚫 SHIFT duplicate BLOCKED - recent SHIFT found:', recentShift.timestamp);
+                return;
+            }
+            
             data.shiftAction = this.shiftPressed ? 'release' : 'press';
             data.shiftDuration = this.shiftPressed ? (currentTime - this.shiftPressTime) : 0;
             data.caseTransition = this.getCaseTransition(data);
@@ -1885,14 +1788,23 @@ class BiometricDataCollector {
             data.caseTransition = this.getCaseTransition(data);
         }
 
-        // FIXED: Improved backspace handling - NO DEDUPLICATION for Backspace
+        // FIXED: Improved backspace handling - prevent duplicate backspace recording
         if (data.actualChar === 'BACKSPACE') {
-            // NO DEDUPLICATION - record every Backspace press
-            console.log('✅ Backspace recorded - NO DEDUPLICATION');
+            // Check if we already recorded a BACKSPACE recently
+            const recentKeystrokes = this.keystrokeData.slice(-3); // Check last 3 keystrokes
+            const recentBackspace = recentKeystrokes.find(ks => 
+                ks.actualChar === 'BACKSPACE' && 
+                (currentTime - ks.timestamp) < this.backspaceCooldown
+            );
+            
+            if (recentBackspace) {
+                console.log('🚫 BACKSPACE duplicate BLOCKED - recent BACKSPACE found:', recentBackspace.timestamp);
+                return;
+            }
         }
 
         // Update last keystroke time
-        if (data.actualChar !== '↑') {
+        if (data.actualChar !== 'SHIFT') {
             this.lastKeystrokeTime = currentTime;
         }
 
@@ -1903,14 +1815,6 @@ class BiometricDataCollector {
         // Debug logging for backspace
         if (data.actualChar === 'BACKSPACE') {
             console.log('Recording backspace keystroke:', data.type, 'timestamp:', data.timestamp);
-        }
-        // Debug logging for shift key
-        if (data.actualChar === '↑') {
-            console.log('Recording shift keystroke:', data.type, 'timestamp:', data.timestamp);
-        }
-        // Debug logging for space
-        if (data.actualChar === 'SPACE') {
-            console.log('Recording space keystroke:', data.type, 'timestamp:', data.timestamp);
         }
 
         this.keystrokeData.push(data);
@@ -1926,7 +1830,7 @@ class BiometricDataCollector {
     }
     
     getCaseTransition(data) {
-        if (data.actualChar === '↑') {
+        if (data.actualChar === 'SHIFT') {
             return this.shiftPressed ? 'lowercase_to_uppercase' : 'uppercase_to_lowercase';
         }
         
@@ -1960,24 +1864,6 @@ class BiometricDataCollector {
         }
     }
     
-    // NEW: Reset Shift key state to ensure it's not stuck
-    resetShiftKeyState() {
-        console.log('🔄 Resetting Shift key state');
-        this.shiftPressed = false;
-        this.shiftPressTime = 0;
-        this.shiftReleaseTime = 0;
-        this.currentCase = 'lowercase';
-        
-        // Force release any stuck Shift key on the system
-        if (this.isMobile) {
-            // For mobile, we can't directly control the keyboard state
-            console.log('📱 Mobile device - Shift state reset to false');
-        } else {
-            // For desktop, we can try to ensure Shift is released
-            console.log('🖥️ Desktop device - Shift state reset to false');
-        }
-    }
-    
     // Helper method to get backspace statistics for debugging
     getBackspaceStats() {
         const backspaces = this.keystrokeData.filter(k => k.actualChar === 'BACKSPACE');
@@ -1991,13 +1877,6 @@ class BiometricDataCollector {
     // Helper method to check if character should be recorded (deduplication)
     shouldRecordChar(char, timestamp, isQuote = false) {
         const currentTime = performance.now();
-        
-        // EXCLUDE: Space from deduplication - record every space press
-        if (char === 'SPACE') {
-            console.log('✅ Space approved for recording (NO DEDUPLICATION):', char, 'at time:', currentTime);
-            return true;
-        }
-        
         // For quotes, use much more lenient deduplication to ensure they are captured
         const dedupWindow = isQuote ? 15 + Math.random() * 5 : 30 + Math.random() * 10; // 15-20ms for quotes vs 30-40ms for others
         if (this.lastChar === char && this.lastCharTime) {
@@ -2018,8 +1897,7 @@ class BiometricDataCollector {
     
     // Helper method to get character statistics for debugging
     getCharStats() {
-        // INCLUDE: Shift (↑), Backspace, and Space in statistics
-        const chars = this.keystrokeData.filter(k => k.actualChar);
+        const chars = this.keystrokeData.filter(k => k.actualChar && k.actualChar !== 'BACKSPACE' && k.actualChar !== 'SHIFT');
         console.log('Character Statistics:');
         console.log('Total characters recorded:', chars.length);
         console.log('Character types:', [...new Set(chars.map(c => c.type))]);
@@ -2029,12 +1907,6 @@ class BiometricDataCollector {
         chars.forEach(c => {
             charCounts[c.actualChar] = (charCounts[c.actualChar] || 0) + 1;
         });
-        
-        // Show counts for important keys
-        console.log('Key counts:');
-        if (charCounts['↑']) console.log('  Shift (↑):', charCounts['↑']);
-        if (charCounts['BACKSPACE']) console.log('  Backspace:', charCounts['BACKSPACE']);
-        if (charCounts['SPACE']) console.log('  Space:', charCounts['SPACE']);
         
         const duplicates = Object.entries(charCounts).filter(([char, count]) => count > 1);
         if (duplicates.length > 0) {
@@ -3238,8 +3110,8 @@ class BiometricDataCollector {
                 }
                 const wasDeleted = (keystroke.actualChar === 'BACKSPACE' || keystroke.type.startsWith('delete')) ? 1 : 0;
                 let refChar = keystroke.actualChar || 'unknown';
-                if (keystroke.isSynthetic && keystroke.actualChar === '↑') {
-                    refChar = '↑';
+                if (keystroke.isSynthetic && keystroke.actualChar === 'SHIFT') {
+                    refChar = 'SHIFT';
                 } else if (keystroke.actualChar && keystroke.actualChar.length === 1) {
                     refChar = keystroke.actualChar;
                 }
@@ -3403,87 +3275,6 @@ class BiometricDataCollector {
                 galleryGrid.style.opacity = '0.5';
             }
         }
-    }
-
-    // NEW: Comprehensive test function for all fixes
-    testAllFixes() {
-        console.log('🧪 COMPREHENSIVE TEST - All Fixes:');
-        console.log('=====================================');
-        
-        // Test 1: Shift key detection
-        console.log('1️⃣ Shift Key Test:');
-        const shiftEvents = this.keystrokeData.filter(k => k.actualChar === '↑');
-        console.log(`   - Shift events recorded: ${shiftEvents.length}`);
-        if (shiftEvents.length > 0) {
-            console.log(`   - Last Shift event: ${shiftEvents[shiftEvents.length - 1].type} at ${Math.round(shiftEvents[shiftEvents.length - 1].timestamp)}ms`);
-        }
-        
-        // Test 2: Backspace detection
-        console.log('2️⃣ Backspace Test:');
-        const backspaceEvents = this.keystrokeData.filter(k => k.actualChar === 'BACKSPACE');
-        console.log(`   - Backspace events recorded: ${backspaceEvents.length}`);
-        if (backspaceEvents.length > 0) {
-            console.log(`   - Last Backspace event: ${backspaceEvents[backspaceEvents.length - 1].type} at ${Math.round(backspaceEvents[backspaceEvents.length - 1].timestamp)}ms`);
-        }
-        
-        // Test 3: Space detection
-        console.log('3️⃣ Space Test:');
-        const spaceEvents = this.keystrokeData.filter(k => k.actualChar === 'SPACE');
-        console.log(`   - Space events recorded: ${spaceEvents.length}`);
-        if (spaceEvents.length > 0) {
-            console.log(`   - Last Space event: ${spaceEvents[spaceEvents.length - 1].type} at ${Math.round(spaceEvents[spaceEvents.length - 1].timestamp)}ms`);
-        }
-        
-        // Test 4: Enhanced Cursor movement
-        console.log('4️⃣ Enhanced Cursor Movement Test:');
-        const typingInput = document.getElementById('typing-input');
-        if (typingInput) {
-            console.log(`   - Input value length: ${typingInput.value.length}`);
-            console.log(`   - Cursor position: ${typingInput.selectionStart}`);
-            console.log(`   - Input is focused: ${document.activeElement === typingInput}`);
-            console.log(`   - User-select CSS: ${getComputedStyle(typingInput).userSelect}`);
-            console.log(`   - Pointer events CSS: ${getComputedStyle(typingInput).pointerEvents}`);
-            console.log(`   - Text rendering: ${getComputedStyle(typingInput).textRendering}`);
-            
-            // Test cursor positioning functionality
-            console.log('   - Testing cursor positioning...');
-            const testPositions = [0, Math.floor(typingInput.value.length / 2), typingInput.value.length];
-            testPositions.forEach(pos => {
-                typingInput.setSelectionRange(pos, pos);
-                console.log(`     Position ${pos}: cursor at ${typingInput.selectionStart}`);
-            });
-            
-            // Reset cursor to end
-            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-        }
-        
-        // Test 5: Text selection prevention
-        console.log('5️⃣ Text Selection Prevention Test:');
-        console.log(`   - Selection start: ${typingInput?.selectionStart || 'N/A'}`);
-        console.log(`   - Selection end: ${typingInput?.selectionEnd || 'N/A'}`);
-        console.log(`   - Selection length: ${(typingInput?.selectionEnd || 0) - (typingInput?.selectionStart || 0)}`);
-        
-        // Test 6: Next Sentence button functionality
-        console.log('6️⃣ Next Sentence Button Test:');
-        this.testNextSentenceButton();
-        
-        // Test 7: Shift key reset functionality
-        console.log('7️⃣ Shift Key Reset Test:');
-        this.testShiftKeyReset();
-        
-        console.log('=====================================');
-        console.log('✅ Test complete! Check console for results.');
-        console.log('💡 Try clicking/tapping in the input field to test cursor movement!');
-        console.log('💡 Try completing a sentence to test Next Sentence button!');
-        console.log('💡 Try pressing Shift key to test reset functionality!');
-        
-        return {
-            shiftCount: shiftEvents.length,
-            backspaceCount: backspaceEvents.length,
-            spaceCount: spaceEvents.length,
-            cursorPosition: typingInput?.selectionStart || 0,
-            selectionLength: (typingInput?.selectionEnd || 0) - (typingInput?.selectionStart || 0)
-        };
     }
 }
 // Initialize the application
