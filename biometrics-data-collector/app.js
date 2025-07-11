@@ -443,13 +443,7 @@ class BiometricDataCollector {
             });
             
             typingInput.addEventListener('keydown', function(e) {
-                // Prevent arrow keys, Home, End, and selection
-                if ([37, 38, 39, 40, 35, 36].includes(e.keyCode) || (e.ctrlKey && (e.key === 'a' || e.key === 'A'))) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                }
-                
+                // Block copy-paste and select all
                 if (e.ctrlKey || e.metaKey) {
                     if (e.key === 'c' || e.key === 'C' || 
                         e.key === 'v' || e.key === 'V' || 
@@ -1371,12 +1365,12 @@ class BiometricDataCollector {
             return;
         }
         
-        // Block navigation keys
-        const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-        if (restrictedKeys.includes(e.key)) {
-            e.preventDefault();
-            return;
-        }
+        // COMMENTED OUT: Block navigation keys - cursor restriction removed
+        // const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        // if (restrictedKeys.includes(e.key)) {
+        //     e.preventDefault();
+        //     return;
+        // }
         
         // Block copy-paste
         if (e.ctrlKey && ['v', 'x', 'c'].includes(e.key.toLowerCase())) {
@@ -1467,12 +1461,12 @@ class BiometricDataCollector {
             return;
         }
         
-        // Block navigation keys
-        const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-        if (restrictedKeys.includes(e.key)) {
-            e.preventDefault();
-            return;
-        }
+        // COMMENTED OUT: Block navigation keys - cursor restriction removed
+        // const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        // if (restrictedKeys.includes(e.key)) {
+        //     e.preventDefault();
+        //     return;
+        // }
         
         // Block copy-paste
         if (e.ctrlKey && ['v', 'x', 'c'].includes(e.key.toLowerCase())) {
