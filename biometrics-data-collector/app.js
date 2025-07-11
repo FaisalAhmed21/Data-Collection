@@ -359,82 +359,47 @@ class BiometricDataCollector {
         }
         const typingInput = document.getElementById('typing-input');
         if (typingInput) {
-            // COMPREHENSIVE TEXT SELECTION PREVENTION - ALLOWS CURSOR MOVEMENT
+            // SIMPLIFIED TEXT SELECTION PREVENTION - ALLOWS NATURAL CURSOR MOVEMENT
             typingInput.addEventListener('selectstart', function(e) { 
                 e.preventDefault(); 
                 e.stopPropagation();
                 return false;
             });
             
-            // Prevent text selection on mouse/touch events but allow cursor movement
+            // Allow natural cursor movement on mouse/touch events
             typingInput.addEventListener('mousedown', function(e) {
-                // Allow cursor positioning but prevent text selection
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Set cursor position where user clicked
-                const rect = typingInput.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                const clickY = e.clientY - rect.top;
-                
-                // Calculate approximate cursor position
-                const charWidth = rect.width / Math.max(typingInput.value.length, 1);
-                const approximatePosition = Math.round(clickX / charWidth);
-                const clampedPosition = Math.max(0, Math.min(approximatePosition, typingInput.value.length));
-                
+                // Allow natural cursor positioning - don't prevent default
+                // Only prevent text selection after cursor is set
                 setTimeout(() => {
-                    typingInput.setSelectionRange(clampedPosition, clampedPosition);
-                }, 0);
-                
-                return false;
+                    const currentPos = typingInput.selectionStart || 0;
+                    typingInput.setSelectionRange(currentPos, currentPos);
+                }, 10);
             });
             
             typingInput.addEventListener('mouseup', function(e) {
-                // Prevent text selection
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Keep cursor at current position, don't allow selection
-                const currentPos = typingInput.selectionStart || 0;
+                // Prevent text selection after cursor positioning
                 setTimeout(() => {
+                    const currentPos = typingInput.selectionStart || 0;
                     typingInput.setSelectionRange(currentPos, currentPos);
-                }, 0);
+                }, 10);
             });
             
-            // Touch events for mobile
+            // Touch events for mobile - allow natural cursor movement
             typingInput.addEventListener('touchstart', function(e) {
-                // Allow cursor positioning but prevent text selection
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Set cursor position where user touched
-                const rect = typingInput.getBoundingClientRect();
-                const touch = e.touches[0];
-                const touchX = touch.clientX - rect.left;
-                const touchY = touch.clientY - rect.top;
-                
-                // Calculate approximate cursor position
-                const charWidth = rect.width / Math.max(typingInput.value.length, 1);
-                const approximatePosition = Math.round(touchX / charWidth);
-                const clampedPosition = Math.max(0, Math.min(approximatePosition, typingInput.value.length));
-                
+                // Allow natural cursor positioning - don't prevent default
+                // Only prevent text selection after cursor is set
                 setTimeout(() => {
-                    typingInput.setSelectionRange(clampedPosition, clampedPosition);
-                }, 0);
-                
-                return false;
+                    const currentPos = typingInput.selectionStart || 0;
+                    typingInput.setSelectionRange(currentPos, currentPos);
+                }, 10);
             });
             
             typingInput.addEventListener('touchend', function(e) {
-                // Prevent text selection
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Keep cursor at current position, don't allow selection
-                const currentPos = typingInput.selectionStart || 0;
+                // Prevent text selection after cursor positioning
                 setTimeout(() => {
+                    const currentPos = typingInput.selectionStart || 0;
                     typingInput.setSelectionRange(currentPos, currentPos);
-                }, 0);
+                }, 10);
             });
             
             typingInput.addEventListener('select', function(e) {
@@ -665,7 +630,7 @@ class BiometricDataCollector {
             this.handleKeyup(e);
         });
         
-        // ADDED BACK: Focus event for pointer tracking only (no cursor forcing)
+        // Enhanced focus event for pointer tracking only (no cursor forcing)
         typingInput.addEventListener('focus', (e) => {
             const rect = e.target.getBoundingClientRect();
             this.currentPointerX = rect.left + rect.width / 2;
@@ -674,12 +639,21 @@ class BiometricDataCollector {
             this.pointerTracking.y = this.currentPointerY;
         });
         
-        // ADDED BACK: Click event for pointer tracking only (no cursor forcing)
+        // Enhanced click event for pointer tracking only (no cursor forcing)
         typingInput.addEventListener('click', (e) => {
             this.currentPointerX = e.clientX;
             this.currentPointerY = e.clientY;
             this.pointerTracking.x = e.clientX;
             this.pointerTracking.y = e.clientY;
+        });
+        
+        // Enhanced input event for pointer tracking during typing
+        typingInput.addEventListener('input', (e) => {
+            // Update pointer position during typing for better accuracy
+            this.currentPointerX = e.clientX || this.currentPointerX;
+            this.currentPointerY = e.clientY || this.currentPointerY;
+            this.pointerTracking.x = this.currentPointerX;
+            this.pointerTracking.y = this.currentPointerY;
         });
         
         typingInput.addEventListener('paste', (e) => {
@@ -1582,6 +1556,10 @@ class BiometricDataCollector {
         // Test Shift key detection
         console.log('🔍 Testing Shift key detection:');
         this.testShiftKeyDetection();
+        
+        // Test cursor movement
+        console.log('🔍 Testing cursor movement:');
+        this.testCursorMovement();
     }
     
     // NEW: Test function for Shift key detection
@@ -1597,6 +1575,32 @@ class BiometricDataCollector {
         
         if (shiftEvents.length > 0) {
             console.log('  - Recent Shift events:', shiftEvents.slice(-3));
+        }
+    }
+    
+    // NEW: Test function for cursor movement
+    testCursorMovement() {
+        console.log('🖱️ Cursor movement test:');
+        const typingInput = document.getElementById('typing-input');
+        if (typingInput) {
+            console.log('  - Input value length:', typingInput.value.length);
+            console.log('  - Current cursor position:', typingInput.selectionStart);
+            console.log('  - Input is focused:', document.activeElement === typingInput);
+            console.log('  - User-select CSS:', getComputedStyle(typingInput).userSelect);
+            console.log('  - Pointer events CSS:', getComputedStyle(typingInput).pointerEvents);
+            
+            // Test cursor positioning
+            console.log('  - Testing cursor positioning...');
+            const testPositions = [0, Math.floor(typingInput.value.length / 2), typingInput.value.length];
+            testPositions.forEach(pos => {
+                typingInput.setSelectionRange(pos, pos);
+                console.log(`    Position ${pos}: cursor at ${typingInput.selectionStart}`);
+            });
+            
+            // Reset cursor to end
+            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+        } else {
+            console.log('  - Typing input not found!');
         }
     }
     
@@ -3309,14 +3313,27 @@ class BiometricDataCollector {
             console.log(`   - Last Space event: ${spaceEvents[spaceEvents.length - 1].type} at ${Math.round(spaceEvents[spaceEvents.length - 1].timestamp)}ms`);
         }
         
-        // Test 4: Cursor movement
-        console.log('4️⃣ Cursor Movement Test:');
+        // Test 4: Enhanced Cursor movement
+        console.log('4️⃣ Enhanced Cursor Movement Test:');
         const typingInput = document.getElementById('typing-input');
         if (typingInput) {
             console.log(`   - Input value length: ${typingInput.value.length}`);
             console.log(`   - Cursor position: ${typingInput.selectionStart}`);
             console.log(`   - Input is focused: ${document.activeElement === typingInput}`);
             console.log(`   - User-select CSS: ${getComputedStyle(typingInput).userSelect}`);
+            console.log(`   - Pointer events CSS: ${getComputedStyle(typingInput).pointerEvents}`);
+            console.log(`   - Text rendering: ${getComputedStyle(typingInput).textRendering}`);
+            
+            // Test cursor positioning functionality
+            console.log('   - Testing cursor positioning...');
+            const testPositions = [0, Math.floor(typingInput.value.length / 2), typingInput.value.length];
+            testPositions.forEach(pos => {
+                typingInput.setSelectionRange(pos, pos);
+                console.log(`     Position ${pos}: cursor at ${typingInput.selectionStart}`);
+            });
+            
+            // Reset cursor to end
+            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
         }
         
         // Test 5: Text selection prevention
@@ -3327,6 +3344,7 @@ class BiometricDataCollector {
         
         console.log('=====================================');
         console.log('✅ Test complete! Check console for results.');
+        console.log('💡 Try clicking/tapping in the input field to test cursor movement!');
         
         return {
             shiftCount: shiftEvents.length,
