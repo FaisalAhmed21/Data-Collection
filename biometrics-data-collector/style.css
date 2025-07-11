@@ -1325,8 +1325,8 @@ select.form-control {
   position: absolute;
   top: 20px;
   right: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   color: white;
   font-size: 2rem;
   width: 50px;
@@ -1336,9 +1336,11 @@ select.form-control {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.3s var(--ease-standard);
+  transition: all 0.3s var(--ease-standard);
   backdrop-filter: blur(10px);
-  z-index: 10;
+  z-index: 1001;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .close-popup:hover {
@@ -1399,18 +1401,20 @@ select.form-control {
   display: flex;
   align-items: center;
   gap: var(--space-12);
-  background: rgba(30, 30, 30, 0.85); /* Darker, more opaque for visibility */
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   padding: var(--space-8) var(--space-16);
   border-radius: var(--radius-full);
   backdrop-filter: blur(10px);
-  z-index: 10;
+  z-index: 1001;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .zoom-in,
 .zoom-out,
 .zoom-reset {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   color: white;
   font-size: 1.2rem;
   width: 36px;
@@ -1420,8 +1424,9 @@ select.form-control {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.3s var(--ease-standard);
+  transition: all 0.3s var(--ease-standard);
   font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .zoom-reset {
@@ -1440,12 +1445,15 @@ select.form-control {
 
 .zoom-level {
   color: white;
-  font-weight: var(--font-weight-medium);
-  font-size: 12px;
-  min-width: 32px;
-  max-width: 48px;
+  font-weight: var(--font-weight-bold);
+  font-size: 14px;
+  min-width: 40px;
+  max-width: 60px;
   text-align: center;
-  padding: 2px 4px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-base);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .popup-nav {
@@ -2345,19 +2353,31 @@ h1, h2, h3, h4, h5, h6, p, span, label, div, button, input, textarea, select {
   }
 }
 
-/* Complete text selection prevention for typing input - ALLOWS CURSOR MOVEMENT */
+/* Enhanced cursor movement with text selection prevention */
 #typing-input {
-  /* REMOVED: user-select: none - this was blocking cursor movement */
-  -webkit-touch-callout: none !important;
-  -webkit-tap-highlight-color: transparent !important;
-  pointer-events: auto !important;
-  /* Allow cursor movement but prevent text selection */
+  /* Allow natural cursor movement and text input */
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   -ms-user-select: text !important;
   user-select: text !important;
+  
+  /* Prevent touch callouts and highlights */
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  
+  /* Ensure pointer events work */
+  pointer-events: auto !important;
+  
+  /* Allow normal input behavior */
+  cursor: text !important;
+  
+  /* Ensure proper text rendering for cursor positioning */
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
 }
 
+/* Make text selection invisible but allow cursor movement */
 #typing-input::selection {
   background: transparent !important;
   color: inherit !important;
