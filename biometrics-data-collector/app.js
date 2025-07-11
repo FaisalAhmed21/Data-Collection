@@ -2768,8 +2768,14 @@ class BiometricDataCollector {
             // pinch-to-zoom
             const dist = this.getDistance(e.touches[0], e.touches[1]);
             const change = dist / this.galleryZoom.initialDistance;
-            // Allow zoom from 0.5x to 5x for flexibility
-            const newScale = Math.max(0.5, Math.min(5.0, this.galleryZoom.scale * change));
+            const newScale = Math.max(1, Math.min(3.0, this.galleryZoom.scale * change));
+            // Adjust translation to keep the zoom centered on pinch midpoint
+
+            if (newScale <= 1.1) {
+                // Trigger zoom reset if user pinches out
+                this.resetZoom();
+                return;
+            }
             const ctr = document.querySelector('.popup-image-container');
             const img = document.querySelector('.popup-image');
             if (img && ctr) {
@@ -2813,25 +2819,33 @@ class BiometricDataCollector {
     // 5. On touch end: finish pinch/pan and handle swipe if not zoomed
     handleGalleryTouchEnd(e) {
         const ts = performance.now();
-        // Only allow swipe to change image if scale is exactly 1
+    
+        // swipe to change image only when scale ≈ 1
         if (!this.galleryZoom.isPinching && !this.galleryZoom.isPanning
-            && e.changedTouches.length === 1 && Math.abs(this.galleryZoom.scale - 1) < 0.01) {
+            && e.changedTouches.length === 1 && this.galleryZoom.scale <= 1.1) {
             const endX = e.changedTouches[0].clientX;
             const dx = this.galleryTouchStart.x - endX;
             if (Math.abs(dx) > 50) {
                 dx > 0 ? this.nextGalleryImage() : this.prevGalleryImage();
             }
         }
+    
         // end pinch
         if (e.touches.length < 2) {
             this.galleryZoom.isPinching = false;
             // Do not auto-reset zoom or translation after pinch in
-            // Do not set isPanning here; let user pan if scale > 1
+            if (this.galleryZoom.scale > 1.0) {
+                this.galleryZoom.isPanning = true;
+            } 
+            else {
+                this.resetZoom();
+            }
         }
         // end pan
         if (e.touches.length === 0) {
             this.galleryZoom.isPanning = false;
         }
+    
         this.recordTouchEvent({
             timestamp: ts,
             type: 'touchend',
@@ -3133,7 +3147,6 @@ class BiometricDataCollector {
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
                     was_deleted: wasDeleted,
                     flight_time_ms: flightTime,
-                    device_model: this.deviceInfo.device_model, // Column 9
                     browser_name: this.deviceInfo.browser_name  // Column 10
                 });
             }
@@ -3164,7 +3177,6 @@ class BiometricDataCollector {
                 inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0,
                 num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
                 path_length_px: this.gesturePathLength[`${touch.trial || 1}_${touch.step || 1}`] || 0,
-                device_model: this.deviceInfo.device_model, // Column 9
                 browser_name: this.deviceInfo.browser_name  // Column 10
             };
             features.push(baseFeature);
