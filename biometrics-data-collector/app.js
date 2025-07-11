@@ -217,12 +217,151 @@ class BiometricDataCollector {
                 }
             });
         }
-        // Block clipboard copy, cut, and paste in typing input
+        // Comprehensive clipboard blocking for all input methods
         const typingInput = document.getElementById('typing-input');
         if (typingInput) {
-            typingInput.addEventListener('copy', function(e) { e.preventDefault(); });
-            typingInput.addEventListener('cut', function(e) { e.preventDefault(); });
-            typingInput.addEventListener('paste', function(e) { e.preventDefault(); });
+            // Block all clipboard events
+            typingInput.addEventListener('copy', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                this.showCopyBlockedFeedback();
+                return false;
+            }.bind(this));
+            typingInput.addEventListener('cut', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                this.showCopyBlockedFeedback();
+                return false;
+            }.bind(this));
+            typingInput.addEventListener('paste', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                this.showCopyBlockedFeedback();
+                return false;
+            }.bind(this));
+            
+            // Block drag and drop
+            typingInput.addEventListener('drop', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                return false;
+            });
+            
+            // Block context menu (right-click)
+            typingInput.addEventListener('contextmenu', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                return false;
+            });
+            
+            // Block keyboard shortcuts for copy/paste
+            typingInput.addEventListener('keydown', function(e) {
+                // Block Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+A
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 'c' || e.key === 'C' || 
+                        e.key === 'v' || e.key === 'V' || 
+                        e.key === 'x' || e.key === 'X' || 
+                        e.key === 'a' || e.key === 'A') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+                }
+                
+                // Block Shift+Insert (paste)
+                if (e.shiftKey && e.key === 'Insert') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            });
+            
+            // Block selection and cursor movement
+            typingInput.addEventListener('selectstart', function(e) { 
+                e.preventDefault(); 
+                return false;
+            });
+            
+            typingInput.addEventListener('mousedown', function(e) {
+                // Prevent text selection
+                e.preventDefault();
+                // Always place cursor at end
+                setTimeout(() => {
+                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                }, 0);
+                return false;
+            });
+            
+            typingInput.addEventListener('mouseup', function(e) {
+                // Always place cursor at end
+                setTimeout(() => {
+                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                }, 0);
+            });
+            
+            // Block touch selection on mobile
+            typingInput.addEventListener('touchstart', function(e) {
+                // Prevent text selection on touch
+                e.preventDefault();
+                // Always place cursor at end
+                setTimeout(() => {
+                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                }, 0);
+                return false;
+            });
+            
+            // Block IME composition that might include clipboard content
+            typingInput.addEventListener('compositionstart', function(e) {
+                // Allow composition but monitor for suspicious content
+                console.log('Composition started - monitoring for clipboard content');
+            });
+            
+            // Monitor input for suspicious patterns (multiple characters at once)
+            typingInput.addEventListener('input', function(e) {
+                const currentValue = e.target.value;
+                const previousValue = this.lastInputValue || '';
+                
+                // Check if multiple characters were added at once (potential paste)
+                if (currentValue.length > previousValue.length + 1) {
+                    console.log('Potential paste detected - blocking');
+                    // Revert to previous value
+                    e.target.value = previousValue;
+                    // Place cursor at end
+                    setTimeout(() => {
+                        typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                    }, 0);
+                    return false;
+                }
+                
+                this.lastInputValue = currentValue;
+            }.bind(this));
+            
+            // Disable clipboard API access
+            if (navigator.clipboard) {
+                // Override clipboard methods
+                const originalWriteText = navigator.clipboard.writeText;
+                const originalReadText = navigator.clipboard.readText;
+                
+                navigator.clipboard.writeText = function() {
+                    console.log('Clipboard write blocked');
+                    return Promise.reject(new Error('Clipboard access blocked'));
+                };
+                
+                navigator.clipboard.readText = function() {
+                    console.log('Clipboard read blocked');
+                    return Promise.reject(new Error('Clipboard access blocked'));
+                };
+            }
+            
+            // Block document.execCommand clipboard operations
+            const originalExecCommand = document.execCommand;
+            document.execCommand = function(command, ...args) {
+                if (command === 'copy' || command === 'cut' || command === 'paste') {
+                    console.log(`execCommand ${command} blocked`);
+                    return false;
+                }
+                return originalExecCommand.call(this, command, ...args);
+            };
         }
         typingInput.addEventListener('compositionstart', (e) => {
             this.compositionActive = true;
@@ -275,11 +414,61 @@ class BiometricDataCollector {
             this.pointerTracking.x = e.clientX;
             this.pointerTracking.y = e.clientY;
         });
-        typingInput.addEventListener('paste', (e) => e.preventDefault());
-        typingInput.addEventListener('copy',   e => e.preventDefault());
-        typingInput.addEventListener('cut',    e => e.preventDefault());
-        typingInput.addEventListener('drop',   e => e.preventDefault());
-        typingInput.addEventListener('contextmenu', e => e.preventDefault());
+        // Additional clipboard blocking (redundant but extra protection)
+        typingInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        });
+        typingInput.addEventListener('copy', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        });
+        typingInput.addEventListener('cut', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        });
+        typingInput.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        });
+        typingInput.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        });
+        // Protect sentence display from copying
+        const sentenceDisplay = document.querySelector('.sentence-display');
+        if (sentenceDisplay) {
+            sentenceDisplay.addEventListener('copy', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                this.showCopyBlockedFeedback();
+                return false;
+            }.bind(this));
+            sentenceDisplay.addEventListener('selectstart', function(e) { 
+                e.preventDefault(); 
+                return false;
+            });
+            sentenceDisplay.addEventListener('contextmenu', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                this.showCopyBlockedFeedback();
+                return false;
+            }.bind(this));
+            sentenceDisplay.addEventListener('mousedown', function(e) { 
+                e.preventDefault(); 
+                return false;
+            });
+            sentenceDisplay.addEventListener('touchstart', function(e) { 
+                e.preventDefault(); 
+                return false;
+            });
+        }
+        
         document.getElementById('next-sentence-btn').addEventListener('click', () => this.nextSentence());
         this.bindCrystalEvents();
         document.getElementById('reset-step-btn').addEventListener('click', () => this.resetCrystalStep());
@@ -2951,6 +3140,26 @@ class BiometricDataCollector {
         });
     }
 
+    showCopyBlockedFeedback() {
+        // Show visual feedback when copy/paste is blocked
+        const typingInput = document.getElementById('typing-input');
+        if (typingInput) {
+            typingInput.classList.add('copy-blocked');
+            setTimeout(() => {
+                typingInput.classList.remove('copy-blocked');
+            }, 500);
+        }
+        
+        // Also show feedback on sentence display if it was targeted
+        const sentenceDisplay = document.querySelector('.sentence-display');
+        if (sentenceDisplay) {
+            sentenceDisplay.classList.add('copy-blocked');
+            setTimeout(() => {
+                sentenceDisplay.classList.remove('copy-blocked');
+            }, 500);
+        }
+    }
+    
     updateTaskLocks() {
         // Typing
         const typingInput = document.getElementById('typing-input');
