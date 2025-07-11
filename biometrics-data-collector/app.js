@@ -1560,6 +1560,10 @@ class BiometricDataCollector {
         // Test cursor movement
         console.log('🔍 Testing cursor movement:');
         this.testCursorMovement();
+        
+        // Test Next Sentence button
+        console.log('🔍 Testing Next Sentence button:');
+        this.testNextSentenceButton();
     }
     
     // NEW: Test function for Shift key detection
@@ -1601,6 +1605,35 @@ class BiometricDataCollector {
             typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
         } else {
             console.log('  - Typing input not found!');
+        }
+    }
+    
+    // NEW: Test function for Next Sentence button
+    testNextSentenceButton() {
+        console.log('🔘 Next Sentence button test:');
+        const nextBtn = document.getElementById('next-sentence-btn');
+        if (nextBtn) {
+            console.log('  - Button found in DOM');
+            console.log('  - Button disabled:', nextBtn.disabled);
+            console.log('  - Button display:', nextBtn.style.display);
+            console.log('  - Button classes:', nextBtn.className);
+            console.log('  - Button text:', nextBtn.textContent);
+            console.log('  - Button onclick:', nextBtn.onclick);
+            
+            // Test if event listener is attached
+            const events = getEventListeners ? getEventListeners(nextBtn) : 'getEventListeners not available';
+            console.log('  - Event listeners:', events);
+            
+            // Test button click simulation
+            console.log('  - Testing button click simulation...');
+            try {
+                nextBtn.click();
+                console.log('  - Button click simulation successful');
+            } catch (error) {
+                console.log('  - Button click simulation failed:', error);
+            }
+        } else {
+            console.log('  - Next Sentence button not found in DOM!');
         }
     }
     
@@ -1649,17 +1682,7 @@ class BiometricDataCollector {
             console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
         }
     
-        // NEW: Enable/disable Next Sentence button based on accuracy
-        const nextButton = document.getElementById('next-sentence-btn');
-        if (nextButton) {
-            if (accuracy === 100) {
-                nextButton.disabled = false;
-                nextButton.classList.remove('btn--disabled');
-            } else {
-                nextButton.disabled = true;
-                nextButton.classList.add('btn--disabled');
-            }
-        }
+        // REMOVED: Button control logic moved to checkSentenceCompletion() only
     
         // Animate accuracy ring
         const accuracyRing = document.getElementById('accuracy-ring');
@@ -1699,30 +1722,71 @@ class BiometricDataCollector {
         const target = this.sentences[this.currentSentence];
         const nextBtn = document.getElementById('next-sentence-btn');
         const accuracy = this.calculateAccuracy();
+        
+        console.log('🔍 Sentence completion check:', {
+            currentSentence: this.currentSentence,
+            totalSentences: this.sentences.length,
+            typed: `"${typed}"`,
+            target: `"${target}"`,
+            accuracy: accuracy,
+            isComplete: typed === target && accuracy === 100,
+            isLastSentence: this.currentSentence === this.sentences.length - 1
+        });
+        
         // Only enable next button and show fireworks if 100% accuracy is achieved
         if (typed === target && accuracy === 100) {
             if (this.currentSentence === this.sentences.length - 1) {
                 // Last sentence: hide next sentence button, show next task button
+                console.log('✅ Last sentence completed - hiding Next Sentence button, showing Next Task button');
                 nextBtn.style.display = 'none';
+                nextBtn.disabled = true;
                 this.showNextTaskButton('crystal', 'Crystal Forge Game');
             } else {
+                // Not last sentence: enable next sentence button
+                console.log('✅ Sentence completed - enabling Next Sentence button');
                 nextBtn.disabled = false;
+                nextBtn.style.display = 'inline-flex';
                 nextBtn.classList.add('next-task-btn--deep');
+                nextBtn.classList.remove('btn--disabled');
             }
-
         } else {
+            // Sentence not complete: disable next sentence button
+            console.log('❌ Sentence not complete - disabling Next Sentence button');
             nextBtn.disabled = true;
-            nextBtn.classList.remove('next-task-btn--deep');
             nextBtn.style.display = 'inline-flex';
+            nextBtn.classList.remove('next-task-btn--deep');
+            nextBtn.classList.add('btn--disabled');
         }
+        
+        // Debug button state
+        console.log('🔍 Next Sentence button state:', {
+            disabled: nextBtn.disabled,
+            display: nextBtn.style.display,
+            classes: nextBtn.className,
+            text: nextBtn.textContent
+        });
     }
     
     nextSentence() {
+        console.log('🔄 Next Sentence button clicked!');
+        console.log('🔍 Current state before increment:', {
+            currentSentence: this.currentSentence,
+            totalSentences: this.sentences.length
+        });
+        
         this.currentSentence++;
+        
+        console.log('🔍 State after increment:', {
+            currentSentence: this.currentSentence,
+            totalSentences: this.sentences.length
+        });
+        
         if (this.currentSentence >= this.sentences.length) {
+            console.log('✅ All sentences completed - showing Next Task button');
             this.showNextTaskButton('crystal', 'Crystal Forge Game');
             this.updateTaskLocks();
         } else {
+            console.log('✅ Moving to next sentence:', this.currentSentence + 1);
             this.displayCurrentSentence();
             this.updateTypingProgress();
         }
@@ -3342,9 +3406,14 @@ class BiometricDataCollector {
         console.log(`   - Selection end: ${typingInput?.selectionEnd || 'N/A'}`);
         console.log(`   - Selection length: ${(typingInput?.selectionEnd || 0) - (typingInput?.selectionStart || 0)}`);
         
+        // Test 6: Next Sentence button functionality
+        console.log('6️⃣ Next Sentence Button Test:');
+        this.testNextSentenceButton();
+        
         console.log('=====================================');
         console.log('✅ Test complete! Check console for results.');
         console.log('💡 Try clicking/tapping in the input field to test cursor movement!');
+        console.log('💡 Try completing a sentence to test Next Sentence button!');
         
         return {
             shiftCount: shiftEvents.length,
