@@ -3102,7 +3102,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '10'; // 10 features: participant_id, task_id, timestamp_ms, ref_char, touch_x, touch_y, was_deleted, flight_time_ms, device_model, browser_name
+        document.getElementById('keystroke-features').textContent = '9'; // 9 features: participant_id, task_id, timestamp_ms, ref_char, touch_x, touch_y, was_deleted, flight_time_ms, browser_name
     }
 
     
@@ -3114,7 +3114,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '12'; // 12 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, num_touch_points, path_length_px, device_model, browser_name
+        document.getElementById('touch-features').textContent = '11'; // 11 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, num_touch_points, path_length_px, browser_name
     }
 
     // ENHANCED: Keystroke feature extraction with device model and browser name as separate columns
