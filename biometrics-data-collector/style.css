@@ -824,6 +824,36 @@ select.form-control {
   -ms-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Make sentence display completely unselectable */
+.sentence-display {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: default;
+}
+
+.sentence-display p {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  pointer-events: none;
+}
+
+/* Visual feedback for blocked copy attempts */
+.copy-blocked {
+  animation: copy-blocked-shake 0.5s ease-in-out;
+}
+
+@keyframes copy-blocked-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
 .typing-area {
