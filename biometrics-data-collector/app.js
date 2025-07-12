@@ -1014,11 +1014,6 @@ class BiometricDataCollector {
             feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
         }
         
-        // Add cursor if still typing
-        if (typed.length < target.length) {
-            feedbackHTML += `<span class="cursor">|</span>`;
-        }
-        
         // Add remaining target characters
         for (let i = typed.length; i < target.length; i++) {
             feedbackHTML += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
