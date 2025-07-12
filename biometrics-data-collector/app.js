@@ -37,6 +37,7 @@ class BiometricDataCollector {
         this.lastCharTime = 0;
         this.lastChar = null;
         this.previousChar = null;
+        this.lastShiftRecorded = false; // Track if SHIFT was already recorded for current sequence
         
         // Platform-specific cooldown windows (in milliseconds)
         if (this.isIOS) {
@@ -877,12 +878,12 @@ class BiometricDataCollector {
                     // ENHANCED: Improved character normalization and shift handling
                     let refChar = this.normalizeCharacter(char);
                     
-                    // ENHANCED: Improved shift detection for uppercase letters
+                    // ENHANCED: Improved shift detection for uppercase letters - record only once per sequence
                     if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
                         const currentTime = performance.now();
                         
-                        // Check if we need to record a SHIFT event
-                        if (currentTime - this.lastShiftTime > this.shiftCooldown) {
+                        // Only record SHIFT if it hasn't been recorded for this sequence and cooldown passed
+                        if (!this.lastShiftRecorded && currentTime - this.lastShiftTime > this.shiftCooldown) {
                             // Record SHIFT event first
                             this.recordKeystroke({
                                 timestamp: charTimestamp - 0.5,
@@ -896,8 +897,12 @@ class BiometricDataCollector {
                             });
                             
                             this.lastShiftTime = currentTime;
+                            this.lastShiftRecorded = true; // Mark SHIFT as recorded for this sequence
                             console.log(`✅ SHIFT recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, 'cooldown:', this.shiftCooldown, 'ms');
                         }
+                    } else {
+                        // Reset SHIFT tracking for non-uppercase characters
+                        this.lastShiftRecorded = false;
                     }
                     
                     // Check if character should be recorded with platform-specific deduplication
@@ -931,10 +936,10 @@ class BiometricDataCollector {
         else if (inputType && data) {
             let refChar = this.normalizeCharacter(data);
             
-            // Handle shift for uppercase letters in other input types
+            // Handle shift for uppercase letters in other input types - record only once per sequence
             if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
                 const currentTime = performance.now();
-                if (currentTime - this.lastShiftTime > this.shiftCooldown) {
+                if (!this.lastShiftRecorded && currentTime - this.lastShiftTime > this.shiftCooldown) {
                     this.recordKeystroke({
                         timestamp: timestamp - 0.5,
                         actualChar: 'SHIFT',
@@ -947,8 +952,12 @@ class BiometricDataCollector {
                     });
                     
                     this.lastShiftTime = currentTime;
+                    this.lastShiftRecorded = true; // Mark SHIFT as recorded for this sequence
                     console.log(`✅ SHIFT recorded (other input) (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, 'cooldown:', this.shiftCooldown, 'ms');
                 }
+            } else {
+                // Reset SHIFT tracking for non-uppercase characters
+                this.lastShiftRecorded = false;
             }
             
             const isQuote = refChar === "'" || refChar === '"';
@@ -1472,6 +1481,7 @@ class BiometricDataCollector {
         this.lastShiftTime = 0;
         this.lastCharTime = 0;
         this.lastChar = null;
+        this.lastShiftRecorded = false; // Reset SHIFT tracking
         
         // Reset mobile input tracking
         this.lastInputValue = '';
@@ -3265,7 +3275,7 @@ class BiometricDataCollector {
         document.getElementById('touch-features').textContent = '11'; // 11 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, num_touch_points, path_length_px, browser_name
     }
 
-    // ENHANCED: Keystroke feature extraction with device model and browser name as separate columns
+    // ENHANCED: Keystroke feature extraction with 60-40 random flight time splitting
     extractKeystrokeFeatures() {
         const features = [];
         
@@ -3279,6 +3289,15 @@ class BiometricDataCollector {
                         console.warn(`⚠️ Negative flight time detected: ${timeDiff}ms between "${this.keystrokeData[index - 1].actualChar}" and "${keystroke.actualChar}". Setting to 0.`);
                     }
                 }
+                
+                // ENHANCED: 60-40 random proportion for flight time splitting
+                let splitFlightTime = flightTime;
+                if (flightTime > 0) {
+                    // Generate random proportion between 0.55 and 0.65 (centered around 0.6)
+                    const randomProportion = 0.55 + Math.random() * 0.1; // 55% to 65%
+                    splitFlightTime = Math.round(flightTime * randomProportion);
+                }
+                
                 const wasDeleted = (keystroke.actualChar === 'BACKSPACE' || keystroke.type.startsWith('delete')) ? 1 : 0;
                 let refChar = keystroke.actualChar || 'unknown';
                 if (keystroke.isSynthetic && keystroke.actualChar === 'SHIFT') {
@@ -3286,6 +3305,7 @@ class BiometricDataCollector {
                 } else if (keystroke.actualChar && keystroke.actualChar.length === 1) {
                     refChar = keystroke.actualChar;
                 }
+                
                 features.push({
                     participant_id: this.participantId,
                     task_id: 1,
@@ -3294,8 +3314,8 @@ class BiometricDataCollector {
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
                     was_deleted: wasDeleted,
-                    flight_time_ms: flightTime,
-                    browser_name: this.deviceInfo.browser_name  // Column 10
+                    flight_time_ms: splitFlightTime, // Use split flight time
+                    browser_name: this.deviceInfo.browser_name
                 });
             }
         });
