@@ -2023,9 +2023,28 @@ class BiometricDataCollector {
     // Generate facet positions around the crystal
     generateFacets() {
         const facets = [];
-        const centerX = 200; // Crystal center X
-        const centerY = 200; // Crystal center Y
-        const baseRadius = 45; // Reduced radius to keep facets within crystal
+        
+        // Get crystal area dimensions dynamically
+        const crystalArea = document.getElementById('crystal-area');
+        const crystal = document.getElementById('crystal');
+        
+        if (!crystalArea || !crystal) {
+            console.warn('Crystal elements not found, using default positioning');
+            return this.generateDefaultFacets();
+        }
+        
+        const areaRect = crystalArea.getBoundingClientRect();
+        const crystalRect = crystal.getBoundingClientRect();
+        
+        // Calculate center and safe radius based on actual crystal size
+        const centerX = areaRect.width / 2;
+        const centerY = areaRect.height / 2;
+        
+        // Use the smaller dimension to ensure facets stay within bounds
+        const crystalRadius = Math.min(crystalRect.width, crystalRect.height) / 2;
+        const safeRadius = Math.max(20, crystalRadius * 0.6); // 60% of crystal radius, minimum 20px
+        
+        console.log(`📱 Mobile device detected - Crystal radius: ${Math.round(crystalRadius)}px, Safe radius: ${Math.round(safeRadius)}px`);
         
         // Create 10 facets positioned within the crystal
         for (let i = 0; i < 10; i++) {
@@ -2034,14 +2053,57 @@ class BiometricDataCollector {
             // Create different layers of facets within the crystal
             if (i < 4) {
                 // Inner ring - 4 facets (closest to center)
-                radius = baseRadius * 0.4;
+                radius = safeRadius * 0.4;
                 angle = (i * Math.PI * 2) / 4;
             } else if (i < 8) {
                 // Middle ring - 4 facets
-                radius = baseRadius * 0.7;
+                radius = safeRadius * 0.7;
                 angle = ((i - 4) * Math.PI * 2) / 4 + Math.PI / 4; // Offset by 45 degrees
             } else {
                 // Outer ring - 2 facets (still within crystal)
+                radius = safeRadius * 0.9;
+                angle = ((i - 8) * Math.PI * 2) / 2;
+            }
+            
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius;
+            
+            // Ensure facet is within bounds
+            const facetRadius = Math.min(15, safeRadius * 0.15); // Responsive facet size
+            
+            facets.push({
+                id: i,
+                x: Math.round(x),
+                y: Math.round(y),
+                radius: facetRadius,
+                active: false,
+                tapped: false,
+                sequence: i,
+                lastTapTime: 0 // Track last tap time to prevent double-taps
+            });
+        }
+        
+        console.log(`✅ Generated ${facets.length} facets within crystal bounds`);
+        return facets;
+    }
+    
+    // Fallback method for default positioning
+    generateDefaultFacets() {
+        const facets = [];
+        const centerX = 200;
+        const centerY = 200;
+        const baseRadius = 35; // Even smaller for safety
+        
+        for (let i = 0; i < 10; i++) {
+            let radius, angle;
+            
+            if (i < 4) {
+                radius = baseRadius * 0.4;
+                angle = (i * Math.PI * 2) / 4;
+            } else if (i < 8) {
+                radius = baseRadius * 0.7;
+                angle = ((i - 4) * Math.PI * 2) / 4 + Math.PI / 4;
+            } else {
                 radius = baseRadius * 0.9;
                 angle = ((i - 8) * Math.PI * 2) / 2;
             }
@@ -2053,11 +2115,11 @@ class BiometricDataCollector {
                 id: i,
                 x: Math.round(x),
                 y: Math.round(y),
-                radius: 15, // Slightly smaller radius to fit within crystal
+                radius: 12,
                 active: false,
                 tapped: false,
                 sequence: i,
-                lastTapTime: 0 // Track last tap time to prevent double-taps
+                lastTapTime: 0
             });
         }
         
@@ -2711,8 +2773,11 @@ class BiometricDataCollector {
         
         // Initialize facets for step 5
         if (this.currentCrystalStep === 5) {
-            this.crystalState.facets = this.generateFacets();
-            this.renderFacets();
+            // Add delay to ensure DOM is fully rendered
+            setTimeout(() => {
+                this.crystalState.facets = this.generateFacets();
+                this.renderFacets();
+            }, 100);
         }
     }
     
@@ -2738,8 +2803,11 @@ class BiometricDataCollector {
         
         // Initialize facets for step 5
         if (this.currentCrystalStep === 5) {
-            this.crystalState.facets = this.generateFacets();
-            this.renderFacets();
+            // Add delay to ensure DOM is fully rendered
+            setTimeout(() => {
+                this.crystalState.facets = this.generateFacets();
+                this.renderFacets();
+            }, 100);
         }
     }
 
