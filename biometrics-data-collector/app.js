@@ -36,6 +36,8 @@ class BiometricDataCollector {
         this.lastChar = null;
         this.previousChar = null;
         this.lastShiftRecorded = false;
+        this.lastCapitalLetterTime = 0;
+        this.shiftForCapitalCooldown = 100; // Cooldown to prevent multiple SHIFT events for same capital letter
         
         if (this.isIOS) {
             this.backspaceCooldown = 200;
@@ -831,14 +833,44 @@ class BiometricDataCollector {
                 else {
                     let refChar = this.normalizeCharacter(char);
                     
+                    // Handle capital letters with proper SHIFT recording
                     if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
                         const currentTime = performance.now();
                         
-                        if (!this.lastShiftRecorded && currentTime - this.lastShiftTime > this.shiftCooldown) {
+                        // Check if we need to record SHIFT for this capital letter
+                        if (currentTime - this.lastCapitalLetterTime > this.shiftForCapitalCooldown) {
+                            // Record SHIFT event with proper flight time distribution
+                            this.recordKeystrokeWithShift(charTimestamp, refChar, pos - data.length + i, inputType);
+                            this.lastCapitalLetterTime = currentTime;
+                        } else {
+                            // Just record the capital letter without SHIFT
+                            if (this.shouldRecordChar(refChar, charTimestamp, false)) {
+                                this.recordKeystroke({
+                                    timestamp: charTimestamp,
+                                    actualChar: refChar,
+                                    keyCode: char.charCodeAt(0),
+                                    type: inputType,
+                                    sentence: this.currentSentence,
+                                    position: pos - data.length + i,
+                                    clientX: this.pointerTracking.x,
+                                    clientY: this.pointerTracking.y
+                                });
+                                
+                                this.lastChar = refChar;
+                                this.lastCharTime = charTimestamp;
+                                console.log(`📝 Capital letter recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, refChar);
+                            }
+                        }
+                    } else {
+                        // Handle lowercase letters and other characters
+                        const isQuote = refChar === "'" || refChar === '"';
+                        if (this.shouldRecordChar(refChar, charTimestamp, isQuote)) {
+                            console.log(`📝 Recording keystroke (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, refChar, 'type:', inputType, 'timestamp:', charTimestamp);
+                            
                             this.recordKeystroke({
-                                timestamp: charTimestamp - 0.5,
-                                actualChar: 'SHIFT',
-                                keyCode: 16,
+                                timestamp: charTimestamp,
+                                actualChar: refChar,
+                                keyCode: char.charCodeAt(0),
                                 type: inputType,
                                 sentence: this.currentSentence,
                                 position: pos - data.length + i,
@@ -846,33 +878,11 @@ class BiometricDataCollector {
                                 clientY: this.pointerTracking.y
                             });
                             
-                            this.lastShiftTime = currentTime;
-                            this.lastShiftRecorded = true; // Mark SHIFT as recorded for this sequence
-                            console.log(`✅ SHIFT recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, 'cooldown:', this.shiftCooldown, 'ms');
+                            this.lastChar = refChar;
+                            this.lastCharTime = charTimestamp;
+                        } else {
+                            console.log(`❌ Character duplicate ignored (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, refChar);
                         }
-                                            } else {
-                            this.lastShiftRecorded = false;
-                        }
-                        
-                        const isQuote = refChar === "'" || refChar === '"';
-                        if (this.shouldRecordChar(refChar, charTimestamp, isQuote)) {
-                        console.log(`📝 Recording keystroke (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, refChar, 'type:', inputType, 'timestamp:', charTimestamp);
-                        
-                        this.recordKeystroke({
-                            timestamp: charTimestamp,
-                            actualChar: refChar,
-                            keyCode: char.charCodeAt(0),
-                            type: inputType,
-                            sentence: this.currentSentence,
-                            position: pos - data.length + i,
-                            clientX: this.pointerTracking.x,
-                            clientY: this.pointerTracking.y
-                        });
-                        
-                        this.lastChar = refChar;
-                        this.lastCharTime = charTimestamp;
-                    } else {
-                        console.log(`❌ Character duplicate ignored (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, refChar);
                     }
                 }
                 
@@ -883,13 +893,44 @@ class BiometricDataCollector {
         else if (inputType && data) {
             let refChar = this.normalizeCharacter(data);
             
+            // Handle capital letters with proper SHIFT recording
             if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
                 const currentTime = performance.now();
-                if (!this.lastShiftRecorded && currentTime - this.lastShiftTime > this.shiftCooldown) {
+                
+                // Check if we need to record SHIFT for this capital letter
+                if (currentTime - this.lastCapitalLetterTime > this.shiftForCapitalCooldown) {
+                    // Record SHIFT event with proper flight time distribution
+                    this.recordKeystrokeWithShift(timestamp, refChar, pos - 1, inputType);
+                    this.lastCapitalLetterTime = currentTime;
+                } else {
+                    // Just record the capital letter without SHIFT
+                    if (this.shouldRecordChar(refChar, timestamp, false)) {
+                        this.recordKeystroke({
+                            timestamp: timestamp,
+                            actualChar: refChar,
+                            keyCode: data.charCodeAt(0),
+                            type: inputType,
+                            sentence: this.currentSentence,
+                            position: pos - 1,
+                            clientX: this.pointerTracking.x,
+                            clientY: this.pointerTracking.y
+                        });
+                        
+                        this.lastChar = refChar;
+                        this.lastCharTime = timestamp;
+                        console.log(`📝 Capital letter recorded (other input) (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, refChar);
+                    }
+                }
+            } else {
+                // Handle lowercase letters and other characters
+                const isQuote = refChar === "'" || refChar === '"';
+                if (this.shouldRecordChar(refChar, timestamp, isQuote)) {
+                    console.log(`📝 Recording keystroke (other input) (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, refChar, 'type:', inputType, 'timestamp:', timestamp);
+                    
                     this.recordKeystroke({
-                        timestamp: timestamp - 0.5,
-                        actualChar: 'SHIFT',
-                        keyCode: 16,
+                        timestamp: timestamp,
+                        actualChar: refChar,
+                        keyCode: data.charCodeAt(0),
                         type: inputType,
                         sentence: this.currentSentence,
                         position: pos - 1,
@@ -897,33 +938,11 @@ class BiometricDataCollector {
                         clientY: this.pointerTracking.y
                     });
                     
-                    this.lastShiftTime = currentTime;
-                    this.lastShiftRecorded = true; // Mark SHIFT as recorded for this sequence
-                    console.log(`✅ SHIFT recorded (other input) (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, 'cooldown:', this.shiftCooldown, 'ms');
+                    this.lastChar = refChar;
+                    this.lastCharTime = timestamp;
+                } else {
+                    console.log(`❌ Character duplicate ignored (other input) (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, refChar);
                 }
-            } else {
-                this.lastShiftRecorded = false;
-            }
-            
-            const isQuote = refChar === "'" || refChar === '"';
-            if (this.shouldRecordChar(refChar, timestamp, isQuote)) {
-                console.log(`📝 Recording keystroke (other input) (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, refChar, 'type:', inputType, 'timestamp:', timestamp);
-                
-                this.recordKeystroke({
-                    timestamp: timestamp,
-                    actualChar: refChar,
-                    keyCode: data.charCodeAt(0),
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos - 1,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-                
-                this.lastChar = refChar;
-                this.lastCharTime = timestamp;
-            } else {
-                console.log(`❌ Character duplicate ignored (other input) (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, refChar);
             }
         }
     
@@ -1437,6 +1456,7 @@ class BiometricDataCollector {
         this.lastCharTime = 0;
         this.lastChar = null;
         this.lastShiftRecorded = false;
+        this.lastCapitalLetterTime = 0;
         
         this.lastInputValue = '';
         this.inputEventCount = 0;
@@ -1453,6 +1473,7 @@ class BiometricDataCollector {
         console.log(`  Space: ${this.spaceCooldown}ms`);
         console.log(`  Shift: ${this.shiftCooldown}ms`);
         console.log(`  Characters: ${this.charCooldown}ms`);
+        console.log(`  Shift for Capital: ${this.shiftForCapitalCooldown}ms`);
         
         console.log('🔍 Quote handling test:');
         this.testQuoteHandling();
@@ -1585,15 +1606,72 @@ class BiometricDataCollector {
         document.getElementById('typing-progress').style.width = `${progress}%`;
     }
     
+    // New method to handle SHIFT + capital letter with proper flight time distribution
+    recordKeystrokeWithShift(timestamp, capitalChar, position, inputType) {
+        const currentTime = performance.now();
+        const prevKeystrokeTime = this.lastKeystrokeTime > 0 ? this.lastKeystrokeTime : currentTime;
+        const totalFlightTime = currentTime - prevKeystrokeTime;
+        
+        // Generate 60-40 random proportion (55-65% for SHIFT, 35-45% for capital letter)
+        const shiftProportion = 0.55 + Math.random() * 0.1; // 55% to 65%
+        const capitalProportion = 1 - shiftProportion; // 35% to 45%
+        
+        const shiftFlightTime = Math.round(totalFlightTime * shiftProportion);
+        const capitalFlightTime = Math.round(totalFlightTime * capitalProportion);
+        
+        // Record SHIFT event first
+        const shiftEvent = {
+            timestamp: prevKeystrokeTime + shiftFlightTime,
+            actualChar: 'SHIFT',
+            keyCode: 16,
+            type: inputType,
+            sentence: this.currentSentence,
+            position: position,
+            clientX: this.pointerTracking.x,
+            clientY: this.pointerTracking.y,
+            flightTime: shiftFlightTime,
+            shiftKey: true,
+            shiftPressed: true,
+            isSynthetic: true
+        };
+        
+        // Record capital letter event second
+        const capitalEvent = {
+            timestamp: prevKeystrokeTime + shiftFlightTime + capitalFlightTime,
+            actualChar: capitalChar,
+            keyCode: capitalChar.charCodeAt(0),
+            type: inputType,
+            sentence: this.currentSentence,
+            position: position,
+            clientX: this.pointerTracking.x,
+            clientY: this.pointerTracking.y,
+            flightTime: capitalFlightTime,
+            shiftKey: true,
+            shiftPressed: true
+        };
+        
+        // Add both events to keystroke data
+        this.keystrokeData.push(shiftEvent);
+        this.keystrokeData.push(capitalEvent);
+        
+        // Update tracking variables
+        this.lastKeystrokeTime = capitalEvent.timestamp;
+        this.lastChar = capitalChar;
+        this.lastCharTime = capitalEvent.timestamp;
+        
+        console.log(`✅ SHIFT + ${capitalChar} recorded with flight time split: SHIFT=${shiftFlightTime}ms (${Math.round(shiftProportion*100)}%), ${capitalChar}=${capitalFlightTime}ms (${Math.round(capitalProportion*100)}%)`);
+    }
+    
     recordKeystroke(data) {
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('[QUOTE] Keystroke captured:', data);
         }
+        
+        // Enhanced deduplication for iOS
         const isQuote = data.actualChar === "'" || data.actualChar === '"';
         if (this.isIOS && data.actualChar && data.actualChar !== 'BACKSPACE' && data.actualChar !== 'SHIFT' && !isQuote) {
             const currentTime = performance.now();
-            const isQuote = data.actualChar === "'" || data.actualChar === '"';
-            const dedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
+            const dedupWindow = isQuote ? 100 : 300;
             
             const recentKeystrokes = this.keystrokeData.slice(-5);
             const duplicateFound = recentKeystrokes.some(ks => 
@@ -1607,68 +1685,15 @@ class BiometricDataCollector {
         }
 
         const currentTime = performance.now();
-        let prevKeystrokeTime = this.lastKeystrokeTime > 0 ? this.lastKeystrokeTime : currentTime;
         let flightTime = 0;
         if (this.lastKeystrokeTime > 0 && data.actualChar !== 'SHIFT') {
             flightTime = currentTime - this.lastKeystrokeTime;
         }
 
+        // Add flight time to the data
+        data.flightTime = Math.round(flightTime);
 
-
-
-        if (
-            data.actualChar &&
-            data.actualChar.length === 1 &&
-            this.getCharacterCase(data.actualChar) === 'uppercase'
-        ) {
-            const currentTime = performance.now();
-            const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
-            
-            if (!lastKeystroke || 
-                lastKeystroke.actualChar !== 'SHIFT' || 
-                (currentTime - lastKeystroke.timestamp) > 50) {
-                
-                let split = 0.4 + Math.random() * 0.2;
-                let shiftFlight = flightTime * split;
-                let capFlight = flightTime * (1 - split);
-                const shiftEvent = {
-                    ...data,
-                    actualChar: 'SHIFT',
-                    keyCode: 16,
-                    type: 'keydown',
-                    timestamp: prevKeystrokeTime + shiftFlight,
-                    flightTime: Math.round(shiftFlight),
-                    shiftKey: true,
-                    shiftPressed: true,
-                    isSynthetic: true
-                };
-                const capEvent = {
-                    ...data,
-                    timestamp: prevKeystrokeTime + shiftFlight + capFlight,
-                    flightTime: Math.round(capFlight),
-                    shiftKey: true,
-                    shiftPressed: true
-                };
-                if (this.isIOS) {
-                    const recent = this.keystrokeData.slice(-4);
-                    if (!recent.some(e => e.actualChar === 'SHIFT' && Math.abs(e.timestamp - shiftEvent.timestamp) < 10)) {
-                        this.keystrokeData.push(shiftEvent);
-                    }
-                    if (!recent.some(e => e.actualChar === data.actualChar && Math.abs(e.timestamp - capEvent.timestamp) < 10)) {
-                        this.keystrokeData.push(capEvent);
-                    }
-                } else {
-                    this.keystrokeData.push(shiftEvent);
-                    this.keystrokeData.push(capEvent);
-                }
-                this.lastKeystrokeTime = capEvent.timestamp;
-                this.lastChar = data.actualChar;
-                return;
-            } else {
-                console.log('🚫 SHIFT already recorded recently, skipping duplicate');
-            }
-        }
-
+        // Handle SHIFT-specific data
         if (data.actualChar === 'SHIFT') {
             data.shiftAction = this.shiftPressed ? 'release' : 'press';
             data.shiftDuration = this.shiftPressed ? (currentTime - this.shiftPressTime) : 0;
@@ -1680,14 +1705,16 @@ class BiometricDataCollector {
             data.caseTransition = this.getCaseTransition(data);
         }
 
+        // Update last keystroke time for non-SHIFT events
         if (data.actualChar !== 'SHIFT') {
             this.lastKeystrokeTime = currentTime;
         }
 
+        // Log specific events
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('Recording keystroke with quote:', data.actualChar, 'type:', data.type);
         }
-        if (data.actualChar === 'Backspace') {
+        if (data.actualChar === 'BACKSPACE') {
             console.log('Recording backspace keystroke:', data.type, 'timestamp:', data.timestamp);
         }
 
@@ -1749,6 +1776,7 @@ class BiometricDataCollector {
     shouldRecordChar(char, timestamp, isQuote = false) {
         const currentTime = performance.now();
         
+        // Determine deduplication window based on character type and platform
         let dedupWindow;
         if (char === 'SPACE') {
             dedupWindow = this.spaceCooldown;
@@ -1762,6 +1790,7 @@ class BiometricDataCollector {
             dedupWindow = this.charCooldown;
         }
         
+        // Check if this character was recently recorded
         if (this.lastChar === char && this.lastCharTime) {
             const timeSinceLast = currentTime - this.lastCharTime;
             if (timeSinceLast < dedupWindow) {
@@ -1770,18 +1799,22 @@ class BiometricDataCollector {
             }
         }
         
+        // Platform-specific additional checks
         if (this.isIOS) {
+            // iOS: Check for rapid input events
             if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 25) {
                 console.log(`🚫 iOS rapid input BLOCKED: ${char} - time since last event: ${currentTime - this.lastInputEventTime}ms`);
                 return false;
             }
         } else if (this.isAndroid) {
+            // Android: Check for duplicate input events
             if (this.lastInputEvent === char && this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 20) {
                 console.log(`🚫 Android input event duplicate BLOCKED: ${char} - time since last: ${currentTime - this.lastInputEventTime}ms`);
                 return false;
             }
         }
         
+        // Update tracking variables
         this.lastChar = char;
         this.lastCharTime = currentTime;
         this.lastInputEvent = char;
@@ -3224,7 +3257,7 @@ class BiometricDataCollector {
         document.getElementById('touch-features').textContent = '11'; // 11 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, num_touch_points, path_length_px, browser_name
     }
 
-    // ENHANCED: Keystroke feature extraction with 60-40 random flight time splitting
+    // ENHANCED: Keystroke feature extraction with proper flight time handling
     extractKeystrokeFeatures() {
         const features = [];
         
@@ -3237,14 +3270,6 @@ class BiometricDataCollector {
                     if (timeDiff < 0) {
                         console.warn(`⚠️ Negative flight time detected: ${timeDiff}ms between "${this.keystrokeData[index - 1].actualChar}" and "${keystroke.actualChar}". Setting to 0.`);
                     }
-                }
-                
-                // ENHANCED: 60-40 random proportion for flight time splitting
-                let splitFlightTime = flightTime;
-                if (flightTime > 0) {
-                    // Generate random proportion between 0.55 and 0.65 (centered around 0.6)
-                    const randomProportion = 0.55 + Math.random() * 0.1; // 55% to 65%
-                    splitFlightTime = Math.round(flightTime * randomProportion);
                 }
                 
                 const wasDeleted = (keystroke.actualChar === 'BACKSPACE' || keystroke.type.startsWith('delete')) ? 1 : 0;
@@ -3263,7 +3288,7 @@ class BiometricDataCollector {
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
                     was_deleted: wasDeleted,
-                    flight_time_ms: splitFlightTime, // Use split flight time
+                    flight_time_ms: flightTime, // Use the flight time as recorded
                     browser_name: this.deviceInfo.browser_name
                 });
             }
