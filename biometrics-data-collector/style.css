@@ -269,24 +269,29 @@ html {
   color: var(--color-text);
   background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
-  /* Ensure proper scaling on all devices */
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
   padding: 0;
-  /* Ensure proper scaling on all devices */
   min-height: 100vh;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 *,
 *::before,
 *::after {
-  box-sizing: inherit;
+  box-sizing: border-box;
 }
 
 /* Responsive Typography */
@@ -612,13 +617,14 @@ select.form-control {
 /* Container layout */
 .container {
   width: 100%;
-  margin-right: auto;
-  margin-left: auto;
-  padding-right: var(--space-16);
-  padding-left: var(--space-16);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-16);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Utility classes */
@@ -740,19 +746,30 @@ select.form-control {
 .screen {
   display: none;
   min-height: 100vh;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
   padding: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .screen.active {
-  display: block;
+  display: flex;
 }
 
 /* Welcome Screen */
 .welcome-content {
   max-width: 600px;
+  width: 100%;
   margin: 0 auto;
   text-align: center;
-  padding-top: 10vh;
+  padding: 10vh var(--space-16) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .welcome-content h1 {
@@ -776,8 +793,12 @@ select.form-control {
 /* Typing Task Screen */
 .typing-content {
   max-width: 800px;
+  width: 100%;
   margin: 0 auto;
   padding: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .progress-bar {
@@ -1342,7 +1363,11 @@ select.form-control {
 /* Gallery Screen */
 .gallery-content {
   max-width: 1000px;
+  width: 100%;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .gallery-instruction {
@@ -1625,8 +1650,12 @@ select.form-control {
 /* Export Screen */
 .export-content {
   max-width: 700px;
+  width: 100%;
   margin: 0 auto;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .export-stats {
@@ -2725,5 +2754,69 @@ h1, h2, h3, h4, h5, h6, p, span, label, div, button, input, textarea, select {
     
     .facet-highlight {
         border-width: 1px;
+    }
+}
+
+/* Enhanced centering for all device types */
+html, body {
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+/* Ensure all main containers are properly centered */
+.container, .screen, .welcome-content, .typing-content, .crystal-content, .gallery-content, .export-content {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 1200px;
+    box-sizing: border-box;
+}
+
+/* Mobile-specific centering improvements */
+@media (max-width: 768px) {
+    .container, .screen, .welcome-content, .typing-content, .crystal-content, .gallery-content, .export-content {
+        padding-left: var(--space-16);
+        padding-right: var(--space-16);
+        margin: 0 auto;
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
+    }
+    
+    body {
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        overflow-x: hidden;
+    }
+}
+
+@media (max-width: 480px) {
+    .container, .screen, .welcome-content, .typing-content, .crystal-content, .gallery-content, .export-content {
+        padding-left: var(--space-12);
+        padding-right: var(--space-12);
+        margin: 0 auto;
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 360px) {
+    .container, .screen, .welcome-content, .typing-content, .crystal-content, .gallery-content, .export-content {
+        padding-left: var(--space-8);
+        padding-right: var(--space-8);
+        margin: 0 auto;
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
     }
 }
