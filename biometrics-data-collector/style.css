@@ -923,19 +923,7 @@ select.form-control {
   font-weight: var(--font-weight-normal);
 }
 
-.typing-feedback-display .cursor {
-  background: var(--color-primary);
-  color: var(--color-background);
-  padding: 2px 1px;
-  border-radius: 3px;
-  animation: cursor-blink 1s infinite;
-  font-weight: var(--font-weight-bold);
-}
 
-@keyframes cursor-blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0.3; }
-}
 
 /* Dark mode adjustments for typing feedback */
 @media (prefers-color-scheme: dark) {
@@ -987,8 +975,7 @@ select.form-control {
   
   .typing-feedback-display .typed-correct,
   .typing-feedback-display .typed-incorrect,
-  .typing-feedback-display .to-type,
-  .typing-feedback-display .cursor {
+  .typing-feedback-display .to-type {
     padding: 1px 0.5px;
     border-radius: 2px;
   }
@@ -1008,8 +995,7 @@ select.form-control {
   
   .typing-feedback-display .typed-correct,
   .typing-feedback-display .typed-incorrect,
-  .typing-feedback-display .to-type,
-  .typing-feedback-display .cursor {
+  .typing-feedback-display .to-type {
     padding: 0.5px 0.25px;
     border-radius: 1px;
   }
