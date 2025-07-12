@@ -689,8 +689,20 @@ class BiometricDataCollector {
                 const typingSection = document.getElementById('typing-screen');
                 typingSection.appendChild(nextTaskBtn);
             } else if (targetScreen === 'gallery') {
-                const crystalSection = document.getElementById('crystal-screen');
-                crystalSection.appendChild(nextTaskBtn);
+                // Position the gallery button right after the Reset Current Step button
+                const crystalControls = document.querySelector('.crystal-controls');
+                if (crystalControls) {
+                    // Insert the button after the reset button but before the next step button
+                    const resetBtn = document.getElementById('reset-step-btn');
+                    if (resetBtn && resetBtn.nextSibling) {
+                        crystalControls.insertBefore(nextTaskBtn, resetBtn.nextSibling);
+                    } else {
+                        crystalControls.appendChild(nextTaskBtn);
+                    }
+                } else {
+                    const crystalSection = document.getElementById('crystal-screen');
+                    crystalSection.appendChild(nextTaskBtn);
+                }
             }
         } else {
             nextTaskBtn.textContent = `Next Task: ${taskName}`;
@@ -1619,7 +1631,7 @@ class BiometricDataCollector {
         const shiftFlightTime = Math.round(totalFlightTime * shiftProportion);
         const capitalFlightTime = Math.round(totalFlightTime * capitalProportion);
         
-        // Record SHIFT event first
+        // Record SHIFT event first (with flight time from previous keystroke to SHIFT)
         const shiftEvent = {
             timestamp: prevKeystrokeTime + shiftFlightTime,
             actualChar: 'SHIFT',
@@ -1629,13 +1641,13 @@ class BiometricDataCollector {
             position: position,
             clientX: this.pointerTracking.x,
             clientY: this.pointerTracking.y,
-            flightTime: shiftFlightTime,
+            flightTime: shiftFlightTime, // Flight time from previous keystroke to SHIFT
             shiftKey: true,
             shiftPressed: true,
             isSynthetic: true
         };
         
-        // Record capital letter event second
+        // Record capital letter event second (with flight time from SHIFT to capital letter)
         const capitalEvent = {
             timestamp: prevKeystrokeTime + shiftFlightTime + capitalFlightTime,
             actualChar: capitalChar,
@@ -1645,7 +1657,7 @@ class BiometricDataCollector {
             position: position,
             clientX: this.pointerTracking.x,
             clientY: this.pointerTracking.y,
-            flightTime: capitalFlightTime,
+            flightTime: capitalFlightTime, // Flight time from SHIFT to capital letter
             shiftKey: true,
             shiftPressed: true
         };
@@ -1659,7 +1671,10 @@ class BiometricDataCollector {
         this.lastChar = capitalChar;
         this.lastCharTime = capitalEvent.timestamp;
         
-        console.log(`✅ SHIFT + ${capitalChar} recorded with flight time split: SHIFT=${shiftFlightTime}ms (${Math.round(shiftProportion*100)}%), ${capitalChar}=${capitalFlightTime}ms (${Math.round(capitalProportion*100)}%)`);
+        console.log(`✅ SHIFT + ${capitalChar} recorded with proper flight time split:`);
+        console.log(`  Previous keystroke → SHIFT: ${shiftFlightTime}ms (${Math.round(shiftProportion*100)}%)`);
+        console.log(`  SHIFT → ${capitalChar}: ${capitalFlightTime}ms (${Math.round(capitalProportion*100)}%)`);
+        console.log(`  Total flight time: ${totalFlightTime}ms`);
     }
     
     recordKeystroke(data) {
