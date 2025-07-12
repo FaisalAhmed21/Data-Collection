@@ -97,11 +97,11 @@ class BiometricDataCollector {
         
         // Crystal game state
         this.crystalSteps = [
-            { id: 1, instruction: "Tap the crystal exactly 3 times with your finger", target: 3, type: 'tap' },
-            { id: 2, instruction: "Touch anywhere on crystal surface, then rotate clockwise for one full rotation with one finger. After green light, rotate counter-clockwise for one full rotation. After second green light, rotate clockwise again for one full rotation. After third green light, task is complete.", target: 3, type: 'rotate' },
-            { id: 3, instruction: "Pinch to shrink the crystal to 50% size", target: 0.5, type: 'pinch' },
-            { id: 4, instruction: "Spread fingers to grow crystal to 150% size", target: 1.5, type: 'spread' },
-            { id: 5, instruction: "Tap the crystal facets in the order they light up. Follow the sequence to activate all 10 facets.", target: 10, type: 'facet_tap' }
+            { id: 1, instruction: "Tap the crystal exactly 3 times with your finger. Each tap will make the crystal glow. Complete all 3 taps to proceed.", target: 3, type: 'tap' },
+            { id: 2, instruction: "Touch the crystal, then rotate your finger CLOCKWISE in a complete circle. After the teal glow, rotate COUNTER-CLOCKWISE in a complete circle. After the second teal glow, rotate CLOCKWISE again in a complete circle. Complete all 3 rotations to proceed.", target: 3, type: 'rotate' },
+            { id: 3, instruction: "Place two fingers on the crystal and pinch them together to shrink the crystal to 50% of its original size. The crystal will glow when you reach the target size.", target: 0.5, type: 'pinch' },
+            { id: 4, instruction: "Place two fingers on the crystal and spread them apart to enlarge the crystal to 150% of its original size. The crystal will glow when you reach the target size.", target: 1.5, type: 'spread' },
+            { id: 5, instruction: "Tap the crystal facets in the exact order they light up (green dots). Follow the sequence carefully to activate all 10 facets. Each correct tap will make the facet glow blue.", target: 10, type: 'facet_tap' }
         ];
         
         this.crystalState = {
@@ -2810,24 +2810,24 @@ class BiometricDataCollector {
     
     getStepTitle(type) {
         const titles = {
-            'tap': 'Finger Tapping',
-            'rotate': 'One Finger Rotation',
-            'pinch': 'Pinch to Shrink',
-            'spread': 'Spread to Enlarge',
-            'pressure': 'Three-Finger Pressure',
-            'facet_tap': 'Crystal Facet Tapping'
+            'tap': 'Step 1: Finger Tapping (3 Taps)',
+            'rotate': 'Step 2: Finger Rotation (3 Circles)',
+            'pinch': 'Step 3: Pinch to Shrink (50%)',
+            'spread': 'Step 4: Spread to Enlarge (150%)',
+            'pressure': 'Step 5: Three-Finger Pressure',
+            'facet_tap': 'Step 5: Facet Sequence Tapping (10 Facets)'
         };
         return titles[type] || 'Unknown';
     }
     
     getInitialProgress(type) {
         const progress = {
-            'tap': '0/3',
-            'rotate': '0/3',
-            'pinch': '100% → 50%',
-            'spread': '100% → 150%',
-            'pressure': '0s / 3s',
-            'facet_tap': '0/10'
+            'tap': 'Taps: 0/3',
+            'rotate': 'Rotations: 0/3',
+            'pinch': 'Target: 50% (Current: 100%)',
+            'spread': 'Target: 150% (Current: 100%)',
+            'pressure': 'Hold Time: 0s / 3s',
+            'facet_tap': 'Facets: 0/10'
         };
         return progress[type] || '0/0';
     }
@@ -2835,19 +2835,55 @@ class BiometricDataCollector {
     updateStepProgress(progress) {
         document.getElementById('step-progress').textContent = progress;
         
-        // STRICT guidance for rotation step
-        if (this.currentCrystalStep === 2) {
-            const stepStatus = document.getElementById('step-status');
-            if (this.crystalState.rotationCompleted) {
-                stepStatus.textContent = 'Perfect! All rotations completed - Next step available';
-            } else if (this.crystalState.rotationRounds === 0) {
-                stepStatus.textContent = 'STRICT: Touch crystal, then rotate CLOCKWISE only for one full rotation';
-            } else if (this.crystalState.rotationRounds === 1) {
-                stepStatus.textContent = 'Teal highlight! STRICT: Now rotate COUNTER-CLOCKWISE only for one full rotation';
-            } else if (this.crystalState.rotationRounds === 2) {
-                stepStatus.textContent = 'Second teal highlight! STRICT: Now rotate CLOCKWISE only for one full rotation';
+        // Enhanced guidance for all steps
+        const stepStatus = document.getElementById('step-status');
+        
+        if (this.currentCrystalStep === 1) {
+            // Tap step guidance
+            if (this.crystalState.tapCount === 0) {
+                stepStatus.textContent = 'Ready: Tap the crystal 3 times with your finger';
+            } else if (this.crystalState.tapCount < 3) {
+                stepStatus.textContent = `Progress: ${this.crystalState.tapCount}/3 taps completed. Continue tapping!`;
             } else {
-                stepStatus.textContent = 'STRICT RULES: CW → CCW → CW (only these directions work)';
+                stepStatus.textContent = '✅ Complete! All 3 taps finished. Click "Next Step" to continue.';
+            }
+        } else if (this.currentCrystalStep === 2) {
+            // Rotation step guidance
+            if (this.crystalState.rotationCompleted) {
+                stepStatus.textContent = '✅ Perfect! All 3 rotations completed. Click "Next Step" to continue.';
+            } else if (this.crystalState.rotationRounds === 0) {
+                stepStatus.textContent = 'Step 1: Touch the crystal, then rotate your finger CLOCKWISE in a complete circle';
+            } else if (this.crystalState.rotationRounds === 1) {
+                stepStatus.textContent = 'Step 2: Great! Now rotate COUNTER-CLOCKWISE in a complete circle';
+            } else if (this.crystalState.rotationRounds === 2) {
+                stepStatus.textContent = 'Step 3: Almost done! Now rotate CLOCKWISE again in a complete circle';
+            } else {
+                stepStatus.textContent = 'Rotation Pattern: CLOCKWISE → COUNTER-CLOCKWISE → CLOCKWISE';
+            }
+        } else if (this.currentCrystalStep === 3) {
+            // Pinch step guidance
+            const currentSize = Math.round(this.crystalState.currentSize * 100);
+            if (currentSize > 50) {
+                stepStatus.textContent = `Current: ${currentSize}% - Pinch fingers together to reach 50%`;
+            } else {
+                stepStatus.textContent = '✅ Perfect! Crystal shrunk to 50%. Click "Next Step" to continue.';
+            }
+        } else if (this.currentCrystalStep === 4) {
+            // Spread step guidance
+            const currentSize = Math.round(this.crystalState.currentSize * 100);
+            if (currentSize < 150) {
+                stepStatus.textContent = `Current: ${currentSize}% - Spread fingers apart to reach 150%`;
+            } else {
+                stepStatus.textContent = '✅ Perfect! Crystal enlarged to 150%. Click "Next Step" to continue.';
+            }
+        } else if (this.currentCrystalStep === 5) {
+            // Facet tapping step guidance
+            if (this.crystalState.currentFacetIndex === 0) {
+                stepStatus.textContent = 'Ready: Tap the facets in the order they light up (green dots)';
+            } else if (this.crystalState.currentFacetIndex < 10) {
+                stepStatus.textContent = `Progress: ${this.crystalState.currentFacetIndex}/10 facets activated. Continue the sequence!`;
+            } else {
+                stepStatus.textContent = '✅ Complete! All 10 facets activated. Click "Next Step" to continue.';
             }
         }
     }
