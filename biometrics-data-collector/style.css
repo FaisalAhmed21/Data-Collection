@@ -2540,3 +2540,60 @@ h1, h2, h3, h4, h5, h6, p, span, label, div, button, input, textarea, select {
     position: relative;
     z-index: 5;
 }
+
+/* Responsive design for different mobile devices */
+@media (max-width: 480px) {
+    #crystal-area {
+        width: 350px;
+        height: 350px;
+    }
+    
+    .crystal-facet {
+        border-width: 2px;
+    }
+    
+    .facet-highlight {
+        border-width: 2px;
+    }
+}
+
+@media (max-width: 360px) {
+    #crystal-area {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .crystal-facet {
+        border-width: 1px;
+    }
+    
+    .facet-highlight {
+        border-width: 2px;
+    }
+}
+
+@media (max-width: 320px) {
+    #crystal-area {
+        width: 280px;
+        height: 280px;
+    }
+}
+
+/* Ensure smooth performance on all devices */
+.crystal-facet,
+.facet-highlight {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+
+/* High DPI display optimization */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .crystal-facet {
+        border-width: 1px;
+    }
+    
+    .facet-highlight {
+        border-width: 1px;
+    }
+}
