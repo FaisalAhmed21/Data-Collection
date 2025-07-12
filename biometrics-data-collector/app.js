@@ -841,6 +841,7 @@ class BiometricDataCollector {
             
             this.calculateAccuracy();
             this.checkSentenceCompletion();
+            this.updateTypingFeedback();
             return;
         }
     
