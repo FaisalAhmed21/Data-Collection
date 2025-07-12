@@ -26,45 +26,40 @@ class BiometricDataCollector {
             y: window.innerHeight / 2
         };
         
-        // Enhanced composition state for mobile IME handling
         this.compositionActive = false;
         this.lastInputLength = 0;
         
-        // Enhanced deduplication tracking with platform-specific cooldowns
         this.lastBackspaceTime = 0;
         this.lastSpaceTime = 0;
         this.lastShiftTime = 0;
         this.lastCharTime = 0;
         this.lastChar = null;
         this.previousChar = null;
-        this.lastShiftRecorded = false; // Track if SHIFT was already recorded for current sequence
+        this.lastShiftRecorded = false;
         
-        // Platform-specific cooldown windows (in milliseconds)
         if (this.isIOS) {
-            this.backspaceCooldown = 200;  // iOS: 200ms for backspace
-            this.spaceCooldown = 300;      // iOS: 300ms for space
-            this.shiftCooldown = 100;      // iOS: 100ms for shift
-            this.charCooldown = 50;        // iOS: 50ms for regular characters
+            this.backspaceCooldown = 200;
+            this.spaceCooldown = 300;
+            this.shiftCooldown = 100;
+            this.charCooldown = 50;
         } else if (this.isAndroid) {
-            this.backspaceCooldown = 150;  // Android: 150ms for backspace
-            this.spaceCooldown = 250;      // Android: 250ms for space
-            this.shiftCooldown = 80;       // Android: 80ms for shift
-            this.charCooldown = 30;        // Android: 30ms for regular characters
+            this.backspaceCooldown = 150;
+            this.spaceCooldown = 250;
+            this.shiftCooldown = 80;
+            this.charCooldown = 30;
         } else {
-            this.backspaceCooldown = 100;  // Desktop: 100ms for backspace
-            this.spaceCooldown = 200;      // Desktop: 200ms for space
-            this.shiftCooldown = 50;       // Desktop: 50ms for shift
-            this.charCooldown = 20;        // Desktop: 20ms for regular characters
+            this.backspaceCooldown = 100;
+            this.spaceCooldown = 200;
+            this.shiftCooldown = 50;
+            this.charCooldown = 20;
         }
         
-        // Enhanced input event tracking
         this.lastInputValue = '';
         this.inputEventCount = 0;
         this.lastInputEvent = null;
         this.lastInputEventTime = 0;
         this.inputEventCooldown = this.isIOS ? 50 : 30;
         
-        // Enhanced shift state tracking
         this.shiftPressed = false;
         this.shiftPressTime = 0;
         this.shiftReleaseTime = 0;
@@ -72,7 +67,6 @@ class BiometricDataCollector {
         this.currentCase = 'lowercase';
         this.flightTimeData = [];
         
-        // Enhanced gallery zoom state with pinch support
         this.galleryZoom = {
             scale: 1,
             isPanning: false,
@@ -84,7 +78,7 @@ class BiometricDataCollector {
             initialDistance: 0,
             touches: [],
             lastTapTime: 0,
-            zoomPersistent: false // Track if zoom should persist
+            zoomPersistent: false
         };
         
         // Typing task data
@@ -95,7 +89,6 @@ class BiometricDataCollector {
             "Tesla's Model S hit 0-60 mph in 2.1 seconds - breaking the previous record!"
         ];
         
-        // Crystal game state
         this.crystalSteps = [
             { id: 1, instruction: "Tap the crystal exactly 3 times with your finger. Each tap will make the crystal glow. Complete all 3 taps to proceed.", target: 3, type: 'tap' },
             { id: 2, instruction: "Touch the crystal, then rotate your finger CLOCKWISE in a complete circle. After the teal glow, rotate COUNTER-CLOCKWISE in a complete circle. After the second teal glow, rotate CLOCKWISE again in a complete circle. Complete all 3 rotations to proceed.", target: 3, type: 'rotate' },
@@ -122,18 +115,16 @@ class BiometricDataCollector {
             rotationDirection: null,
             rotationRounds: 0,
             rotationSequence: [],
-            rotationCompleted: false, // Track if rotation task is completed
-            wrongDirectionStarted: false, // Track if wrong direction was started
+            rotationCompleted: false,
+            wrongDirectionStarted: false,
             currentTrial: 1,
             stepStartTime: null,
-            // Facet tapping state
             facets: [],
             currentFacetIndex: 0,
             tappedFacets: new Set(),
             facetSequence: []
         };
         
-        // Gallery images
         this.galleryImages = [
             'https://picsum.photos/800/600?random=1',
             'https://picsum.photos/800/600?random=2',
@@ -357,9 +348,8 @@ class BiometricDataCollector {
             browserInfoElement.textContent = `${this.deviceInfo.browser_name} ${this.deviceInfo.browser_version}`;
         }
 
-        // Column 1: Phone Model, Column 2: Browser Name
-        const phoneModelElement = document.getElementById('phone-model'); // Column 1
-        const browserNameElement = document.getElementById('browser-name'); // Column 2
+        const phoneModelElement = document.getElementById('phone-model');
+        const browserNameElement = document.getElementById('browser-name');
         if (phoneModelElement) {
           phoneModelElement.textContent = this.deviceInfo.device_model;
         }
@@ -640,34 +630,7 @@ class BiometricDataCollector {
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
 
-        // Restrict cursor movement: always keep cursor at end
-        /*
-        typingInput.addEventListener('keydown', (e) => {
-            // Prevent arrow keys, Home, End, and selection
-            if ([37, 38, 39, 40, 35, 36].includes(e.keyCode) || (e.ctrlKey && (e.key === 'a' || e.key === 'A'))) {
-                e.preventDefault();
-                return false;
-            }
-        });
-        typingInput.addEventListener('mousedown', (e) => {
-            // Prevent mouse click from moving cursor
-            e.preventDefault();
-            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-            return false;
-        });
-        typingInput.addEventListener('mouseup', (e) => {
-            // Always set cursor at end after mouse up
-            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-        });
-        typingInput.addEventListener('select', (e) => {
-            // Prevent text selection
-            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-        });
-        typingInput.addEventListener('input', (e) => {
-            // Always keep cursor at end after input
-            typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-        });
-        */
+
     }
     
     switchScreen(screenName) {
@@ -757,7 +720,6 @@ class BiometricDataCollector {
         console.log(`✅ Next Task button shown for: ${taskName}`);
     }
     
-    // ENHANCED: Improved mobile-friendly keystroke detection with platform-specific deduplication
     handleTypingInput(e) {
         const { inputType, data } = e;
         const inputEl = e.target;
@@ -766,16 +728,13 @@ class BiometricDataCollector {
         const timestamp = performance.now();
         const currentTime = performance.now();
         
-        // Enhanced event signature for better deduplication
         const eventSignature = `${inputType}-${data}-${value.length}-${pos}`;
         
-        // Skip processing during composition on mobile
         if (this.compositionActive && inputType === 'insertText') {
             console.log('🔄 Composition active, skipping insertText');
             return;
         }
         
-        // Enhanced deduplication for input events
         if (data && inputType === 'insertText') {
             const isQuote = data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´' || data === '′' || data === '‵' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶';
             
@@ -783,7 +742,6 @@ class BiometricDataCollector {
                 console.log('🔍 Quote input detected:', data, 'charCode:', data.charCodeAt(0), 'type:', inputType);
             }
             
-            // Platform-specific deduplication
             if (this.isIOS) {
                 const dedupWindow = isQuote ? 50 : 300;
                 if (this.lastInputEvent === eventSignature && 
@@ -803,7 +761,6 @@ class BiometricDataCollector {
             }
         }
         
-        // Update tracking variables
         this.lastInputValue = value;
         this.lastInputLength = value.length;
         this.lastInputEvent = eventSignature;
@@ -814,12 +771,10 @@ class BiometricDataCollector {
             console.log(`📱 Mobile input event: "${data}" | Event #${this.inputEventCount} | Platform: ${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}`);
         }
 
-        // ENHANCED: Improved backspace handling with platform-specific cooldowns
         if (inputType && inputType.startsWith('delete')) {
             if (inputType === 'deleteContentBackward' || inputType === 'deleteContent' || inputType === 'deleteWordBackward') {
                 const currentTime = performance.now();
                 
-                // Platform-specific backspace deduplication
                 if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
                     this.recordKeystroke({
                         timestamp: timestamp - 0.5,
@@ -845,13 +800,11 @@ class BiometricDataCollector {
             return;
         }
     
-        // ENHANCED: Improved text insertion with better character handling
         else if (inputType === 'insertText' && data) {
             for (let i = 0; i < data.length; i++) {
                 const char = data[i];
                 const charTimestamp = timestamp + i;
                 
-                // ENHANCED: Improved space handling with platform-specific deduplication
                 if (char === ' ') {
                     const currentTime = performance.now();
                     if (currentTime - this.lastSpaceTime < this.spaceCooldown) {
@@ -876,16 +829,12 @@ class BiometricDataCollector {
                     console.log(`✅ SPACE recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, 'cooldown:', this.spaceCooldown, 'ms');
                 }
                 else {
-                    // ENHANCED: Improved character normalization and shift handling
                     let refChar = this.normalizeCharacter(char);
                     
-                    // ENHANCED: Improved shift detection for uppercase letters - record only once per sequence
                     if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
                         const currentTime = performance.now();
                         
-                        // Only record SHIFT if it hasn't been recorded for this sequence and cooldown passed
                         if (!this.lastShiftRecorded && currentTime - this.lastShiftTime > this.shiftCooldown) {
-                            // Record SHIFT event first
                             this.recordKeystroke({
                                 timestamp: charTimestamp - 0.5,
                                 actualChar: 'SHIFT',
@@ -901,14 +850,12 @@ class BiometricDataCollector {
                             this.lastShiftRecorded = true; // Mark SHIFT as recorded for this sequence
                             console.log(`✅ SHIFT recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, 'cooldown:', this.shiftCooldown, 'ms');
                         }
-                    } else {
-                        // Reset SHIFT tracking for non-uppercase characters
-                        this.lastShiftRecorded = false;
-                    }
-                    
-                    // Check if character should be recorded with platform-specific deduplication
-                    const isQuote = refChar === "'" || refChar === '"';
-                    if (this.shouldRecordChar(refChar, charTimestamp, isQuote)) {
+                                            } else {
+                            this.lastShiftRecorded = false;
+                        }
+                        
+                        const isQuote = refChar === "'" || refChar === '"';
+                        if (this.shouldRecordChar(refChar, charTimestamp, isQuote)) {
                         console.log(`📝 Recording keystroke (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, refChar, 'type:', inputType, 'timestamp:', charTimestamp);
                         
                         this.recordKeystroke({
@@ -933,11 +880,9 @@ class BiometricDataCollector {
             }
         }
     
-        // Handle other input types
         else if (inputType && data) {
             let refChar = this.normalizeCharacter(data);
             
-            // Handle shift for uppercase letters in other input types - record only once per sequence
             if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
                 const currentTime = performance.now();
                 if (!this.lastShiftRecorded && currentTime - this.lastShiftTime > this.shiftCooldown) {
@@ -957,7 +902,6 @@ class BiometricDataCollector {
                     console.log(`✅ SHIFT recorded (other input) (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, 'cooldown:', this.shiftCooldown, 'ms');
                 }
             } else {
-                // Reset SHIFT tracking for non-uppercase characters
                 this.lastShiftRecorded = false;
             }
             
@@ -988,7 +932,6 @@ class BiometricDataCollector {
         this.updateTypingFeedback();
     }
     
-    // Update typing feedback display with real-time visual feedback
     updateTypingFeedback() {
         const typed = document.getElementById('typing-input').value;
         const target = this.sentences[this.currentSentence];
@@ -999,23 +942,18 @@ class BiometricDataCollector {
         let feedbackHTML = '';
         const minLength = Math.min(typed.length, target.length);
         
-        // Process typed characters
         for (let i = 0; i < minLength; i++) {
             if (typed[i] === target[i]) {
-                // Correct character
                 feedbackHTML += `<span class="typed-correct">${this.escapeHtml(typed[i])}</span>`;
             } else {
-                // Incorrect character
                 feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
             }
         }
         
-        // Add remaining typed characters (if any) as incorrect
         for (let i = minLength; i < typed.length; i++) {
             feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
         }
         
-        // Add remaining target characters
         for (let i = typed.length; i < target.length; i++) {
             feedbackHTML += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
         }
@@ -1023,129 +961,122 @@ class BiometricDataCollector {
         feedbackDisplay.innerHTML = feedbackHTML;
     }
     
-    // Helper method to escape HTML characters
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
     
-    // ENHANCED: Character normalization for consistent handling across platforms
     normalizeCharacter(char) {
-        // Handle smart quotes and apostrophes (common in mobile keyboards)
         if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵') {
-            return "'"; // Single quote/apostrophe - all variants
+            return "'";
         } else if (char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟' || char === '″' || char === '‶') {
-            return '"'; // Double quote - all variants
+            return '"';
         } else if (char === '-' || char === '–' || char === '—') {
-            return '-'; // Hyphen/dash
+            return '-';
         } else if (char === '.' || char === '…') {
-            return '.'; // Period/ellipsis
+            return '.';
         } else if (char === ',' || char === '،') {
-            return ','; // Comma
+            return ',';
         } else if (char === '!' || char === '¡') {
-            return '!'; // Exclamation
+            return '!';
         } else if (char === '?' || char === '¿') {
-            return '?'; // Question mark
+            return '?';
         } else if (char === '@') {
-            return '@'; // At symbol
+            return '@';
         } else if (char === '#') {
-            return '#'; // Hash
+            return '#';
         } else if (char === '$' || char === '€' || char === '£' || char === '¥') {
-            return '$'; // Dollar/currency
+            return '$';
         } else if (char === '%') {
-            return '%'; // Percent
+            return '%';
         } else if (char === '&') {
-            return '&'; // Ampersand
+            return '&';
         } else if (char === '*') {
-            return '*'; // Asterisk
+            return '*';
         } else if (char === '(') {
-            return '('; // Left parenthesis
+            return '(';
         } else if (char === ')') {
-            return ')'; // Right parenthesis
+            return ')';
         } else if (char === '+' || char === '±') {
-            return '+'; // Plus
+            return '+';
         } else if (char === '=' || char === '≠') {
-            return '='; // Equals
+            return '=';
         } else if (char === '[' || char === '【') {
-            return '['; // Left bracket
+            return '[';
         } else if (char === ']' || char === '】') {
-            return ']'; // Right bracket
+            return ']';
         } else if (char === '{' || char === '｛') {
-            return '{'; // Left brace
+            return '{';
         } else if (char === '}' || char === '｝') {
-            return '}'; // Right brace
+            return '}';
         } else if (char === '\\' || char === '＼') {
-            return '\\'; // Backslash
+            return '\\';
         } else if (char === '|' || char === '｜') {
-            return '|'; // Pipe
+            return '|';
         } else if (char === ';' || char === '；') {
-            return ';'; // Semicolon
+            return ';';
         } else if (char === ':' || char === '：') {
-            return ':'; // Colon
+            return ':';
         } else if (char === '/' || char === '／') {
-            return '/'; // Forward slash
+            return '/';
         } else if (char === '<' || char === '＜') {
-            return '<'; // Less than
+            return '<';
         } else if (char === '>' || char === '＞') {
-            return '>'; // Greater than
+            return '>';
         } else if (char === '`' || char === '｀') {
-            return '`'; // Backtick
+            return '`';
         } else if (char === '~' || char === '～') {
-            return '~'; // Tilde
+            return '~';
         } else if (char === '^' || char === '＾') {
-            return '^'; // Caret
+            return '^';
         } else if (char === '_' || char === '＿') {
-            return '_'; // Underscore
+            return '_';
         } else if (char === '°' || char === '℃' || char === '℉') {
-            return '°'; // Degree symbol
+            return '°';
         } else if (char === '©' || char === '®' || char === '™') {
-            return char; // Copyright symbols
+            return char;
         } else if (char === '§' || char === '¶') {
-            return char; // Section symbols
+            return char;
         } else if (char === '†' || char === '‡') {
-            return char; // Dagger symbols
+            return char;
         } else if (char === '•' || char === '·' || char === '▪' || char === '▫') {
-            return '•'; // Bullet points
+            return '•';
         } else if (char === '✓' || char === '✔' || char === '☑') {
-            return '✓'; // Check marks
+            return '✓';
         } else if (char === '✗' || char === '✘' || char === '☒') {
-            return '✗'; // X marks
+            return '✗';
         } else if (char === '→' || char === '←' || char === '↑' || char === '↓') {
-            return char; // Arrows
+            return char;
         } else if (char === '♠' || char === '♥' || char === '♦' || char === '♣') {
-            return char; // Card suits
+            return char;
         } else if (char === '☺' || char === '☻' || char === '☹') {
-            return char; // Emoticons
+            return char;
         } else if (char === '☀' || char === '☁' || char === '☂' || char === '☃') {
-            return char; // Weather symbols
+            return char;
         } else if (char === '♫' || char === '♪' || char === '♬') {
-            return char; // Music symbols
+            return char;
         } else if (char === '∞' || char === '≈' || char === '≤' || char === '≥') {
-            return char; // Math symbols
+            return char;
         } else if (char === '∑' || char === '∏' || char === '∫' || char === '√') {
-            return char; // Advanced math symbols
+            return char;
         } else if (char === 'α' || char === 'β' || char === 'γ' || char === 'δ') {
-            return char; // Greek letters
+            return char;
         } else if (char === 'π' || char === 'μ' || char === 'σ' || char === 'τ') {
-            return char; // More Greek letters
+            return char;
         } else {
-            // For all other characters, use as-is
             return char;
         }
     }
     
-    // ENHANCED: Character detection with better mobile support
     getActualTypedCharacter(e, inputValue = '') {
-        // 1. Handle mobile IME / virtual keyboard composition events
         if (e.keyCode === 229 || e.key === 'Unidentified' || e.key === 'Process') {
             if (inputValue.length > this.lastInputLength) {
                 return inputValue.slice(-1);
             }
-            return null; // Don't record unidentified characters
+            return null;
         }
     
-        // 2. Handle well-known special keys
         const specialKeys = {
             'Backspace':    'Backspace',
             'Enter':        'enter',
@@ -1293,12 +1224,10 @@ class BiometricDataCollector {
             return specialKeys[e.key];
         }
     
-        // 3. Handle printable characters
         if (e.key && e.key.length === 1) {
             return e.key;
         }
     
-        // 4. Fallback for older browsers or rare keys
         if (e.keyCode && !isNaN(e.keyCode)) {
             const char = String.fromCharCode(e.keyCode);
             if (char && /\S/.test(char)) {
@@ -1306,15 +1235,12 @@ class BiometricDataCollector {
             }
         }
     
-        // 5. Return null for unidentifiable keys
         return null;
     }
     
-    // ENHANCED: Improved keydown handling with platform-specific deduplication
     handleKeydown(e) {
         const timestamp = performance.now();
         
-        // ENHANCED: Improved SHIFT tracking with platform-specific cooldowns
         if (e.key === 'Shift') {
             const currentTime = performance.now();
             if (currentTime - this.lastShiftTime > this.shiftCooldown) {
@@ -1340,23 +1266,19 @@ class BiometricDataCollector {
             return;
         }
         
-        // Block navigation keys
         const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
         if (restrictedKeys.includes(e.key)) {
             e.preventDefault();
             return;
         }
         
-        // Block copy-paste
         if (e.ctrlKey && ['v', 'x', 'c'].includes(e.key.toLowerCase())) {
             e.preventDefault();
             return;
         }
         
-        // Get the actual typed character
         const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
 
-        // ENHANCED: Improved backspace handling with platform-specific cooldowns
         if (actualCharacter === 'Backspace' || actualCharacter === 'backspace') {
             const currentTime = performance.now();
             
@@ -1386,11 +1308,9 @@ class BiometricDataCollector {
             return;
         }
         
-        // ENHANCED: Improved character handling with platform-specific deduplication
         if (actualCharacter) {
             console.log(`Key pressed (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, e.key, 'KeyCode:', e.keyCode, 'Detected:', actualCharacter);
             
-            // Check if character should be recorded
             if (this.shouldRecordChar(actualCharacter, timestamp, false)) {
                 this.recordKeystroke({
                     timestamp,
@@ -1412,11 +1332,9 @@ class BiometricDataCollector {
         this.checkSentenceCompletion();
     }
     
-    // ENHANCED: Improved keyup handling with platform-specific deduplication
     handleKeyup(e) {
         const timestamp = performance.now();
         
-        // ENHANCED: Improved SHIFT tracking with platform-specific cooldowns
         if (e.key === 'Shift') {
             const currentTime = performance.now();
             if (currentTime - this.lastShiftTime > this.shiftCooldown) {
@@ -1442,23 +1360,19 @@ class BiometricDataCollector {
             return;
         }
         
-        // Block navigation keys
         const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
         if (restrictedKeys.includes(e.key)) {
             e.preventDefault();
             return;
         }
         
-        // Block copy-paste
         if (e.ctrlKey && ['v', 'x', 'c'].includes(e.key.toLowerCase())) {
             e.preventDefault();
             return;
         }
         
-        // Get the actual typed character
         const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
 
-        // ENHANCED: Improved backspace handling with platform-specific cooldowns
         if (actualCharacter === 'Backspace' || actualCharacter === 'backspace') {
             const currentTime = performance.now();
             
@@ -1488,11 +1402,9 @@ class BiometricDataCollector {
             return;
         }
         
-        // ENHANCED: Improved character handling with platform-specific deduplication
         if (actualCharacter) {
             console.log(`Key released (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, e.key, 'KeyCode:', e.keyCode, 'Detected:', actualCharacter);
             
-            // Check if character should be recorded
             if (this.shouldRecordChar(actualCharacter, timestamp, false)) {
                 this.recordKeystroke({
                     timestamp,
@@ -1517,7 +1429,6 @@ class BiometricDataCollector {
     startTypingTask() {
         this.currentSentence = 0;
         
-        // Reset all tracking variables for clean start
         this.lastInputLength = 0;
         this.previousChar = null;
         this.lastBackspaceTime = 0;
@@ -1525,28 +1436,24 @@ class BiometricDataCollector {
         this.lastShiftTime = 0;
         this.lastCharTime = 0;
         this.lastChar = null;
-        this.lastShiftRecorded = false; // Reset SHIFT tracking
+        this.lastShiftRecorded = false;
         
-        // Reset mobile input tracking
         this.lastInputValue = '';
         this.inputEventCount = 0;
         this.lastInputEvent = null;
         this.lastInputEventTime = 0;
         
-        // Reset composition state
         this.compositionActive = false;
         
         this.displayCurrentSentence();
         this.updateTypingProgress();
         
-        // Log platform-specific cooldown settings
         console.log(`🔍 Starting typing task (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}) - Cooldown settings:`);
         console.log(`  Backspace: ${this.backspaceCooldown}ms`);
         console.log(`  Space: ${this.spaceCooldown}ms`);
         console.log(`  Shift: ${this.shiftCooldown}ms`);
         console.log(`  Characters: ${this.charCooldown}ms`);
         
-        // Test quote handling for debugging
         console.log('🔍 Quote handling test:');
         this.testQuoteHandling();
     }
@@ -1564,7 +1471,6 @@ class BiometricDataCollector {
         nextBtn.style.backgroundColor = 'var(--color-secondary)';
         nextBtn.style.opacity = '0.5';
         
-        // Initialize typing feedback display
         this.updateTypingFeedback();
     }
     
@@ -1599,7 +1505,6 @@ class BiometricDataCollector {
             console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
         }
     
-        // NEW: Enable/disable Next Sentence button based on accuracy
         const nextButton = document.getElementById('next-sentence-btn');
         if (nextButton) {
             if (accuracy === 100) {
@@ -1611,7 +1516,6 @@ class BiometricDataCollector {
             }
         }
     
-        // Animate accuracy ring
         const accuracyRing = document.getElementById('accuracy-ring');
         const accuracyValue = document.getElementById('accuracy');
         const encourage = document.querySelector('.accuracy-encourage');
@@ -1649,10 +1553,8 @@ class BiometricDataCollector {
         const target = this.sentences[this.currentSentence];
         const nextBtn = document.getElementById('next-sentence-btn');
         const accuracy = this.calculateAccuracy();
-        // Only enable next button and show fireworks if 100% accuracy is achieved
         if (typed === target && accuracy === 100) {
             if (this.currentSentence === this.sentences.length - 1) {
-                // Last sentence: hide next sentence button, show next task button
                 nextBtn.style.display = 'none';
                 this.showNextTaskButton('crystal', 'Crystal Forge Game');
             } else {
@@ -1684,20 +1586,16 @@ class BiometricDataCollector {
     }
     
     recordKeystroke(data) {
-        // Always log quote keystrokes for debugging
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('[QUOTE] Keystroke captured:', data);
         }
         const isQuote = data.actualChar === "'" || data.actualChar === '"';
-        // FINAL iOS safety check to prevent double character recording
-        // More lenient for quotes to ensure they are captured
         if (this.isIOS && data.actualChar && data.actualChar !== 'BACKSPACE' && data.actualChar !== 'SHIFT' && !isQuote) {
             const currentTime = performance.now();
             const isQuote = data.actualChar === "'" || data.actualChar === '"';
             const dedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
             
-            // Check if this exact character was recorded very recently
-            const recentKeystrokes = this.keystrokeData.slice(-5); // Check last 5 keystrokes
+            const recentKeystrokes = this.keystrokeData.slice(-5);
             const duplicateFound = recentKeystrokes.some(ks => 
                 ks.actualChar === data.actualChar && 
                 (currentTime - ks.timestamp) < dedupWindow
@@ -1708,7 +1606,6 @@ class BiometricDataCollector {
             }
         }
 
-        // Calculate flight time (time between keystrokes)
         const currentTime = performance.now();
         let prevKeystrokeTime = this.lastKeystrokeTime > 0 ? this.lastKeystrokeTime : currentTime;
         let flightTime = 0;
@@ -1719,26 +1616,21 @@ class BiometricDataCollector {
 
 
 
-        // Enhanced SHIFT handling for capital letters
         if (
             data.actualChar &&
             data.actualChar.length === 1 &&
             this.getCharacterCase(data.actualChar) === 'uppercase'
         ) {
-            // Check if we already recorded a SHIFT for this character recently
             const currentTime = performance.now();
             const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
             
-            // Only add SHIFT if we haven't recorded one recently
             if (!lastKeystroke || 
                 lastKeystroke.actualChar !== 'SHIFT' || 
                 (currentTime - lastKeystroke.timestamp) > 50) {
                 
-                // Always insert a synthetic SHIFT event before the uppercase letter
-                let split = 0.4 + Math.random() * 0.2; // 0.4 to 0.6
+                let split = 0.4 + Math.random() * 0.2;
                 let shiftFlight = flightTime * split;
                 let capFlight = flightTime * (1 - split);
-                // Synthetic SHIFT event
                 const shiftEvent = {
                     ...data,
                     actualChar: 'SHIFT',
@@ -1750,7 +1642,6 @@ class BiometricDataCollector {
                     shiftPressed: true,
                     isSynthetic: true
                 };
-                // Capital letter event
                 const capEvent = {
                     ...data,
                     timestamp: prevKeystrokeTime + shiftFlight + capFlight,
@@ -1758,7 +1649,6 @@ class BiometricDataCollector {
                     shiftKey: true,
                     shiftPressed: true
                 };
-                // iOS deduplication: ensure no duplicate SHIFT or capital letter events
                 if (this.isIOS) {
                     const recent = this.keystrokeData.slice(-4);
                     if (!recent.some(e => e.actualChar === 'SHIFT' && Math.abs(e.timestamp - shiftEvent.timestamp) < 10)) {
@@ -1771,39 +1661,32 @@ class BiometricDataCollector {
                     this.keystrokeData.push(shiftEvent);
                     this.keystrokeData.push(capEvent);
                 }
-                // Update lastKeystrokeTime
                 this.lastKeystrokeTime = capEvent.timestamp;
                 this.lastChar = data.actualChar;
                 return;
             } else {
-                // SHIFT already recorded recently, just record the capital letter
                 console.log('🚫 SHIFT already recorded recently, skipping duplicate');
             }
         }
 
-        // Enhanced SHIFT handling for actual SHIFT key
         if (data.actualChar === 'SHIFT') {
             data.shiftAction = this.shiftPressed ? 'release' : 'press';
             data.shiftDuration = this.shiftPressed ? (currentTime - this.shiftPressTime) : 0;
             data.caseTransition = this.getCaseTransition(data);
             console.log(`🔤 SHIFT ${data.shiftAction}: ${data.caseTransition}, duration: ${data.shiftDuration.toFixed(2)}ms`);
         } else if (data.actualChar && data.actualChar !== 'BACKSPACE') {
-            // Add SHIFT context to regular characters
             data.shiftPressed = this.shiftPressed;
             data.characterCase = this.getCharacterCase(data.actualChar);
             data.caseTransition = this.getCaseTransition(data);
         }
 
-        // Update last keystroke time
         if (data.actualChar !== 'SHIFT') {
             this.lastKeystrokeTime = currentTime;
         }
 
-        // Debug logging for quote characters
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('Recording keystroke with quote:', data.actualChar, 'type:', data.type);
         }
-        // Debug logging for backspace
         if (data.actualChar === 'Backspace') {
             console.log('Recording backspace keystroke:', data.type, 'timestamp:', data.timestamp);
         }
@@ -1811,7 +1694,6 @@ class BiometricDataCollector {
         this.keystrokeData.push(data);
     }
     
-    // SHIFT and case handling helper methods
     getCharacterCase(char) {
         if (char.length === 1) {
             if (char >= 'A' && char <= 'Z') return 'uppercase';
@@ -1855,7 +1737,6 @@ class BiometricDataCollector {
         }
     }
     
-    // Helper method to get backspace statistics for debugging
     getBackspaceStats() {
         const backspaces = this.keystrokeData.filter(k => k.actualChar === 'BACKSPACE');
         console.log('Backspace Statistics:');
@@ -1865,12 +1746,9 @@ class BiometricDataCollector {
         return backspaces;
     }
     
-    // Helper method to check if character should be recorded (deduplication)
-    // ENHANCED: Platform-specific character deduplication with improved logic
     shouldRecordChar(char, timestamp, isQuote = false) {
         const currentTime = performance.now();
         
-        // Platform-specific deduplication windows
         let dedupWindow;
         if (char === 'SPACE') {
             dedupWindow = this.spaceCooldown;
@@ -1879,13 +1757,11 @@ class BiometricDataCollector {
         } else if (char === 'SHIFT') {
             dedupWindow = this.shiftCooldown;
         } else if (isQuote) {
-            // More lenient deduplication for quotes on mobile
             dedupWindow = this.isIOS ? 50 : this.isAndroid ? 30 : 20;
         } else {
             dedupWindow = this.charCooldown;
         }
         
-        // Check for duplicate characters within the cooldown window
         if (this.lastChar === char && this.lastCharTime) {
             const timeSinceLast = currentTime - this.lastCharTime;
             if (timeSinceLast < dedupWindow) {
@@ -1894,22 +1770,18 @@ class BiometricDataCollector {
             }
         }
         
-        // Additional platform-specific checks
         if (this.isIOS) {
-            // iOS-specific: Check for rapid input events
             if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 25) {
                 console.log(`🚫 iOS rapid input BLOCKED: ${char} - time since last event: ${currentTime - this.lastInputEventTime}ms`);
                 return false;
             }
         } else if (this.isAndroid) {
-            // Android-specific: Check for input event duplicates
             if (this.lastInputEvent === char && this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 20) {
                 console.log(`🚫 Android input event duplicate BLOCKED: ${char} - time since last: ${currentTime - this.lastInputEventTime}ms`);
                 return false;
             }
         }
         
-        // Update tracking variables
         this.lastChar = char;
         this.lastCharTime = currentTime;
         this.lastInputEvent = char;
@@ -1919,14 +1791,12 @@ class BiometricDataCollector {
         return true;
     }
     
-    // Helper method to get character statistics for debugging
     getCharStats() {
         const chars = this.keystrokeData.filter(k => k.actualChar && k.actualChar !== 'BACKSPACE' && k.actualChar !== 'SHIFT');
         console.log('Character Statistics:');
         console.log('Total characters recorded:', chars.length);
         console.log('Character types:', [...new Set(chars.map(c => c.type))]);
         
-        // Count duplicates
         const charCounts = {};
         chars.forEach(c => {
             charCounts[c.actualChar] = (charCounts[c.actualChar] || 0) + 1;
@@ -1942,11 +1812,9 @@ class BiometricDataCollector {
         return chars;
     }
     
-    // Helper method to test quote handling specifically
     testQuoteHandling() {
         console.log('🔍 Testing quote handling for mobile keyboards (Gboard, iOS):');
         
-        // Check if quotes are in the recorded data
         const quotes = this.keystrokeData.filter(k => k.actualChar === "'" || k.actualChar === '"');
         console.log('Quotes found in keystroke data:', quotes.length);
         
@@ -1959,14 +1827,12 @@ class BiometricDataCollector {
             console.log('❌ No quotes found in keystroke data!');
         }
         
-        // Test character detection
         const testChars = ["'", "'", "'", "'", "'", "'", "`", "´", "′", "‵", '"', '"', '"', '"', '"', '"', "„", "‟", "″", "‶"];
         console.log('Testing character detection:');
         testChars.forEach(char => {
             console.log(`  "${char}" (${char.charCodeAt(0)}) -> should be normalized`);
         });
         
-        // Test deduplication windows for quotes
         console.log('Quote deduplication windows:');
         console.log('  iOS input event dedup: 50ms (vs 300ms for others)');
         console.log('  iOS rapid input dedup: 100ms (vs 150ms for others)');
