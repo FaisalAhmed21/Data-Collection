@@ -815,34 +815,34 @@ class BiometricDataCollector {
             console.log(`📱 Mobile input event: "${data}" | Event #${this.inputEventCount} | Signature: ${eventSignature}`);
         }
     
-        if (inputType && inputType.startsWith('delete')) {
-            if (inputType === 'deleteContentBackward' || inputType === 'deleteContent' || inputType === 'deleteWordBackward') {
-                const currentTime = performance.now();
+        // if (inputType && inputType.startsWith('delete')) {
+        //     if (inputType === 'deleteContentBackward' || inputType === 'deleteContent' || inputType === 'deleteWordBackward') {
+        //         const currentTime = performance.now();
                 
-                if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
-                    this.recordKeystroke({
-                        timestamp: timestamp - 0.5,
-                        actualChar: 'BACKSPACE',
-                        keyCode: 8,
-                        type: inputType,
-                        sentence: this.currentSentence,
-                        position: pos,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
-                    console.log('Mobile backspace recorded:', inputType, 'at time:', currentTime);
+        //         if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
+        //             this.recordKeystroke({
+        //                 timestamp: timestamp - 0.5,
+        //                 actualChar: 'BACKSPACE',
+        //                 keyCode: 8,
+        //                 type: inputType,
+        //                 sentence: this.currentSentence,
+        //                 position: pos,
+        //                 clientX: this.pointerTracking.x,
+        //                 clientY: this.pointerTracking.y
+        //             });
+        //             console.log('Mobile backspace recorded:', inputType, 'at time:', currentTime);
                     
-                    this.lastBackspaceTime = currentTime;
-                } else {
-                    console.log('Mobile backspace duplicate ignored:', inputType, 'time since last:', currentTime - this.lastBackspaceTime);
-                }
-            }
+        //             this.lastBackspaceTime = currentTime;
+        //         } else {
+        //             console.log('Mobile backspace duplicate ignored:', inputType, 'time since last:', currentTime - this.lastBackspaceTime);
+        //         }
+        //     }
             
-            // Update accuracy and check sentence completion after backspace
-            this.calculateAccuracy();
-            this.checkSentenceCompletion();
-            return;
-        }
+        //     // Update accuracy and check sentence completion after backspace
+        //     this.calculateAccuracy();
+        //     this.checkSentenceCompletion();
+        //     return;
+        // }
     
         // Handle text insertion
         else if (inputType === 'insertText' && data) {
@@ -851,9 +851,12 @@ class BiometricDataCollector {
                 const posOffset = pos - data.length + i;
                 
                 if (char === ' ') {
-                    // SPACE character
+                    const currentTime = performance.now();
+                    if (this.lastChar === 'SPACE' && (currentTime - this.lastCharTime < 200)) {
+                        console.log('🚫 Duplicate SPACE ignored');
+                        return;
+                    }
                     this.recordKeystroke({
-                        timestamp: timestamp + i,
                         actualChar: 'SPACE',
                         keyCode: 32,
                         type: inputType,
@@ -976,27 +979,27 @@ class BiometricDataCollector {
                     
                     // SPECIAL CASE: Handle SHIFT logic for case changes
                     // Only record SHIFT if going from lowercase to uppercase, not from uppercase to lowercase
-                    if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
-                        // Check if previous character was lowercase
-                        if (this.previousChar && this.previousChar === this.previousChar.toLowerCase() && this.previousChar.match(/[a-z]/)) {
-                            // Going from lowercase to uppercase - record SHIFT first, then the letter
-                            this.recordKeystroke({
-                                timestamp: timestamp + i - 0.5,
-                                actualChar: 'SHIFT',
-                                keyCode: 16,
-                                type: inputType,
-                                sentence: this.currentSentence,
-                                position: pos - data.length + i,
-                                clientX: this.pointerTracking.x,
-                                clientY: this.pointerTracking.y
-                            });
-                        }
-                        // Record the uppercase letter
-                        refChar = char;
-                    } else if (char === char.toLowerCase() && char.match(/[a-z]/)) {
-                        // Lowercase letter - no SHIFT needed
-                        refChar = char;
-                    }
+                    // if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
+                    //     // Check if previous character was lowercase
+                    //     if (this.previousChar && this.previousChar === this.previousChar.toLowerCase() && this.previousChar.match(/[a-z]/)) {
+                    //         // Going from lowercase to uppercase - record SHIFT first, then the letter
+                    //         this.recordKeystroke({
+                    //             timestamp: timestamp + i - 0.5,
+                    //             actualChar: 'SHIFT',
+                    //             keyCode: 16,
+                    //             type: inputType,
+                    //             sentence: this.currentSentence,
+                    //             position: pos - data.length + i,
+                    //             clientX: this.pointerTracking.x,
+                    //             clientY: this.pointerTracking.y
+                    //         });
+                    //     }
+                    //     // Record the uppercase letter
+                    //     refChar = char;
+                    // } else if (char === char.toLowerCase() && char.match(/[a-z]/)) {
+                    //     // Lowercase letter - no SHIFT needed
+                    //     refChar = char;
+                    // }
                     
                     // Debug logging for quote characters
                     if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟' || char === '″' || char === '‶') {
