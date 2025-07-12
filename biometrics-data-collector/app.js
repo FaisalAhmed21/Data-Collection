@@ -692,10 +692,10 @@ class BiometricDataCollector {
                 // Position the gallery button right after the Reset Current Step button
                 const crystalControls = document.querySelector('.crystal-controls');
                 if (crystalControls) {
-                    // Insert the button after the reset button but before the next step button
+                    // Insert the button right after the reset button to keep them in the same row
                     const resetBtn = document.getElementById('reset-step-btn');
-                    if (resetBtn && resetBtn.nextSibling) {
-                        crystalControls.insertBefore(nextTaskBtn, resetBtn.nextSibling);
+                    if (resetBtn) {
+                        resetBtn.insertAdjacentElement('afterend', nextTaskBtn);
                     } else {
                         crystalControls.appendChild(nextTaskBtn);
                     }
