@@ -12,7 +12,7 @@
         <div id="welcome-screen" class="screen active">
             <div class="welcome-content">
                 <h1>Behavioral Biometrics Study</h1>
-                <p class="welcome-highlight">Unlock the secrets of your unique typing and gestures!<br><span class="emoji">🧠✨</span></p>
+                <p class="welcome-highlight">Help us understand your unique typing and touch patterns!<br><span class="emoji">🧠✨</span></p>
                 <div class="participant-info">
                     <p>Participant ID: <span id="participant-id">-</span></p>
                 </div>
@@ -21,7 +21,7 @@
                         <h3 class="consent-heading">Consent to Participate in Research</h3>
                         <div class="consent-body">
                             <p class="consent-summary"><b>Before you begin, please review and provide your consent:</b></p>
-                            <p class="consent-main"><b>By participating, you allow us to collect your typing and gesture data anonymously for research purposes. Your privacy will be fully respected, and your information will be securely protected.</b></p>
+                            <p class="consent-main"><b>By participating, you allow us to collect your typing and touch interaction data anonymously for research purposes. Your privacy will be fully respected, and your information will be securely protected.</b></p>
                             <div class="consent-checkbox-center">
                                 <label class="consent-label">
                                     <input type="checkbox" id="consent-checkbox">
@@ -32,7 +32,7 @@
                         </div>
                     </div>
                 </div>
-                <button id="start-btn" class="btn btn--primary btn--lg" disabled>START STUDY</button>
+                <button id="start-btn" class="btn btn--primary btn--lg" disabled>START TYPING & TOUCH TASKS</button>
                 <div class="welcome-visuals">
                     <div class="animated-graphic">
                         <!-- Replace crystal with abstract animated SVG using teal/purple -->
@@ -64,7 +64,7 @@
                 <div class="progress-bar">
                     <div class="progress-fill" id="typing-progress"></div>
                 </div>
-                <p class="task-instruction">Type the following sentence exactly as shown.</p>
+                <p class="task-instruction">Type each sentence exactly as shown. You must achieve 100% accuracy to proceed. Use the visual feedback below to see your progress and any mistakes.</p>
                 
                 <div class="sentence-display">
                     <p id="target-sentence"></p>
@@ -99,7 +99,7 @@
                     </div>
                 </div>
                 
-                <button id="next-sentence-btn" class="btn btn--primary" disabled>Next Sentence</button>
+                <button id="next-sentence-btn" class="btn btn--primary" disabled>Next Sentence (100% Accuracy Required)</button>
             </div>
         </div>
 
@@ -143,8 +143,8 @@
                 </div>
                 
                 <div class="crystal-controls">
-                    <button id="reset-step-btn" class="btn btn--secondary">Reset Step</button>
-                    <button id="next-crystal-btn" class="btn btn--primary" disabled>Next Step</button>
+                    <button id="reset-step-btn" class="btn btn--secondary">Reset Current Step</button>
+                    <button id="next-crystal-btn" class="btn btn--primary" disabled>Next Step (Complete Current First)</button>
                 </div>
             </div>
         </div>
@@ -153,7 +153,7 @@
         <div id="gallery-screen" class="screen">
             <div class="gallery-content">
                 <h2>Image Gallery</h2>
-                <p class="gallery-instruction">Click on images to view them. In full-screen: swipe right for next image, swipe left for previous image. Use zoom controls to zoom in/out.</p>
+                <p class="gallery-instruction">Click on any image to view it in full-screen. In full-screen mode: swipe right for next image, swipe left for previous image. Use pinch gestures or zoom controls to zoom in/out. Double-tap to reset zoom.</p>
                 
                 <div class="gallery-container">
                     <div class="gallery-grid" id="gallery-grid">
@@ -161,7 +161,7 @@
                     </div>
                 </div>
                 
-                <button id="finish-gallery-btn" class="btn btn--primary">Complete Gallery</button>
+                <button id="finish-gallery-btn" class="btn btn--primary">Complete Gallery & Export Data</button>
             </div>
         </div>
 
@@ -169,7 +169,7 @@
         <div id="export-screen" class="screen">
             <div class="export-content">
                 <h2>Data Export</h2>
-                <p>Your behavioral biometric data has been collected successfully.</p>
+                <p>Congratulations! You have successfully completed all tasks. Your typing and touch interaction data has been collected for research purposes.</p>
                 
                 <div class="export-stats">
                     <div class="stat-card">
@@ -214,7 +214,7 @@
                 </div>
                 
                 <div class="completion-message">
-                    <p>Thank you for participating in this behavioral biometrics study!</p>
+                    <p>Thank you for participating in this behavioral biometrics study! Your contribution helps advance our understanding of human-computer interaction patterns.</p>
                 </div>
             </div>
         </div>
