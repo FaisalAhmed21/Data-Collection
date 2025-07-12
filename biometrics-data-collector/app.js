@@ -984,6 +984,54 @@ class BiometricDataCollector {
     
         this.calculateAccuracy();
         this.checkSentenceCompletion();
+        this.updateTypingFeedback();
+    }
+    
+    // Update typing feedback display with real-time visual feedback
+    updateTypingFeedback() {
+        const typed = document.getElementById('typing-input').value;
+        const target = this.sentences[this.currentSentence];
+        const feedbackDisplay = document.getElementById('typing-feedback-display');
+        
+        if (!feedbackDisplay || !target) return;
+        
+        let feedbackHTML = '';
+        const minLength = Math.min(typed.length, target.length);
+        
+        // Process typed characters
+        for (let i = 0; i < minLength; i++) {
+            if (typed[i] === target[i]) {
+                // Correct character
+                feedbackHTML += `<span class="typed-correct">${this.escapeHtml(typed[i])}</span>`;
+            } else {
+                // Incorrect character
+                feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
+            }
+        }
+        
+        // Add remaining typed characters (if any) as incorrect
+        for (let i = minLength; i < typed.length; i++) {
+            feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
+        }
+        
+        // Add cursor if still typing
+        if (typed.length < target.length) {
+            feedbackHTML += `<span class="cursor">|</span>`;
+        }
+        
+        // Add remaining target characters
+        for (let i = typed.length; i < target.length; i++) {
+            feedbackHTML += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
+        }
+        
+        feedbackDisplay.innerHTML = feedbackHTML;
+    }
+    
+    // Helper method to escape HTML characters
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
     
     // ENHANCED: Character normalization for consistent handling across platforms
@@ -1519,6 +1567,9 @@ class BiometricDataCollector {
         nextBtn.style.display = 'inline-flex';
         nextBtn.style.backgroundColor = 'var(--color-secondary)';
         nextBtn.style.opacity = '0.5';
+        
+        // Initialize typing feedback display
+        this.updateTypingFeedback();
     }
     
     calculateAccuracy() {
