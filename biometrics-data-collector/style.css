@@ -1372,6 +1372,7 @@ select.form-control {
   box-shadow: var(--shadow-sm);
   position: relative;
   flex-wrap: wrap;
+  min-height: 60px; /* Ensure consistent container height */
 }
 
 /* Ensure all buttons in crystal controls have consistent styling and alignment */
@@ -1383,14 +1384,19 @@ select.form-control {
   justify-content: center;
   flex: 0 0 auto; /* Prevent buttons from growing/shrinking */
   margin: 0; /* Remove any default margins */
+  align-self: stretch; /* Ensure all buttons stretch to same height */
+  box-sizing: border-box; /* Include padding and border in height calculation */
 }
 
 /* Specific styling for the next task button */
 .crystal-controls .next-task-btn {
   order: 2; /* Place it after the reset button */
-  margin-top: 0; /* Remove top margin to align with reset button */
+  margin: 0; /* Remove all margins to ensure perfect alignment */
   height: auto; /* Ensure consistent height */
-  align-self: center; /* Center align with other buttons */
+  align-self: stretch; /* Stretch to match other buttons */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Ensure proper alignment when Next Step button is hidden */
@@ -1399,8 +1405,15 @@ select.form-control {
 }
 
 /* Ensure all buttons maintain consistent spacing and alignment */
-.crystal-controls .btn:not(:last-child) {
-  margin-right: 0; /* Remove right margin, use gap instead */
+.crystal-controls .btn {
+  margin: 0; /* Remove all margins, use gap instead */
+  align-self: stretch; /* Ensure all buttons stretch to same height */
+}
+
+/* Force perfect alignment for the next task button */
+.crystal-controls .next-task-btn {
+  align-self: center; /* Center align with other buttons */
+  line-height: 1.2; /* Consistent line height */
 }
 
 @media (max-width: 600px) {
@@ -1418,6 +1431,7 @@ select.form-control {
     font-size: var(--font-size-sm);
     padding: var(--space-8) var(--space-12);
     flex: 0 0 auto;
+    align-self: stretch; /* Ensure perfect alignment */
   }
 }
 
