@@ -2956,3 +2956,16 @@ html, body {
     text-shadow: 0 1px 2px rgba(0,0,0,0.18) !important;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  .accuracy-value, .stat-value, .feedback-value {
+    color: #fff !important;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.7), 0 0 2px var(--color-success);
+    font-weight: bold;
+  }
+}
+[data-color-scheme="dark"] .accuracy-value, [data-color-scheme="dark"] .stat-value, [data-color-scheme="dark"] .feedback-value {
+  color: #fff !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.7), 0 0 2px var(--color-success);
+  font-weight: bold;
+}
