@@ -1755,6 +1755,9 @@ class BiometricDataCollector {
         if (data.actualChar === 'BACKSPACE') {
             console.log('Recording backspace keystroke:', data.type, 'timestamp:', data.timestamp);
         }
+        if (data.actualChar === '†') {
+            console.log('Recording † symbol keystroke (iOS SHIFT replacement):', data.type, 'timestamp:', data.timestamp, 'synthetic:', data.isSynthetic || false);
+        }
 
         this.keystrokeData.push(data);
         
@@ -1820,6 +1823,12 @@ class BiometricDataCollector {
     
         shouldRecordChar(char, timestamp, isQuote = false) {
         const currentTime = performance.now();
+    
+        // Special handling for † symbol - always allow it to be recorded
+        if (char === '†') {
+            console.log(`✅ † symbol always approved for recording (iOS SHIFT replacement)`);
+            return true;
+        }
     
         // iOS: Enhanced deduplication for all characters including BACKSPACE
         if (this.isIOS) {
@@ -2007,6 +2016,17 @@ class BiometricDataCollector {
         // Check for SHIFT events
         const shiftEvents = this.keystrokeData.filter(k => k.actualChar === 'SHIFT');
         console.log('SHIFT events found:', shiftEvents.length);
+        
+        // Check for † symbol events (iOS SHIFT replacement)
+        const daggerEvents = this.keystrokeData.filter(k => k.actualChar === '†');
+        console.log('† symbol events found:', daggerEvents.length);
+        
+        if (daggerEvents.length > 0) {
+            console.log('† symbol details:');
+            daggerEvents.forEach((dagger, i) => {
+                console.log(`  † symbol ${i + 1}: timestamp ${Math.round(dagger.timestamp)}ms, type: ${dagger.type}, synthetic: ${dagger.isSynthetic || false}`);
+            });
+        }
         
         return quotes;
     }
@@ -3398,10 +3418,15 @@ class BiometricDataCollector {
         this.keystrokeData.forEach((keystroke, index) => {
             if (keystroke.type === 'keydown' || keystroke.type === 'keyup' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete')) {
                 // Skip synthetic capital letter events to prevent duplicates in final output
-                // But keep synthetic SHIFT events for proper flight time analysis
-                if (keystroke.isSynthetic && keystroke.actualChar !== 'SHIFT') {
+                // But keep synthetic SHIFT events and † symbol for proper analysis
+                if (keystroke.isSynthetic && keystroke.actualChar !== 'SHIFT' && keystroke.actualChar !== '†') {
                     console.log(`🚫 Skipping synthetic capital letter in feature extraction: ${keystroke.actualChar}`);
                     return;
+                }
+                
+                // Special handling for † symbol - always include it in output
+                if (keystroke.actualChar === '†') {
+                    console.log(`✅ Including † symbol in feature extraction (iOS SHIFT replacement)`);
                 }
                 
                 let flightTime = keystroke.flightTime || 0;
