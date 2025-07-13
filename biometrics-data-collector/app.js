@@ -1204,7 +1204,7 @@ class BiometricDataCollector {
                 timestamp,
                 actualChar: '⇧',
                 keyCode: 16,
-                type: 'keyup',
+                type: 'keydown',
                 shiftKey: true,
                 ctrlKey: e.ctrlKey,
                 altKey: e.altKey,
@@ -1539,61 +1539,6 @@ class BiometricDataCollector {
     }
     
     // New method to handle SHIFT + capital letter with proper flight time distribution
-    recordKeystrokeWithShift(timestamp, capitalChar, position, inputType) {
-        const currentTime = performance.now();
-        // Always record SHIFT event, even for the very first character
-        const prevKeystrokeTime = (this.lastKeystrokeTime && this.lastKeystrokeTime > 0) ? this.lastKeystrokeTime : (timestamp - 1);
-        const totalFlightTime = currentTime - prevKeystrokeTime;
-        // Generate 60-40 random proportion (55-65% for SHIFT, 35-45% for capital letter)
-        const shiftProportion = 0.55 + Math.random() * 0.1; // 55% to 65%
-        const capitalProportion = 1 - shiftProportion; // 35% to 45%
-        const shiftFlightTime = Math.round(totalFlightTime * shiftProportion);
-        const capitalFlightTime = Math.round(totalFlightTime * capitalProportion);
-        // Record SHIFT event first (with flight time from previous keystroke to SHIFT)
-        const shiftEvent = {
-            timestamp: prevKeystrokeTime + shiftFlightTime,
-            actualChar: '⇧',
-            keyCode: 16,
-            type: inputType,
-            sentence: this.currentSentence,
-            position: position,
-            clientX: this.pointerTracking.x,
-            clientY: this.pointerTracking.y,
-            flightTime: shiftFlightTime, // Flight time from previous keystroke to SHIFT
-            shiftKey: true,
-            shiftPressed: true,
-            isSynthetic: true
-        };
-        // Record capital letter event second (with flight time from SHIFT to capital letter)
-        const capitalEvent = {
-            timestamp: prevKeystrokeTime + shiftFlightTime + capitalFlightTime,
-            actualChar: capitalChar,
-            keyCode: capitalChar.charCodeAt(0),
-            type: inputType,
-            sentence: this.currentSentence,
-            position: position,
-            clientX: this.pointerTracking.x,
-            clientY: this.pointerTracking.y,
-            flightTime: capitalFlightTime, // Flight time from SHIFT to capital letter
-            shiftKey: true,
-            shiftPressed: true,
-            isSynthetic: true // Mark as synthetic to prevent duplicate recording
-        };
-        // Add both events to keystroke data
-        this.keystrokeData.push(shiftEvent);
-        this.keystrokeData.push(capitalEvent);
-        // Update tracking variables
-        this.lastKeystrokeTime = capitalEvent.timestamp;
-        this.lastChar = capitalChar;
-        this.lastCharTime = capitalEvent.timestamp;
-        console.log(`[DEBUG] SHIFT event recorded:`, shiftEvent);
-        console.log(`[DEBUG] Capital letter event recorded:`, capitalEvent);
-        console.log(`✅ SHIFT + ${capitalChar} recorded with proper flight time split:`);
-        console.log(`  Previous keystroke → SHIFT: ${shiftFlightTime}ms (${Math.round(shiftProportion*100)}%)`);
-        console.log(`  SHIFT → ${capitalChar}: ${capitalFlightTime}ms (${Math.round(capitalProportion*100)}%)`);
-        console.log(`  Total flight time: ${totalFlightTime}ms`);
-    }
-    
     recordKeystroke(data) {
         if (['SHIFT', 'BACKSPACE', 'SPACE', 'ENTER', 'TAB', 'escape', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'delete', 'home', 'end'].includes(data.actualChar)) {
             console.log(`[DEBUG] Special key recorded:`, data);
@@ -1634,6 +1579,7 @@ class BiometricDataCollector {
 
         // Add flight time to the data
         data.flightTime = Math.round(flightTime);
+        data.ref_char = data.actualChar;
 
         // Handle SHIFT-specific data
         if (data.actualChar === 'SHIFT') {
