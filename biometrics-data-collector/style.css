@@ -2391,6 +2391,8 @@ select.form-control {
   /* Ensure proper rendering on all devices */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
+  /* Ensure proper positioning context for absolute positioned children */
+  position: relative;
 }
 
 /* Ensure SVG circle is always a complete circle */
