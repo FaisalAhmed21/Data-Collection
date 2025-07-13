@@ -749,6 +749,7 @@ class BiometricDataCollector {
             return;
         }
         
+        // Enhanced iOS deduplication for input events
         if (data && inputType === 'insertText') {
             const isQuote = data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´' || data === '′' || data === '‵' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶';
             
@@ -849,11 +850,25 @@ class BiometricDataCollector {
                     if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
                         const currentTime = performance.now();
                         
+                        // Enhanced iOS capital letter handling - prevent double recording
+                        if (this.isIOS) {
+                            // Check if this capital letter was already processed
+                            const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
+                            if (lastKeystroke && 
+                                lastKeystroke.actualChar === refChar && 
+                                (currentTime - lastKeystroke.timestamp) < 200) {
+                                console.log(`🚫 iOS capital letter duplicate BLOCKED: ${refChar} already recorded`);
+                                continue;
+                            }
+                        }
+                        
                         // Check if we need to record SHIFT for this capital letter
                         if (currentTime - this.lastCapitalLetterTime > this.shiftForCapitalCooldown) {
                             // Record SHIFT event with proper flight time distribution
                             this.recordKeystrokeWithShift(charTimestamp, refChar, pos - data.length + i, inputType);
                             this.lastCapitalLetterTime = currentTime;
+                            // Skip recording the actual character since it's already recorded synthetically
+                            continue;
                         } else {
                             // Just record the capital letter without SHIFT
                             if (this.shouldRecordChar(refChar, charTimestamp, false)) {
@@ -909,11 +924,31 @@ class BiometricDataCollector {
             if (data === data.toUpperCase() && data.match(/[A-Z]/)) {
                 const currentTime = performance.now();
                 
+                // Enhanced iOS capital letter handling - prevent double recording
+                if (this.isIOS) {
+                    // Check if this capital letter was already processed
+                    const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
+                    if (lastKeystroke && 
+                        lastKeystroke.actualChar === refChar && 
+                        (currentTime - lastKeystroke.timestamp) < 200) {
+                        console.log(`🚫 iOS capital letter duplicate BLOCKED (other input): ${refChar} already recorded`);
+                        this.calculateAccuracy();
+                        this.checkSentenceCompletion();
+                        this.updateTypingFeedback();
+                        return;
+                    }
+                }
+                
                 // Check if we need to record SHIFT for this capital letter
                 if (currentTime - this.lastCapitalLetterTime > this.shiftForCapitalCooldown) {
                     // Record SHIFT event with proper flight time distribution
                     this.recordKeystrokeWithShift(timestamp, refChar, pos - 1, inputType);
                     this.lastCapitalLetterTime = currentTime;
+                    // Skip recording the actual character since it's already recorded synthetically
+                    this.calculateAccuracy();
+                    this.checkSentenceCompletion();
+                    this.updateTypingFeedback();
+                    return;
                 } else {
                     // Just record the capital letter without SHIFT
                     if (this.shouldRecordChar(refChar, timestamp, false)) {
@@ -1621,6 +1656,41 @@ class BiometricDataCollector {
     // New method to handle SHIFT + capital letter with proper flight time distribution
     recordKeystrokeWithShift(timestamp, capitalChar, position, inputType) {
         const currentTime = performance.now();
+        
+        // Enhanced iOS SHIFT deduplication - prevent multiple SHIFT recordings
+        if (this.isIOS) {
+            // Check if SHIFT was recently recorded for this capital letter
+            const recentKeystrokes = this.keystrokeData.slice(-3);
+            const recentShift = recentKeystrokes.find(ks => 
+                ks.actualChar === 'SHIFT' && 
+                (currentTime - ks.timestamp) < 300
+            );
+            
+            if (recentShift) {
+                console.log(`🚫 iOS SHIFT duplicate BLOCKED: SHIFT already recorded recently for ${capitalChar}`);
+                // Just record the capital letter without additional SHIFT
+                if (this.shouldRecordChar(capitalChar, timestamp, false)) {
+                    this.recordKeystroke({
+                        timestamp: timestamp,
+                        actualChar: capitalChar,
+                        keyCode: capitalChar.charCodeAt(0),
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: position,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y,
+                        shiftKey: true,
+                        shiftPressed: true
+                    });
+                    
+                    this.lastChar = capitalChar;
+                    this.lastCharTime = timestamp;
+                    console.log(`📝 Capital letter recorded without duplicate SHIFT: ${capitalChar}`);
+                }
+                return;
+            }
+        }
+        
         const prevKeystrokeTime = this.lastKeystrokeTime > 0 ? this.lastKeystrokeTime : currentTime;
         const totalFlightTime = currentTime - prevKeystrokeTime;
         
@@ -1659,7 +1729,8 @@ class BiometricDataCollector {
             clientY: this.pointerTracking.y,
             flightTime: capitalFlightTime, // Flight time from SHIFT to capital letter
             shiftKey: true,
-            shiftPressed: true
+            shiftPressed: true,
+            isSynthetic: true // Mark as synthetic to prevent duplicate recording
         };
         
         // Add both events to keystroke data
@@ -1697,6 +1768,12 @@ class BiometricDataCollector {
                 console.log('🚫 iOS FINAL CHECK: Duplicate character BLOCKED:', data.actualChar, 'window:', dedupWindow, 'ms');
                 return;
             }
+        }
+        
+        // Prevent recording synthetic capital letter events that are already recorded
+        if (data.isSynthetic && data.actualChar !== 'SHIFT') {
+            console.log('🚫 Synthetic capital letter already recorded, skipping:', data.actualChar);
+            return;
         }
 
         const currentTime = performance.now();
@@ -1805,6 +1882,24 @@ class BiometricDataCollector {
             dedupWindow = this.charCooldown;
         }
         
+        // Enhanced iOS capital letter deduplication
+        if (this.isIOS && char.match(/[A-Z]/)) {
+            // Check if this capital letter was already recorded recently
+            const recentKeystrokes = this.keystrokeData.slice(-5);
+            const duplicateCapital = recentKeystrokes.find(ks => 
+                ks.actualChar === char && 
+                (currentTime - ks.timestamp) < 250
+            );
+            
+            if (duplicateCapital) {
+                console.log(`🚫 iOS capital letter duplicate BLOCKED in shouldRecordChar: ${char} already recorded`);
+                return false;
+            }
+            
+            // Use longer cooldown for capital letters on iOS
+            dedupWindow = Math.max(dedupWindow, 200);
+        }
+        
         // Check if this character was recently recorded
         if (this.lastChar === char && this.lastCharTime) {
             const timeSinceLast = currentTime - this.lastCharTime;
@@ -1827,6 +1922,16 @@ class BiometricDataCollector {
                 console.log(`🚫 Android input event duplicate BLOCKED: ${char} - time since last: ${currentTime - this.lastInputEventTime}ms`);
                 return false;
             }
+        }
+        
+        // Check for synthetic capital letter events that might have already been recorded
+        const recentSynthetic = this.keystrokeData.slice(-3).find(ks => 
+            ks.isSynthetic && ks.actualChar === char && ks.actualChar !== 'SHIFT' && 
+            (currentTime - ks.timestamp) < 500
+        );
+        if (recentSynthetic) {
+            console.log(`🚫 Synthetic capital letter duplicate BLOCKED: ${char} already recorded synthetically`);
+            return false;
         }
         
         // Update tracking variables
@@ -1888,6 +1993,22 @@ class BiometricDataCollector {
         console.log('  iOS final keystroke dedup: 100ms (vs 300ms for others)');
         console.log('  Android input event dedup: 30ms (vs 100ms for others)');
         console.log('  shouldRecordChar dedup: 15-20ms (vs 30-40ms for others)');
+        
+        // Add capital letter debugging
+        console.log('🔍 Capital letter debugging:');
+        const capitalLetters = this.keystrokeData.filter(k => k.actualChar && k.actualChar.match(/[A-Z]/));
+        console.log('Capital letters found in keystroke data:', capitalLetters.length);
+        
+        if (capitalLetters.length > 0) {
+            console.log('Capital letter details:');
+            capitalLetters.forEach((cap, i) => {
+                console.log(`  Capital ${i + 1}: "${cap.actualChar}" at timestamp ${Math.round(cap.timestamp)}ms, type: ${cap.type}, synthetic: ${cap.isSynthetic || false}`);
+            });
+        }
+        
+        // Check for SHIFT events
+        const shiftEvents = this.keystrokeData.filter(k => k.actualChar === 'SHIFT');
+        console.log('SHIFT events found:', shiftEvents.length);
         
         return quotes;
     }
@@ -3278,6 +3399,13 @@ class BiometricDataCollector {
         
         this.keystrokeData.forEach((keystroke, index) => {
             if (keystroke.type === 'keydown' || keystroke.type === 'keyup' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete')) {
+                // Skip synthetic capital letter events to prevent duplicates in final output
+                // But keep synthetic SHIFT events for proper flight time analysis
+                if (keystroke.isSynthetic && keystroke.actualChar !== 'SHIFT') {
+                    console.log(`🚫 Skipping synthetic capital letter in feature extraction: ${keystroke.actualChar}`);
+                    return;
+                }
+                
                 let flightTime = keystroke.flightTime || 0;
                 if (flightTime === 0 && index > 0) {
                     const timeDiff = keystroke.timestamp - this.keystrokeData[index - 1].timestamp;
@@ -3289,9 +3417,7 @@ class BiometricDataCollector {
                 
                 const wasDeleted = (keystroke.actualChar === 'BACKSPACE' || keystroke.type.startsWith('delete')) ? 1 : 0;
                 let refChar = keystroke.actualChar || 'unknown';
-                if (keystroke.isSynthetic && keystroke.actualChar === 'SHIFT') {
-                    refChar = 'SHIFT';
-                } else if (keystroke.actualChar && keystroke.actualChar.length === 1) {
+                if (keystroke.actualChar && keystroke.actualChar.length === 1) {
                     refChar = keystroke.actualChar;
                 }
                 
