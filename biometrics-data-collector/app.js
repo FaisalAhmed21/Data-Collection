@@ -40,7 +40,7 @@ class BiometricDataCollector {
         this.previousChar = null;
         this.lastShiftRecorded = false;
         this.lastCapitalLetterTime = 0;
-        this.shiftForCapitalCooldown = 100; // Cooldown to prevent multiple SHIFT events for same capital letter
+        this.shiftForCapitalCooldown = 200; // Cooldown to prevent multiple SHIFT events for same capital letter
         
         if (this.isIOS) {
             this.backspaceCooldown = 200;
@@ -759,6 +759,7 @@ class BiometricDataCollector {
                     console.log(`✅ Backspace recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, inputType, 'cooldown:', this.backspaceCooldown, 'ms');
                     
                     this.lastBackspaceTime = currentTime;
+                    his.lastBackspaceType = inputType;
                 } else {
                     console.log(`🚫 Backspace duplicate ignored (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, inputType, 'time since last:', currentTime - this.lastBackspaceTime, 'ms');
                 }
@@ -800,27 +801,26 @@ class BiometricDataCollector {
                 }
                 else {
                     let refChar = this.normalizeCharacter(char);
-                    
                     // Handle capital letters with proper SHIFT recording
                     if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
                         const currentTime = performance.now();
                     
-                        // Prevent same capital letter from being recorded repeatedly
-                        if (refChar === this.lastCapitalChar && (currentTime - this.lastCapitalCharTime) < 200) {
-                            console.log(`🚫 Duplicate capital letter ${refChar} skipped`);
+                        // Prevent duplicate capital detection
+                        if (refChar === this.lastCapitalChar && (currentTime - this.lastCapitalCharTime) < 250) {
+                            console.log(`🚫 Skipped duplicate capital SHIFT+${refChar}`);
                             continue;
                         }
                     
-                        // Record SHIFT + capital if cooldown allows
-                        if (currentTime - this.lastCapitalLetterTime > this.shiftForCapitalCooldown) {
+                        // Ensure SHIFT is not redundantly added if previous was also capital
+                        if ((currentTime - this.lastCapitalLetterTime) > this.shiftForCapitalCooldown) {
                             this.recordKeystrokeWithShift(charTimestamp, refChar, pos - data.length + i, inputType);
                             this.lastCapitalLetterTime = currentTime;
                             this.lastCapitalChar = refChar;
                             this.lastCapitalCharTime = currentTime;
-                            continue; // Skip recording again separately
+                            continue;
                         }
                     
-                        // Otherwise, record capital without SHIFT (fallback)
+                        // If SHIFT recently recorded, don't re-record — just add capital
                         if (this.shouldRecordChar(refChar, charTimestamp, false)) {
                             this.recordKeystroke({
                                 timestamp: charTimestamp,
@@ -832,12 +832,12 @@ class BiometricDataCollector {
                                 clientX: this.pointerTracking.x,
                                 clientY: this.pointerTracking.y
                             });
-                    
                             this.lastChar = refChar;
                             this.lastCharTime = charTimestamp;
-                            console.log(`📝 Capital letter recorded (fallback - no SHIFT):`, refChar);
                         }
-                    }else {
+                        continue;
+                    }
+                    else {
                         // Handle lowercase letters and other characters
                         const isQuote = refChar === "'" || refChar === '"';
                         if (this.shouldRecordChar(refChar, charTimestamp, isQuote)) {
