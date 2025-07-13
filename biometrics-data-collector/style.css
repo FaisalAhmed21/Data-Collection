@@ -2372,7 +2372,8 @@ select.form-control {
   position: relative;
   transition: box-shadow 0.3s;
   overflow: visible; /* Ensure percentage circle is not clipped */
-  padding-right: 20px; /* Extra padding on right to accommodate left-shifted circle */
+  padding-right: 15px; /* Balanced padding to accommodate circle */
+  padding-left: 5px; /* Small left padding for balance */
 }
 .accuracy-ring {
   position: relative;
@@ -2384,17 +2385,24 @@ select.form-control {
   justify-content: center;
 }
 
-/* iOS-specific positioning for percentage circle visibility */
+/* iOS-specific positioning for percentage circle visibility - CENTERED */
 @media screen and (max-width: 768px) {
   .accuracy-ring {
-    margin-left: -10px; /* Move slightly left on mobile for better visibility */
+    margin-left: -5px; /* Slight left offset to ensure full circle visibility */
   }
 }
 
-/* Extra adjustment for smaller iOS screens */
+/* Extra adjustment for smaller iOS screens - CENTERED */
 @media screen and (max-width: 480px) {
   .accuracy-ring {
-    margin-left: -15px; /* More left offset for smaller screens */
+    margin-left: -8px; /* Moderate left offset for smaller screens */
+  }
+}
+
+/* Ensure circle is fully visible on very small screens */
+@media screen and (max-width: 360px) {
+  .accuracy-ring {
+    margin-left: -10px; /* Larger offset for very small screens */
   }
 }
 .accuracy-bg {
@@ -2433,7 +2441,8 @@ select.form-control {
     min-width: 110px;
     min-height: 110px;
     padding: var(--space-8);
-    padding-right: 25px; /* Extra padding for left-shifted circle */
+    padding-right: 20px; /* Balanced padding for circle */
+    padding-left: 8px; /* Small left padding for balance */
     overflow: visible;
   }
   .accuracy-ring {
