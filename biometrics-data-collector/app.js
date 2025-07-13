@@ -62,6 +62,10 @@ class BiometricDataCollector {
         this.lastInputEventTime = 0;
         this.inputEventCooldown = this.isIOS ? 50 : 30;
         
+        // iOS-specific deduplication tracking
+        this.iOSInputHistory = [];
+        this.iOSLastProcessedEvent = null;
+        
         this.shiftPressed = false;
         this.shiftPressTime = 0;
         this.shiftReleaseTime = 0;
@@ -678,6 +682,25 @@ class BiometricDataCollector {
             return;
         }
         
+        // iOS: Early duplicate detection before processing
+        if (this.isIOS && data && inputType === 'insertText') {
+            const currentTime = performance.now();
+            
+            // Check if this exact event was processed recently
+            if (this.iOSLastProcessedEvent && 
+                this.iOSLastProcessedEvent.signature === eventSignature &&
+                (currentTime - this.iOSLastProcessedEvent.timestamp) < 100) {
+                console.log('🚫 iOS early duplicate BLOCKED:', data, 'signature:', eventSignature);
+                return;
+            }
+            
+            // Update last processed event
+            this.iOSLastProcessedEvent = {
+                signature: eventSignature,
+                timestamp: currentTime
+            };
+        }
+        
         // Enhanced iOS deduplication for input events
         if (data && inputType === 'insertText') {
             // Reset SHIFT tracking on any new lowercase letter
@@ -693,7 +716,23 @@ class BiometricDataCollector {
                 console.log('🔍 Quote input detected:', data, 'charCode:', data.charCodeAt(0), 'type:', inputType);
             }
             
-            if (this.isAndroid) {
+            // iOS: More aggressive deduplication
+            if (this.isIOS) {
+                const dedupWindow = isQuote ? 50 : 150; // Longer window for iOS
+                if (this.lastInputEvent === eventSignature && 
+                    this.lastInputEventTime && 
+                    (currentTime - this.lastInputEventTime) < dedupWindow) {
+                    console.log('🚫 iOS duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                    return;
+                }
+                
+                // Additional check for rapid character input
+                if (this.lastChar === data && this.lastCharTime && 
+                    (currentTime - this.lastCharTime) < 100) {
+                    console.log('🚫 iOS rapid character input BLOCKED:', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
+                    return;
+                }
+            } else if (this.isAndroid) {
                 const dedupWindow = isQuote ? 30 : 100;
                 if (this.lastInputEvent === eventSignature && 
                     this.lastInputEventTime && 
@@ -1439,6 +1478,10 @@ class BiometricDataCollector {
         
         this.compositionActive = false;
         
+        // Reset iOS-specific tracking
+        this.iOSInputHistory = [];
+        this.iOSLastProcessedEvent = null;
+        
         this.displayCurrentSentence();
         this.updateTypingProgress();
         
@@ -1635,17 +1678,35 @@ class BiometricDataCollector {
     }
     
     recordKeystroke(data) {
-        // Prevent duplicate keystroke recording
+        // Enhanced iOS deduplication - check against actual recorded data
         const currentTime = performance.now();
-        if (this.lastRecordedKeystroke) {
-            const timeDiff = currentTime - this.lastRecordedKeystroke.timestamp;
-            const charDiff = data.actualChar === this.lastRecordedKeystroke.actualChar;
-            const typeDiff = data.type === this.lastRecordedKeystroke.type;
+        
+        if (this.isIOS) {
+            // Check for duplicates in the last 10 keystrokes with a 200ms window
+            const recentKeystrokes = this.keystrokeData.slice(-10);
+            const duplicateFound = recentKeystrokes.some(ks => {
+                const timeDiff = currentTime - ks.timestamp;
+                return ks.actualChar === data.actualChar && 
+                       ks.type === data.type && 
+                       timeDiff < 200; // 200ms window for iOS
+            });
             
-            // If same character, same type, and within 50ms, it's likely a duplicate
-            if (charDiff && typeDiff && timeDiff < 50) {
-                console.log(`🚫 Duplicate keystroke BLOCKED: ${data.actualChar} (${timeDiff}ms since last)`);
+            if (duplicateFound) {
+                console.log(`🚫 iOS FINAL CHECK: Duplicate keystroke BLOCKED: ${data.actualChar} (type: ${data.type})`);
                 return;
+            }
+        } else {
+            // Original deduplication for Android/Desktop
+            if (this.lastRecordedKeystroke) {
+                const timeDiff = currentTime - this.lastRecordedKeystroke.timestamp;
+                const charDiff = data.actualChar === this.lastRecordedKeystroke.actualChar;
+                const typeDiff = data.type === this.lastRecordedKeystroke.type;
+                
+                // If same character, same type, and within 50ms, it's likely a duplicate
+                if (charDiff && typeDiff && timeDiff < 50) {
+                    console.log(`🚫 Duplicate keystroke BLOCKED: ${data.actualChar} (${timeDiff}ms since last)`);
+                    return;
+                }
             }
         }
         
@@ -1655,22 +1716,6 @@ class BiometricDataCollector {
         
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('[QUOTE] Keystroke captured:', data);
-        }
-        
-        // Enhanced deduplication for iOS (only for backspace)
-        const isQuote = data.actualChar === "'" || data.actualChar === '"';
-        if (this.isIOS && data.actualChar === 'BACKSPACE') {
-            const dedupWindow = 100; // 100ms cooldown for backspace on iOS
-            
-            const recentKeystrokes = this.keystrokeData.slice(-3);
-            const duplicateFound = recentKeystrokes.some(ks => 
-                ks.actualChar === 'BACKSPACE' && 
-                (currentTime - ks.timestamp) < dedupWindow
-            );
-            if (duplicateFound) {
-                console.log('🚫 iOS FINAL CHECK: Duplicate BACKSPACE BLOCKED, window:', dedupWindow, 'ms');
-                return;
-            }
         }
         
         // Prevent recording synthetic capital letter events that are already recorded
@@ -1776,31 +1821,59 @@ class BiometricDataCollector {
         shouldRecordChar(char, timestamp, isQuote = false) {
         const currentTime = performance.now();
     
-        // 🚀 New rule: Always allow BACKSPACE, SHIFT, and † symbol with no deduplication
-        if (char === 'BACKSPACE' || char === 'SHIFT' || char === '†') {
-            return true;
-        }
-        
-        // iOS: Remove all cooldowns except backspace
+        // iOS: Enhanced deduplication for all characters including BACKSPACE
         if (this.isIOS) {
-            // Only apply backspace cooldown for iOS
-            if (char === 'BACKSPACE') {
-                if (this.lastChar === 'BACKSPACE' && this.lastCharTime) {
-                    const timeSinceLast = currentTime - this.lastCharTime;
-                    if (timeSinceLast < 100) { // 100ms cooldown for backspace on iOS
-                        console.log(`🚫 iOS backspace cooldown BLOCKED: ${char} - time since last: ${timeSinceLast}ms`);
-                        return false;
-                    }
+            // Check for recent duplicate keystrokes in the actual data
+            const recentKeystrokes = this.keystrokeData.slice(-5);
+            const duplicateFound = recentKeystrokes.some(ks => {
+                const timeDiff = currentTime - ks.timestamp;
+                return ks.actualChar === char && timeDiff < 150; // 150ms window for iOS
+            });
+            
+            if (duplicateFound) {
+                console.log(`🚫 iOS duplicate BLOCKED: ${char} already recorded recently`);
+                return false;
+            }
+            
+            // Check iOS input history for duplicates
+            const recentInputs = this.iOSInputHistory.slice(-3);
+            const inputDuplicate = recentInputs.some(input => {
+                const timeDiff = currentTime - input.timestamp;
+                return input.char === char && timeDiff < 200; // 200ms window
+            });
+            
+            if (inputDuplicate) {
+                console.log(`🚫 iOS input history duplicate BLOCKED: ${char}`);
+                return false;
+            }
+            
+            // Additional check for rapid input events
+            if (this.lastChar === char && this.lastCharTime) {
+                const timeSinceLast = currentTime - this.lastCharTime;
+                if (timeSinceLast < 100) { // 100ms cooldown for all characters on iOS
+                    console.log(`🚫 iOS rapid input BLOCKED: ${char} - time since last: ${timeSinceLast}ms`);
+                    return false;
                 }
             }
             
-            // For all other characters on iOS, allow recording without cooldown
+            // Update tracking variables
             this.lastChar = char;
             this.lastCharTime = currentTime;
             this.lastInputEvent = char;
             this.lastInputEventTime = currentTime;
             
-            console.log(`✅ iOS character approved for recording (no cooldown): ${char} at time: ${currentTime}`);
+            // Add to iOS input history
+            this.iOSInputHistory.push({
+                char: char,
+                timestamp: currentTime
+            });
+            
+            // Keep only last 10 entries
+            if (this.iOSInputHistory.length > 10) {
+                this.iOSInputHistory.shift();
+            }
+            
+            console.log(`✅ iOS character approved for recording: ${char} at time: ${currentTime}`);
             return true;
         }
     
