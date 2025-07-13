@@ -2430,6 +2430,12 @@ select.form-control {
     height: 60px !important;
     overflow: visible !important;
   }
+  
+  .accuracy-value {
+    font-size: 0.85em !important;
+    max-width: 82% !important;
+    max-height: 82% !important;
+  }
 }
 
 /* Small mobile screens - still centered */
@@ -2449,6 +2455,12 @@ select.form-control {
     height: 60px !important;
     overflow: visible !important;
   }
+  
+  .accuracy-value {
+    font-size: 0.8em !important;
+    max-width: 83% !important;
+    max-height: 83% !important;
+  }
 }
 
 /* Very small mobile screens - still centered */
@@ -2467,6 +2479,12 @@ select.form-control {
     width: 60px !important;
     height: 60px !important;
     overflow: visible !important;
+  }
+  
+  .accuracy-value {
+    font-size: 0.75em !important;
+    max-width: 85% !important;
+    max-height: 85% !important;
   }
 }
 
@@ -2531,11 +2549,16 @@ select.form-control {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3em;
+  font-size: 0.9em;
   font-weight: bold;
   color: #FFFFFF;
   z-index: 2;
   pointer-events: none;
+  /* Ensure text stays within circle bounds */
+  max-width: 80%;
+  max-height: 80%;
+  text-align: center;
+  line-height: 1;
 }
 .accuracy-encourage {
   color: var(--color-success);
@@ -2568,6 +2591,12 @@ select.form-control {
   .accuracy-ring circle {
     overflow: visible !important;
     vector-effect: non-scaling-stroke !important;
+  }
+  
+  .accuracy-value {
+    font-size: 0.75em !important;
+    max-width: 85% !important;
+    max-height: 85% !important;
   }
 }
 
