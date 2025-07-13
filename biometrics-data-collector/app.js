@@ -42,6 +42,7 @@ class BiometricDataCollector {
         this.shiftForCapitalCooldown = 200; // Cooldown to prevent multiple SHIFT events for same capital letter
         this.lastShiftTime = 0; // Track when SHIFT was last recorded
         this.capitalLetterCount = 0; // Track capital letters for debugging
+        this.lastRecordedKeystroke = null; // Track last recorded keystroke to prevent duplicates
         
         if (this.isIOS) {
             this.spaceCooldown = 300;
@@ -487,35 +488,13 @@ class BiometricDataCollector {
         });
         typingInput.addEventListener('compositionend', (e) => {
             this.compositionActive = false;
-            if (e.data) {
-                this.recordKeystroke({
-                    timestamp: performance.now(),
-                    actualChar: e.data,
-                    keyCode: e.data.charCodeAt(0),
-                    type: 'compositionend',
-                    sentence: this.currentSentence,
-                    position: e.target.selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-            }
             console.log('Composition ended:', e.data);
         });
         typingInput.addEventListener('input', (e) => {
             this.handleTypingInput(e);
         });
-        typingInput.addEventListener('keydown', (e) => {
-            if (this.compositionActive || e.keyCode === 229) {
-                return;
-            }
-            this.handleKeydown(e);
-        });
-        typingInput.addEventListener('keyup', (e) => {
-            if (this.compositionActive || e.keyCode === 229) {
-                return;
-            }
-            this.handleKeyup(e);
-        });
+        // Remove keydown and keyup handlers to prevent duplicate recording
+        // All keystroke recording is now handled in handleTypingInput
         typingInput.addEventListener('focus', (e) => {
             const rect = e.target.getBoundingClientRect();
             this.currentPointerX = rect.left + rect.width / 2;
@@ -1436,107 +1415,8 @@ class BiometricDataCollector {
         return null;
     }
     
-    handleKeydown(e) {
-        const timestamp = performance.now();
-        
-        const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-        if (restrictedKeys.includes(e.key)) {
-            e.preventDefault();
-            return;
-        }
-        
-        if (e.ctrlKey && ['v', 'x', 'c'].includes(e.key.toLowerCase())) {
-            e.preventDefault();
-            return;
-        }
-        
-        const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
-
-        if (actualCharacter === 'Backspace' || actualCharacter === 'backspace') {
-                this.recordKeystroke({
-                    timestamp,
-                    actualChar: 'BACKSPACE',
-                    keyCode: 8,
-                    type: 'keydown',
-                    shiftKey: e.shiftKey,
-                    ctrlKey: e.ctrlKey,
-                    altKey: e.altKey,
-                    sentence: this.currentSentence,
-                    position: e.target.selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-            console.log('✅ Backspace keydown recorded once');
-            
-            this.calculateAccuracy();
-            this.checkSentenceCompletion();
-            return;
-        }
-
-        
-        if (actualCharacter) {
-            console.log(`Key pressed (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, e.key, 'KeyCode:', e.keyCode, 'Detected:', actualCharacter);
-            
-            if (this.shouldRecordChar(actualCharacter, timestamp, false)) {
-                this.recordKeystroke({
-                    timestamp,
-                    actualChar: actualCharacter,
-                    keyCode: e.keyCode,
-                    type: 'keydown',
-                    shiftKey: e.shiftKey,
-                    ctrlKey: e.ctrlKey,
-                    altKey: e.altKey,
-                    sentence: this.currentSentence,
-                    position: e.target.selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-            }
-        }
-        
-        this.calculateAccuracy();
-        this.checkSentenceCompletion();
-    }
-    
-    handleKeyup(e) {
-        const timestamp = performance.now();
-        
-        const restrictedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-        if (restrictedKeys.includes(e.key)) {
-            e.preventDefault();
-            return;
-        }
-        
-        if (e.ctrlKey && ['v', 'x', 'c'].includes(e.key.toLowerCase())) {
-            e.preventDefault();
-            return;
-        }
-        
-        const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
-        
-        if (actualCharacter) {
-            console.log(`Key released (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, e.key, 'KeyCode:', e.keyCode, 'Detected:', actualCharacter);
-            
-            if (this.shouldRecordChar(actualCharacter, timestamp, false)) {
-                this.recordKeystroke({
-                    timestamp,
-                    actualChar: actualCharacter,
-                    keyCode: e.keyCode,
-                    type: 'keyup',
-                    shiftKey: e.shiftKey,
-                    ctrlKey: e.ctrlKey,
-                    altKey: e.altKey,
-                    sentence: this.currentSentence,
-                    position: e.target.selectionStart || 0,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-            }
-        }
-        
-        this.calculateAccuracy();
-        this.checkSentenceCompletion();
-    }
+    // handleKeydown and handleKeyup methods removed to prevent duplicate keystroke recording
+    // All keystroke recording is now handled in handleTypingInput method
     
     startTypingTask() {
         this.currentSentence = 0;
@@ -1550,6 +1430,7 @@ class BiometricDataCollector {
         this.lastCapitalLetterTime = 0;
         this.lastShiftTime = 0;
         this.capitalLetterCount = 0;
+        this.lastRecordedKeystroke = null;
         
         this.lastInputValue = '';
         this.inputEventCount = 0;
@@ -1754,6 +1635,20 @@ class BiometricDataCollector {
     }
     
     recordKeystroke(data) {
+        // Prevent duplicate keystroke recording
+        const currentTime = performance.now();
+        if (this.lastRecordedKeystroke) {
+            const timeDiff = currentTime - this.lastRecordedKeystroke.timestamp;
+            const charDiff = data.actualChar === this.lastRecordedKeystroke.actualChar;
+            const typeDiff = data.type === this.lastRecordedKeystroke.type;
+            
+            // If same character, same type, and within 50ms, it's likely a duplicate
+            if (charDiff && typeDiff && timeDiff < 50) {
+                console.log(`🚫 Duplicate keystroke BLOCKED: ${data.actualChar} (${timeDiff}ms since last)`);
+                return;
+            }
+        }
+        
         if (['SHIFT', '†', 'BACKSPACE', 'SPACE', 'ENTER', 'TAB', 'escape', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'delete', 'home', 'end'].includes(data.actualChar)) {
             console.log(`[DEBUG] Special key recorded:`, data);
         }
@@ -1765,7 +1660,6 @@ class BiometricDataCollector {
         // Enhanced deduplication for iOS (only for backspace)
         const isQuote = data.actualChar === "'" || data.actualChar === '"';
         if (this.isIOS && data.actualChar === 'BACKSPACE') {
-            const currentTime = performance.now();
             const dedupWindow = 100; // 100ms cooldown for backspace on iOS
             
             const recentKeystrokes = this.keystrokeData.slice(-3);
@@ -1780,12 +1674,10 @@ class BiometricDataCollector {
         }
         
         // Prevent recording synthetic capital letter events that are already recorded
-        if (data.isSynthetic && data.actualChar !== 'SHIFT') {
+        if (data.isSynthetic && data.actualChar !== 'SHIFT' && data.actualChar !== '†') {
             console.log('🚫 Synthetic capital letter already recorded, skipping:', data.actualChar);
             return;
         }
-
-        const currentTime = performance.now();
         let flightTime = 0;
         if (this.lastKeystrokeTime > 0 && data.actualChar !== 'SHIFT') {
             flightTime = currentTime - this.lastKeystrokeTime;
@@ -1820,6 +1712,13 @@ class BiometricDataCollector {
         }
 
         this.keystrokeData.push(data);
+        
+        // Track this keystroke to prevent duplicates
+        this.lastRecordedKeystroke = {
+            timestamp: data.timestamp,
+            actualChar: data.actualChar,
+            type: data.type
+        };
     }
     
     getCharacterCase(char) {
