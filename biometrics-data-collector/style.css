@@ -192,6 +192,32 @@
   --color-info-rgb: 98, 108, 113;
 }
 
+.progress-circle {
+  position: relative;
+  width: 150px;         /* or whatever size you want */
+  height: 150px;
+  border-radius: 50%;
+  background: var(--color-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.progress-percentage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(1.5rem, 5vw, 3rem);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  text-align: center;
+  line-height: 1;
+  pointer-events: none;
+}
+
+
 /* Next Task Button */
 .next-task-btn {
   display: inline-flex;
