@@ -41,6 +41,7 @@ class BiometricDataCollector {
         this.lastShiftRecorded = false;
         this.lastCapitalLetterTime = 0;
         this.shiftForCapitalCooldown = 200; // Cooldown to prevent multiple SHIFT events for same capital letter
+        this.firstCapitalLetterInSentence = true; // Track if this is the first capital letter in the current sentence
         
         if (this.isIOS) {
             this.backspaceCooldown = 200;
@@ -789,29 +790,57 @@ class BiometricDataCollector {
             return;
         }
 
-        // Handle SHIFT and capital letters
+        // Handle SHIFT and capital letters - FIXED: Prevent duplication and ensure first capital gets SHIFT
         if (data && data.length === 1 && data === data.toUpperCase() && data.match(/[A-Z]/)) {
+            // Check if this capital letter was already processed to prevent duplication
+            const currentTime = performance.now();
+            const recentKeystrokes = this.keystrokeData.slice(-6);
+            const duplicateFound = recentKeystrokes.some(ks => 
+                ks.actualChar === data && 
+                (currentTime - ks.timestamp) < 200
+            );
+            
+            if (duplicateFound) {
+                console.log(`🚫 Capital letter duplicate BLOCKED: ${data} already recorded`);
+                this.calculateAccuracy();
+                this.checkSentenceCompletion();
+                this.updateTypingFeedback();
+                return;
+            }
+            
             // Always insert a synthetic SHIFT event before the uppercase letter
             let prevKeystrokeTime = this.lastKeystrokeTime > 0 ? this.lastKeystrokeTime : timestamp - 1;
             let flightTime = timestamp - prevKeystrokeTime;
             let split = 0.4 + Math.random() * 0.2; // 0.4 to 0.6
             let shiftFlight = flightTime * split;
             let capFlight = flightTime * (1 - split);
-            // Synthetic SHIFT event
-            const shiftEvent = {
-                timestamp: prevKeystrokeTime + shiftFlight,
-                actualChar: 'SHIFT',
-                keyCode: 16,
-                type: inputType,
-                sentence: this.currentSentence,
-                position: pos - 1,
-                clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y,
-                flightTime: Math.round(shiftFlight),
-                shiftKey: true,
-                shiftPressed: true,
-                isSynthetic: true
-            };
+            
+            // Check if SHIFT was already recorded recently (but always record for first capital letter)
+            const shiftAlreadyRecorded = recentKeystrokes.some(ks => 
+                ks.actualChar === 'SHIFT' && 
+                (currentTime - ks.timestamp) < 100
+            );
+            
+            // Synthetic SHIFT event (always record for first capital letter, or if not already recorded)
+            if (this.firstCapitalLetterInSentence || !shiftAlreadyRecorded) {
+                const shiftEvent = {
+                    timestamp: prevKeystrokeTime + shiftFlight,
+                    actualChar: 'SHIFT',
+                    keyCode: 16,
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos - 1,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y,
+                    flightTime: Math.round(shiftFlight),
+                    shiftKey: true,
+                    shiftPressed: true,
+                    isSynthetic: true
+                };
+                this.keystrokeData.push(shiftEvent);
+                console.log(`✅ Synthetic SHIFT recorded before: ${data} (first capital: ${this.firstCapitalLetterInSentence})`);
+            }
+            
             // Capital letter event
             const capEvent = {
                 timestamp: prevKeystrokeTime + shiftFlight + capFlight,
@@ -826,16 +855,18 @@ class BiometricDataCollector {
                 shiftKey: true,
                 shiftPressed: true
             };
-            // iOS/Android deduplication: ensure no duplicate SHIFT or capital letter events
-            const recent = this.keystrokeData.slice(-4);
-            if (!recent.some(e => e.actualChar === 'SHIFT' && Math.abs(e.timestamp - shiftEvent.timestamp) < 10)) {
-                this.keystrokeData.push(shiftEvent);
-            }
-            if (!recent.some(e => e.actualChar === data && Math.abs(e.timestamp - capEvent.timestamp) < 10)) {
-                this.keystrokeData.push(capEvent);
-            }
+            
+            this.keystrokeData.push(capEvent);
             this.lastKeystrokeTime = capEvent.timestamp;
             this.lastChar = data;
+            
+            // Mark that we've recorded the first capital letter for this sentence
+            if (this.firstCapitalLetterInSentence) {
+                this.firstCapitalLetterInSentence = false;
+            }
+            
+            console.log(`✅ Capital letter recorded: ${data} (with SHIFT)`);
+            
             this.calculateAccuracy();
             this.checkSentenceCompletion();
             this.updateTypingFeedback();
@@ -1681,6 +1712,11 @@ class BiometricDataCollector {
         input.value = '';
         input.focus();
         document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
+        
+        // Reset first capital letter flag for new sentence
+        this.firstCapitalLetterInSentence = true;
+        console.log(`🔄 New sentence started - firstCapitalLetterInSentence reset to: ${this.firstCapitalLetterInSentence}`);
+        
         this.calculateAccuracy();
         const nextBtn = document.getElementById('next-sentence-btn');
         nextBtn.disabled = true;
