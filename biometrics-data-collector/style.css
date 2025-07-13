@@ -2372,8 +2372,8 @@ select.form-control {
   position: relative;
   transition: box-shadow 0.3s;
   overflow: visible; /* Ensure percentage circle is not clipped */
-  padding-right: 15px; /* Balanced padding to accommodate circle */
-  padding-left: 5px; /* Small left padding for balance */
+  padding: 20px; /* Equal padding on all sides for perfect centering */
+  text-align: center; /* Center all content */
 }
 .accuracy-ring {
   position: relative;
@@ -2385,24 +2385,52 @@ select.form-control {
   justify-content: center;
 }
 
-/* iOS-specific positioning for percentage circle visibility - CENTERED */
+/* UNIVERSAL MOBILE: Center percentage circle for ALL mobile devices */
 @media screen and (max-width: 768px) {
   .accuracy-ring {
-    margin-left: -5px; /* Slight left offset to ensure full circle visibility */
+    margin: 0 auto 8px auto !important; /* Perfectly centered */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 }
 
-/* Extra adjustment for smaller iOS screens - CENTERED */
+/* Small mobile screens - still centered */
 @media screen and (max-width: 480px) {
   .accuracy-ring {
-    margin-left: -8px; /* Moderate left offset for smaller screens */
+    margin: 0 auto 8px auto !important; /* Perfectly centered */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 }
 
-/* Ensure circle is fully visible on very small screens */
+/* Very small mobile screens - still centered */
 @media screen and (max-width: 360px) {
   .accuracy-ring {
-    margin-left: -10px; /* Larger offset for very small screens */
+    margin: 0 auto 8px auto !important; /* Perfectly centered */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
+/* COMPREHENSIVE: Ensure percentage circle is centered on ALL mobile devices */
+@media (max-width: 768px), (max-width: 480px), (max-width: 360px) {
+  .accuracy-ring {
+    margin: 0 auto 8px auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  
+  .accuracy-stat {
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 }
 .accuracy-bg {
@@ -2440,10 +2468,9 @@ select.form-control {
   .accuracy-stat {
     min-width: 110px;
     min-height: 110px;
-    padding: var(--space-8);
-    padding-right: 20px; /* Balanced padding for circle */
-    padding-left: 8px; /* Small left padding for balance */
+    padding: 16px; /* Equal padding for perfect centering */
     overflow: visible;
+    text-align: center;
   }
   .accuracy-ring {
     width: 44px;
