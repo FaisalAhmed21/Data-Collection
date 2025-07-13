@@ -2362,8 +2362,10 @@ select.form-control {
   vertical-align: middle;
 }
 
-/* Attractive Accuracy Stat Box */
+/* Attractive Accuracy Stat Box - Centered for All Devices */
 .accuracy-stat {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
@@ -2386,156 +2388,36 @@ select.form-control {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Ensure the circle is always fully visible */
   overflow: visible;
-  /* Ensure proper rendering on all devices */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
-  /* Ensure proper positioning context for absolute positioned children */
-  position: relative;
 }
 
-/* Ensure SVG circle is always a complete circle */
 .accuracy-ring svg {
   width: 100%;
   height: 100%;
   display: block;
-  /* Prevent any clipping */
   overflow: visible;
-  /* Ensure proper rendering */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
 }
 
-/* Ensure circle elements are always complete */
 .accuracy-ring circle {
-  /* Force complete circle rendering */
   vector-effect: non-scaling-stroke;
-  /* Ensure proper stroke rendering */
   stroke-linecap: round;
   stroke-linejoin: round;
-  /* Prevent any clipping */
   overflow: visible;
 }
 
-/* UNIVERSAL MOBILE: Center percentage circle for ALL mobile devices */
-@media screen and (max-width: 768px) {
-  .accuracy-ring {
-    margin: 0 auto 8px auto !important; /* Perfectly centered */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-ring svg {
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-value {
-    font-size: 0.85em !important;
-    max-width: 82% !important;
-    max-height: 82% !important;
-  }
-}
-
-/* Small mobile screens - still centered */
-@media screen and (max-width: 480px) {
-  .accuracy-ring {
-    margin: 0 auto 8px auto !important; /* Perfectly centered */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-ring svg {
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-value {
-    font-size: 0.8em !important;
-    max-width: 83% !important;
-    max-height: 83% !important;
-  }
-}
-
-/* Very small mobile screens - still centered */
-@media screen and (max-width: 360px) {
-  .accuracy-ring {
-    margin: 0 auto 8px auto !important; /* Perfectly centered */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-ring svg {
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-value {
-    font-size: 0.75em !important;
-    max-width: 85% !important;
-    max-height: 85% !important;
-  }
-}
-
-/* COMPREHENSIVE: Ensure percentage circle is centered on ALL mobile devices */
-@media (max-width: 768px), (max-width: 480px), (max-width: 360px) {
-  .accuracy-ring {
-    margin: 0 auto 8px auto !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-ring svg {
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-    display: block !important;
-  }
-  
-  .accuracy-ring circle {
-    overflow: visible !important;
-    vector-effect: non-scaling-stroke !important;
-  }
-  
-  .accuracy-stat {
-    text-align: center !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-}
 .accuracy-bg {
   stroke: #e0e7ef;
   opacity: 0.5;
-  /* Ensure complete circle rendering */
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  /* Prevent any clipping */
   overflow: visible;
 }
+
 .accuracy-fg {
   stroke: var(--color-success);
   stroke-linecap: round;
@@ -2543,11 +2425,10 @@ select.form-control {
   stroke-dasharray: 163.36;
   stroke-dashoffset: 0;
   transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  /* Ensure complete circle rendering */
   vector-effect: non-scaling-stroke;
-  /* Prevent any clipping */
   overflow: visible;
 }
+
 .accuracy-value {
   position: absolute;
   left: 50%;
@@ -2561,17 +2442,32 @@ select.form-control {
   color: var(--color-text);
   z-index: 2;
   pointer-events: none;
-  /* Ensure text stays within circle bounds */
   max-width: 70%;
   max-height: 70%;
   text-align: center;
   line-height: 1;
-  /* Ensure perfect centering */
   width: auto;
   height: auto;
 }
 
+/* Universal Mobile Centering - Consolidated Rules */
 @media screen and (max-width: 768px) {
+  .accuracy-ring {
+    margin: 0 auto 8px auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
+  }
+  
+  .accuracy-ring svg {
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
+  }
+  
   .accuracy-value {
     font-size: 1em !important;
     max-width: 75% !important;
@@ -2582,18 +2478,23 @@ select.form-control {
   }
 }
 
-@media (max-width: 600px) {
-  .accuracy-value {
-    font-size: 0.95em !important;
-    max-width: 80% !important;
-    max-height: 80% !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
-  }
-}
-
 @media screen and (max-width: 480px) {
+  .accuracy-ring {
+    margin: 0 auto 8px auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
+  }
+  
+  .accuracy-ring svg {
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
+  }
+  
   .accuracy-value {
     font-size: 0.92em !important;
     max-width: 82% !important;
@@ -2605,6 +2506,22 @@ select.form-control {
 }
 
 @media screen and (max-width: 360px) {
+  .accuracy-ring {
+    margin: 0 auto 8px auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
+  }
+  
+  .accuracy-ring svg {
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
+  }
+  
   .accuracy-value {
     font-size: 0.88em !important;
     max-width: 85% !important;
@@ -2615,6 +2532,17 @@ select.form-control {
   }
 }
 
+/* Mobile-specific accuracy stat centering */
+@media (max-width: 600px) {
+  .accuracy-stat {
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
 .accuracy-encourage {
   color: var(--color-success);
   font-size: var(--font-size-sm);
@@ -2622,37 +2550,6 @@ select.form-control {
   font-weight: 500;
   text-align: center;
   letter-spacing: 0.01em;
-}
-@media (max-width: 600px) {
-  .accuracy-stat {
-    min-width: 110px;
-    min-height: 110px;
-    padding: 16px; /* Equal padding for perfect centering */
-    overflow: visible;
-    text-align: center;
-  }
-  .accuracy-ring {
-    width: 44px;
-    height: 44px;
-    overflow: visible !important;
-  }
-  
-  .accuracy-ring svg {
-    width: 44px !important;
-    height: 44px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-ring circle {
-    overflow: visible !important;
-    vector-effect: non-scaling-stroke !important;
-  }
-  
-  .accuracy-value {
-    font-size: 0.75em !important;
-    max-width: 85% !important;
-    max-height: 85% !important;
-  }
 }
 
 .fireworks-container {
@@ -2715,46 +2612,15 @@ select.form-control {
   background: transparent !important;
 }
 
-/* iOS-specific fixes for circle rendering */
-@supports (-webkit-touch-callout: none) {
-  .accuracy-ring {
-    /* Force hardware acceleration for iOS */
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-    /* Ensure proper rendering */
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-  }
-  
-  .accuracy-ring svg {
-    /* Force hardware acceleration for iOS */
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-    /* Ensure proper rendering */
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-  }
-  
-  .accuracy-ring circle {
-    /* Ensure complete circle rendering on iOS */
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-  }
+/* Universal hardware acceleration for all devices */
+.accuracy-ring {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
-/* Android-specific fixes for circle rendering */
-@supports not (-webkit-touch-callout: none) {
-  .accuracy-ring {
-    /* Ensure proper rendering on Android */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-  }
-  
-  .accuracy-ring svg {
-    /* Ensure proper rendering on Android */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-  }
+.accuracy-ring svg {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 .progress-fill {
   background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
