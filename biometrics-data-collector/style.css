@@ -1381,7 +1381,7 @@ select.form-control {
 
 /* Ensure all buttons in crystal controls have consistent styling and alignment */
 .crystal-controls .btn {
-  height: auto;
+  height: 44px !important; /* Fixed height for perfect alignment */
   min-height: 44px; /* Ensure minimum touch target size */
   display: inline-flex;
   align-items: center;
@@ -1390,17 +1390,19 @@ select.form-control {
   margin: 0; /* Remove any default margins */
   align-self: stretch; /* Ensure all buttons stretch to same height */
   box-sizing: border-box; /* Include padding and border in height calculation */
+  line-height: 1.2; /* Consistent line height */
 }
 
 /* Specific styling for the next task button */
 .crystal-controls .next-task-btn {
   order: 2; /* Place it after the reset button */
   margin: 0; /* Remove all margins to ensure perfect alignment */
-  height: auto; /* Ensure consistent height */
+  height: 44px !important; /* Fixed height to match other buttons */
   align-self: stretch; /* Stretch to match other buttons */
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  line-height: 1.2; /* Consistent line height */
 }
 
 /* Ensure proper alignment when Next Step button is hidden */
@@ -1420,6 +1422,20 @@ select.form-control {
   line-height: 1.2; /* Consistent line height */
 }
 
+/* Ensure all crystal control buttons have identical heights */
+.crystal-controls .btn,
+.crystal-controls .next-task-btn,
+.crystal-controls #next-crystal-btn,
+.crystal-controls #reset-step-btn {
+  height: 44px !important;
+  min-height: 44px !important;
+  line-height: 1.2 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
 @media (max-width: 600px) {
   .crystal-controls {
     flex-direction: row !important;
@@ -1436,6 +1452,8 @@ select.form-control {
     padding: var(--space-8) var(--space-12);
     flex: 0 0 auto;
     align-self: stretch; /* Ensure perfect alignment */
+    height: 44px !important; /* Maintain fixed height on mobile */
+    line-height: 1.2; /* Consistent line height */
   }
 }
 
@@ -2088,6 +2106,8 @@ select.form-control {
     padding: var(--space-8) var(--space-12);
     font-size: clamp(0.8rem, 2.2vw, 0.9rem);
     min-height: 40px;
+    height: 40px !important; /* Fixed height for consistency */
+    line-height: 1.2;
   }
 
   .btn--lg {
@@ -2173,6 +2193,8 @@ select.form-control {
     padding: var(--space-6) var(--space-10);
     font-size: clamp(0.75rem, 2vw, 0.85rem);
     min-height: 36px;
+    height: 36px !important; /* Fixed height for consistency */
+    line-height: 1.2;
   }
 
   .gallery-grid {
