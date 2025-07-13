@@ -614,6 +614,13 @@ select.form-control {
   border: 1px solid rgba(var(--color-info-rgb, 98, 108, 113), var(--status-border-opacity));
 }
 
+.typed-shift {
+    color: #ffd700;
+    font-weight: bold;
+    margin: 0 1px;
+}
+
+
 /* Container layout */
 .container {
   width: 100%;
@@ -2798,7 +2805,7 @@ h1, h2, h3, h4, h5, h6, p, span, label, div, button, input, textarea, select {
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    overflow: hidden; /* Ensure facets stay within bounds */
+    overflow: hidden;
 }
 
 #crystal {
@@ -2976,4 +2983,35 @@ html, body {
   color: #fff !important;
   text-shadow: 0 1px 4px rgba(0,0,0,0.7), 0 0 2px var(--color-success);
   font-weight: bold;
+}
+
+/* Match Next Task button height to Reset Step button */
+#next-task-btn.next-task-btn, .next-task-btn {
+    height: 48px !important;
+    min-height: 48px !important;
+    font-size: 1.1rem;
+    padding: 0 28px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    margin-left: 12px;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+#reset-step-btn {
+    height: 48px !important;
+    min-height: 48px !important;
+    font-size: 1.1rem;
+    border-radius: 12px;
+    padding: 0 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
