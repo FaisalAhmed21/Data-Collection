@@ -759,7 +759,7 @@ class BiometricDataCollector {
                     console.log(`✅ Backspace recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, inputType, 'cooldown:', this.backspaceCooldown, 'ms');
                     
                     this.lastBackspaceTime = currentTime;
-                    his.lastBackspaceType = inputType;
+                    this.lastBackspaceType = inputType;
                 } else {
                     console.log(`🚫 Backspace duplicate ignored (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, inputType, 'time since last:', currentTime - this.lastBackspaceTime, 'ms');
                 }
