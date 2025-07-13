@@ -2383,6 +2383,34 @@ select.form-control {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Ensure the circle is always fully visible */
+  overflow: visible;
+  /* Ensure proper rendering on all devices */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Ensure SVG circle is always a complete circle */
+.accuracy-ring svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* Prevent any clipping */
+  overflow: visible;
+  /* Ensure proper rendering */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Ensure circle elements are always complete */
+.accuracy-ring circle {
+  /* Force complete circle rendering */
+  vector-effect: non-scaling-stroke;
+  /* Ensure proper stroke rendering */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* Prevent any clipping */
+  overflow: visible;
 }
 
 /* UNIVERSAL MOBILE: Center percentage circle for ALL mobile devices */
@@ -2392,6 +2420,15 @@ select.form-control {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
+  }
+  
+  .accuracy-ring svg {
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
   }
 }
 
@@ -2402,6 +2439,15 @@ select.form-control {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
+  }
+  
+  .accuracy-ring svg {
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
   }
 }
 
@@ -2412,6 +2458,15 @@ select.form-control {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
+  }
+  
+  .accuracy-ring svg {
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
   }
 }
 
@@ -2423,6 +2478,21 @@ select.form-control {
     align-items: center !important;
     justify-content: center !important;
     text-align: center !important;
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
+  }
+  
+  .accuracy-ring svg {
+    width: 60px !important;
+    height: 60px !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  
+  .accuracy-ring circle {
+    overflow: visible !important;
+    vector-effect: non-scaling-stroke !important;
   }
   
   .accuracy-stat {
@@ -2436,13 +2506,24 @@ select.form-control {
 .accuracy-bg {
   stroke: #e0e7ef;
   opacity: 0.5;
+  /* Ensure complete circle rendering */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  /* Prevent any clipping */
+  overflow: visible;
 }
 .accuracy-fg {
   stroke: var(--color-success);
   stroke-linecap: round;
+  stroke-linejoin: round;
   stroke-dasharray: 163.36;
   stroke-dashoffset: 0;
   transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Ensure complete circle rendering */
+  vector-effect: non-scaling-stroke;
+  /* Prevent any clipping */
+  overflow: visible;
 }
 .accuracy-value {
   position: absolute;
@@ -2475,6 +2556,18 @@ select.form-control {
   .accuracy-ring {
     width: 44px;
     height: 44px;
+    overflow: visible !important;
+  }
+  
+  .accuracy-ring svg {
+    width: 44px !important;
+    height: 44px !important;
+    overflow: visible !important;
+  }
+  
+  .accuracy-ring circle {
+    overflow: visible !important;
+    vector-effect: non-scaling-stroke !important;
   }
 }
 
@@ -2536,6 +2629,48 @@ select.form-control {
 /* Remove strong color backgrounds from .accuracy-ring, .progress-bar, etc. Use accent only for the ring/line itself */
 .accuracy-ring svg, .progress-bar {
   background: transparent !important;
+}
+
+/* iOS-specific fixes for circle rendering */
+@supports (-webkit-touch-callout: none) {
+  .accuracy-ring {
+    /* Force hardware acceleration for iOS */
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    /* Ensure proper rendering */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  .accuracy-ring svg {
+    /* Force hardware acceleration for iOS */
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    /* Ensure proper rendering */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  .accuracy-ring circle {
+    /* Ensure complete circle rendering on iOS */
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Android-specific fixes for circle rendering */
+@supports not (-webkit-touch-callout: none) {
+  .accuracy-ring {
+    /* Ensure proper rendering on Android */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+  
+  .accuracy-ring svg {
+    /* Ensure proper rendering on Android */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
 }
 .progress-fill {
   background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
