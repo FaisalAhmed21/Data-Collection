@@ -696,7 +696,50 @@ class BiometricDataCollector {
         const pos = inputEl.selectionStart || value.length;
         const timestamp = performance.now();
         const currentTime = performance.now();
+        
         const eventSignature = `${inputType}-${data}-${value.length}-${pos}`;
+        
+        if (this.compositionActive && inputType === 'insertText') {
+            console.log('🔄 Composition active, skipping insertText');
+            return;
+        }
+        
+        // Enhanced iOS deduplication for input events
+        if (data && inputType === 'insertText') {
+            const isQuote = data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´' || data === '′' || data === '‵' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶';
+            
+            if (isQuote) {
+                console.log('🔍 Quote input detected:', data, 'charCode:', data.charCodeAt(0), 'type:', inputType);
+            }
+            
+            if (this.isIOS) {
+                const dedupWindow = isQuote ? 50 : 300;
+                if (this.lastInputEvent === eventSignature && 
+                    this.lastInputEventTime && 
+                    (currentTime - this.lastInputEventTime) < dedupWindow) {
+                    console.log('🚫 iOS duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                    return;
+                }
+            } else if (this.isAndroid) {
+                const dedupWindow = isQuote ? 30 : 100;
+                if (this.lastInputEvent === eventSignature && 
+                    this.lastInputEventTime && 
+                    (currentTime - this.lastInputEventTime) < dedupWindow) {
+                    console.log('🚫 Android duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                    return;
+                }
+            }
+        }
+        
+        this.lastInputValue = value;
+        this.lastInputLength = value.length;
+        this.lastInputEvent = eventSignature;
+        this.lastInputEventTime = currentTime;
+        this.inputEventCount++;
+        
+        if (data && inputType === 'insertText') {
+            console.log(`📱 Mobile input event: "${data}" | Event #${this.inputEventCount} | Platform: ${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}`);
+        }
 
         // --- SPACE, SHIFT, BACKSPACE LOGIC FROM PROVIDED CODE ---
         // Handle SPACE
@@ -716,6 +759,7 @@ class BiometricDataCollector {
             console.log(`✅ SPACE recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}): cooldown: ${this.spaceCooldown} ms`);
             this.calculateAccuracy();
             this.checkSentenceCompletion();
+            this.updateTypingFeedback();
             return;
         }
 
@@ -741,6 +785,7 @@ class BiometricDataCollector {
             }
             this.calculateAccuracy();
             this.checkSentenceCompletion();
+            this.updateTypingFeedback();
             return;
         }
 
@@ -793,9 +838,313 @@ class BiometricDataCollector {
             this.lastChar = data;
             this.calculateAccuracy();
             this.checkSentenceCompletion();
+            this.updateTypingFeedback();
             return;
         }
-        // ... existing code ...
+
+        // Handle text insertion
+        else if (inputType === 'insertText' && data) {
+            for (let i = 0; i < data.length; i++) {
+                const char = data[i];
+                const posOffset = pos - data.length + i;
+                
+                // Enhanced character handling for all characters including quotes and smart characters
+                let refChar = char;
+                
+                // Debug: Log the actual character being processed
+                console.log('Processing character:', char, 'charCode:', char.charCodeAt(0), 'type:', inputType);
+                
+                // Handle smart quotes and apostrophes (common in mobile keyboards)
+                if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵') {
+                    refChar = "'"; // Single quote/apostrophe - all variants
+                    console.log('✅ Single quote detected:', char, '-> stored as:', refChar);
+                } else if (char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟' || char === '″' || char === '‶') {
+                    refChar = '"'; // Double quote - all variants
+                    console.log('✅ Double quote detected:', char, '-> stored as:', refChar);
+                } else if (char === '-' || char === '–' || char === '—') {
+                    refChar = '-'; // Hyphen/dash
+                } else if (char === '.' || char === '…') {
+                    refChar = '.'; // Period/ellipsis
+                } else if (char === ',' || char === '،') {
+                    refChar = ','; // Comma
+                } else if (char === '!' || char === '¡') {
+                    refChar = '!'; // Exclamation
+                } else if (char === '?' || char === '¿') {
+                    refChar = '?'; // Question mark
+                } else if (char === '@') {
+                    refChar = '@'; // At symbol
+                } else if (char === '#') {
+                    refChar = '#'; // Hash
+                } else if (char === '$' || char === '€' || char === '£' || char === '¥') {
+                    refChar = '$'; // Dollar/currency
+                } else if (char === '%') {
+                    refChar = '%'; // Percent
+                } else if (char === '&') {
+                    refChar = '&'; // Ampersand
+                } else if (char === '*') {
+                    refChar = '*'; // Asterisk
+                } else if (char === '(') {
+                    refChar = '('; // Left parenthesis
+                } else if (char === ')') {
+                    refChar = ')'; // Right parenthesis
+                } else if (char === '+' || char === '±') {
+                    refChar = '+'; // Plus
+                } else if (char === '=' || char === '≠') {
+                    refChar = '='; // Equals
+                } else if (char === '[' || char === '【') {
+                    refChar = '['; // Left bracket
+                } else if (char === ']' || char === '】') {
+                    refChar = ']'; // Right bracket
+                } else if (char === '{' || char === '｛') {
+                    refChar = '{'; // Left brace
+                } else if (char === '}' || char === '｝') {
+                    refChar = '}'; // Right brace
+                } else if (char === '\\' || char === '＼') {
+                    refChar = '\\'; // Backslash
+                } else if (char === '|' || char === '｜') {
+                    refChar = '|'; // Pipe
+                } else if (char === ';' || char === '；') {
+                    refChar = ';'; // Semicolon
+                } else if (char === ':' || char === '：') {
+                    refChar = ':'; // Colon
+                } else if (char === '/' || char === '／') {
+                    refChar = '/'; // Forward slash
+                } else if (char === '<' || char === '＜') {
+                    refChar = '<'; // Less than
+                } else if (char === '>' || char === '＞') {
+                    refChar = '>'; // Greater than
+                } else if (char === '`' || char === '｀') {
+                    refChar = '`'; // Backtick
+                } else if (char === '~' || char === '～') {
+                    refChar = '~'; // Tilde
+                } else if (char === '^' || char === '＾') {
+                    refChar = '^'; // Caret
+                } else if (char === '_' || char === '＿') {
+                    refChar = '_'; // Underscore
+                } else if (char === '°' || char === '℃' || char === '℉') {
+                    refChar = '°'; // Degree symbol
+                } else if (char === '©' || char === '®' || char === '™') {
+                    refChar = char; // Copyright symbols
+                } else if (char === '§' || char === '¶') {
+                    refChar = char; // Section symbols
+                } else if (char === '†' || char === '‡') {
+                    refChar = char; // Dagger symbols
+                } else if (char === '•' || char === '·' || char === '▪' || char === '▫') {
+                    refChar = '•'; // Bullet points
+                } else if (char === '✓' || char === '✔' || char === '☑') {
+                    refChar = '✓'; // Check marks
+                } else if (char === '✗' || char === '✘' || char === '☒') {
+                    refChar = '✗'; // X marks
+                } else if (char === '→' || char === '←' || char === '↑' || char === '↓') {
+                    refChar = char; // Arrows
+                } else if (char === '♠' || char === '♥' || char === '♦' || char === '♣') {
+                    refChar = char; // Card suits
+                } else if (char === '☺' || char === '☻' || char === '☹') {
+                    refChar = char; // Emoticons
+                } else if (char === '☀' || char === '☁' || char === '☂' || char === '☃') {
+                    refChar = char; // Weather symbols
+                } else if (char === '♫' || char === '♪' || char === '♬') {
+                    refChar = char; // Music symbols
+                } else if (char === '∞' || char === '≈' || char === '≤' || char === '≥') {
+                    refChar = char; // Math symbols
+                } else if (char === '∑' || char === '∏' || char === '∫' || char === '√') {
+                    refChar = char; // Advanced math symbols
+                } else if (char === 'α' || char === 'β' || char === 'γ' || char === 'δ') {
+                    refChar = char; // Greek letters
+                } else if (char === 'π' || char === 'μ' || char === 'σ' || char === 'τ') {
+                    refChar = char; // More Greek letters
+                } else {
+                    // For all other characters, use as-is
+                    refChar = char;
+                }
+                
+                // Debug logging for quote characters
+                if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟' || char === '″' || char === '‶') {
+                    console.log('🔍 Quote processing complete - Final refChar:', refChar);
+                }
+                
+                // Check if character should be recorded (simplified deduplication)
+                // For quotes, use more lenient deduplication
+                const isQuote = refChar === "'" || refChar === '"';
+                if (this.shouldRecordChar(refChar, timestamp + i, isQuote)) {
+                    
+                    // Final iOS safety check: prevent duplicate in keystroke data
+                    // More lenient for quotes
+                    if (this.isIOS) {
+                        const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
+                        const quoteDedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
+                        if (lastKeystroke && 
+                            lastKeystroke.actualChar === refChar && 
+                            (timestamp + i - lastKeystroke.timestamp) < quoteDedupWindow) {
+                            console.log('🚫 iOS final duplicate BLOCKED in keystroke data:', refChar);
+                            return;
+                        }
+                    }
+                    
+                    console.log('📝 Recording keystroke:', refChar, 'type:', inputType, 'timestamp:', timestamp + i);
+                    this.recordKeystroke({
+                        timestamp: timestamp + i,
+                        actualChar: refChar,
+                        keyCode: char.charCodeAt(0),
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - data.length + i,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                    
+                    // Update last character and time for mobile deduplication
+                    this.lastChar = refChar;
+                    this.lastCharTime = timestamp + i;
+                } else {
+                    console.log('❌ Character duplicate ignored:', refChar);
+                }
+                
+                // Update previous character for next iteration
+                this.previousChar = char;
+            }
+        }
+    
+        // Handle other input types like paste, cut, etc.
+        else if (inputType && data) {
+            let refChar = data;
+            
+            // Debug: Log the actual data being processed
+            console.log('Processing other input data:', data, 'charCode:', data.charCodeAt(0), 'type:', inputType);
+
+            if (data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´' || data === '′' || data === '‵') {
+                refChar = "'"; // Single quote/apostrophe - all variants
+                console.log('✅ Single quote detected (other input):', data, '-> stored as:', refChar);
+            } else if (data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶') {
+                refChar = '"'; // Double quote - all variants
+                console.log('✅ Double quote detected (other input):', data, '-> stored as:', refChar);
+            } else if (data === '–' || data === '—') {
+                refChar = '-'; // En dash and em dash
+            } else if (data === '…') {
+                refChar = '.'; // Ellipsis
+            } else if (data === '،') {
+                refChar = ','; // Arabic comma
+            } else if (data === '¡') {
+                refChar = '!'; // Inverted exclamation
+            } else if (data === '¿') {
+                refChar = '?'; // Inverted question
+            } else if (data === '€' || data === '£' || data === '¥') {
+                refChar = '$'; // Other currency symbols
+            } else if (data === '±') {
+                refChar = '+'; // Plus-minus
+            } else if (data === '≠') {
+                refChar = '='; // Not equals
+            } else if (data === '【') {
+                refChar = '['; // Fullwidth left bracket
+            } else if (data === '】') {
+                refChar = ']'; // Fullwidth right bracket
+            } else if (data === '｛') {
+                refChar = '{'; // Fullwidth left brace
+            } else if (data === '｝') {
+                refChar = '}'; // Fullwidth right brace
+            } else if (data === '＼') {
+                refChar = '\\'; // Fullwidth backslash
+            } else if (data === '｜') {
+                refChar = '|'; // Fullwidth pipe
+            } else if (data === '；') {
+                refChar = ';'; // Fullwidth semicolon
+            } else if (data === '：') {
+                refChar = ':'; // Fullwidth colon
+            } else if (data === '／') {
+                refChar = '/'; // Fullwidth forward slash
+            } else if (data === '＜') {
+                refChar = '<'; // Fullwidth less than
+            } else if (data === '＞') {
+                refChar = '>'; // Fullwidth greater than
+            } else if (data === '｀') {
+                refChar = '`'; // Fullwidth backtick
+            } else if (data === '～') {
+                refChar = '~'; // Fullwidth tilde
+            } else if (data === '＾') {
+                refChar = '^'; // Fullwidth caret
+            } else if (data === '＿') {
+                refChar = '_'; // Fullwidth underscore
+            } else if (data === '℃' || data === '℉') {
+                refChar = '°'; // Temperature symbols
+            } else if (data === '©' || data === '®' || data === '™') {
+                refChar = data; // Copyright symbols
+            } else if (data === '§' || data === '¶') {
+                refChar = data; // Section symbols
+            } else if (data === '†' || data === '‡') {
+                refChar = data; // Dagger symbols
+            } else if (data === '•' || data === '·' || data === '▪' || data === '▫') {
+                refChar = '•'; // Bullet points
+            } else if (data === '✓' || data === '✔' || data === '☑') {
+                refChar = '✓'; // Check marks
+            } else if (data === '✗' || data === '✘' || data === '☒') {
+                refChar = '✗'; // X marks
+            } else if (data === '→' || data === '←' || data === '↑' || data === '↓') {
+                refChar = data; // Arrows
+            } else if (data === '♠' || data === '♥' || data === '♦' || data === '♣') {
+                refChar = data; // Card suits
+            } else if (data === '☺' || data === '☻' || data === '☹') {
+                refChar = data; // Emoticons
+            } else if (data === '☀' || data === '☁' || data === '☂' || data === '☃') {
+                refChar = data; // Weather symbols
+            } else if (data === '♫' || data === '♪' || data === '♬') {
+                refChar = data; // Music symbols
+            } else if (data === '∞' || data === '≈' || data === '≤' || data === '≥') {
+                refChar = data; // Math symbols
+            } else if (data === '∑' || data === '∏' || data === '∫' || data === '√') {
+                refChar = data; // Advanced math symbols
+            } else if (data === 'α' || data === 'β' || data === 'γ' || data === 'δ') {
+                refChar = data; // Greek letters
+            } else if (data === 'π' || data === 'μ' || data === 'σ' || data === 'τ') {
+                refChar = data; // More Greek letters
+            }
+            
+            // Debug logging for quote characters
+            if (data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´' || data === '′' || data === '‵' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶') {
+                console.log('🔍 Quote processing complete (other input) - Final refChar:', refChar);
+            }
+            
+            // Check if character should be recorded (simplified deduplication)
+            // For quotes, use more lenient deduplication
+            const isQuote = refChar === "'" || refChar === '"';
+            if (this.shouldRecordChar(refChar, timestamp, isQuote)) {
+                
+                // Final iOS safety check: prevent duplicate in keystroke data
+                // More lenient for quotes
+                if (this.isIOS) {
+                    const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
+                    const quoteDedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
+                    if (lastKeystroke && 
+                        lastKeystroke.actualChar === refChar && 
+                        (timestamp - lastKeystroke.timestamp) < quoteDedupWindow) {
+                        console.log('🚫 iOS final duplicate BLOCKED in keystroke data (other input):', refChar);
+                        return;
+                    }
+                }
+                
+                console.log('📝 Recording keystroke (other input):', refChar, 'type:', inputType, 'timestamp:', timestamp);
+                this.recordKeystroke({
+                    timestamp: timestamp,
+                    actualChar: refChar,
+                    keyCode: data.charCodeAt(0),
+                    type: inputType,
+                    sentence: this.currentSentence,
+                    position: pos - 1,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+                
+                // Update last character and time for mobile deduplication
+                this.lastChar = refChar;
+                this.lastCharTime = timestamp;
+            } else {
+                console.log('❌ Character duplicate ignored (other input):', refChar);
+            }
+        }
+    
+        // Update accuracy and check sentence completion after any input
+        this.calculateAccuracy();
+        this.checkSentenceCompletion();
+        this.updateTypingFeedback();
     }
     
     updateTypingFeedback() {
