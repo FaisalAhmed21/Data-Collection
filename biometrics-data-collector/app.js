@@ -497,6 +497,30 @@ class BiometricDataCollector {
         typingInput.addEventListener('input', (e) => {
             this.handleTypingInput(e);
         });
+        
+        // Add keydown listener for arrow keys (up arrow for case change)
+        typingInput.addEventListener('keydown', (e) => {
+            // Handle up arrow key for case change
+            if (e.key === 'ArrowUp') {
+                const timestamp = performance.now();
+                
+                // Record † symbol for up arrow on iOS
+                if (this.isIOS) {
+                    this.recordKeystroke({
+                        timestamp,
+                        actualChar: '†',
+                        keyCode: 38, // ArrowUp keyCode
+                        type: 'keydown',
+                        sentence: this.currentSentence,
+                        position: typingInput.selectionStart || 0,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                    console.log('✅ † symbol recorded for up arrow key press (iOS case change)');
+                }
+            }
+        });
+        
         // Remove keydown and keyup handlers to prevent duplicate recording
         // All keystroke recording is now handled in handleTypingInput
         typingInput.addEventListener('focus', (e) => {
@@ -776,19 +800,19 @@ class BiometricDataCollector {
             return;
         }
     
-        // Handle BACKSPACE - FIXED: Store only once per click
+        // Handle BACKSPACE - Record every backspace press
         if (inputType && inputType.startsWith('delete')) {
-                    this.recordKeystroke({
+            this.recordKeystroke({
                 timestamp,
                 actualChar: 'BACKSPACE',
                 keyCode: 8,
-                        type: inputType,
-                        sentence: this.currentSentence,
+                type: inputType,
+                sentence: this.currentSentence,
                 position: pos,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
-            console.log('✅ Backspace recorded once');
+                clientX: this.pointerTracking.x,
+                clientY: this.pointerTracking.y
+            });
+            console.log('✅ Backspace recorded (every press)');
             this.calculateAccuracy();
             this.checkSentenceCompletion();
             this.updateTypingFeedback();
@@ -803,28 +827,19 @@ class BiometricDataCollector {
             
             // iOS: Use † symbol instead of SHIFT
             if (this.isIOS) {
-                // Check if we recently recorded † symbol (within 200ms for iOS)
-                const recentDagger = this.keystrokeData.slice(-3).find(ks => 
-                    ks.actualChar === '†' && 
-                    (timestamp - ks.timestamp) < 200
-                );
-                
-                if (!recentDagger) {
-                    this.recordKeystroke({
-                        timestamp,
-                        actualChar: '†',
-                        keyCode: 16,
-                        type: 'synthetic',
-                        sentence: this.currentSentence,
-                        position: pos - 1,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
-                    this.lastShiftTime = timestamp;
-                    console.log(`✅ † symbol recorded before capital letter: ${data} (iOS)`);
-                } else {
-                    console.log(`⏭️ iOS: † symbol already recorded recently, skipping for: ${data}`);
-                }
+                // Always record † symbol for capital letters on iOS (no deduplication)
+                this.recordKeystroke({
+                    timestamp,
+                    actualChar: '†',
+                    keyCode: 16,
+                    type: 'synthetic',
+                    sentence: this.currentSentence,
+                    position: pos - 1,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
+                this.lastShiftTime = timestamp;
+                console.log(`✅ † symbol recorded before capital letter: ${data} (iOS)`);
             } else {
                 // Android/Desktop: Use SHIFT
                 const recentShift = this.keystrokeData.slice(-5).find(ks => 
@@ -1491,6 +1506,9 @@ class BiometricDataCollector {
         
         console.log('🔍 Quote handling test:');
         this.testQuoteHandling();
+        
+        console.log('🔍 Backspace handling test:');
+        this.testBackspaceHandling();
     }
     
     displayCurrentSentence() {
@@ -1682,18 +1700,23 @@ class BiometricDataCollector {
         const currentTime = performance.now();
         
         if (this.isIOS) {
-            // Check for duplicates in the last 10 keystrokes with a 200ms window
-            const recentKeystrokes = this.keystrokeData.slice(-10);
-            const duplicateFound = recentKeystrokes.some(ks => {
-                const timeDiff = currentTime - ks.timestamp;
-                return ks.actualChar === data.actualChar && 
-                       ks.type === data.type && 
-                       timeDiff < 200; // 200ms window for iOS
-            });
-            
-            if (duplicateFound) {
-                console.log(`🚫 iOS FINAL CHECK: Duplicate keystroke BLOCKED: ${data.actualChar} (type: ${data.type})`);
-                return;
+            // Skip deduplication for † symbol and BACKSPACE
+            if (data.actualChar === '†' || data.actualChar === 'BACKSPACE') {
+                console.log(`✅ iOS: ${data.actualChar} bypassing deduplication (always record)`);
+            } else {
+                // Check for duplicates in the last 10 keystrokes with a 200ms window
+                const recentKeystrokes = this.keystrokeData.slice(-10);
+                const duplicateFound = recentKeystrokes.some(ks => {
+                    const timeDiff = currentTime - ks.timestamp;
+                    return ks.actualChar === data.actualChar && 
+                           ks.type === data.type && 
+                           timeDiff < 200; // 200ms window for iOS
+                });
+                
+                if (duplicateFound) {
+                    console.log(`🚫 iOS FINAL CHECK: Duplicate keystroke BLOCKED: ${data.actualChar} (type: ${data.type})`);
+                    return;
+                }
             }
         } else {
             // Original deduplication for Android/Desktop
@@ -1817,6 +1840,36 @@ class BiometricDataCollector {
         console.log('Backspace Statistics:');
         console.log('Total backspaces recorded:', backspaces.length);
         console.log('Backspace types:', [...new Set(backspaces.map(b => b.type))]);
+        
+        // Group backspaces by timestamp to detect rapid sequences
+        const backspaceGroups = [];
+        let currentGroup = [];
+        
+        backspaces.forEach((backspace, index) => {
+            if (index === 0) {
+                currentGroup.push(backspace);
+            } else {
+                const timeDiff = backspace.timestamp - backspaces[index - 1].timestamp;
+                if (timeDiff < 500) { // Group backspaces within 500ms
+                    currentGroup.push(backspace);
+                } else {
+                    if (currentGroup.length > 0) {
+                        backspaceGroups.push([...currentGroup]);
+                    }
+                    currentGroup = [backspace];
+                }
+            }
+        });
+        
+        if (currentGroup.length > 0) {
+            backspaceGroups.push(currentGroup);
+        }
+        
+        console.log('Backspace sequences:');
+        backspaceGroups.forEach((group, index) => {
+            console.log(`  Sequence ${index + 1}: ${group.length} backspaces in ${Math.round(group[group.length - 1].timestamp - group[0].timestamp)}ms`);
+        });
+        
         console.log('Backspace details:', backspaces);
         return backspaces;
     }
@@ -1824,13 +1877,13 @@ class BiometricDataCollector {
         shouldRecordChar(char, timestamp, isQuote = false) {
         const currentTime = performance.now();
     
-        // Special handling for † symbol - always allow it to be recorded
-        if (char === '†') {
-            console.log(`✅ † symbol always approved for recording (iOS SHIFT replacement)`);
+        // Special handling for † symbol and BACKSPACE - always allow them to be recorded
+        if (char === '†' || char === 'BACKSPACE') {
+            console.log(`✅ ${char} always approved for recording (${char === '†' ? 'iOS SHIFT replacement' : 'backspace press'})`);
             return true;
         }
     
-        // iOS: Enhanced deduplication for all characters including BACKSPACE
+        // iOS: Enhanced deduplication for all characters except BACKSPACE
         if (this.isIOS) {
             // Check for recent duplicate keystrokes in the actual data
             const recentKeystrokes = this.keystrokeData.slice(-5);
@@ -2029,6 +2082,30 @@ class BiometricDataCollector {
         }
         
         return quotes;
+    }
+    
+    testBackspaceHandling() {
+        console.log('🔍 Testing backspace handling:');
+        
+        const backspaces = this.keystrokeData.filter(k => k.actualChar === 'BACKSPACE');
+        console.log('Backspaces found in keystroke data:', backspaces.length);
+        
+        if (backspaces.length > 0) {
+            console.log('Backspace details:');
+            backspaces.forEach((backspace, i) => {
+                console.log(`  Backspace ${i + 1}: timestamp ${Math.round(backspace.timestamp)}ms, type: ${backspace.type}, synthetic: ${backspace.isSynthetic || false}`);
+            });
+        } else {
+            console.log('❌ No backspaces found in keystroke data!');
+        }
+        
+        // Test rapid backspace sequences
+        console.log('Backspace deduplication settings:');
+        console.log('  iOS: No deduplication (all backspaces recorded)');
+        console.log('  Android/Desktop: Standard deduplication applies');
+        console.log('  † symbol: Always recorded (no deduplication)');
+        
+        return backspaces;
     }
     
     // Crystal Game Methods
