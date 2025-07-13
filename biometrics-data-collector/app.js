@@ -1415,6 +1415,8 @@ class BiometricDataCollector {
         this.iOSInputHistory = [];
         this.iOSLastProcessedEvent = null;
         
+        // Initialize accuracy ring to 0%
+        this.initializeAccuracyRing();
         this.displayCurrentSentence();
         this.updateTypingProgress();
         
@@ -1436,6 +1438,8 @@ class BiometricDataCollector {
         input.focus();
         document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
         
+        // Initialize accuracy ring to 0% (empty circle)
+        this.initializeAccuracyRing();
         this.calculateAccuracy();
         const nextBtn = document.getElementById('next-sentence-btn');
         nextBtn.disabled = true;
@@ -1444,6 +1448,25 @@ class BiometricDataCollector {
         nextBtn.style.opacity = '0.5';
         
         this.updateTypingFeedback();
+    }
+    
+    initializeAccuracyRing() {
+        const accuracyRing = document.getElementById('accuracy-ring');
+        const accuracyValue = document.getElementById('accuracy');
+        const encourage = document.querySelector('.accuracy-encourage');
+        
+        if (accuracyRing && accuracyValue) {
+            // Start with 0% accuracy (empty circle)
+            const circumference = 2 * Math.PI * 26;
+            accuracyRing.setAttribute('stroke-dasharray', circumference);
+            accuracyRing.setAttribute('stroke-dashoffset', circumference); // Full offset = empty circle
+            accuracyValue.textContent = '0%';
+            
+            if (encourage) {
+                encourage.textContent = 'Start typing!';
+                encourage.style.color = 'var(--color-text-secondary)';
+            }
+        }
     }
     
     calculateAccuracy() {
@@ -1496,8 +1519,24 @@ class BiometricDataCollector {
             let percent = Math.max(0, Math.min(accuracy, 100));
             const circumference = 2 * Math.PI * 26;
             const offset = circumference * (1 - percent / 100);
+            
+            // Smooth animation for the progress ring
             accuracyRing.setAttribute('stroke-dasharray', circumference);
             accuracyRing.setAttribute('stroke-dashoffset', offset);
+            
+            // Add a subtle animation class for visual feedback
+            accuracyRing.classList.add('progress-animating');
+            setTimeout(() => {
+                accuracyRing.classList.remove('progress-animating');
+            }, 600);
+            
+            // Add completion animation when accuracy reaches 100%
+            if (percent === 100) {
+                accuracyRing.classList.add('completed');
+                setTimeout(() => {
+                    accuracyRing.classList.remove('completed');
+                }, 1000);
+            }
     
             if (encourage) {
                 if (percent === 100) {
@@ -1509,9 +1548,12 @@ class BiometricDataCollector {
                 } else if (percent >= 50) {
                     encourage.textContent = 'Keep going! 💪';
                     encourage.style.color = 'var(--color-warning)';
-                } else {
+                } else if (percent > 0) {
                     encourage.textContent = 'You can do it!';
                     encourage.style.color = 'var(--color-error)';
+                } else {
+                    encourage.textContent = 'Start typing!';
+                    encourage.style.color = 'var(--color-text-secondary)';
                 }
             }
         }
