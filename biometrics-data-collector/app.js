@@ -28,6 +28,9 @@ class BiometricDataCollector {
         
         this.compositionActive = false;
         this.lastInputLength = 0;
+        this.lastCapitalChar = null;
+        this.lastCapitalCharTime = 0;
+
         
         this.lastBackspaceTime = 0;
         this.lastSpaceTime = 0;
@@ -49,6 +52,7 @@ class BiometricDataCollector {
             this.spaceCooldown = 250;
             this.shiftCooldown = 80;
             this.charCooldown = 30;
+            this.lastBackspaceType = '';
         } else {
             this.backspaceCooldown = 100;
             this.spaceCooldown = 200;
@@ -435,35 +439,6 @@ class BiometricDataCollector {
                 }
             });
             
-            /*
-            typingInput.addEventListener('selectstart', function(e) { 
-                e.preventDefault(); 
-                return false;
-            });
-            
-            typingInput.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
-                return false;
-            });
-            
-            typingInput.addEventListener('mouseup', function(e) {
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
-            });
-            
-            typingInput.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                setTimeout(() => {
-                    typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                }, 0);
-                return false;
-            });
-            */
-            
             typingInput.addEventListener('compositionstart', function(e) {
                 console.log('Composition started - monitoring for clipboard content');
             });
@@ -592,26 +567,6 @@ class BiometricDataCollector {
                 this.showCopyBlockedFeedback();
                 return false;
             }.bind(this));
-            /*
-            sentenceDisplay.addEventListener('selectstart', function(e) { 
-                e.preventDefault(); 
-                return false;
-            });
-            sentenceDisplay.addEventListener('contextmenu', function(e) { 
-                e.preventDefault(); 
-                e.stopPropagation();
-                this.showCopyBlockedFeedback();
-                return false;
-            }.bind(this));
-            sentenceDisplay.addEventListener('mousedown', function(e) { 
-                e.preventDefault(); 
-                return false;
-            });
-            sentenceDisplay.addEventListener('touchstart', function(e) { 
-                e.preventDefault(); 
-                return false;
-            });
-            */
         }
         
         document.getElementById('next-sentence-btn').addEventListener('click', () => this.nextSentence());
@@ -790,7 +745,7 @@ class BiometricDataCollector {
             if (inputType === 'deleteContentBackward' || inputType === 'deleteContent' || inputType === 'deleteWordBackward') {
                 const currentTime = performance.now();
                 
-                if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
+                if (currentTime - this.lastBackspaceTime > this.backspaceCooldown || this.lastBackspaceType !== inputType) {
                     this.recordKeystroke({
                         timestamp: timestamp - 0.5,
                         actualChar: 'BACKSPACE',
@@ -849,46 +804,40 @@ class BiometricDataCollector {
                     // Handle capital letters with proper SHIFT recording
                     if (char === char.toUpperCase() && char.match(/[A-Z]/)) {
                         const currentTime = performance.now();
-                        
-                        // Enhanced iOS capital letter handling - prevent double recording
-                        if (this.isIOS) {
-                            // Check if this capital letter was already processed
-                            const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
-                            if (lastKeystroke && 
-                                lastKeystroke.actualChar === refChar && 
-                                (currentTime - lastKeystroke.timestamp) < 200) {
-                                console.log(`🚫 iOS capital letter duplicate BLOCKED: ${refChar} already recorded`);
-                                continue;
-                            }
+                    
+                        // Prevent same capital letter from being recorded repeatedly
+                        if (refChar === this.lastCapitalChar && (currentTime - this.lastCapitalCharTime) < 200) {
+                            console.log(`🚫 Duplicate capital letter ${refChar} skipped`);
+                            continue;
                         }
-                        
-                        // Check if we need to record SHIFT for this capital letter
+                    
+                        // Record SHIFT + capital if cooldown allows
                         if (currentTime - this.lastCapitalLetterTime > this.shiftForCapitalCooldown) {
-                            // Record SHIFT event with proper flight time distribution
                             this.recordKeystrokeWithShift(charTimestamp, refChar, pos - data.length + i, inputType);
                             this.lastCapitalLetterTime = currentTime;
-                            // Skip recording the actual character since it's already recorded synthetically
-                            continue;
-                        } else {
-                            // Just record the capital letter without SHIFT
-                            if (this.shouldRecordChar(refChar, charTimestamp, false)) {
-                                this.recordKeystroke({
-                                    timestamp: charTimestamp,
-                                    actualChar: refChar,
-                                    keyCode: char.charCodeAt(0),
-                                    type: inputType,
-                                    sentence: this.currentSentence,
-                                    position: pos - data.length + i,
-                                    clientX: this.pointerTracking.x,
-                                    clientY: this.pointerTracking.y
-                                });
-                                
-                                this.lastChar = refChar;
-                                this.lastCharTime = charTimestamp;
-                                console.log(`📝 Capital letter recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}):`, refChar);
-                            }
+                            this.lastCapitalChar = refChar;
+                            this.lastCapitalCharTime = currentTime;
+                            continue; // Skip recording again separately
                         }
-                    } else {
+                    
+                        // Otherwise, record capital without SHIFT (fallback)
+                        if (this.shouldRecordChar(refChar, charTimestamp, false)) {
+                            this.recordKeystroke({
+                                timestamp: charTimestamp,
+                                actualChar: refChar,
+                                keyCode: char.charCodeAt(0),
+                                type: inputType,
+                                sentence: this.currentSentence,
+                                position: pos - data.length + i,
+                                clientX: this.pointerTracking.x,
+                                clientY: this.pointerTracking.y
+                            });
+                    
+                            this.lastChar = refChar;
+                            this.lastCharTime = charTimestamp;
+                            console.log(`📝 Capital letter recorded (fallback - no SHIFT):`, refChar);
+                        }
+                    }else {
                         // Handle lowercase letters and other characters
                         const isQuote = refChar === "'" || refChar === '"';
                         if (this.shouldRecordChar(refChar, charTimestamp, isQuote)) {
@@ -1348,7 +1297,7 @@ class BiometricDataCollector {
         if (actualCharacter === 'Backspace' || actualCharacter === 'backspace') {
             const currentTime = performance.now();
             
-            if (currentTime - this.lastBackspaceTime > this.backspaceCooldown) {
+            if (currentTime - this.lastBackspaceTime > this.backspaceCooldown || this.lastBackspaceType !== 'keydown') {
                 this.recordKeystroke({
                     timestamp,
                     actualChar: 'BACKSPACE',
