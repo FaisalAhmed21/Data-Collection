@@ -2418,16 +2418,18 @@ select.form-control {
 
 .accuracy-bg {
   stroke: #e0e7ef;
-  opacity: 0.3;
+  opacity: 0.5;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   overflow: visible;
+  transform: rotate(-90deg); /* Start from top instead of right */
+  transform-origin: center;
 }
 
 /* Enhanced progress ring with gradient effect */
 .accuracy-fg {
-  stroke: url(#accuracyGradient);
+  stroke: var(--color-success);
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 163.36;
@@ -2435,6 +2437,8 @@ select.form-control {
   transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   vector-effect: non-scaling-stroke;
   overflow: visible;
+  transform: rotate(-90deg); /* Start from top instead of right */
+  transform-origin: center;
 }
 
 .accuracy-fg.progress-animating {
