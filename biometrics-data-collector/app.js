@@ -121,28 +121,9 @@ class BiometricDataCollector {
             facetSequence: []
         };
         
-        this.galleryImages = [
-            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
-            'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop',
-            'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop',
-            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&sat=-50',
-            'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&sat=-30',
-            'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop&sat=-40',
-            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&sat=-60',
-            'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&sat=-70',
-            'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop&sat=-80',
-            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&sat=-90',
-            'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&sat=-100',
-            'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop&sat=-110',
-            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&sat=-120',
-            'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&sat=-130',
-            'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop&sat=-140',
-            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&sat=-150',
-            'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&sat=-160',
-            'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop&sat=-170',
-            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&sat=-180',
-            'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&sat=-190'
-        ];
+        // Generate 20 unique random images for each session
+        const randomSeeds = Array.from({length: 20}, () => Math.floor(Math.random() * 1000000));
+        this.galleryImages = randomSeeds.map(seed => `https://picsum.photos/seed/${seed}/800/600`);
         
 
         this.gesturePath = {};
