@@ -704,9 +704,15 @@ class BiometricDataCollector {
                 this.shiftInserted = false;
             }
         
-            // Special case: store SHIFT exactly once before any capital letter
+            // Special case: store SHIFT exactly once before EACH capital letter
             if (data.length === 1 && data.match(/[A-Z]/)) {
-                if (!this.shiftInserted) {
+                // Check if we recently recorded SHIFT for this specific capital letter
+                const recentShift = this.keystrokeData.slice(-3).find(ks => 
+                    ks.actualChar === 'SHIFT' && 
+                    (timestamp - ks.timestamp) < 100
+                );
+                
+                if (!recentShift) {
                     this.recordKeystroke({
                         timestamp,
                         actualChar: 'SHIFT',
@@ -717,8 +723,7 @@ class BiometricDataCollector {
                         clientX: this.pointerTracking.x,
                         clientY: this.pointerTracking.y
                     });
-                    console.log('✅ SHIFT recorded once before capital sequence');
-                    this.shiftInserted = true;
+                    console.log('✅ SHIFT recorded before capital letter:', data);
                 }
         
                 this.recordKeystroke({
@@ -776,6 +781,30 @@ class BiometricDataCollector {
         this.inputEventCount++;
         
         if (data && inputType === 'insertText') {
+            // iOS-specific: Additional autocorrect filtering
+            if (this.isIOS && data.length > 1) {
+                // Filter out common autocorrect patterns
+                const autocorrectPatterns = [
+                    /^[a-z][A-Z]+$/,  // "qCEO"
+                    /^[A-Z]+[a-z]$/,  // "CEOq"
+                    /^[a-z][A-Z]+[a-z]$/,  // "qCEOq"
+                    /^[a-z]+[A-Z]+[a-z]+$/  // "abcABCdef"
+                ];
+                
+                for (const pattern of autocorrectPatterns) {
+                    if (pattern.test(data)) {
+                        console.log('🚫 iOS autocorrect pattern detected:', data, 'pattern:', pattern);
+                        // Extract only the intended characters (usually the capital letters)
+                        const capitalLetters = data.match(/[A-Z]/g);
+                        if (capitalLetters && capitalLetters.length > 0) {
+                            data = capitalLetters.join('');
+                            console.log('✅ Cleaned autocorrect data:', data);
+                        }
+                        break;
+                    }
+                }
+            }
+            
             console.log(`📱 Mobile input event: "${data}" | Event #${this.inputEventCount} | Platform: ${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}`);
         }
 
@@ -821,9 +850,15 @@ class BiometricDataCollector {
         }
 
 
-        // Handle SHIFT and capital letters - FIXED: SHIFT only ONCE before capital letters
+        // Handle SHIFT and capital letters - FIXED: SHIFT before EACH capital letter
         if (data && data.length === 1 && data.match(/[A-Z]/)) {
-            if (!this.shiftInserted) {
+            // Check if we recently recorded SHIFT for this specific capital letter
+            const recentShift = this.keystrokeData.slice(-3).find(ks => 
+                ks.actualChar === 'SHIFT' && 
+                (timestamp - ks.timestamp) < 100
+            );
+            
+            if (!recentShift) {
                 this.recordKeystroke({
                     timestamp,
                     actualChar: 'SHIFT',
@@ -834,8 +869,7 @@ class BiometricDataCollector {
                     clientX: this.pointerTracking.x,
                     clientY: this.pointerTracking.y
                 });
-                this.shiftInserted = true;
-                console.log(`✅ SHIFT recorded once before capital sequence`);
+                console.log(`✅ SHIFT recorded before capital letter: ${data}`);
             }
         
             this.recordKeystroke({
@@ -859,6 +893,21 @@ class BiometricDataCollector {
 
         // Handle text insertion
         else if (inputType === 'insertText' && data) {
+            // iOS-specific: Filter out autocorrect interference
+            if (this.isIOS && data.length > 1) {
+                // Check if this looks like autocorrect interference (e.g., "qCEO" or "CEOq")
+                const autocorrectPattern = /^[a-z]?[A-Z]+[a-z]?$/;
+                if (autocorrectPattern.test(data)) {
+                    console.log('🚫 iOS autocorrect interference detected:', data);
+                    // Extract only the capital letters
+                    const capitalLetters = data.match(/[A-Z]/g);
+                    if (capitalLetters) {
+                        data = capitalLetters.join('');
+                        console.log('✅ Extracted capital letters:', data);
+                    }
+                }
+            }
+            
             for (let i = 0; i < data.length; i++) {
                 const char = data[i];
                 const posOffset = pos - data.length + i;
@@ -1936,6 +1985,21 @@ class BiometricDataCollector {
     
             // Use longer cooldown for capital letters on iOS
             dedupWindow = Math.max(dedupWindow, 200);
+        }
+        
+        // Enhanced iOS autocorrect character filtering
+        if (this.isIOS && char.match(/[a-z]/)) {
+            // Check if this lowercase character is likely autocorrect interference
+            const recentKeystrokes = this.keystrokeData.slice(-3);
+            const hasRecentCapital = recentKeystrokes.some(ks => 
+                ks.actualChar && ks.actualChar.match(/[A-Z]/) &&
+                (currentTime - ks.timestamp) < 500
+            );
+            
+            if (hasRecentCapital) {
+                console.log(`🚫 iOS autocorrect lowercase character BLOCKED: ${char} (likely interference)`);
+                return false;
+            }
         }
     
         // General deduplication
