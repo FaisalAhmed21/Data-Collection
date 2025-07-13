@@ -1161,7 +1161,7 @@ select.form-control {
   outline: none !important;
 }
 
-/* Universal Crystal Sizing */
+/* Universal Crystal Sizing - No Clipping */
 .crystal {
   width: clamp(176px, 20vw + 88px, 264px);
   height: clamp(176px, 20vw + 88px, 264px);
@@ -1169,6 +1169,9 @@ select.form-control {
   transition: transform 0.3s var(--ease-standard), filter 0.3s var(--ease-standard);
   transform-origin: center;
   border-radius: 50%;
+  overflow: visible !important; /* Ensure crystal can scale beyond its bounds */
+  position: relative;
+  z-index: 10; /* Ensure crystal appears above any potential clipping containers */
 }
 
 .crystal-inner {
@@ -1259,6 +1262,8 @@ select.form-control {
   /* Grid rules will override where supported */
   display: grid;
   place-items: center;
+  overflow: visible !important; /* Allow crystal to scale freely */
+  position: relative;
 }
 
 .crystal-content {
@@ -1269,6 +1274,8 @@ select.form-control {
   /* Grid rules will override where supported */
   display: grid;
   place-items: center;
+  overflow: visible !important; /* Allow crystal to scale freely */
+  position: relative;
 }
 
 @keyframes crystal-shrink {
@@ -2411,22 +2418,40 @@ select.form-control {
 
 .accuracy-bg {
   stroke: #e0e7ef;
-  opacity: 0.5;
+  opacity: 0.3;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   overflow: visible;
 }
 
+/* Enhanced progress ring with gradient effect */
 .accuracy-fg {
-  stroke: var(--color-success);
+  stroke: url(#accuracyGradient);
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 163.36;
-  stroke-dashoffset: 0;
+  stroke-dashoffset: 163.36; /* Start with empty circle */
   transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   vector-effect: non-scaling-stroke;
   overflow: visible;
+}
+
+.accuracy-fg.progress-animating {
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  filter: drop-shadow(0 0 6px var(--color-success));
+  stroke-width: 7;
+}
+
+/* Add a subtle pulse animation when accuracy reaches 100% */
+.accuracy-fg.completed {
+  animation: accuracy-complete 1s ease-in-out;
+}
+
+@keyframes accuracy-complete {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); filter: drop-shadow(0 0 8px var(--color-success)); }
+  100% { transform: scale(1); }
 }
 
 .accuracy-value {
@@ -2984,7 +3009,7 @@ h1, h2, h3, h4, h5, h6, p, span, label, div, button, input, textarea, select {
     border-radius: 0 !important;
     box-shadow: none !important;
     outline: none !important;
-    overflow: hidden; /* Ensure facets stay within bounds */
+    overflow: visible !important; /* Allow crystal to scale freely without clipping */
 }
 
 #crystal {
@@ -2992,11 +3017,12 @@ h1, h2, h3, h4, h5, h6, p, span, label, div, button, input, textarea, select {
     z-index: 5;
 }
 
-/* Responsive design for different mobile devices */
+/* Responsive design for different mobile devices - No Clipping */
 @media (max-width: 480px) {
     #crystal-area {
         width: 350px;
         height: 350px;
+        overflow: visible !important; /* Maintain no clipping on mobile */
     }
     
     .crystal-facet {
@@ -3012,6 +3038,7 @@ h1, h2, h3, h4, h5, h6, p, span, label, div, button, input, textarea, select {
     #crystal-area {
         width: 300px;
         height: 300px;
+        overflow: visible !important; /* Maintain no clipping on mobile */
     }
     
     .crystal-facet {
@@ -3027,6 +3054,7 @@ h1, h2, h3, h4, h5, h6, p, span, label, div, button, input, textarea, select {
     #crystal-area {
         width: 280px;
         height: 280px;
+        overflow: visible !important; /* Maintain no clipping on mobile */
     }
 }
 
