@@ -2423,39 +2423,17 @@ select.form-control {
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   overflow: visible;
-  transform: rotate(-90deg); /* Start from top instead of right */
-  transform-origin: center;
 }
 
-/* Enhanced progress ring with gradient effect */
 .accuracy-fg {
   stroke: var(--color-success);
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 163.36;
-  stroke-dashoffset: 163.36; /* Start with empty circle */
+  stroke-dashoffset: 0;
   transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   vector-effect: non-scaling-stroke;
   overflow: visible;
-  transform: rotate(-90deg); /* Start from top instead of right */
-  transform-origin: center;
-}
-
-.accuracy-fg.progress-animating {
-  transition: stroke-dashoffset 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  filter: drop-shadow(0 0 6px var(--color-success));
-  stroke-width: 7;
-}
-
-/* Add a subtle pulse animation when accuracy reaches 100% */
-.accuracy-fg.completed {
-  animation: accuracy-complete 1s ease-in-out;
-}
-
-@keyframes accuracy-complete {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); filter: drop-shadow(0 0 8px var(--color-success)); }
-  100% { transform: scale(1); }
 }
 
 .accuracy-value {
