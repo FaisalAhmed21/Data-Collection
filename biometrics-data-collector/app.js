@@ -31,7 +31,7 @@ class BiometricDataCollector {
         this.lastCapitalChar = null;
         this.lastCapitalCharTime = 0;
         this.shiftInserted = false;
-
+        
 
         this.lastSpaceTime = 0;
         this.lastCharTime = 0;
@@ -40,6 +40,8 @@ class BiometricDataCollector {
         this.lastShiftRecorded = false;
         this.lastCapitalLetterTime = 0;
         this.shiftForCapitalCooldown = 200; // Cooldown to prevent multiple SHIFT events for same capital letter
+        this.lastShiftTime = 0; // Track when SHIFT was last recorded
+        this.capitalLetterCount = 0; // Track capital letters for debugging
         
         if (this.isIOS) {
             this.spaceCooldown = 300;
@@ -704,12 +706,112 @@ class BiometricDataCollector {
                 this.shiftInserted = false;
             }
         
-            // Special case: store SHIFT exactly once before EACH capital letter
-            if (data.length === 1 && data.match(/[A-Z]/)) {
-                // Check if we recently recorded SHIFT for this specific capital letter
-                const recentShift = this.keystrokeData.slice(-3).find(ks => 
+            // Quote deduplication logic (preserve your existing code)
+            const isQuote = data === "'" || data === "`" || data === '´' || data === '′' || data === '‵' ||
+                             data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶';
+            
+            if (isQuote) {
+                console.log('🔍 Quote input detected:', data, 'charCode:', data.charCodeAt(0), 'type:', inputType);
+            }
+            
+            if (this.isAndroid) {
+                const dedupWindow = isQuote ? 30 : 100;
+                if (this.lastInputEvent === eventSignature && 
+                    this.lastInputEventTime && 
+                    (currentTime - this.lastInputEventTime) < dedupWindow) {
+                    console.log('🚫 Android duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                    return;
+                }
+            }
+        }
+        
+        
+        this.lastInputValue = value;
+        this.lastInputLength = value.length;
+        this.lastInputEvent = eventSignature;
+        this.lastInputEventTime = currentTime;
+        this.inputEventCount++;
+        
+        if (data && inputType === 'insertText') {
+            console.log(`📱 Mobile input event: "${data}" | Event #${this.inputEventCount} | Platform: ${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}`);
+        }
+
+        // --- SPACE, SHIFT, BACKSPACE LOGIC FROM PROVIDED CODE ---
+        // Handle SPACE
+        if (data === ' ') {
+                    this.recordKeystroke({
+                timestamp,
+                actualChar: 'SPACE',
+                keyCode: 32,
+                        type: inputType,
+                        sentence: this.currentSentence,
+                position: pos - 1,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+            this.lastChar = 'SPACE';
+            this.lastCharTime = timestamp;
+            console.log(`✅ SPACE recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}): cooldown: ${this.spaceCooldown} ms`);
+            this.calculateAccuracy();
+            this.checkSentenceCompletion();
+            this.updateTypingFeedback();
+            return;
+        }
+    
+        // Handle BACKSPACE - FIXED: Store only once per click
+        if (inputType && inputType.startsWith('delete')) {
+                    this.recordKeystroke({
+                timestamp,
+                actualChar: 'BACKSPACE',
+                keyCode: 8,
+                        type: inputType,
+                        sentence: this.currentSentence,
+                position: pos,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+            console.log('✅ Backspace recorded once');
+            this.calculateAccuracy();
+            this.checkSentenceCompletion();
+            this.updateTypingFeedback();
+            return;
+        }
+
+
+                // Handle SHIFT and capital letters - iOS uses † symbol instead of SHIFT
+        if (data && data.length === 1 && data.match(/[A-Z]/)) {
+            this.capitalLetterCount++;
+            console.log(`🔤 Capital letter #${this.capitalLetterCount} detected: ${data} on ${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}`);
+            
+            // iOS: Use † symbol instead of SHIFT
+            if (this.isIOS) {
+                // Check if we recently recorded † symbol (within 200ms for iOS)
+                const recentDagger = this.keystrokeData.slice(-3).find(ks => 
+                    ks.actualChar === '†' && 
+                    (timestamp - ks.timestamp) < 200
+                );
+                
+                if (!recentDagger) {
+                    this.recordKeystroke({
+                        timestamp,
+                        actualChar: '†',
+                        keyCode: 16,
+                        type: 'synthetic',
+                        sentence: this.currentSentence,
+                        position: pos - 1,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                    this.lastShiftTime = timestamp;
+                    console.log(`✅ † symbol recorded before capital letter: ${data} (iOS)`);
+                } else {
+                    console.log(`⏭️ iOS: † symbol already recorded recently, skipping for: ${data}`);
+                }
+            } else {
+                // Android/Desktop: Use SHIFT
+                const recentShift = this.keystrokeData.slice(-5).find(ks => 
                     ks.actualChar === 'SHIFT' && 
-                    (timestamp - ks.timestamp) < 100
+                    (timestamp - ks.timestamp) < 150
                 );
                 
                 if (!recentShift) {
@@ -723,153 +825,11 @@ class BiometricDataCollector {
                         clientX: this.pointerTracking.x,
                         clientY: this.pointerTracking.y
                     });
-                    console.log('✅ SHIFT recorded before capital letter:', data);
+                    this.lastShiftTime = timestamp;
+                    console.log(`✅ SHIFT recorded before capital letter: ${data} (${this.isAndroid ? 'Android' : 'Desktop'})`);
+                } else {
+                    console.log(`⏭️ SHIFT already recorded recently, skipping for: ${data}`);
                 }
-        
-                this.recordKeystroke({
-                    timestamp: timestamp + 1,
-                    actualChar: data,
-                    keyCode: data.charCodeAt(0),
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos - 1,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-                this.lastChar = data;
-                this.lastKeystrokeTime = timestamp + 1;
-                this.calculateAccuracy();
-                this.checkSentenceCompletion();
-                this.updateTypingFeedback();
-                return;
-            }
-        
-            // Quote deduplication logic (preserve your existing code)
-            const isQuote = data === "'" || data === "`" || data === '´' || data === '′' || data === '‵' ||
-                             data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶';
-            
-            if (isQuote) {
-                console.log('🔍 Quote input detected:', data, 'charCode:', data.charCodeAt(0), 'type:', inputType);
-            }
-        
-            if (this.isIOS) {
-                const dedupWindow = isQuote ? 50 : 300;
-                if (this.lastInputEvent === eventSignature && 
-                    this.lastInputEventTime && 
-                    (currentTime - this.lastInputEventTime) < dedupWindow) {
-                    console.log('🚫 iOS duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
-                    return;
-                }
-            } else if (this.isAndroid) {
-                const dedupWindow = isQuote ? 30 : 100;
-                if (this.lastInputEvent === eventSignature && 
-                    this.lastInputEventTime && 
-                    (currentTime - this.lastInputEventTime) < dedupWindow) {
-                    console.log('🚫 Android duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
-                    return;
-                }
-            }
-        
-            // If it's not capital letter, fall through to your existing character recording logic...
-        }
-        
-        
-        this.lastInputValue = value;
-        this.lastInputLength = value.length;
-        this.lastInputEvent = eventSignature;
-        this.lastInputEventTime = currentTime;
-        this.inputEventCount++;
-        
-        if (data && inputType === 'insertText') {
-            // iOS-specific: Additional autocorrect filtering
-            if (this.isIOS && data.length > 1) {
-                // Filter out common autocorrect patterns
-                const autocorrectPatterns = [
-                    /^[a-z][A-Z]+$/,  // "qCEO"
-                    /^[A-Z]+[a-z]$/,  // "CEOq"
-                    /^[a-z][A-Z]+[a-z]$/,  // "qCEOq"
-                    /^[a-z]+[A-Z]+[a-z]+$/  // "abcABCdef"
-                ];
-                
-                for (const pattern of autocorrectPatterns) {
-                    if (pattern.test(data)) {
-                        console.log('🚫 iOS autocorrect pattern detected:', data, 'pattern:', pattern);
-                        // Extract only the intended characters (usually the capital letters)
-                        const capitalLetters = data.match(/[A-Z]/g);
-                        if (capitalLetters && capitalLetters.length > 0) {
-                            data = capitalLetters.join('');
-                            console.log('✅ Cleaned autocorrect data:', data);
-                        }
-                        break;
-                    }
-                }
-            }
-            
-            console.log(`📱 Mobile input event: "${data}" | Event #${this.inputEventCount} | Platform: ${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}`);
-        }
-
-        // --- SPACE, SHIFT, BACKSPACE LOGIC FROM PROVIDED CODE ---
-        // Handle SPACE
-        if (data === ' ') {
-            this.recordKeystroke({
-                timestamp,
-                actualChar: 'SPACE',
-                keyCode: 32,
-                type: inputType,
-                sentence: this.currentSentence,
-                position: pos - 1,
-                clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y
-            });
-            this.lastChar = 'SPACE';
-            this.lastCharTime = timestamp;
-            console.log(`✅ SPACE recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}): cooldown: ${this.spaceCooldown} ms`);
-            this.calculateAccuracy();
-            this.checkSentenceCompletion();
-            this.updateTypingFeedback();
-            return;
-        }
-
-        // Handle BACKSPACE - FIXED: Store only once per click
-        if (inputType && inputType.startsWith('delete')) {
-            this.recordKeystroke({
-                timestamp,
-                actualChar: 'BACKSPACE',
-                keyCode: 8,
-                type: inputType,
-                sentence: this.currentSentence,
-                position: pos,
-                clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y
-            });
-            console.log('✅ Backspace recorded once');
-            this.calculateAccuracy();
-            this.checkSentenceCompletion();
-            this.updateTypingFeedback();
-            return;
-        }
-
-
-        // Handle SHIFT and capital letters - FIXED: SHIFT before EACH capital letter
-        if (data && data.length === 1 && data.match(/[A-Z]/)) {
-            // Check if we recently recorded SHIFT for this specific capital letter
-            const recentShift = this.keystrokeData.slice(-3).find(ks => 
-                ks.actualChar === 'SHIFT' && 
-                (timestamp - ks.timestamp) < 100
-            );
-            
-            if (!recentShift) {
-                this.recordKeystroke({
-                    timestamp,
-                    actualChar: 'SHIFT',
-                    keyCode: 16,
-                    type: 'synthetic',
-                    sentence: this.currentSentence,
-                    position: pos - 1,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-                console.log(`✅ SHIFT recorded before capital letter: ${data}`);
             }
         
             this.recordKeystroke({
@@ -893,21 +853,6 @@ class BiometricDataCollector {
 
         // Handle text insertion
         else if (inputType === 'insertText' && data) {
-            // iOS-specific: Filter out autocorrect interference
-            if (this.isIOS && data.length > 1) {
-                // Check if this looks like autocorrect interference (e.g., "qCEO" or "CEOq")
-                const autocorrectPattern = /^[a-z]?[A-Z]+[a-z]?$/;
-                if (autocorrectPattern.test(data)) {
-                    console.log('🚫 iOS autocorrect interference detected:', data);
-                    // Extract only the capital letters
-                    const capitalLetters = data.match(/[A-Z]/g);
-                    if (capitalLetters) {
-                        data = capitalLetters.join('');
-                        console.log('✅ Extracted capital letters:', data);
-                    }
-                }
-            }
-            
             for (let i = 0; i < data.length; i++) {
                 const char = data[i];
                 const posOffset = pos - data.length + i;
@@ -1027,38 +972,25 @@ class BiometricDataCollector {
                     console.log('🔍 Quote processing complete - Final refChar:', refChar);
                 }
                 
-                // Check if character should be recorded (simplified deduplication)
+                                // Check if character should be recorded (simplified deduplication)
                 // For quotes, use more lenient deduplication
                 const isQuote = refChar === "'" || refChar === '"';
                 if (this.shouldRecordChar(refChar, timestamp + i, isQuote)) {
                     
-                    // Final iOS safety check: prevent duplicate in keystroke data
-                    // More lenient for quotes
-                    if (this.isIOS) {
-                        const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
-                        const quoteDedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
-                        if (lastKeystroke && 
-                            lastKeystroke.actualChar === refChar && 
-                            (timestamp + i - lastKeystroke.timestamp) < quoteDedupWindow) {
-                            console.log('🚫 iOS final duplicate BLOCKED in keystroke data:', refChar);
-                            return;
-                        }
-                    }
-                    
                     console.log('📝 Recording keystroke:', refChar, 'type:', inputType, 'timestamp:', timestamp + i);
-                    this.recordKeystroke({
+                        this.recordKeystroke({
                         timestamp: timestamp + i,
-                        actualChar: refChar,
+                            actualChar: refChar,
                         keyCode: char.charCodeAt(0),
-                        type: inputType,
-                        sentence: this.currentSentence,
+                            type: inputType,
+                            sentence: this.currentSentence,
                         position: pos - data.length + i,
-                        clientX: this.pointerTracking.x,
-                        clientY: this.pointerTracking.y
-                    });
-                    
+                            clientX: this.pointerTracking.x,
+                            clientY: this.pointerTracking.y
+                        });
+                        
                     // Update last character and time for mobile deduplication
-                    this.lastChar = refChar;
+                        this.lastChar = refChar;
                     this.lastCharTime = timestamp + i;
                 } else {
                     console.log('❌ Character duplicate ignored:', refChar);
@@ -1167,40 +1099,27 @@ class BiometricDataCollector {
                 console.log('🔍 Quote processing complete (other input) - Final refChar:', refChar);
             }
             
-            // Check if character should be recorded (simplified deduplication)
+                        // Check if character should be recorded (simplified deduplication)
             // For quotes, use more lenient deduplication
             const isQuote = refChar === "'" || refChar === '"';
             if (this.shouldRecordChar(refChar, timestamp, isQuote)) {
                 
-                // Final iOS safety check: prevent duplicate in keystroke data
-                // More lenient for quotes
-                if (this.isIOS) {
-                    const lastKeystroke = this.keystrokeData[this.keystrokeData.length - 1];
-                    const quoteDedupWindow = isQuote ? 100 : 300; // 100ms for quotes vs 300ms for others
-                    if (lastKeystroke && 
-                        lastKeystroke.actualChar === refChar && 
-                        (timestamp - lastKeystroke.timestamp) < quoteDedupWindow) {
-                        console.log('🚫 iOS final duplicate BLOCKED in keystroke data (other input):', refChar);
-                        return;
-                    }
-                }
-                
                 console.log('📝 Recording keystroke (other input):', refChar, 'type:', inputType, 'timestamp:', timestamp);
-                this.recordKeystroke({
-                    timestamp: timestamp,
-                    actualChar: refChar,
-                    keyCode: data.charCodeAt(0),
-                    type: inputType,
-                    sentence: this.currentSentence,
-                    position: pos - 1,
-                    clientX: this.pointerTracking.x,
-                    clientY: this.pointerTracking.y
-                });
-                
+                    this.recordKeystroke({
+                        timestamp: timestamp,
+                        actualChar: refChar,
+                        keyCode: data.charCodeAt(0),
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - 1,
+                        clientX: this.pointerTracking.x,
+                        clientY: this.pointerTracking.y
+                    });
+                    
                 // Update last character and time for mobile deduplication
-                this.lastChar = refChar;
-                this.lastCharTime = timestamp;
-            } else {
+                    this.lastChar = refChar;
+                    this.lastCharTime = timestamp;
+                } else {
                 console.log('❌ Character duplicate ignored (other input):', refChar);
             }
         }
@@ -1534,19 +1453,19 @@ class BiometricDataCollector {
         const actualCharacter = this.getActualTypedCharacter(e, e.target.value);
 
         if (actualCharacter === 'Backspace' || actualCharacter === 'backspace') {
-            this.recordKeystroke({
-                timestamp,
-                actualChar: 'BACKSPACE',
-                keyCode: 8,
-                type: 'keydown',
-                shiftKey: e.shiftKey,
-                ctrlKey: e.ctrlKey,
-                altKey: e.altKey,
-                sentence: this.currentSentence,
-                position: e.target.selectionStart || 0,
-                clientX: this.pointerTracking.x,
-                clientY: this.pointerTracking.y
-            });
+                this.recordKeystroke({
+                    timestamp,
+                    actualChar: 'BACKSPACE',
+                    keyCode: 8,
+                    type: 'keydown',
+                    shiftKey: e.shiftKey,
+                    ctrlKey: e.ctrlKey,
+                    altKey: e.altKey,
+                    sentence: this.currentSentence,
+                    position: e.target.selectionStart || 0,
+                    clientX: this.pointerTracking.x,
+                    clientY: this.pointerTracking.y
+                });
             console.log('✅ Backspace keydown recorded once');
             
             this.calculateAccuracy();
@@ -1629,6 +1548,8 @@ class BiometricDataCollector {
         this.lastChar = null;
         this.lastShiftRecorded = false;
         this.lastCapitalLetterTime = 0;
+        this.lastShiftTime = 0;
+        this.capitalLetterCount = 0;
         
         this.lastInputValue = '';
         this.inputEventCount = 0;
@@ -1833,7 +1754,7 @@ class BiometricDataCollector {
     }
     
     recordKeystroke(data) {
-        if (['SHIFT', 'BACKSPACE', 'SPACE', 'ENTER', 'TAB', 'escape', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'delete', 'home', 'end'].includes(data.actualChar)) {
+        if (['SHIFT', '†', 'BACKSPACE', 'SPACE', 'ENTER', 'TAB', 'escape', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'delete', 'home', 'end'].includes(data.actualChar)) {
             console.log(`[DEBUG] Special key recorded:`, data);
         }
         
@@ -1841,19 +1762,19 @@ class BiometricDataCollector {
             console.log('[QUOTE] Keystroke captured:', data);
         }
         
-        // Enhanced deduplication for iOS
+        // Enhanced deduplication for iOS (only for backspace)
         const isQuote = data.actualChar === "'" || data.actualChar === '"';
-        if (this.isIOS && data.actualChar && data.actualChar !== 'BACKSPACE' && data.actualChar !== 'SHIFT' && !isQuote) {
+        if (this.isIOS && data.actualChar === 'BACKSPACE') {
             const currentTime = performance.now();
-            const dedupWindow = isQuote ? 100 : 300;
+            const dedupWindow = 100; // 100ms cooldown for backspace on iOS
             
-            const recentKeystrokes = this.keystrokeData.slice(-5);
+            const recentKeystrokes = this.keystrokeData.slice(-3);
             const duplicateFound = recentKeystrokes.some(ks => 
-                ks.actualChar === data.actualChar && 
+                ks.actualChar === 'BACKSPACE' && 
                 (currentTime - ks.timestamp) < dedupWindow
             );
             if (duplicateFound) {
-                console.log('🚫 iOS FINAL CHECK: Duplicate character BLOCKED:', data.actualChar, 'window:', dedupWindow, 'ms');
+                console.log('🚫 iOS FINAL CHECK: Duplicate BACKSPACE BLOCKED, window:', dedupWindow, 'ms');
                 return;
             }
         }
@@ -1953,78 +1874,82 @@ class BiometricDataCollector {
         return backspaces;
     }
     
-    shouldRecordChar(char, timestamp, isQuote = false) {
+        shouldRecordChar(char, timestamp, isQuote = false) {
         const currentTime = performance.now();
     
-        // 🚀 New rule: Always allow BACKSPACE and SHIFT with no deduplication
-        if (char === 'BACKSPACE' || char === 'SHIFT') {
+        // 🚀 New rule: Always allow BACKSPACE, SHIFT, and † symbol with no deduplication
+        if (char === 'BACKSPACE' || char === 'SHIFT' || char === '†') {
+            return true;
+        }
+        
+        // iOS: Remove all cooldowns except backspace
+        if (this.isIOS) {
+            // Only apply backspace cooldown for iOS
+            if (char === 'BACKSPACE') {
+                if (this.lastChar === 'BACKSPACE' && this.lastCharTime) {
+                    const timeSinceLast = currentTime - this.lastCharTime;
+                    if (timeSinceLast < 100) { // 100ms cooldown for backspace on iOS
+                        console.log(`🚫 iOS backspace cooldown BLOCKED: ${char} - time since last: ${timeSinceLast}ms`);
+                        return false;
+                    }
+                }
+            }
+            
+            // For all other characters on iOS, allow recording without cooldown
+            this.lastChar = char;
+            this.lastCharTime = currentTime;
+            this.lastInputEvent = char;
+            this.lastInputEventTime = currentTime;
+            
+            console.log(`✅ iOS character approved for recording (no cooldown): ${char} at time: ${currentTime}`);
             return true;
         }
     
+        // Android/Desktop: Keep existing cooldown logic
         // Determine deduplication window based on character type and platform
         let dedupWindow;
         if (char === 'SPACE') {
             dedupWindow = this.spaceCooldown;
         } else if (isQuote) {
-            dedupWindow = this.isIOS ? 50 : this.isAndroid ? 30 : 20;
+            dedupWindow = this.isAndroid ? 30 : 20;
         } else {
             dedupWindow = this.charCooldown;
         }
     
-        // Enhanced iOS capital letter deduplication (optional)
-        if (this.isIOS && char.match(/[A-Z]/)) {
+        // Enhanced Android capital letter deduplication
+        if (this.isAndroid && char.match(/[A-Z]/)) {
             const recentKeystrokes = this.keystrokeData.slice(-5);
             const duplicateCapital = recentKeystrokes.find(ks => 
                 ks.actualChar === char && 
                 (currentTime - ks.timestamp) < 250
             );
             if (duplicateCapital) {
-                console.log(`🚫 iOS capital letter duplicate BLOCKED in shouldRecordChar: ${char} already recorded`);
+                console.log(`🚫 Android capital letter duplicate BLOCKED in shouldRecordChar: ${char} already recorded`);
                 return false;
             }
     
-            // Use longer cooldown for capital letters on iOS
+            // Use longer cooldown for capital letters on Android
             dedupWindow = Math.max(dedupWindow, 200);
         }
-        
-        // Enhanced iOS autocorrect character filtering
-        if (this.isIOS && char.match(/[a-z]/)) {
-            // Check if this lowercase character is likely autocorrect interference
-            const recentKeystrokes = this.keystrokeData.slice(-3);
-            const hasRecentCapital = recentKeystrokes.some(ks => 
-                ks.actualChar && ks.actualChar.match(/[A-Z]/) &&
-                (currentTime - ks.timestamp) < 500
-            );
-            
-            if (hasRecentCapital) {
-                console.log(`🚫 iOS autocorrect lowercase character BLOCKED: ${char} (likely interference)`);
-                return false;
-            }
-        }
     
-        // General deduplication
+        // General deduplication for Android/Desktop
         if (this.lastChar === char && this.lastCharTime) {
             const timeSinceLast = currentTime - this.lastCharTime;
             if (timeSinceLast < dedupWindow) {
-                console.log(`🚫 Deduplication (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}): ${char} duplicate BLOCKED - time since last: ${timeSinceLast}ms (window: ${dedupWindow}ms)`);
+                console.log(`🚫 Deduplication (${this.isAndroid ? 'Android' : 'Desktop'}): ${char} duplicate BLOCKED - time since last: ${timeSinceLast}ms (window: ${dedupWindow}ms)`);
                 return false;
             }
         }
     
-        // Platform-specific rapid input deduplication
-        if (this.isIOS) {
-            if (this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 25) {
-                console.log(`🚫 iOS rapid input BLOCKED: ${char} - time since last event: ${currentTime - this.lastInputEventTime}ms`);
-                return false;
-            }
-        } else if (this.isAndroid) {
+        // Platform-specific rapid input deduplication for Android
+        if (this.isAndroid) {
             if (this.lastInputEvent === char && this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 20) {
                 console.log(`🚫 Android input event duplicate BLOCKED: ${char} - time since last: ${currentTime - this.lastInputEventTime}ms`);
                 return false;
             }
         }
     
-        // Synthetic capital letter deduplication
+        // Synthetic capital letter deduplication for Android/Desktop
         const recentSynthetic = this.keystrokeData.slice(-3).find(ks => 
             ks.isSynthetic && ks.actualChar === char && ks.actualChar !== 'SHIFT' && 
             (currentTime - ks.timestamp) < 500
@@ -2034,13 +1959,13 @@ class BiometricDataCollector {
             return false;
         }
     
-        // Update tracking variables
+        // Update tracking variables for Android/Desktop
         this.lastChar = char;
         this.lastCharTime = currentTime;
         this.lastInputEvent = char;
         this.lastInputEventTime = currentTime;
     
-        console.log(`✅ Character approved for recording (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}): ${char} at time: ${currentTime}, cooldown: ${dedupWindow}ms`);
+        console.log(`✅ Character approved for recording (${this.isAndroid ? 'Android' : 'Desktop'}): ${char} at time: ${currentTime}, cooldown: ${dedupWindow}ms`);
         return true;
     }
 
