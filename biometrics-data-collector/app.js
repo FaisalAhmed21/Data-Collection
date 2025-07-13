@@ -260,6 +260,29 @@ class BiometricDataCollector {
         this.initializeGallery();
         this.setupPointerTracking();
         this.updateTaskLocks();
+        
+        // Initialize accuracy ring on page load
+        setTimeout(() => {
+            this.initializeAccuracyRing();
+            
+            // Test the accuracy ring with a simple animation
+            setTimeout(() => {
+                console.log('🧪 Testing accuracy ring animation...');
+                const accuracyRing = document.getElementById('accuracy-ring');
+                if (accuracyRing) {
+                    const circumference = 2 * Math.PI * 26;
+                    // Test 50% fill
+                    accuracyRing.setAttribute('stroke-dashoffset', circumference * 0.5);
+                    console.log('✅ Test animation applied - ring should be 50% filled');
+                    
+                    // Reset after 2 seconds
+                    setTimeout(() => {
+                        accuracyRing.setAttribute('stroke-dashoffset', circumference);
+                        console.log('✅ Test animation reset - ring should be empty again');
+                    }, 2000);
+                }
+            }, 500);
+        }, 100);
     }
     
     setupPointerTracking() {
@@ -1458,14 +1481,24 @@ class BiometricDataCollector {
         if (accuracyRing && accuracyValue) {
             // Start with 0% accuracy (empty circle)
             const circumference = 2 * Math.PI * 26;
+            console.log('🔍 Initializing accuracy ring with circumference:', circumference);
+            
+            // Set initial state - empty circle
             accuracyRing.setAttribute('stroke-dasharray', circumference);
             accuracyRing.setAttribute('stroke-dashoffset', circumference); // Full offset = empty circle
             accuracyValue.textContent = '0%';
+            
+            // Remove any existing animation classes
+            accuracyRing.classList.remove('progress-animating', 'completed');
             
             if (encourage) {
                 encourage.textContent = 'Start typing!';
                 encourage.style.color = 'var(--color-text-secondary)';
             }
+            
+            console.log('✅ Accuracy ring initialized to 0% (empty circle)');
+        } else {
+            console.error('❌ Could not find accuracy ring elements');
         }
     }
     
@@ -1519,6 +1552,8 @@ class BiometricDataCollector {
             let percent = Math.max(0, Math.min(accuracy, 100));
             const circumference = 2 * Math.PI * 26;
             const offset = circumference * (1 - percent / 100);
+            
+            console.log(`🔍 Updating accuracy ring: ${percent}% -> offset: ${offset.toFixed(2)}`);
             
             // Smooth animation for the progress ring
             accuracyRing.setAttribute('stroke-dasharray', circumference);
