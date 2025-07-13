@@ -3421,7 +3421,7 @@ class BiometricDataCollector {
         .then(res => res.text())
         .then(response => {
             console.log(`✅ ${filename} uploaded:`, response);
-            alert(`✅ ${filename} uploaded to your Google Drive.`);
+            alert(`✅ ${filename} uploaded to Drive.`);
         })
         .catch(error => {
             console.error(`❌ Upload failed:`, error);
