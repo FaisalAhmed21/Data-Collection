@@ -1,3162 +1,3626 @@
-:root {
-  /* Updated Navy & Gold Color Palette */
-  --color-background: #FFFFFF;
-  --color-surface: #F7FAFC; /* Very light teal-tinted background */
-  --color-text: #1A2236;
-  --color-text-secondary: #6B7A90;
-  --color-primary: #20CFCF;                       /* Vibrant Teal */
-  --color-primary-hover: #1AB1B1;
-  --color-primary-active: #179A9A;
-  --color-secondary: #E6F7FA; /* Soft light teal for containers */
-  --color-secondary-hover: #D0F0F7;
-  --color-secondary-active: #B8E6F0;
-  --color-accent: #AEEBFB; /* Soft sky blue for highlights */
-  --color-accent-light: #E6F8FC; /* Very light sky blue for backgrounds */
-  --color-border: rgba(32, 207, 207, 0.15);
-  --color-btn-primary-text: #FFFFFF;
-  --color-card-border: rgba(32, 207, 207, 0.10);
-  --color-card-border-inner: rgba(32, 207, 207, 0.10);
-  --color-error: #FF4F64;
-  --color-success: #20CFCF;
-  --color-warning: #FFB86B;
-  --color-info: #AEEBFB;
-  --color-focus-ring: rgba(32, 207, 207, 0.18);
-  --color-select-caret: #20CFCF;
-
-  /* Common style patterns */
-  --focus-ring: 0 0 0 3px var(--color-focus-ring);
-  --focus-outline: 2px solid var(--color-primary);
-  --status-bg-opacity: 0.15;
-  --status-border-opacity: 0.25;
-  --select-caret-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23001F3F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  --select-caret-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-
-  /* RGB versions for opacity control */
-  --color-success-rgb: 32, 207, 207;
-  --color-error-rgb: 255, 79, 100;
-  --color-warning-rgb: 255, 184, 107;
-  --color-info-rgb: 174, 235, 251;
-
-  /* Typography */
-  --font-family-base: "FKGroteskNeue", "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-family-mono: "Berkeley Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-size-xs: 11px;
-  --font-size-sm: 12px;
-  --font-size-base: 14px;
-  --font-size-md: 14px;
-  --font-size-lg: 16px;
-  --font-size-xl: 18px;
-  --font-size-2xl: 20px;
-  --font-size-3xl: 24px;
-  --font-size-4xl: 30px;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 550;
-  --font-weight-bold: 600;
-  --line-height-tight: 1.2;
-  --line-height-normal: 1.5;
-  --letter-spacing-tight: -0.01em;
-
-  /* Spacing */
-  --space-0: 0;
-  --space-1: 1px;
-  --space-2: 2px;
-  --space-4: 4px;
-  --space-6: 6px;
-  --space-8: 8px;
-  --space-10: 10px;
-  --space-12: 12px;
-  --space-16: 16px;
-  --space-20: 20px;
-  --space-24: 24px;
-  --space-32: 32px;
-
-  /* Border Radius */
-  --radius-sm: 6px;
-  --radius-base: 8px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-full: 9999px;
-
-  /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-  --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.15), inset 0 -1px 0 rgba(0, 0, 0, 0.03);
-
-  /* Animation */
-  --duration-fast: 150ms;
-  --duration-normal: 250ms;
-  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* Layout */
-  --container-sm: 640px;
-  --container-md: 768px;
-  --container-lg: 1024px;
-  --container-xl: 1280px;
-}
-
-/* Dark mode colors */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: rgba(31, 33, 33, 1);
-    --color-surface: rgba(38, 40, 40, 1);
-    --color-text: rgba(245, 245, 245, 1);
-    --color-text-secondary: rgba(167, 169, 169, 0.7);
-    --color-primary: #32B8C6;
-    --color-primary-hover: #2DA6B2;
-    --color-primary-active: #2996A1;
-    --color-secondary: rgba(255, 215, 0, 0.15);
-    --color-secondary-hover: rgba(255, 215, 0, 0.25);
-    --color-secondary-active: rgba(255, 215, 0, 0.3);
-    --color-border: rgba(119, 124, 124, 0.3);
-    --color-error: rgba(255, 84, 89, 1);
-    --color-success: rgba(50, 184, 198, 1);
-    --color-warning: rgba(230, 129, 97, 1);
-    --color-info: rgba(167, 169, 169, 1);
-    --color-focus-ring: rgba(50, 184, 198, 0.4);
-    --color-btn-primary-text: rgba(19, 52, 59, 1);
-    --color-card-border: rgba(119, 124, 124, 0.2);
-    --color-card-border-inner: rgba(119, 124, 124, 0.15);
-    --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.15);
-    --button-border-secondary: rgba(119, 124, 124, 0.2);
-    --color-border-secondary: rgba(119, 124, 124, 0.2);
-    --color-select-caret: rgba(245, 245, 245, 0.8);
-
-    /* RGB versions for dark mode */
-    --color-success-rgb: 50, 184, 198;
-    --color-error-rgb: 255, 84, 89;
-    --color-warning-rgb: 230, 129, 97;
-    --color-info-rgb: 167, 169, 169;
-  }
-}
-
-/* Data attribute for manual theme switching */
-[data-color-scheme="dark"] {
-  --color-background: rgba(31, 33, 33, 1);
-  --color-surface: rgba(38, 40, 40, 1);
-  --color-text: rgba(245, 245, 245, 1);
-  --color-text-secondary: rgba(167, 169, 169, 0.7);
-  --color-primary: #32B8C6;
-  --color-primary-hover: #2DA6B2;
-  --color-primary-active: #2996A1;
-  --color-secondary: rgba(255, 215, 0, 0.15);
-  --color-secondary-hover: rgba(255, 215, 0, 0.25);
-  --color-secondary-active: rgba(255, 215, 0, 0.3);
-  --color-border: rgba(119, 124, 124, 0.3);
-  --color-error: rgba(255, 84, 89, 1);
-  --color-success: rgba(50, 184, 198, 1);
-  --color-warning: rgba(230, 129, 97, 1);
-  --color-info: rgba(167, 169, 169, 1);
-  --color-focus-ring: rgba(50, 184, 198, 0.4);
-  --color-btn-primary-text: rgba(19, 52, 59, 1);
-  --color-card-border: rgba(119, 124, 124, 0.15);
-  --color-card-border-inner: rgba(119, 124, 124, 0.15);
-  --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.15);
-  --color-border-secondary: rgba(119, 124, 124, 0.2);
-  --color-select-caret: rgba(245, 245, 245, 0.8);
-
-  /* RGB versions for dark mode */
-  --color-success-rgb: 50, 184, 198;
-  --color-error-rgb: 255, 84, 89;
-  --color-warning-rgb: 230, 129, 97;
-  --color-info-rgb: 167, 169, 169;
-}
-
-[data-color-scheme="light"] {
-  --color-background: #FFFFFF;
-  --color-surface: #FFFFFF;
-  --color-text: rgba(19, 52, 59, 1);
-  --color-text-secondary: rgba(98, 108, 113, 1);
-  --color-primary: #001F3F;
-  --color-primary-hover: #002147;
-  --color-primary-active: #000F2A;
-  --color-secondary: #FFD700;
-  --color-secondary-hover: #FFCA1A;
-  --color-secondary-active: #FFC300;
-  --color-border: rgba(33, 128, 141, 0.2);
-  --color-btn-primary-text: #F5F5F5;
-  --color-card-border: rgba(33, 128, 141, 0.12);
-  --color-card-border-inner: rgba(33, 128, 141, 0.12);
-  --color-error: rgba(192, 21, 47, 1);
-  --color-success: rgba(33, 128, 141, 1);
-  --color-warning: rgba(168, 75, 47, 1);
-  --color-info: rgba(98, 108, 113, 1);
-  --color-focus-ring: rgba(33, 128, 141, 0.4);
-
-  /* RGB versions for light mode */
-  --color-success-rgb: 33, 128, 141;
-  --color-error-rgb: 192, 21, 47;
-  --color-warning-rgb: 168, 75, 47;
-  --color-info-rgb: 98, 108, 113;
-}
-
-
-
-
-/* Next Task Button */
-.next-task-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-8);
-  padding: var(--space-12) var(--space-24);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-btn-primary-text);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
-  border: none;
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-standard);
-  box-shadow: var(--shadow-md);
-  margin: var(--space-24) auto;
-  min-width: 200px;
-  position: relative;
-  overflow: hidden;
-}
-
-.next-task-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.next-task-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-  background: linear-gradient(135deg, var(--color-primary-hover) 0%, var(--color-primary-active) 100%);
-}
-
-.next-task-btn:hover::before {
-  left: 100%;
-}
-
-.next-task-btn:active {
-  transform: translateY(0);
-  box-shadow: var(--shadow-sm);
-}
-
-.next-task-btn:focus-visible {
-  outline: var(--focus-outline);
-  box-shadow: var(--focus-ring), var(--shadow-md);
-}
-
-/* Animation for button appearance */
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.next-task-btn {
-  animation: slideInUp 0.6s var(--ease-standard);
-}
-
-/* Base styles */
-html {
-  font-size: var(--font-size-base);
-  font-family: var(--font-family-base);
-  line-height: var(--line-height-normal);
-  color: var(--color-text);
-  background-color: var(--color-background);
-  -webkit-font-smoothing: antialiased;
-  -webkit-text-size-adjust: 100%;
-  -ms-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-/* Responsive Typography */
-h1 {
-  font-size: clamp(2rem, 5vw + 1rem, 5rem);
-  margin: 0;
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
-  color: var(--color-text);
-  letter-spacing: var(--letter-spacing-tight);
-}
-
-h2 {
-  font-size: clamp(1.5rem, 4vw + 0.75rem, 3rem);
-  margin: 0;
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
-  color: var(--color-text);
-  letter-spacing: var(--letter-spacing-tight);
-}
-
-h3 {
-  font-size: var(--font-size-2xl);
-  margin: 0;
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
-  color: var(--color-text);
-  letter-spacing: var(--letter-spacing-tight);
-}
-
-h4 {
-  font-size: var(--font-size-xl);
-  margin: 0;
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
-  color: var(--color-text);
-  letter-spacing: var(--letter-spacing-tight);
-}
-
-h5 {
-  font-size: var(--font-size-lg);
-  margin: 0;
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
-  color: var(--color-text);
-  letter-spacing: var(--letter-spacing-tight);
-}
-
-h6 {
-  font-size: var(--font-size-md);
-  margin: 0;
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
-  color: var(--color-text);
-  letter-spacing: var(--letter-spacing-tight);
-}
-
-p {
-  font-size: clamp(1rem, 1vw + 0.75rem, 1.5rem);
-  margin: 0 0 var(--space-16) 0;
-}
-
-a {
-  color: var(--color-primary);
-  text-decoration: none;
-  transition: color var(--duration-fast) var(--ease-standard);
-}
-
-a:hover {
-  color: var(--color-primary-hover);
-}
-
-code,
-pre {
-  font-family: var(--font-family-mono);
-  font-size: calc(var(--font-size-base) * 0.95);
-  background-color: var(--color-secondary);
-  border-radius: var(--radius-sm);
-}
-
-code {
-  padding: var(--space-1) var(--space-4);
-}
-
-pre {
-  padding: var(--space-16);
-  margin: var(--space-16) 0;
-  overflow: auto;
-  border: 1px solid var(--color-border);
-}
-
-pre code {
-  background: none;
-  padding: 0;
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-8) var(--space-16);
-  border-radius: var(--radius-base);
-  font-size: var(--font-size-base);
-  font-weight: 500;
-  line-height: 1.5;
-  cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-standard);
-  border: none;
-  text-decoration: none;
-  position: relative;
-}
-
-.btn:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-.btn--primary {
-  background: var(--color-primary);
-  color: var(--color-btn-primary-text);
-}
-
-.btn--primary:hover {
-  background: var(--color-primary-hover);
-}
-
-.btn--primary:active {
-  background: var(--color-primary-active);
-}
-
-.btn--secondary {
-  background: var(--color-secondary);
-  color: var(--color-text);
-}
-
-.btn--secondary:hover {
-  background: var(--color-secondary-hover);
-}
-
-.btn--secondary:active {
-  background: var(--color-secondary-active);
-}
-
-.btn--outline {
-  background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
-}
-
-.btn--outline:hover {
-  background: var(--color-secondary);
-}
-
-.btn--sm {
-  padding: var(--space-4) var(--space-12);
-  font-size: var(--font-size-sm);
-  border-radius: var(--radius-sm);
-}
-
-.btn--lg {
-  padding: var(--space-10) var(--space-20);
-  font-size: var(--font-size-lg);
-  border-radius: var(--radius-md);
-}
-
-.btn--full-width {
-  width: 100%;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Form elements */
-.form-control {
-  display: block;
-  width: 100%;
-  padding: var(--space-8) var(--space-12);
-  font-size: var(--font-size-md);
-  line-height: 1.5;
-  color: var(--color-text);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-base);
-  transition: border-color var(--duration-fast) var(--ease-standard),
-              box-shadow var(--duration-fast) var(--ease-standard);
-}
-
-textarea.form-control {
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-base);
-  resize: none;
-}
-
-select.form-control {
-  padding: var(--space-8) var(--space-12);
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: var(--select-caret-light);
-  background-repeat: no-repeat;
-  background-position: right var(--space-12) center;
-  background-size: 16px;
-  padding-right: var(--space-32);
-}
-
-/* Add a dark mode specific caret */
-@media (prefers-color-scheme: dark) {
-  select.form-control {
-    background-image: var(--select-caret-dark);
-  }
-}
-
-/* Also handle data-color-scheme */
-[data-color-scheme="dark"] select.form-control {
-  background-image: var(--select-caret-dark);
-}
-
-[data-color-scheme="light"] select.form-control {
-  background-image: var(--select-caret-light);
-}
-
-.form-control:focus {
-  border-color: var(--color-primary);
-  outline: var(--focus-outline);
-}
-
-.form-label {
-  display: block;
-  margin-bottom: var(--space-8);
-  font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-sm);
-}
-
-.form-group {
-  margin-bottom: var(--space-16);
-}
-
-/* Card component with gradient hover effect */
-.card {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-card-border);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  position: relative;
-  transition: box-shadow var(--duration-normal) var(--ease-standard);
-}
-
-.card:hover {
-  box-shadow: var(--shadow-md);
-}
-
-.card:hover::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  background: linear-gradient(45deg, var(--color-secondary), var(--color-primary));
-  border-radius: var(--radius-lg);
-  z-index: -1;
-  animation: gradient-shift 3s ease infinite;
-}
-
-@keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.card__body {
-  padding: var(--space-16);
-}
-
-.card__header,
-.card__footer {
-  padding: var(--space-16);
-  border-bottom: 1px solid var(--color-card-border-inner);
-}
-
-/* Diagonal Section Divider */
-.diagonal-section {
-  clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
-  padding: var(--space-32) var(--space-16);
-  background-color: var(--color-surface);
-}
-
-/* Status indicators - simplified with CSS variables */
-.status {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-6) var(--space-12);
-  border-radius: var(--radius-full);
-  font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-sm);
-}
-
-.status--success {
-  background-color: rgba(var(--color-success-rgb, 33, 128, 141), var(--status-bg-opacity));
-  color: var(--color-success);
-  border: 1px solid rgba(var(--color-success-rgb, 33, 128, 141), var(--status-border-opacity));
-}
-
-.status--error {
-  background-color: rgba(var(--color-error-rgb, 192, 21, 47), var(--status-bg-opacity));
-  color: var(--color-error);
-  border: 1px solid rgba(var(--color-error-rgb, 192, 21, 47), var(--status-border-opacity));
-}
-
-.status--warning {
-  background-color: rgba(var(--color-warning-rgb, 168, 75, 47), var(--status-bg-opacity));
-  color: var(--color-warning);
-  border: 1px solid rgba(var(--color-warning-rgb, 168, 75, 47), var(--status-border-opacity));
-}
-
-.status--info {
-  background-color: rgba(var(--color-info-rgb, 98, 108, 113), var(--status-bg-opacity));
-  color: var(--color-info);
-  border: 1px solid rgba(var(--color-info-rgb, 98, 108, 113), var(--status-border-opacity));
-}
-
-/* Container layout */
-.container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--space-16);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Utility classes */
-.flex {
-  display: flex;
-}
-
-.flex-col {
-  flex-direction: column;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.justify-center {
-  justify-content: center;
-}
-
-.justify-between {
-  justify-content: space-between;
-}
-
-.gap-4 {
-  gap: var(--space-4);
-}
-
-.gap-8 {
-  gap: var(--space-8);
-}
-
-.gap-16 {
-  gap: var(--space-16);
-}
-
-.m-0 {
-  margin: 0;
-}
-
-.mt-8 {
-  margin-top: var(--space-8);
-}
-
-.mb-8 {
-  margin-bottom: var(--space-8);
-}
-
-.mx-8 {
-  margin-left: var(--space-8);
-  margin-right: var(--space-8);
-}
-
-.my-8 {
-  margin-top: var(--space-8);
-  margin-bottom: var(--space-8);
-}
-
-.p-0 {
-  padding: 0;
-}
-
-.py-8 {
-  padding-top: var(--space-8);
-  padding-bottom: var(--space-8);
-}
-
-.px-8 {
-  padding-left: var(--space-8);
-  padding-right: var(--space-8);
-}
-
-.py-16 {
-  padding-top: var(--space-16);
-  padding-bottom: var(--space-16);
-}
-
-.px-16 {
-  padding-left: var(--space-16);
-  padding-right: var(--space-16);
-}
-
-.block {
-  display: block;
-}
-
-.hidden {
-  display: none;
-}
-
-/* Accessibility */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
-:focus-visible {
-  outline: var(--focus-outline);
-  outline-offset: 2px;
-}
-
-/* Dark mode specifics */
-[data-color-scheme="dark"] .btn--outline {
-  border: 1px solid var(--color-border-secondary);
-}
-
-@font-face {
-  font-family: 'FKGroteskNeue';
-  src: url('https://r2cdn.perplexity.ai/fonts/FKGroteskNeue.woff2') format('woff2');
-}
-
-/* Base styles and screen management */
-.screen {
-  display: none;
-  min-height: 100vh;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--space-24);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.screen.active {
-  display: flex;
-}
-
-/* Welcome Screen */
-.welcome-content {
-  max-width: 600px;
-  width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  padding: 10vh var(--space-16) 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.welcome-content h1 {
-  margin-bottom: var(--space-24);
-  color: var(--color-primary);
-}
-
-.participant-info {
-  background: var(--color-surface);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-16);
-  margin: var(--space-24) 0;
-}
-
-.participant-info span {
-  font-weight: var(--font-weight-bold);
-  color: var(--color-primary);
-}
-
-/* Typing Task Screen */
-.typing-content {
-  max-width: 800px;
-  width: 100%;
-  margin: 0 auto;
-  padding: var(--space-24);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: var(--color-secondary);
-  border-radius: var(--radius-full);
-  margin-bottom: var(--space-24);
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--color-primary);
-  border-radius: var(--radius-full);
-  transition: width var(--duration-normal) var(--ease-standard);
-  width: 0%;
-}
-
-.sentence-display {
-  background: var(--color-surface);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-24);
-  margin: var(--space-24) 0;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s var(--ease-standard);
-}
-
-.sentence-display:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-primary);
-}
-
-.sentence-display p {
-  font-size: var(--font-size-lg);
-  line-height: var(--line-height-normal);
-  margin: 0;
-  font-family: var(--font-family-mono);
-}
-
-.instruction-text {
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Make sentence display completely unselectable */
-.sentence-display {
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
-  cursor: default;
-}
-
-.sentence-display p {
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-  pointer-events: none;
-}
-
-/* Visual feedback for blocked copy attempts */
-.copy-blocked {
-  animation: copy-blocked-shake 0.5s ease-in-out;
-}
-
-@keyframes copy-blocked-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-.typing-area {
-  margin: var(--space-24) 0;
-  width: 100%;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.typing-area textarea {
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-lg);
-  width: 100%;
-  min-height: 80px;
-  max-height: 120px;
-  resize: none;
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-16);
-  background: var(--color-surface);
-  color: var(--color-text);
-  line-height: 1.5;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-  user-select: text;
-  box-sizing: border-box;
-  transition: border-color var(--duration-normal) var(--ease-standard);
-}
-
-.typing-area textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(32, 207, 207, 0.1);
-}
-
-/* Typing Feedback System */
-.typing-feedback-container {
-  margin: var(--space-16) 0;
-  padding: var(--space-12);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-base);
-  transition: all var(--duration-normal) var(--ease-standard);
-}
-
-.typing-feedback-display {
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-normal);
-  color: var(--color-text);
-  text-align: left;
-  padding: var(--space-12);
-  background: var(--color-background);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  min-height: 60px;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  position: relative;
-}
-
-.typing-feedback-display .typed-correct {
-  background: rgba(32, 207, 207, 0.15);
-  color: var(--color-text);
-  padding: 2px 1px;
-  border-radius: 3px;
-  font-weight: var(--font-weight-medium);
-  border-bottom: 2px solid rgba(32, 207, 207, 0.3);
-}
-
-.typing-feedback-display .typed-incorrect {
-  background: rgba(255, 79, 100, 0.15);
-  color: var(--color-text);
-  padding: 2px 1px;
-  border-radius: 3px;
-  font-weight: var(--font-weight-medium);
-  border-bottom: 2px solid rgba(255, 79, 100, 0.4);
-  text-decoration: line-through;
-  text-decoration-color: rgba(255, 79, 100, 0.6);
-}
-
-.typing-feedback-display .to-type {
-  color: var(--color-text-secondary);
-  opacity: 0.7;
-  font-weight: var(--font-weight-normal);
-}
-
-
-
-/* Dark mode adjustments for typing feedback */
-@media (prefers-color-scheme: dark) {
-  .typing-feedback-display .typed-correct {
-    background: rgba(50, 184, 198, 0.2);
-    border-bottom-color: rgba(50, 184, 198, 0.4);
-  }
-  
-  .typing-feedback-display .typed-incorrect {
-    background: rgba(255, 84, 89, 0.2);
-    border-bottom-color: rgba(255, 84, 89, 0.5);
-    text-decoration-color: rgba(255, 84, 89, 0.7);
-  }
-  
-  .typing-feedback-display .to-type {
-    color: var(--color-text-secondary);
-    opacity: 0.6;
-  }
-}
-
-[data-color-scheme="dark"] .typing-feedback-display .typed-correct {
-  background: rgba(50, 184, 198, 0.2);
-  border-bottom-color: rgba(50, 184, 198, 0.4);
-}
-
-[data-color-scheme="dark"] .typing-feedback-display .typed-incorrect {
-  background: rgba(255, 84, 89, 0.2);
-  border-bottom-color: rgba(255, 84, 89, 0.5);
-  text-decoration-color: rgba(255, 84, 89, 0.7);
-}
-
-[data-color-scheme="dark"] .typing-feedback-display .to-type {
-  color: var(--color-text-secondary);
-  opacity: 0.6;
-}
-
-/* Mobile responsive adjustments for typing feedback */
-@media (max-width: 768px) {
-  .typing-feedback-container {
-    margin: var(--space-12) 0;
-    padding: var(--space-8);
-  }
-  
-  .typing-feedback-display {
-    font-size: var(--font-size-sm);
-    padding: var(--space-8);
-    min-height: 50px;
-  }
-  
-  .typing-feedback-display .typed-correct,
-  .typing-feedback-display .typed-incorrect,
-  .typing-feedback-display .to-type {
-    padding: 1px 0.5px;
-    border-radius: 2px;
-  }
-}
-
-@media (max-width: 480px) {
-  .typing-feedback-container {
-    margin: var(--space-8) 0;
-    padding: var(--space-6);
-  }
-  
-  .typing-feedback-display {
-    font-size: var(--font-size-xs);
-    padding: var(--space-6);
-    min-height: 40px;
-  }
-  
-  .typing-feedback-display .typed-correct,
-  .typing-feedback-display .typed-incorrect,
-  .typing-feedback-display .to-type {
-    padding: 0.5px 0.25px;
-    border-radius: 1px;
-  }
-}
-
-.task-instruction {
-  color: var(--color-warning);
-  font-weight: var(--font-weight-medium);
-  font-style: italic;
-}
-
-.typing-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--space-16);
-  margin: var(--space-24) 0;
-  padding: var(--space-20);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-16);
-  background: var(--color-background);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-base);
-  transition: all 0.2s var(--ease-standard);
-}
-
-.stat:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-primary);
-}
-
-.stat-label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-.stat-value {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-primary);
-}
-
-/* Crystal Forge Game Screen */
-.crystal-header {
-  text-align: center;
-  padding: var(--space-24) var(--space-24) var(--space-16);
-  border-bottom: 1px solid var(--color-border);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
-  color: #FFFFFF;
-  margin-bottom: var(--space-16);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.crystal-header h2 {
-  margin: 0;
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  color: #FFFFFF;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
-  letter-spacing: 0.5px;
-}
-
-/* Universal Crystal Container */
-.crystal-content {
-  display: grid;
-  place-items: center;
-  min-height: 80vh;
-  width: 100%;
-  padding: clamp(1rem, 4vw, 2rem);
-}
-
-.crystal-step-info {
-  text-align: center;
-  margin-bottom: var(--space-32);
-  padding: var(--space-20);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-}
-
-.crystal-step-info h3 {
-  color: var(--color-primary);
-  margin-bottom: var(--space-8);
-}
-
-/* Universal Crystal Container - Removed old positioning */
-.crystal-container {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-/* Universal Crystal Area Sizing and Centering - NO BACKGROUND BOX */
-.crystal-area {
-  display: grid;
-  place-items: center;
-  width: clamp(220px, 25vw + 110px, 330px);
-  height: clamp(220px, 25vw + 110px, 330px);
-  margin: 0 auto;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Universal Crystal Sizing - No Clipping */
-.crystal {
-  width: clamp(176px, 20vw + 88px, 264px);
-  height: clamp(176px, 20vw + 88px, 264px);
-  cursor: pointer;
-  transition: transform 0.3s var(--ease-standard), filter 0.3s var(--ease-standard);
-  transform-origin: center;
-  border-radius: 50%;
-  overflow: visible !important; /* Ensure crystal can scale beyond its bounds */
-  position: relative;
-  z-index: 10; /* Ensure crystal appears above any potential clipping containers */
-}
-
-.crystal-inner {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #20CFCF 0%, #AEEBFB 100%);
-  border-radius: 50%;
-  box-shadow:
-    0 0 30px rgba(32, 207, 207, 0.25),
-    inset 0 0 30px rgba(255, 255, 255, 0.2);
-  position: relative;
-  overflow: hidden;
-}
-
-.crystal-inner::before {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  right: 20px;
-  height: 40px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.4) 50%,
-    transparent 100%);
-  border-radius: 15px;
-}
-
-.crystal-glow {
-  width: 120%;
-  height: 120%;
-  position: absolute;
-  top: -10%;
-  left: -10%;
-  right: -10%;
-  bottom: -10%;
-  background: radial-gradient(circle, rgba(32, 207, 207, 0.25) 0%, transparent 70%);
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 0.3s var(--ease-standard);
-  pointer-events: none;
-}
-
-.crystal.active .crystal-glow {
-  opacity: 1;
-}
-
-.direction-indicator {
-  font-size: 1.2em;
-  margin-top: 10px;
-  color: #888;
-}
-
-.direction-indicator.clockwise { 
-  color: #20CFCF; 
-}
-
-.direction-indicator.counter-clockwise { 
-  color: #3EC6E0; 
-}
-
-.crystal.shrinking {
-  animation: crystal-shrink 0.8s var(--ease-standard);
-}
-
-.crystal.enlarging {
-  animation: crystal-enlarge 0.8s var(--ease-standard);
-}
-
-.crystal.success {
-  animation: crystal-success 0.6s var(--ease-standard);
-}
-
-/* Fallback for older browsers */
-.crystal-area {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Grid rules will override where supported */
-  display: grid;
-  place-items: center;
-}
-
-.crystal-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Grid rules will override where supported */
-  display: grid;
-  place-items: center;
-  overflow: visible !important; /* Allow crystal to scale freely */
-  position: relative;
-}
-
-.crystal-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  /* Grid rules will override where supported */
-  display: grid;
-  place-items: center;
-  overflow: visible !important; /* Allow crystal to scale freely */
-  position: relative;
-}
-
-@keyframes crystal-shrink {
-  0% { transform: scale(1); filter: hue-rotate(0deg) saturate(1); }
-  50% { transform: scale(0.3) rotate(180deg); filter: hue-rotate(180deg) saturate(1.5) brightness(0.7); }
-  100% { transform: scale(0.5); filter: hue-rotate(180deg) brightness(0.8); }
-}
-
-@keyframes crystal-enlarge {
-  0% { transform: scale(1); filter: hue-rotate(0deg) saturate(1); }
-  50% { transform: scale(1.8) rotate(-180deg); filter: hue-rotate(60deg) saturate(1.5) brightness(1.4); }
-  100% { transform: scale(1.5); filter: hue-rotate(60deg) brightness(1.3); }
-}
-
-@keyframes crystal-success {
-  0%, 100% { transform: scale(var(--current-scale, 1)); }
-  25% { transform: scale(calc(var(--current-scale, 1) * 1.2)) rotate(10deg); }
-  75% { transform: scale(calc(var(--current-scale, 1) * 1.2)) rotate(-10deg); }
-}
-
-
-
-/* Crystal size display highlight effects */
-.feedback-value.shrink-highlight {
-  color: #3EC6E0;
-  animation: pulse-shrink 0.5s ease-in-out;
-}
-
-.feedback-value.enlarge-highlight {
-  color: #20CFCF;
-  animation: pulse-enlarge 0.5s ease-in-out;
-}
-
-.feedback-value.completion-highlight {
-  color: var(--color-primary);
-  animation: completion-celebration 1s ease-in-out;
-}
-
-@keyframes pulse-shrink {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
-
-@keyframes pulse-enlarge {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
-
-@keyframes completion-celebration {
-  0%, 100% { transform: scale(1); }
-  33% { transform: scale(1.3) rotate(5deg); }
-  66% { transform: scale(1.3) rotate(-5deg); }
-}
-
-.crystal-feedback {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-16);
-  margin: var(--space-32) 0;
-  padding: var(--space-20);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  justify-items: center;
-  align-items: center;
-}
-
-.feedback-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-16);
-  background: var(--color-background);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-base);
-  transition: all 0.2s var(--ease-standard);
-}
-
-.feedback-item:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-primary);
-}
-
-.feedback-label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-.feedback-value {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-primary);
-}
-
-.crystal-controls {
-  display: flex;
-  flex-direction: row !important;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-12);
-  margin-top: var(--space-32);
-  padding: var(--space-20);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  position: relative;
-  flex-wrap: wrap;
-  min-height: 60px; /* Ensure consistent container height */
-}
-
-/* Ensure all buttons in crystal controls have consistent styling and alignment */
-.crystal-controls .btn {
-  height: 44px !important; /* Fixed height for perfect alignment */
-  min-height: 44px; /* Ensure minimum touch target size */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto; /* Prevent buttons from growing/shrinking */
-  margin: 0; /* Remove any default margins */
-  align-self: stretch; /* Ensure all buttons stretch to same height */
-  box-sizing: border-box; /* Include padding and border in height calculation */
-  line-height: 1.2; /* Consistent line height */
-}
-
-/* Specific styling for the next task button */
-.crystal-controls .next-task-btn {
-  order: 2; /* Place it after the reset button */
-  margin: 0; /* Remove all margins to ensure perfect alignment */
-  height: 44px !important; /* Fixed height to match other buttons */
-  align-self: stretch; /* Stretch to match other buttons */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1.2; /* Consistent line height */
-}
-
-/* Ensure proper alignment when Next Step button is hidden */
-.crystal-controls #next-crystal-btn[style*="display: none"] + .next-task-btn {
-  order: 1; /* Move to position after reset button when next step is hidden */
-}
-
-/* Ensure all buttons maintain consistent spacing and alignment */
-.crystal-controls .btn {
-  margin: 0; /* Remove all margins, use gap instead */
-  align-self: stretch; /* Ensure all buttons stretch to same height */
-}
-
-/* Force perfect alignment for the next task button */
-.crystal-controls .next-task-btn {
-  align-self: center; /* Center align with other buttons */
-  line-height: 1.2; /* Consistent line height */
-}
-
-/* Ensure all crystal control buttons have identical heights */
-.crystal-controls .btn,
-.crystal-controls .next-task-btn,
-.crystal-controls #next-crystal-btn,
-.crystal-controls #reset-step-btn {
-  height: 44px !important;
-  min-height: 44px !important;
-  line-height: 1.2 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-sizing: border-box !important;
-}
-
-/* COMPREHENSIVE: NO BACKGROUND BOXES FOR CRYSTAL ELEMENTS */
-#crystal-area,
-.crystal-area,
-.crystal-container,
-.crystal-content,
-.crystal-step-info,
-.crystal-feedback,
-.crystal-controls {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Ensure crystal itself has no background box */
-#crystal,
-.crystal {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-@media (max-width: 600px) {
-  .crystal-controls {
-    flex-direction: row !important;
-    gap: var(--space-8);
-    padding: var(--space-12);
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .crystal-controls .btn {
-    min-width: 120px; /* Ensure buttons have minimum width on mobile */
-    font-size: var(--font-size-sm);
-    padding: var(--space-8) var(--space-12);
-    flex: 0 0 auto;
-    align-self: stretch; /* Ensure perfect alignment */
-    height: 44px !important; /* Maintain fixed height on mobile */
-    line-height: 1.2; /* Consistent line height */
-  }
-}
-
-/* Gallery Screen */
-.gallery-content {
-  max-width: 1000px;
-  width: 100%;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.gallery-instruction {
-  text-align: center;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-24);
-  font-weight: var(--font-weight-medium);
-}
-
-.gallery-container {
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-card-border);
-  overflow: hidden;
-  margin-bottom: var(--space-24);
-  padding: var(--space-20);
-}
-
-.gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--space-16);
-  margin-bottom: var(--space-24);
-}
-
-.gallery-item {
-  position: relative;
-  cursor: pointer;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  transition: transform 0.3s var(--ease-standard), box-shadow 0.3s var(--ease-standard);
-  background: var(--color-secondary);
-  aspect-ratio: 4/3;
-}
-
-.gallery-item:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(0, 31, 63, 0.3);
-}
-
-.gallery-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s var(--ease-standard);
-}
-
-.gallery-item:hover img {
-  transform: scale(1.1);
-}
-
-/* Image Popup */
-.image-popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1000;
-  display: none;
-  touch-action: none;
-}
-
-.image-popup.active {
-  display: block;
-}
-
-.popup-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.95);
-  backdrop-filter: blur(10px);
-}
-
-.popup-content {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-}
-
-.popup-image-container {
-  position: relative;
-  width: 90%;
-  height: 80%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  cursor: default;
-}
-
-.popup-image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  border-radius: var(--radius-lg);
-  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s var(--ease-standard);
-  transform-origin: center;
-}
-
-.close-popup {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: rgba(0, 0, 0, 0.8);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  font-size: 2rem;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s var(--ease-standard);
-  backdrop-filter: blur(10px);
-  z-index: 1001;
-  font-weight: bold;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.close-popup:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.popup-counter {
-  position: absolute;
-  bottom: 120px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  padding: var(--space-8) var(--space-16);
-  border-radius: var(--radius-full);
-  font-weight: var(--font-weight-medium);
-  backdrop-filter: blur(10px);
-  z-index: 10;
-}
-
-.popup-nav {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: var(--space-16);
-  z-index: 10;
-}
-
-.popup-prev,
-.popup-next {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s var(--ease-standard);
-  backdrop-filter: blur(10px);
-}
-
-.popup-prev:hover,
-.popup-next:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.zoom-controls {
-  position: absolute;
-  bottom: 110px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: var(--space-12);
-  background: rgba(0, 0, 0, 0.9);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  padding: var(--space-8) var(--space-16);
-  border-radius: var(--radius-full);
-  backdrop-filter: blur(10px);
-  z-index: 1001;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-.zoom-in,
-.zoom-out,
-.zoom-reset {
-  background: rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: white;
-  font-size: 1.2rem;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s var(--ease-standard);
-  font-weight: bold;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.zoom-reset {
-  width: auto;
-  padding: 0 var(--space-12);
-  border-radius: var(--radius-base);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-}
-
-.zoom-in:hover,
-.zoom-out:hover,
-.zoom-reset:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.zoom-level {
-  color: white;
-  font-weight: var(--font-weight-bold);
-  font-size: 14px;
-  min-width: 40px;
-  max-width: 60px;
-  text-align: center;
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-base);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.popup-nav {
-  left: 40px;
-  right: 40px;
-  width: calc(100% - 80px);
-  justify-content: space-between;
-  transform: none;
-  position: absolute;
-  bottom: 60px; /* Move arrows higher above the bottom */
-  z-index: 11;
-}
-
-.popup-prev {
-  position: absolute;
-  left: 0;
-}
-
-.popup-next {
-  position: absolute;
-  right: 0;
-}
-
-@media (max-width: 600px) {
-  .zoom-level {
-    font-size: 10px;
-    min-width: 24px;
-    max-width: 32px;
-    padding: 1px 2px;
-  }
-  .popup-nav {
-    left: 8px;
-    right: 8px;
-    width: calc(100% - 16px);
-    bottom: 40px;
-  }
-}
-
-/* Export Screen */
-.export-content {
-  max-width: 700px;
-  width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.export-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space-24);
-  margin: var(--space-32) 0;
-}
-
-.stat-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-24);
-  box-shadow: var(--shadow-sm);
-}
-
-.stat-card h4 {
-  color: var(--color-primary);
-  margin-bottom: var(--space-16);
-}
-
-.stat-card p {
-  margin-bottom: var(--space-8);
-  color: var(--color-text-secondary);
-}
-
-.stat-card span {
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text);
-}
-
-.export-actions {
-  display: flex;
-  gap: var(--space-16);
-  justify-content: center;
-  margin: var(--space-32) 0;
-  flex-wrap: wrap;
-}
-
-.completion-message {
-  margin-top: var(--space-32);
-  padding: var(--space-24);
-  background: var(--color-secondary);
-  border-radius: var(--radius-lg);
-}
-
-/* Touch feedback and animations */
-.crystal-area.touching {
-  background: transparent !important;
-}
-
-.crystal.tap-feedback {
-  animation: tap-pulse 0.2s var(--ease-standard);
-}
-
-@keyframes tap-pulse {
-  0%, 100% { transform: scale(var(--current-scale, 1)); }
-  50% { transform: scale(calc(var(--current-scale, 1) * 1.15)); }
-}
-
-.crystal.rotation-feedback {
-  animation: rotation-glow 0.5s var(--ease-standard) infinite;
-}
-
-@keyframes rotation-glow {
-  0%, 100% { filter: brightness(1) saturate(1); }
-  50% { filter: brightness(1.4) hue-rotate(20deg) saturate(1.3); }
-}
-
-.pressure-indicator {
-  position: absolute;
-  bottom: -80px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 250px;
-  height: 15px;
-  background: var(--color-secondary);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  border: 2px solid var(--color-primary);
-}
-
-.pressure-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #20CFCF, #AEEBFB);
-  border-radius: var(--radius-full);
-  transition: width 0.1s ease-out;
-  width: 0%;
-}
-
-/* Responsive Design for All Screen Sizes */
-@media (max-width: 768px) {
-  .next-task-btn {
-    padding: var(--space-10) var(--space-20);
-    font-size: var(--font-size-md);
-    min-width: 180px;
-    margin: var(--space-20) auto;
-  }
-  
-  .screen {
-    padding: var(--space-12);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .welcome-content {
-    text-align: center;
-    max-width: 100%;
-    padding: var(--space-16);
-  }
-
-  .welcome-content h1 {
-    font-size: clamp(1.5rem, 6vw, 2.5rem);
-    margin-bottom: var(--space-16);
-  }
-
-  .welcome-content p {
-    font-size: clamp(0.875rem, 2vw, 1rem);
-    margin-bottom: var(--space-24);
-  }
-
-  .typing-content {
-    max-width: 100%;
-    padding: var(--space-16);
-  }
-
-  .typing-content h2 {
-    font-size: clamp(1.25rem, 4vw, 1.75rem);
-    margin-bottom: var(--space-16);
-  }
-
-  .sentence-display {
-    margin: var(--space-16) 0;
-    padding: var(--space-12);
-  }
-
-  .sentence-display p {
-    font-size: clamp(0.875rem, 2.5vw, 1rem);
-    line-height: 1.6;
-  }
-
-  .typing-area {
-    max-width: 95%;
-  }
-  
-  .typing-area textarea {
-    font-size: clamp(0.875rem, 2.5vw, 1rem);
-    min-height: 80px;
-    max-height: 100px;
-    padding: var(--space-12);
-  }
-
-  .crystal-feedback {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-8);
-    margin: var(--space-16) 0;
-    padding: var(--space-12);
-  }
-
-  .feedback-item {
-    padding: var(--space-8);
-  }
-
-  .feedback-label {
-    font-size: clamp(0.75rem, 2vw, 0.875rem);
-  }
-
-  .feedback-value {
-    font-size: clamp(0.875rem, 2.5vw, 1rem);
-  }
-
-  .crystal-controls {
-    flex-direction: row !important;
-    gap: var(--space-10);
-    margin-top: var(--space-16);
-    padding: var(--space-16);
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .crystal-step-info h3 {
-    font-size: clamp(1rem, 3vw, 1.25rem);
-    text-align: center;
-    margin-bottom: var(--space-8);
-  }
-
-  .crystal-step-info p {
-    font-size: clamp(0.875rem, 2.5vw, 1rem);
-    text-align: center;
-    line-height: 1.5;
-  }
-
-  .typing-stats {
-    justify-content: center;
-    flex-direction: column;
-    gap: var(--space-8);
-  }
-
-  .stat {
-    padding: var(--space-8);
-  }
-
-  .export-actions {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-12);
-  }
-
-  .gallery-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-8);
-  }
-
-  .gallery-item {
-    aspect-ratio: 1;
-  }
-
-  .popup-image-container {
-    width: 95%;
-    height: 70%;
-  }
-
-  .zoom-controls {
-    bottom: 90px;
-    background: rgba(30, 30, 30, 0.92);
-  }
-
-  .zoom-in,
-  .zoom-out {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
-    min-width: 44px;
-    min-height: 44px;
-  }
-
-  .zoom-reset {
-    padding: 0 var(--space-8);
-    font-size: var(--font-size-xs);
-  }
-
-  .popup-counter {
-    bottom: 110px;
-  }
-
-  .pressure-indicator {
-    width: clamp(150px, 50vw, 200px);
-    height: 12px;
-    bottom: -60px;
-  }
-
-  .btn {
-    padding: var(--space-10) var(--space-16);
-    font-size: clamp(0.875rem, 2.5vw, 1rem);
-    min-height: 44px;
-  }
-
-  .btn--lg {
-    padding: var(--space-12) var(--space-20);
-    font-size: clamp(1rem, 3vw, 1.125rem);
-  }
-}
-
-/* Extra small devices and very small phones */
-@media (max-width: 480px) {
-  .next-task-btn {
-    padding: var(--space-8) var(--space-16);
-    font-size: var(--font-size-sm);
-    min-width: 160px;
-    margin: var(--space-16) auto;
-  }
-  
-  .screen {
-    padding: var(--space-8);
-  }
-
-  .welcome-content {
-    padding: var(--space-12);
-  }
-
-  .welcome-content h1 {
-    font-size: clamp(1.25rem, 5vw, 1.75rem);
-  }
-
-  .welcome-content p {
-    font-size: clamp(0.8rem, 1.8vw, 0.9rem);
-  }
-
-  .typing-content {
-    padding: var(--space-12);
-  }
-
-  .typing-content h2 {
-    font-size: clamp(1.1rem, 3.5vw, 1.4rem);
-  }
-
-  .sentence-display p {
-    font-size: clamp(0.8rem, 2.2vw, 0.9rem);
-  }
-
-  .typing-area {
-    max-width: 98%;
-  }
-  
-  .typing-area textarea {
-    font-size: clamp(0.8rem, 2.2vw, 0.9rem);
-    min-height: 60px;
-    max-height: 80px;
-    padding: var(--space-8);
-  }
-  .crystal-feedback {
-    grid-template-columns: 1fr;
-    gap: var(--space-6);
-    padding: var(--space-8);
-  }
-
-  .feedback-item {
-    padding: var(--space-6);
-  }
-
-  .feedback-label {
-    font-size: clamp(0.7rem, 1.8vw, 0.8rem);
-  }
-
-  .feedback-value {
-    font-size: clamp(0.8rem, 2.2vw, 0.9rem);
-  }
-
-  .crystal-controls {
-    padding: var(--space-12);
-    gap: var(--space-6);
-    flex-direction: row !important;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .crystal-step-info h3 {
-    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-  }
-
-  .crystal-step-info p {
-    font-size: clamp(0.8rem, 2.2vw, 0.9rem);
-  }
-
-  .btn {
-    padding: var(--space-8) var(--space-12);
-    font-size: clamp(0.8rem, 2.2vw, 0.9rem);
-    min-height: 40px;
-    height: 40px !important; /* Fixed height for consistency */
-    line-height: 1.2;
-  }
-
-  .btn--lg {
-    padding: var(--space-10) var(--space-16);
-    font-size: clamp(0.9rem, 2.5vw, 1rem);
-  }
-
-  .gallery-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-6);
-  }
-
-  .zoom-controls {
-    bottom: 40px;
-    padding: var(--space-4) var(--space-8);
-  }
-
-  .zoom-in,
-  .zoom-out {
-    width: 28px;
-    height: 28px;
-    font-size: 0.9rem;
-    min-width: 40px;
-    min-height: 40px;
-  }
-
-  .pressure-indicator {
-    width: clamp(120px, 45vw, 150px);
-    height: 10px;
-    bottom: -50px;
-  }
-}
-
-/* Ultra small devices (very small phones) */
-@media (max-width: 360px) {
-  .next-task-btn {
-    padding: var(--space-6) var(--space-12);
-    font-size: var(--font-size-xs);
-    min-width: 140px;
-    margin: var(--space-12) auto;
-  }
-  
-  .screen {
-    padding: var(--space-6);
-  }
-
-  .welcome-content,
-  .typing-content {
-    padding: var(--space-8);
-  }
-
-  .welcome-content h1 {
-    font-size: clamp(1.1rem, 4.5vw, 1.5rem);
-  }
-
-  .welcome-content p {
-    font-size: clamp(0.75rem, 1.6vw, 0.85rem);
-  }
-
-  .typing-content h2 {
-    font-size: clamp(1rem, 3vw, 1.25rem);
-  }
-
-  
-  .crystal-feedback {
-    padding: var(--space-6);
-  }
-
-  .feedback-item {
-    padding: var(--space-4);
-  }
-
-  .crystal-controls {
-    padding: var(--space-8);
-    flex-direction: row !important;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: var(--space-4);
-  }
-
-  .btn {
-    padding: var(--space-6) var(--space-10);
-    font-size: clamp(0.75rem, 2vw, 0.85rem);
-    min-height: 36px;
-    height: 36px !important; /* Fixed height for consistency */
-    line-height: 1.2;
-  }
-
-  .gallery-grid {
-    gap: var(--space-4);
-  }
-
-  .zoom-controls {
-    bottom: 30px;
-    padding: var(--space-3) var(--space-6);
-  }
-
-  .zoom-in,
-  .zoom-out {
-    width: 24px;
-    height: 24px;
-    font-size: 0.8rem;
-    min-width: 36px;
-    min-height: 36px;
-  }
-}
-
-/* Move feedback and controls lower */
-.crystal-feedback {
-  margin-top: 16px;
-}
-.crystal-controls {
-  margin-top: 16px;
-}
-
-/* Move next-task-btn higher for visibility */
-.next-task-btn {
-  margin-top: 0 !important;
-  margin-bottom: 24px !important;
-}
-
-/* Consent Section Styles */
-.consent-section {
-  margin: var(--space-24) 0 var(--space-16) 0;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-}
-.consent-label {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-8);
-  font-size: var(--font-size-base);
-  cursor: pointer;
-  position: relative;
-  user-select: none;
-}
-.consent-label input[type="checkbox"] {
-  opacity: 0;
-  width: 0;
-  height: 0;
-  position: absolute;
-}
-.custom-checkbox {
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--color-primary);
-  border-radius: 6px;
-  background: var(--color-background);
-  display: inline-block;
-  position: relative;
-  transition: border-color 0.2s;
-  margin-top: 2px;
-}
-.consent-label input[type="checkbox"]:checked + .custom-checkbox {
-  border-color: var(--color-success);
-  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-primary) 100%);
-}
-.custom-checkbox::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 1px;
-  width: 7px;
-  height: 13px;
-  border: solid var(--color-primary);
-  border-width: 0 3px 3px 0;
-  opacity: 0;
-  transform: scale(0.7) rotate(45deg);
-  transition: opacity 0.2s, border-color 0.2s;
-}
-.consent-label input[type="checkbox"]:checked + .custom-checkbox::after {
-  opacity: 1;
-  border-color: #fff;
-}
-.consent-text {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-md);
-  line-height: 1.5;
-  max-width: 420px;
-  margin-left: var(--space-8);
-}
-
-/* Welcome Visuals & Engagement */
-.welcome-visuals {
-  margin-top: var(--space-24);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-12);
-}
-.animated-graphic {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-  box-shadow: 0 4px 24px rgba(0,31,63,0.18), 0 1.5px 8px var(--color-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  animation: pulse-welcome 1.8s infinite;
-}
-@keyframes pulse-welcome {
-  0%, 100% { box-shadow: 0 4px 24px rgba(0,31,63,0.18), 0 1.5px 8px var(--color-secondary); transform: scale(1); }
-  50% { box-shadow: 0 8px 40px rgba(0,31,63,0.28), 0 2.5px 16px var(--color-secondary); transform: scale(1.08); }
-}
-.engage-message {
-  color: var(--color-primary);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  margin-top: var(--space-8);
-}
-.welcome-highlight {
-  color: var(--color-primary);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  margin-bottom: var(--space-16);
-}
-.emoji {
-  font-size: 1.3em;
-  vertical-align: middle;
-}
-
-/* Attractive Accuracy Stat Box - Centered for All Devices */
-.accuracy-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
-  box-shadow: 0 4px 24px rgba(0,31,63,0.10), 0 1.5px 8px var(--color-secondary);
-  border: 2px solid var(--color-primary);
-  border-radius: 18px;
-  min-width: 140px;
-  min-height: 140px;
-  position: relative;
-  transition: box-shadow 0.3s;
-  overflow: visible; /* Ensure percentage circle is not clipped */
-  padding: 20px; /* Equal padding on all sides for perfect centering */
-  text-align: center; /* Center all content */
-}
-.accuracy-ring {
-  position: relative;
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 8px auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: visible;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-
-.accuracy-ring svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  overflow: visible;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-
-.accuracy-ring circle {
-  vector-effect: non-scaling-stroke;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  overflow: visible;
-}
-
-.accuracy-bg {
-  stroke: #e0e7ef;
-  opacity: 0.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-  overflow: visible;
-}
-
-.accuracy-fg {
-  stroke: var(--color-success);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 163.36;
-  stroke-dashoffset: 0;
-  transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  vector-effect: non-scaling-stroke;
-  overflow: visible;
-}
-
-.accuracy-value {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.15em;
-  font-weight: bold;
-  color: var(--color-text);
-  z-index: 2;
-  pointer-events: none;
-  max-width: 70%;
-  max-height: 70%;
-  text-align: center;
-  line-height: 1;
-  width: auto;
-  height: auto;
-}
-
-/* Universal Mobile Centering - Consolidated Rules */
-@media screen and (max-width: 768px) {
-  .accuracy-ring {
-    margin: 0 auto 8px auto !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-ring svg {
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-value {
-    font-size: 1em !important;
-    max-width: 75% !important;
-    max-height: 75% !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .accuracy-ring {
-    margin: 0 auto 8px auto !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-ring svg {
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-value {
-    font-size: 0.92em !important;
-    max-width: 82% !important;
-    max-height: 82% !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
-  }
-}
-
-@media screen and (max-width: 360px) {
-  .accuracy-ring {
-    margin: 0 auto 8px auto !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-ring svg {
-    width: 60px !important;
-    height: 60px !important;
-    overflow: visible !important;
-  }
-  
-  .accuracy-value {
-    font-size: 0.88em !important;
-    max-width: 85% !important;
-    max-height: 85% !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
-  }
-}
-
-/* Mobile-specific accuracy stat centering */
-@media (max-width: 600px) {
-  .accuracy-stat {
-    text-align: center !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-}
-
-.accuracy-encourage {
-  color: var(--color-success);
-  font-size: var(--font-size-sm);
-  margin-top: 4px;
-  font-weight: 500;
-  text-align: center;
-  letter-spacing: 0.01em;
-}
-
-.fireworks-container {
-  position: absolute;
-  left: 50%;
-  top: 20%;
-  transform: translate(-50%, 0);
-  pointer-events: none;
-  z-index: 1000;
-  animation: fireworks-fade 1.5s ease-out forwards;
-}
-.fireworks-svg {
-  width: 120px;
-  height: 120px;
-  opacity: 0.95;
-  animation: fireworks-pop 0.5s cubic-bezier(0.16,1,0.3,1);
-}
-@keyframes fireworks-fade {
-  0% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { opacity: 0; }
-}
-@keyframes fireworks-pop {
-  0% { transform: scale(0.5); opacity: 0; }
-  60% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(1); opacity: 0.95; }
-}
-
-/* Use light backgrounds for containers and cards */
-.container, .typing-content, .crystal-content, .gallery-content, .export-content, .card, .stat, .feedback-item, .sentence-display {
-  background: var(--color-surface) !important;
-  color: var(--color-text) !important;
-}
-
-/* Use soft teal for secondary containers */
-.participant-info, .consent-section, .crystal-step-info, .gallery-container, .export-stats, .completion-message {
-  background: var(--color-secondary) !important;
-  color: var(--color-text) !important;
-}
-
-/* Use very light sky blue for accent backgrounds if needed */
-.accuracy-stat, .crystal-feedback {
-  background: var(--color-accent-light) !important;
-  color: var(--color-text) !important;
-}
-
-/* Buttons and highlights keep the vibrant accent colors */
-.btn--primary, .next-task-btn {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%) !important;
-  color: #fff !important;
-}
-
-/* Ensure all text is dark on light backgrounds for readability */
-.stat-label, .stat-value, .feedback-label, .feedback-value, .form-label, .consent-text, .engage-message, .welcome-highlight, .task-instruction {
-  color: var(--color-text) !important;
-}
-
-/* Remove strong color backgrounds from .accuracy-ring, .progress-bar, etc. Use accent only for the ring/line itself */
-.accuracy-ring svg, .progress-bar {
-  background: transparent !important;
-}
-
-/* Universal hardware acceleration for all devices */
-.accuracy-ring {
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-
-.accuracy-ring svg {
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-.progress-fill {
-  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
-}
-
-/* Card borders and shadows remain subtle */
-.card, .stat, .feedback-item, .sentence-display {
-  border: 1px solid var(--color-card-border);
-  box-shadow: var(--shadow-sm);
-}
-
-.consent-card {
-  background: var(--color-secondary);
-  border: 1.5px solid var(--color-primary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: var(--space-24) var(--space-20);
-  max-width: 480px;
-  margin: 0 auto var(--space-16) auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-.consent-heading {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-primary);
-  margin-bottom: var(--space-12);
-}
-.consent-body {
-  margin-bottom: var(--space-16);
-}
-.consent-summary {
-  font-size: var(--font-size-lg);
-  color: var(--color-text);
-  margin-bottom: var(--space-8);
-}
-.consent-main {
-  font-size: var(--font-size-md);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-8);
-}
-.consent-checkbox-center {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: var(--space-16) 0 0 0;
-}
-
-.next-task-btn--deep {
-  background: linear-gradient(135deg, var(--color-primary-active) 0%, var(--color-primary) 100%) !important;
-  box-shadow: 0 6px 24px rgba(32, 207, 207, 0.25), 0 2px 12px var(--color-primary-active);
-  color: #fff !important;
-  border: 2px solid var(--color-primary-active);
-  transform: scale(1.04);
-  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
-}
-
-.container, .card, .stat, .feedback-item, .sentence-display, .crystal-step-info, .gallery-container, .export-stats, .completion-message {
-  color: var(--color-text) !important;
-}
-
-.container h1, .container h2, .container h3, .container h4, .container h5, .container h6,
-.container p, .container span, .container label,
-.card h1, .card h2, .card h3, .card h4, .card h5, .card h6,
-.card p, .card span, .card label {
-  color: var(--color-text) !important;
-}
-
-.gallery-content h2 {
-  text-align: center;
-  width: 100%;
-  box-sizing: border-box;
-  padding-left: 8px;
-  padding-right: 8px;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  margin: 0 auto 16px auto;
-  max-width: 100vw;
-}
-
-@media (max-width: 768px) {
-  .gallery-content h2 {
-    font-size: clamp(1.2rem, 5vw, 2rem);
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-  .gallery-content {
-    padding-left: 0;
-    padding-right: 0;
-    max-width: 100vw;
-  }
-}
-
-@media (max-width: 480px) {
-  .gallery-content h2 {
-    font-size: clamp(1rem, 6vw, 1.5rem);
-    padding-left: 6px;
-    padding-right: 6px;
-  }
-  .gallery-content {
-    padding-left: 0;
-    padding-right: 0;
-    max-width: 100vw;
-  }
-}
-
-/* Universal text visibility rules for all modes */
-.container, .card, .stat, .feedback-item, .sentence-display, .crystal-step-info, .gallery-container, .export-stats, .completion-message {
-  color: var(--color-text) !important;
-}
-
-.container h1, .container h2, .container h3, .container h4, .container h5, .container h6,
-.container p, .container span, .container label,
-.card h1, .card h2, .card h3, .card h4, .card h5, .card h6,
-.card p, .card span, .card label {
-  color: var(--color-text) !important;
-}
-
-/* Enhanced text visibility for all elements */
-h1, h2, h3, h4, h5, h6, p, span, label, div, button, input, textarea, select {
-  color: var(--color-text) !important;
-}
-
-/* Specific dark mode text enhancements */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-text: rgba(245, 245, 245, 1) !important;
-    --color-text-secondary: rgba(200, 200, 200, 0.9) !important;
-  }
-  
-  /* Ensure all text elements are visible */
-  * {
-    color: var(--color-text) !important;
-  }
-  
-  /* Special handling for form elements */
-  input, textarea, select {
-    color: var(--color-text) !important;
-    background-color: var(--color-surface) !important;
-  }
-  
-  /* Button text visibility */
-  button {
-    color: var(--color-btn-primary-text) !important;
-  }
-  
-  /* Links visibility */
-  a {
-    color: var(--color-primary) !important;
-  }
-}
-
-[data-color-scheme="dark"] {
-  --color-text: rgba(245, 245, 245, 1) !important;
-  --color-text-secondary: rgba(200, 200, 200, 0.9) !important;
-  
-  /* Ensure all text elements are visible */
-  * {
-    color: var(--color-text) !important;
-  }
-  
-  /* Special handling for form elements */
-  input, textarea, select {
-    color: var(--color-text) !important;
-    background-color: var(--color-surface) !important;
-  }
-  
-  /* Button text visibility */
-  button {
-    color: var(--color-btn-primary-text) !important;
-  }
-  
-  /* Links visibility */
-  a {
-    color: var(--color-primary) !important;
-  }
-}
-
-/* Enhanced cursor movement with text selection prevention */
-#typing-input {
-  /* Allow natural cursor movement and text input */
-  -webkit-user-select: text !important;
-  -moz-user-select: text !important;
-  -ms-user-select: text !important;
-  user-select: text !important;
-  
-  /* Prevent touch callouts and highlights */
-  -webkit-touch-callout: none !important;
-  -webkit-tap-highlight-color: transparent !important;
-  
-  /* Ensure pointer events work */
-  pointer-events: auto !important;
-  
-  /* Allow normal input behavior */
-  cursor: text !important;
-  
-  /* Ensure proper text rendering for cursor positioning */
-  text-rendering: optimizeLegibility !important;
-  -webkit-font-smoothing: antialiased !important;
-  -moz-osx-font-smoothing: grayscale !important;
-}
-
-/* Make text selection invisible but allow cursor movement */
-#typing-input::selection {
-  background: transparent !important;
-  color: inherit !important;
-}
-
-#typing-input::-moz-selection {
-  background: transparent !important;
-  color: inherit !important;
-}
-
-/* Prevent text selection on all typing-related elements */
-.typing-area, .typing-content, .sentence-display {
-  -webkit-user-select: none !important;
-  -moz-user-select: none !important;
-  -ms-user-select: none !important;
-  user-select: none !important;
-  -webkit-touch-callout: none !important;
-  -webkit-tap-highlight-color: transparent !important;
-}
-
-/* Ensure typing input remains functional but unselectable */
-#typing-input:focus {
-  outline: var(--focus-outline) !important;
-  color: var(--color-text) !important;
-  background-color: var(--color-surface) !important;
-}
-
-/* Additional dark mode text contrast improvements */
-@media (prefers-color-scheme: dark) {
-  .stat-value, .feedback-value, .accuracy-value {
-    color: var(--color-primary) !important;
-    text-shadow: 0 0 1px rgba(255, 255, 255, 0.1) !important;
-  }
-  
-  .stat-label, .feedback-label {
-    color: var(--color-text-secondary) !important;
-  }
-  
-  .consent-text, .task-instruction {
-    color: var(--color-text) !important;
-  }
-}
-
-[data-color-scheme="dark"] {
-  .stat-value, .feedback-value, .accuracy-value {
-    color: var(--color-primary) !important;
-    text-shadow: 0 0 1px rgba(255, 255, 255, 0.1) !important;
-  }
-  
-  .stat-label, .feedback-label {
-    color: var(--color-text-secondary) !important;
-  }
-  
-  .consent-text, .task-instruction {
-    color: var(--color-text) !important;
-  }
-}
-
-/* Crystal Facet Styles */
-.crystal-facet {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(100, 200, 255, 0.5);
-    border: 2px solid rgba(100, 200, 255, 0.9);
-    pointer-events: none;
-    transition: all 0.3s ease;
-    z-index: 10;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-.crystal-facet.active {
-    background: rgba(100, 255, 100, 0.7);
-    border-color: rgba(100, 255, 100, 1);
-    box-shadow: 0 0 12px rgba(100, 255, 100, 0.8), 0 2px 6px rgba(0, 0, 0, 0.3);
-    animation: pulse 1.5s infinite;
-    transform: scale(1.1);
-}
-
-.crystal-facet.tapped {
-    background: rgba(255, 255, 100, 0.8);
-    border-color: rgba(255, 255, 100, 1);
-    box-shadow: 0 0 10px rgba(255, 255, 100, 0.8), 0 2px 6px rgba(0, 0, 0, 0.3);
-    transform: scale(0.95);
-}
-
-.crystal-facet.success {
-    background: rgba(100, 255, 100, 0.9);
-    border-color: rgba(100, 255, 100, 1);
-    box-shadow: 0 0 15px rgba(100, 255, 100, 0.9), 0 2px 6px rgba(0, 0, 0, 0.3);
-    animation: success-pulse 0.6s ease-out;
-    transform: scale(1.2);
-}
-
-.crystal-facet.error {
-    background: rgba(255, 100, 100, 0.9);
-    border-color: rgba(255, 100, 100, 1);
-    box-shadow: 0 0 15px rgba(255, 100, 100, 0.9), 0 2px 6px rgba(0, 0, 0, 0.3);
-    animation: error-pulse 0.6s ease-out;
-    transform: scale(1.1);
-}
-
-.facet-highlight {
-    position: absolute;
-    border-radius: 50%;
-    border: 3px solid rgba(100, 255, 100, 0.9);
-    background: rgba(100, 255, 100, 0.2);
-    pointer-events: none;
-    z-index: 9;
-    animation: highlight-pulse 2s infinite;
-    box-shadow: 0 0 8px rgba(100, 255, 100, 0.6);
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1.1); opacity: 1; }
-    50% { transform: scale(1.15); opacity: 0.9; }
-}
-
-@keyframes success-pulse {
-    0% { transform: scale(1.1); }
-    50% { transform: scale(1.3); }
-    100% { transform: scale(1.1); }
-}
-
-@keyframes error-pulse {
-    0% { transform: scale(1.1); }
-    50% { transform: scale(1.25); }
-    100% { transform: scale(1.1); }
-}
-
-@keyframes highlight-pulse {
-    0%, 100% { opacity: 0.7; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.05); }
-}
-
-.error-feedback {
-    animation: error-shake 0.4s ease-in-out;
-}
-
-@keyframes error-shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-6px); }
-    75% { transform: translateX(6px); }
-}
-
-/* Ensure crystal area can accommodate facets - NO BACKGROUND BOX */
-#crystal-area {
-    position: relative;
-    width: 400px;
-    height: 400px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    outline: none !important;
-    overflow: visible !important; /* Allow crystal to scale freely without clipping */
-}
-
-#crystal {
-    position: relative;
-    z-index: 5;
-}
-
-/* Responsive design for different mobile devices - No Clipping */
-@media (max-width: 480px) {
-    #crystal-area {
-        width: 350px;
-        height: 350px;
-        overflow: visible !important; /* Maintain no clipping on mobile */
+class BiometricDataCollector {
+    constructor() {
+        this.participantId = '';
+        this.currentScreen = 'welcome';
+        this.currentSentence = 0;
+        this.currentCrystalStep = 1;
+        this.currentGalleryImage = 0;
+        
+        this.taskState = {
+            studyStarted: false,
+            typingCompleted: false,
+            crystalCompleted: false,
+            galleryCompleted: false
+        };
+        
+        this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        this.isAndroid = /Android/.test(navigator.userAgent);
+        this.isMobile = this.isIOS || this.isAndroid;
+        this.keystrokeData = [];
+        this.touchData = [];
+        this.currentPointerX = window.innerWidth / 2;
+        this.currentPointerY = window.innerHeight / 2;
+        this.pointerTracking = {
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2
+        };
+        
+        this.compositionActive = false;
+        this.lastInputLength = 0;
+        
+
+        this.lastSpaceTime = 0;
+        this.lastCharTime = 0;
+        this.lastChar = null;
+        this.previousChar = null;
+        this.lastCapitalLetterTime = 0;
+        this.capitalLetterCount = 0; // Track capital letters for debugging
+        this.lastRecordedKeystroke = null; // Track last recorded keystroke to prevent duplicates
+        
+        if (this.isIOS) {
+            this.spaceCooldown = 300;
+            this.charCooldown = 50;
+        } else if (this.isAndroid) {
+            this.spaceCooldown = 250;
+            this.charCooldown = 30;
+            this.lastBackspaceType = '';
+        } else {
+            this.spaceCooldown = 200;
+            this.charCooldown = 20;
+        }
+        
+        this.lastInputValue = '';
+        this.inputEventCount = 0;
+        this.lastInputEvent = null;
+        this.lastInputEventTime = 0;
+        this.inputEventCooldown = this.isIOS ? 50 : 30;
+        
+        // iOS-specific deduplication tracking
+        this.iOSInputHistory = [];
+        this.iOSLastProcessedEvent = null;
+        
+        this.lastKeystrokeTime = 0;
+        this.flightTimeData = [];
+        
+        this.galleryZoom = {
+            scale: 1,
+            isPanning: false,
+            isPinching: false,
+            startX: 0,
+            startY: 0,
+            translateX: 0,
+            translateY: 0,
+            initialDistance: 0,
+            touches: [],
+            lastTapTime: 0,
+            zoomPersistent: false
+        };
+        
+        // Typing task data
+        this.sentences = [
+            "Dr. Smith's Lab-42 discovered H2O molecules can freeze at -5 degree Celsius under pressure.",
+            "The CEO's Q3 report showed $2.8M profit and 15% growth across all divisions.",
+            "Agent X-007 decoded the message: 'Meet @ Pier 9 on July 4th at 3:30 PM.'",
+            "Tesla's Model S hit 0-60 mph in 2.1 seconds - breaking the previous record!"
+        ];
+        
+        this.crystalSteps = [
+            { id: 1, instruction: "Tap the crystal exactly 3 times with your finger. Each tap will make the crystal glow. Complete all 3 taps to proceed.", target: 3, type: 'tap' },
+            { id: 2, instruction: "Touch the crystal, then rotate your finger CLOCKWISE in a complete circle. After the teal glow, rotate COUNTER-CLOCKWISE in a complete circle. After the second teal glow, rotate CLOCKWISE again in a complete circle. Complete all 3 rotations to proceed.", target: 3, type: 'rotate' },
+            { id: 3, instruction: "Place two fingers on the crystal and pinch them together to shrink the crystal to 50% of its original size. The crystal will glow when you reach the target size.", target: 0.5, type: 'pinch' },
+            { id: 4, instruction: "Place two fingers on the crystal and spread them apart to enlarge the crystal to 150% of its original size. The crystal will glow when you reach the target size.", target: 1.5, type: 'spread' },
+            { id: 5, instruction: "Tap the crystal facets in the exact order they light up (green dots). Follow the sequence carefully to activate all 10 facets. Each correct tap will make the facet glow blue.", target: 10, type: 'facet_tap' }
+        ];
+        
+        this.crystalState = {
+            tapCount: 0,
+            rotationTime: 0,
+            rotationStart: null,
+            currentSize: 1.0,
+            isRotating: false,
+            isPinching: false,
+            isSpreading: false,
+            pressureStart: null,
+            pressureFingers: 0,
+            initialDistance: 0,
+            initialAngle: null,
+            totalRotation: 0,
+            lastAngle: null,
+            rotationAccumulated: 0,
+            rotationDirection: null,
+            rotationRounds: 0,
+            rotationSequence: [],
+            rotationCompleted: false,
+            wrongDirectionStarted: false,
+            currentTrial: 1,
+            stepStartTime: null,
+            facets: [],
+            currentFacetIndex: 0,
+            tappedFacets: new Set(),
+            facetSequence: []
+        };
+        
+        this.galleryImages = [
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNjY2NjY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMTwvdGV4dD48L3N2Zz4=',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNzc3Nzc3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMjwvdGV4dD48L3N2Zz4=',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjODg4ODg4Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMzwvdGV4dD48L3N2Zz4=',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjOTk5OTk5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgNDwvdGV4dD48L3N2Zz4=',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYWFhYWFhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgNTwvdGV4dD48L3N2Zz4=',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYmJiYmJiIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgNjwvdGV4dD48L3N2Zz4=',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjY2NjY2NjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgNzwvdGV4dD48L3N2Zz4=',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgODwvdGV4dD48L3N2Zz4=',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZWVlZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgOTwvdGV4dD48L3N2Zz4=',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMTA8L3RleHQ+PC9zdmc+',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBhYzNhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMTE8L3RleHQ+PC9zdmc+',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZDA5YzNmIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMTI8L3RleHQ+PC9zdmc+',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYjM3YzFmIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMTM8L3RleHQ+PC9zdmc+',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjOTY3YzFmIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMTQ8L3RleHQ+PC9zdmc+',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNzk3YzFmIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMTU8L3RleHQ+PC9zdmc+',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNWJjMWY5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMTY8L3RleHQ+PC9zdmc+',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjM2JjMWY5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMTc8L3RleHQ+PC9zdmc+',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWJjMWY5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMTg8L3RleHQ+PC9zdmc+',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMDBiY2Y5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMTk8L3RleHQ+PC9zdmc+',
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMDBhY2Y5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2UgMjA8L3RleHQ+PC9zdmc+'
+        ];
+        
+
+        this.gesturePath = {};
+        this.gesturePathLength = {};
+        
+        this.deviceInfo = this.detectDeviceInfo();
+        
+        this.init();
     }
     
-    .crystal-facet {
-        border-width: 2px;
+    detectDeviceInfo() {
+        const userAgent = navigator.userAgent;
+        
+        let deviceInfo = {
+            device_type: 'unknown',
+            device_model: 'unknown',
+            browser_name: 'unknown',
+            browser_version: 'unknown',
+            os_name: 'unknown',
+            os_version: 'unknown',
+            platform: 'unknown'
+        };
+        
+        if (/iPad|iPhone|iPod/.test(userAgent)) {
+            deviceInfo.device_type = 'iOS';
+            deviceInfo.os_name = 'iOS';
+            
+            const iosMatch = userAgent.match(/OS (\d+_\d+)/);
+            if (iosMatch) {
+                deviceInfo.os_version = iosMatch[1].replace('_', '.');
+            }
+            
+            if (/iPhone/.test(userAgent)) {
+                if (/iPhone OS 17_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 15 Pro Max';
+                else if (/iPhone OS 16_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 14 Pro Max';
+                else if (/iPhone OS 15_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 13 Pro Max';
+                else if (/iPhone OS 14_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 12 Pro Max';
+                else if (/iPhone OS 13_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 11 Pro Max';
+                else deviceInfo.device_model = 'iPhone (Unknown Model)';
+            }
+            else if (/iPad/.test(userAgent)) {
+                deviceInfo.device_model = 'iPad';
+            }
+        }
+        else if (/Android/.test(userAgent)) {
+            deviceInfo.device_type = 'Android';
+            deviceInfo.os_name = 'Android';
+            
+            const androidMatch = userAgent.match(/Android (\d+\.?\d*)/);
+            if (androidMatch) {
+                deviceInfo.os_version = androidMatch[1];
+            }
+            
+            const modelMatch = userAgent.match(/\(Linux.*?;\s*([^;]+)\s*Build/);
+            if (modelMatch) {
+                const model = modelMatch[1].trim();
+                if (model.includes('SM-')) {
+                    const samsungMatch = model.match(/SM-([A-Z0-9]+)/);
+                    if (samsungMatch) {
+                        const modelCode = samsungMatch[1];
+                        switch(modelCode) {
+                            case 'G991': deviceInfo.device_model = 'Samsung Galaxy S21'; break;
+                            case 'G998': deviceInfo.device_model = 'Samsung Galaxy S21 Ultra'; break;
+                            case 'G996': deviceInfo.device_model = 'Samsung Galaxy S21+'; break;
+                            case 'G781': deviceInfo.device_model = 'Samsung Galaxy S20 FE'; break;
+                            case 'G970': deviceInfo.device_model = 'Samsung Galaxy S10e'; break;
+                            case 'G973': deviceInfo.device_model = 'Samsung Galaxy S10'; break;
+                            case 'G975': deviceInfo.device_model = 'Samsung Galaxy S10+'; break;
+                            case 'N976': deviceInfo.device_model = 'Samsung Galaxy Note 10+'; break;
+                            default: deviceInfo.device_model = `Samsung Galaxy (${modelCode})`;
+                        }
+                    }
+                } else if (model.includes('Pixel')) {
+                    deviceInfo.device_model = model;
+                } else if (model.includes('OnePlus')) {
+                    deviceInfo.device_model = model;
+                } else {
+                    deviceInfo.device_model = model;
+                }
+            }
+        }
+        else {
+            deviceInfo.device_type = 'Mobile';
+            deviceInfo.device_model = 'Unknown Mobile Device';
+            deviceInfo.os_name = 'Unknown';
+            deviceInfo.os_version = 'Unknown';
+        }
+        
+        if (/Chrome/.test(userAgent) && !/Edge/.test(userAgent)) {
+            deviceInfo.browser_name = 'Chrome';
+            const chromeMatch = userAgent.match(/Chrome\/(\d+\.\d+)/);
+            if (chromeMatch) {
+                deviceInfo.browser_version = chromeMatch[1];
+            }
+        } else if (/Firefox/.test(userAgent)) {
+            deviceInfo.browser_name = 'Firefox';
+            const firefoxMatch = userAgent.match(/Firefox\/(\d+\.\d+)/);
+            if (firefoxMatch) {
+                deviceInfo.browser_version = firefoxMatch[1];
+            }
+        } else if (/Safari/.test(userAgent) && !/Chrome/.test(userAgent)) {
+            deviceInfo.browser_name = 'Safari';
+            const safariMatch = userAgent.match(/Version\/(\d+\.\d+)/);
+            if (safariMatch) {
+                deviceInfo.browser_version = safariMatch[1];
+            }
+        } else if (/Edge/.test(userAgent)) {
+            deviceInfo.browser_name = 'Edge';
+            const edgeMatch = userAgent.match(/Edge\/(\d+\.\d+)/);
+            if (edgeMatch) {
+                deviceInfo.browser_version = edgeMatch[1];
+            }
+        } else if (/Opera/.test(userAgent)) {
+            deviceInfo.browser_name = 'Opera';
+            const operaMatch = userAgent.match(/Opera\/(\d+\.\d+)/);
+            if (operaMatch) {
+                deviceInfo.browser_version = operaMatch[1];
+            }
+        } else {
+            deviceInfo.browser_name = 'Unknown Browser';
+            deviceInfo.browser_version = 'Unknown';
+        }
+        
+        deviceInfo.platform = `${deviceInfo.device_model} (${deviceInfo.browser_name})`;
+        
+        console.log('Device Info:', deviceInfo);
+        
+        return deviceInfo;
     }
     
-    .facet-highlight {
-        border-width: 2px;
-    }
-}
-
-@media (max-width: 360px) {
-    #crystal-area {
-        width: 300px;
-        height: 300px;
-        overflow: visible !important; /* Maintain no clipping on mobile */
+    init() {
+        this.bindEvents();
+        this.generateParticipantId();
+        this.initializeGallery();
+        this.setupPointerTracking();
+        this.updateTaskLocks();
     }
     
-    .crystal-facet {
-        border-width: 1px;
+    setupPointerTracking() {
+        // Enhanced pointer tracking for accurate touch coordinates
+        document.addEventListener('mousemove', (e) => {
+            this.currentPointerX = e.clientX;
+            this.currentPointerY = e.clientY;
+            this.pointerTracking = {
+                x: e.clientX,
+                y: e.clientY,
+                timestamp: performance.now()
+            };
+        });
+        
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                this.currentPointerX = touch.clientX;
+                this.currentPointerY = touch.clientY;
+                this.pointerTracking = {
+                    x: touch.clientX,
+                    y: touch.clientY,
+                    timestamp: performance.now()
+                };
+            }
+        });
+        
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                this.currentPointerX = touch.clientX;
+                this.currentPointerY = touch.clientY;
+                this.pointerTracking = {
+                    x: touch.clientX,
+                    y: touch.clientY,
+                    timestamp: performance.now()
+                };
+            }
+        });
+        
+        // Enhanced touch tracking for mobile devices
+        document.addEventListener('touchend', (e) => {
+            if (e.changedTouches.length > 0) {
+                const touch = e.changedTouches[0];
+                this.pointerTracking = {
+                    x: touch.clientX,
+                    y: touch.clientY,
+                    timestamp: performance.now()
+                };
+            }
+        });
     }
     
-    .facet-highlight {
-        border-width: 2px;
-    }
-}
+    generateParticipantId() {
+        const now = new Date();
+        const pad = n => n.toString().padStart(2, '0');
+    
+        const year = now.getFullYear();
+        const month = pad(now.getMonth() + 1);
+        const day = pad(now.getDate());
+        const hour = pad(now.getHours());
+        const minute = pad(now.getMinutes());
+        const second = pad(now.getSeconds());
+    
+        const timePart = `${year}${month}${day}-${hour}${minute}${second}`;
+        const randomPart = Math.random().toString(36).substring(2, 5);
+    
+        this.participantId = `P${timePart}-${randomPart}`;
+        document.getElementById('participant-id').textContent = this.participantId;
+        
+        const deviceInfoElement = document.getElementById('device-info');
+        const browserInfoElement = document.getElementById('browser-info');
+        
+        if (deviceInfoElement) {
+            deviceInfoElement.textContent = `${this.deviceInfo.device_model} (${this.deviceInfo.os_name} ${this.deviceInfo.os_version})`;
+        }
+        
+        if (browserInfoElement) {
+            browserInfoElement.textContent = `${this.deviceInfo.browser_name} ${this.deviceInfo.browser_version}`;
+        }
 
-@media (max-width: 320px) {
-    #crystal-area {
-        width: 280px;
-        height: 280px;
-        overflow: visible !important; /* Maintain no clipping on mobile */
-    }
-}
-
-/* Ensure smooth performance on all devices */
-.crystal-facet,
-.facet-highlight {
-    will-change: transform, opacity;
-    backface-visibility: hidden;
-    transform: translateZ(0);
-}
-
-/* High DPI display optimization */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    .crystal-facet {
-        border-width: 1px;
+        const phoneModelElement = document.getElementById('phone-model');
+        const browserNameElement = document.getElementById('browser-name');
+        if (phoneModelElement) {
+          phoneModelElement.textContent = this.deviceInfo.device_model;
+        }
+        if (browserNameElement) {
+          browserNameElement.textContent = this.deviceInfo.browser_name;
+        }
     }
     
-    .facet-highlight {
-        border-width: 1px;
-    }
-}
+    bindEvents() {
+        document.getElementById('start-btn').addEventListener('click', () => {
+            this.taskState.studyStarted = true;
+            this.taskState.typingCompleted = false;
+            this.taskState.crystalCompleted = false;
+            this.taskState.galleryCompleted = false;
+            this.updateTaskLocks();
+            this.switchScreen('typing');
+            this.startTypingTask();
+        });
+        // Consent checkbox logic
+        const consentCheckbox = document.getElementById('consent-checkbox');
+        const startBtn = document.getElementById('start-btn');
+        if (consentCheckbox && startBtn) {
+            consentCheckbox.addEventListener('change', function() {
+                startBtn.disabled = !this.checked;
+                if (this.checked) {
+                    startBtn.classList.remove('btn--disabled');
+                } else {
+                    startBtn.classList.add('btn--disabled');
+                }
+            });
+        }
+        const typingInput = document.getElementById('typing-input');
+        if (typingInput) {
+            typingInput.addEventListener('copy', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                this.showCopyBlockedFeedback();
+                return false;
+            }.bind(this));
+            typingInput.addEventListener('cut', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                this.showCopyBlockedFeedback();
+                return false;
+            }.bind(this));
+            typingInput.addEventListener('paste', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                this.showCopyBlockedFeedback();
+                return false;
+            }.bind(this));
+            
+            typingInput.addEventListener('drop', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                return false;
+            });
+            
+            typingInput.addEventListener('contextmenu', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                return false;
+            });
+            
+            typingInput.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 'c' || e.key === 'C' || 
+                        e.key === 'v' || e.key === 'V' || 
+                        e.key === 'x' || e.key === 'X' || 
+                        e.key === 'a' || e.key === 'A') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+                }
+                
+                if (e.shiftKey && e.key === 'Insert') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            });
+            
+            typingInput.addEventListener('compositionstart', function(e) {
+                console.log('Composition started - monitoring for clipboard content');
+            });
+            
+            typingInput.addEventListener('input', function(e) {
+                const currentValue = e.target.value;
+                const previousValue = this.lastInputValue || '';
+                
+                if (currentValue.length > previousValue.length + 1) {
+                    console.log('Potential paste detected - blocking');
+                    e.target.value = previousValue;
+                    setTimeout(() => {
+                        typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                    }, 0);
+                    return false;
+                }
+                
+                this.lastInputValue = currentValue;
+            }.bind(this));
+            
+            if (navigator.clipboard) {
+                const originalWriteText = navigator.clipboard.writeText;
+                const originalReadText = navigator.clipboard.readText;
+                
+                navigator.clipboard.writeText = function() {
+                    console.log('Clipboard write blocked');
+                    return Promise.reject(new Error('Clipboard access blocked'));
+                };
+                
+                navigator.clipboard.readText = function() {
+                    console.log('Clipboard read blocked');
+                    return Promise.reject(new Error('Clipboard access blocked'));
+                };
+            }
+            
+            const originalExecCommand = document.execCommand;
+            document.execCommand = function(command, ...args) {
+                if (command === 'copy' || command === 'cut' || command === 'paste') {
+                    console.log(`execCommand ${command} blocked`);
+                    return false;
+                }
+                return originalExecCommand.call(this, command, ...args);
+            };
+        }
+        typingInput.addEventListener('compositionstart', (e) => {
+            this.compositionActive = true;
+            console.log('Composition started');
+        });
+        typingInput.addEventListener('compositionupdate', (e) => {
+            console.log('Composition update:', e.data);
+        });
+        typingInput.addEventListener('compositionend', (e) => {
+            this.compositionActive = false;
+            console.log('Composition ended:', e.data);
+        });
+        typingInput.addEventListener('input', (e) => {
+            this.handleTypingInput(e);
+        });
+        
+        // Remove keydown and keyup handlers to prevent duplicate recording
+        // All keystroke recording is now handled in handleTypingInput
+        typingInput.addEventListener('focus', (e) => {
+            const rect = e.target.getBoundingClientRect();
+            this.currentPointerX = rect.left + rect.width / 2;
+            this.currentPointerY = rect.top + rect.height / 2;
+            this.pointerTracking.x = this.currentPointerX;
+            this.pointerTracking.y = this.currentPointerY;
+        });
+        typingInput.addEventListener('click', (e) => {
+            this.currentPointerX = e.clientX;
+            this.currentPointerY = e.clientY;
+            this.pointerTracking.x = e.clientX;
+            this.pointerTracking.y = e.clientY;
+        });
+        typingInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        });
+        typingInput.addEventListener('copy', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        });
+        typingInput.addEventListener('cut', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        });
+        typingInput.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        });
+        typingInput.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        });
+        const sentenceDisplay = document.querySelector('.sentence-display');
+        if (sentenceDisplay) {
+            sentenceDisplay.addEventListener('copy', function(e) { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                this.showCopyBlockedFeedback();
+                return false;
+            }.bind(this));
+        }
+        
+        document.getElementById('next-sentence-btn').addEventListener('click', () => this.nextSentence());
+        this.bindCrystalEvents();
+        document.getElementById('reset-step-btn').addEventListener('click', () => this.resetCrystalStep());
+        const nextCrystalBtn = document.getElementById('next-crystal-btn');
+        if (!nextCrystalBtn) {
+            console.error('[DEBUG] next-crystal-btn not found in DOM when attaching handler!');
+        } else {
+            nextCrystalBtn.addEventListener('click', () => {
+                console.log('[DEBUG] Next Step button clicked');
+                this.nextCrystalStep();
+            });
+            console.log('[DEBUG] Next Step button handler attached');
+        }
+        this.bindGalleryEvents();
+        document.getElementById('finish-gallery-btn').addEventListener('click', () => this.switchScreen('export'));
+        document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
+        document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
 
-/* Enhanced centering for all device types */
-html, body {
-    text-align: center;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    overflow-x: hidden;
-}
 
-/* Ensure all main containers are properly centered */
-.container, .screen, .welcome-content, .typing-content, .crystal-content, .gallery-content, .export-content {
-    margin-left: auto !important;
-    margin-right: auto !important;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 1200px;
-    box-sizing: border-box;
-}
-
-/* Mobile-specific centering improvements */
-@media (max-width: 768px) {
-    .container, .screen, .welcome-content, .typing-content, .crystal-content, .gallery-content, .export-content {
-        padding-left: var(--space-16);
-        padding-right: var(--space-16);
-        margin: 0 auto;
-        width: 100%;
-        max-width: 100vw;
-        box-sizing: border-box;
     }
     
-    body {
-        padding: 0;
-        margin: 0;
-        width: 100%;
-        overflow-x: hidden;
+    switchScreen(screenName) {
+        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+        const targetScreen = document.getElementById(`${screenName}-screen`);
+        if (targetScreen) {
+            targetScreen.classList.add('active');
+            this.currentScreen = screenName;
+            
+            // Smooth scroll to the target screen
+            this.smoothScrollToScreen(targetScreen);
+        }
+        if (screenName === 'export') {
+            const keystrokeFeatures = this.extractKeystrokeFeatures();
+            const keystrokeFeatureCount = keystrokeFeatures.length > 0 ? Object.keys(keystrokeFeatures[0]).length : 0;
+            document.getElementById('keystroke-features').textContent = keystrokeFeatureCount;
+            const touchFeatures = this.extractTouchFeatures();
+            const touchFeatureCount = touchFeatures.length > 0 ? Object.keys(touchFeatures[0]).length : 0;
+            document.getElementById('touch-features').textContent = touchFeatureCount;
+        }
+    }
+    
+    smoothScrollToScreen(targetScreen) {
+        targetScreen.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+            inline: 'nearest'
+        });
+        
+        setTimeout(() => {
+            window.scrollTo({
+                top: targetScreen.offsetTop,
+                behavior: 'smooth'
+            });
+        }, 100);
+    }
+    
+    showNextTaskButton(targetScreen, taskName) {
+        const currentBtn = document.getElementById('next-sentence-btn');
+        if (currentBtn) {
+            currentBtn.style.display = 'none';
+        }
+        const crystalBtn = document.getElementById('next-crystal-btn');
+        if (crystalBtn) {
+            crystalBtn.style.display = 'none';
+        }
+        let nextTaskBtn = document.getElementById('next-task-btn');
+        if (!nextTaskBtn) {
+            nextTaskBtn = document.createElement('button');
+            nextTaskBtn.id = 'next-task-btn';
+            nextTaskBtn.className = 'next-task-btn';
+            nextTaskBtn.textContent = `Next Task: ${taskName}`;
+            if (targetScreen === 'crystal') {
+                const typingSection = document.getElementById('typing-screen');
+                typingSection.appendChild(nextTaskBtn);
+            } else if (targetScreen === 'gallery') {
+                // Position the gallery button right after the Reset Current Step button
+                const crystalControls = document.querySelector('.crystal-controls');
+                if (crystalControls) {
+                    // Insert the button right after the reset button to keep them in the same row
+                    const resetBtn = document.getElementById('reset-step-btn');
+                    if (resetBtn) {
+                        resetBtn.insertAdjacentElement('afterend', nextTaskBtn);
+                    } else {
+                        crystalControls.appendChild(nextTaskBtn);
+                    }
+                } else {
+                    const crystalSection = document.getElementById('crystal-screen');
+                    crystalSection.appendChild(nextTaskBtn);
+                }
+            }
+        } else {
+            nextTaskBtn.textContent = `Next Task: ${taskName}`;
+        }
+        nextTaskBtn.onclick = () => {
+            if (targetScreen === 'crystal') {
+                this.taskState.typingCompleted = true;
+                this.taskState.crystalCompleted = false;
+                this.taskState.galleryCompleted = false;
+                this.updateTaskLocks();
+                this.switchScreen('crystal');
+                this.startCrystalGame();
+            } else if (targetScreen === 'gallery') {
+                this.taskState.crystalCompleted = true;
+                this.taskState.galleryCompleted = false;
+                this.updateTaskLocks();
+                this.switchScreen('gallery');
+            }
+            nextTaskBtn.remove();
+        };
+        nextTaskBtn.style.display = 'inline-flex';
+        nextTaskBtn.style.opacity = '0';
+        nextTaskBtn.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            nextTaskBtn.style.transition = 'all 0.5s ease';
+            nextTaskBtn.style.opacity = '1';
+            nextTaskBtn.style.transform = 'translateY(0)';
+        }, 100);
+        console.log(`✅ Next Task button shown for: ${taskName}`);
+    }
+    
+    handleTypingInput(e) {
+        const { inputType, data } = e;
+        const inputEl = e.target;
+        const value = inputEl.value;
+        const pos = inputEl.selectionStart || value.length;
+        const timestamp = performance.now();
+        const currentTime = performance.now();
+        
+        const eventSignature = `${inputType}-${data}-${value.length}-${pos}`;
+        
+        if (this.compositionActive && inputType === 'insertText') {
+            console.log('🔄 Composition active, skipping insertText');
+            return;
+        }
+        
+        // iOS: Early duplicate detection before processing
+        if (this.isIOS && data && inputType === 'insertText') {
+            const currentTime = performance.now();
+            
+            // Check if this exact event was processed recently
+            if (this.iOSLastProcessedEvent && 
+                this.iOSLastProcessedEvent.signature === eventSignature &&
+                (currentTime - this.iOSLastProcessedEvent.timestamp) < 100) {
+                console.log('🚫 iOS early duplicate BLOCKED:', data, 'signature:', eventSignature);
+                return;
+            }
+            
+            // Update last processed event
+            this.iOSLastProcessedEvent = {
+                signature: eventSignature,
+                timestamp: currentTime
+            };
+        }
+        
+        // Enhanced iOS deduplication for input events
+        if (data && inputType === 'insertText') {
+        
+            // Quote deduplication logic (preserve your existing code)
+            const isQuote = data === "'" || data === "`" || data === '´' || data === '′' || data === '‵' ||
+                             data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶';
+            
+            if (isQuote) {
+                console.log('🔍 Quote input detected:', data, 'charCode:', data.charCodeAt(0), 'type:', inputType);
+            }
+            
+            // iOS: More aggressive deduplication
+            if (this.isIOS) {
+                const dedupWindow = isQuote ? 50 : 150; // Longer window for iOS
+                if (this.lastInputEvent === eventSignature && 
+                    this.lastInputEventTime && 
+                    (currentTime - this.lastInputEventTime) < dedupWindow) {
+                    console.log('🚫 iOS duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                    return;
+                }
+                
+                // Additional check for rapid character input
+                if (this.lastChar === data && this.lastCharTime && 
+                    (currentTime - this.lastCharTime) < 100) {
+                    console.log('🚫 iOS rapid character input BLOCKED:', data, 'time since last:', currentTime - this.lastCharTime, 'ms');
+                    return;
+                }
+            } else if (this.isAndroid) {
+                const dedupWindow = isQuote ? 30 : 100;
+                if (this.lastInputEvent === eventSignature && 
+                    this.lastInputEventTime && 
+                    (currentTime - this.lastInputEventTime) < dedupWindow) {
+                    console.log('🚫 Android duplicate input event BLOCKED:', data, 'time since last:', currentTime - this.lastInputEventTime, 'ms');
+                    return;
+                }
+            }
+        }
+        
+        
+        this.lastInputValue = value;
+        this.lastInputLength = value.length;
+        this.lastInputEvent = eventSignature;
+        this.lastInputEventTime = currentTime;
+        this.inputEventCount++;
+        
+        if (data && inputType === 'insertText') {
+            console.log(`📱 Mobile input event: "${data}" | Event #${this.inputEventCount} | Platform: ${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}`);
+        }
+
+        // --- SPACE, SHIFT, BACKSPACE LOGIC FROM PROVIDED CODE ---
+        // Handle SPACE
+        if (data === ' ') {
+                    this.recordKeystroke({
+                timestamp,
+                actualChar: 'SPACE',
+                keyCode: 32,
+                        type: inputType,
+                        sentence: this.currentSentence,
+                position: pos - 1,
+                        clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
+                        clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
+                    });
+            this.lastChar = 'SPACE';
+            this.lastCharTime = timestamp;
+            console.log(`✅ SPACE recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}): cooldown: ${this.spaceCooldown} ms`);
+            this.calculateAccuracy();
+            this.checkSentenceCompletion();
+            this.updateTypingFeedback();
+            return;
+        }
+    
+        // Handle BACKSPACE - Record every backspace press
+        if (inputType && inputType.startsWith('delete')) {
+            this.recordKeystroke({
+                timestamp,
+                actualChar: 'BACKSPACE',
+                keyCode: 8,
+                type: inputType,
+                sentence: this.currentSentence,
+                position: pos,
+                clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
+                clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
+            });
+            console.log('✅ Backspace recorded (every press)');
+            this.calculateAccuracy();
+            this.checkSentenceCompletion();
+            this.updateTypingFeedback();
+            return;
+        }
+
+
+                // Handle capital letters - record directly without SHIFT or † symbol
+        if (data && data.length === 1 && data.match(/[A-Z]/)) {
+            this.capitalLetterCount++;
+            console.log(`🔤 Capital letter #${this.capitalLetterCount} detected: ${data} on ${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}`);
+            
+            this.recordKeystroke({
+                timestamp,
+                actualChar: data,
+                keyCode: data.charCodeAt(0),
+                type: inputType,
+                sentence: this.currentSentence,
+                position: pos - 1,
+                clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
+                clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
+            });
+            this.lastChar = data;
+            this.lastKeystrokeTime = timestamp;
+            this.calculateAccuracy();
+            this.checkSentenceCompletion();
+            this.updateTypingFeedback();
+            return;
+        }
+
+
+        // Handle text insertion
+        else if (inputType === 'insertText' && data) {
+            for (let i = 0; i < data.length; i++) {
+                const char = data[i];
+                const posOffset = pos - data.length + i;
+                
+                // Enhanced character handling for all characters including quotes and smart characters
+                let refChar = char;
+                
+                // Debug: Log the actual character being processed
+                console.log('Processing character:', char, 'charCode:', char.charCodeAt(0), 'type:', inputType);
+                
+                // Handle smart quotes and apostrophes (common in mobile keyboards)
+                if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵') {
+                    refChar = "'"; // Single quote/apostrophe - all variants
+                    console.log('✅ Single quote detected:', char, '-> stored as:', refChar);
+                } else if (char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟' || char === '″' || char === '‶') {
+                    refChar = '"'; // Double quote - all variants
+                    console.log('✅ Double quote detected:', char, '-> stored as:', refChar);
+                } else if (char === '-' || char === '–' || char === '—') {
+                    refChar = '-'; // Hyphen/dash
+                } else if (char === '.' || char === '…') {
+                    refChar = '.'; // Period/ellipsis
+                } else if (char === ',' || char === '،') {
+                    refChar = ','; // Comma
+                } else if (char === '!' || char === '¡') {
+                    refChar = '!'; // Exclamation
+                } else if (char === '?' || char === '¿') {
+                    refChar = '?'; // Question mark
+                } else if (char === '@') {
+                    refChar = '@'; // At symbol
+                } else if (char === '#') {
+                    refChar = '#'; // Hash
+                } else if (char === '$' || char === '€' || char === '£' || char === '¥') {
+                    refChar = '$'; // Dollar/currency
+                } else if (char === '%') {
+                    refChar = '%'; // Percent
+                } else if (char === '&') {
+                    refChar = '&'; // Ampersand
+                } else if (char === '*') {
+                    refChar = '*'; // Asterisk
+                } else if (char === '(') {
+                    refChar = '('; // Left parenthesis
+                } else if (char === ')') {
+                    refChar = ')'; // Right parenthesis
+                } else if (char === '+' || char === '±') {
+                    refChar = '+'; // Plus
+                } else if (char === '=' || char === '≠') {
+                    refChar = '='; // Equals
+                } else if (char === '[' || char === '【') {
+                    refChar = '['; // Left bracket
+                } else if (char === ']' || char === '】') {
+                    refChar = ']'; // Right bracket
+                } else if (char === '{' || char === '｛') {
+                    refChar = '{'; // Left brace
+                } else if (char === '}' || char === '｝') {
+                    refChar = '}'; // Right brace
+                } else if (char === '\\' || char === '＼') {
+                    refChar = '\\'; // Backslash
+                } else if (char === '|' || char === '｜') {
+                    refChar = '|'; // Pipe
+                } else if (char === ';' || char === '；') {
+                    refChar = ';'; // Semicolon
+                } else if (char === ':' || char === '：') {
+                    refChar = ':'; // Colon
+                } else if (char === '/' || char === '／') {
+                    refChar = '/'; // Forward slash
+                } else if (char === '<' || char === '＜') {
+                    refChar = '<'; // Less than
+                } else if (char === '>' || char === '＞') {
+                    refChar = '>'; // Greater than
+                } else if (char === '`' || char === '｀') {
+                    refChar = '`'; // Backtick
+                } else if (char === '~' || char === '～') {
+                    refChar = '~'; // Tilde
+                } else if (char === '^' || char === '＾') {
+                    refChar = '^'; // Caret
+                } else if (char === '_' || char === '＿') {
+                    refChar = '_'; // Underscore
+                } else if (char === '°' || char === '℃' || char === '℉') {
+                    refChar = '°'; // Degree symbol
+                } else if (char === '©' || char === '®' || char === '™') {
+                    refChar = char; // Copyright symbols
+                } else if (char === '§' || char === '¶') {
+                    refChar = char; // Section symbols
+                } else if (char === '†' || char === '‡') {
+                    refChar = char; // Dagger symbols
+                } else if (char === '•' || char === '·' || char === '▪' || char === '▫') {
+                    refChar = '•'; // Bullet points
+                } else if (char === '✓' || char === '✔' || char === '☑') {
+                    refChar = '✓'; // Check marks
+                } else if (char === '✗' || char === '✘' || char === '☒') {
+                    refChar = '✗'; // X marks
+                } else if (char === '→' || char === '←' || char === '↑' || char === '↓') {
+                    refChar = char; // Arrows
+                } else if (char === '♠' || char === '♥' || char === '♦' || char === '♣') {
+                    refChar = char; // Card suits
+                } else if (char === '☺' || char === '☻' || char === '☹') {
+                    refChar = char; // Emoticons
+                } else if (char === '☀' || char === '☁' || char === '☂' || char === '☃') {
+                    refChar = char; // Weather symbols
+                } else if (char === '♫' || char === '♪' || char === '♬') {
+                    refChar = char; // Music symbols
+                } else if (char === '∞' || char === '≈' || char === '≤' || char === '≥') {
+                    refChar = char; // Math symbols
+                } else if (char === '∑' || char === '∏' || char === '∫' || char === '√') {
+                    refChar = char; // Advanced math symbols
+                } else if (char === 'α' || char === 'β' || char === 'γ' || char === 'δ') {
+                    refChar = char; // Greek letters
+                } else if (char === 'π' || char === 'μ' || char === 'σ' || char === 'τ') {
+                    refChar = char; // More Greek letters
+                } else {
+                    // For all other characters, use as-is
+                    refChar = char;
+                }
+                
+                // Debug logging for quote characters
+                if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟' || char === '″' || char === '‶') {
+                    console.log('🔍 Quote processing complete - Final refChar:', refChar);
+                }
+                
+                                // Check if character should be recorded (simplified deduplication)
+                // For quotes, use more lenient deduplication
+                const isQuote = refChar === "'" || refChar === '"';
+                if (this.shouldRecordChar(refChar, timestamp + i, isQuote)) {
+                    
+                    console.log('📝 Recording keystroke:', refChar, 'type:', inputType, 'timestamp:', timestamp + i);
+                        this.recordKeystroke({
+                        timestamp: timestamp + i,
+                            actualChar: refChar,
+                        keyCode: char.charCodeAt(0),
+                            type: inputType,
+                            sentence: this.currentSentence,
+                        position: pos - data.length + i,
+                            clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
+                            clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
+                        });
+                        
+                    // Update last character and time for mobile deduplication
+                        this.lastChar = refChar;
+                    this.lastCharTime = timestamp + i;
+                } else {
+                    console.log('❌ Character duplicate ignored:', refChar);
+                }
+                
+                // Update previous character for next iteration
+                this.previousChar = char;
+            }
+        }
+    
+        // Handle other input types like paste, cut, etc.
+        else if (inputType && data) {
+            let refChar = data;
+            
+            // Debug: Log the actual data being processed
+            console.log('Processing other input data:', data, 'charCode:', data.charCodeAt(0), 'type:', inputType);
+
+            if (data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´' || data === '′' || data === '‵') {
+                refChar = "'"; // Single quote/apostrophe - all variants
+                console.log('✅ Single quote detected (other input):', data, '-> stored as:', refChar);
+            } else if (data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶') {
+                refChar = '"'; // Double quote - all variants
+                console.log('✅ Double quote detected (other input):', data, '-> stored as:', refChar);
+            } else if (data === '–' || data === '—') {
+                refChar = '-'; // En dash and em dash
+            } else if (data === '…') {
+                refChar = '.'; // Ellipsis
+            } else if (data === '،') {
+                refChar = ','; // Arabic comma
+            } else if (data === '¡') {
+                refChar = '!'; // Inverted exclamation
+            } else if (data === '¿') {
+                refChar = '?'; // Inverted question
+            } else if (data === '€' || data === '£' || data === '¥') {
+                refChar = '$'; // Other currency symbols
+            } else if (data === '±') {
+                refChar = '+'; // Plus-minus
+            } else if (data === '≠') {
+                refChar = '='; // Not equals
+            } else if (data === '【') {
+                refChar = '['; // Fullwidth left bracket
+            } else if (data === '】') {
+                refChar = ']'; // Fullwidth right bracket
+            } else if (data === '｛') {
+                refChar = '{'; // Fullwidth left brace
+            } else if (data === '｝') {
+                refChar = '}'; // Fullwidth right brace
+            } else if (data === '＼') {
+                refChar = '\\'; // Fullwidth backslash
+            } else if (data === '｜') {
+                refChar = '|'; // Fullwidth pipe
+            } else if (data === '；') {
+                refChar = ';'; // Fullwidth semicolon
+            } else if (data === '：') {
+                refChar = ':'; // Fullwidth colon
+            } else if (data === '／') {
+                refChar = '/'; // Fullwidth forward slash
+            } else if (data === '＜') {
+                refChar = '<'; // Fullwidth less than
+            } else if (data === '＞') {
+                refChar = '>'; // Fullwidth greater than
+            } else if (data === '｀') {
+                refChar = '`'; // Fullwidth backtick
+            } else if (data === '～') {
+                refChar = '~'; // Fullwidth tilde
+            } else if (data === '＾') {
+                refChar = '^'; // Fullwidth caret
+            } else if (data === '＿') {
+                refChar = '_'; // Fullwidth underscore
+            } else if (data === '℃' || data === '℉') {
+                refChar = '°'; // Temperature symbols
+            } else if (data === '©' || data === '®' || data === '™') {
+                refChar = data; // Copyright symbols
+            } else if (data === '§' || data === '¶') {
+                refChar = data; // Section symbols
+            } else if (data === '†' || data === '‡') {
+                refChar = data; // Dagger symbols
+            } else if (data === '•' || data === '·' || data === '▪' || data === '▫') {
+                refChar = '•'; // Bullet points
+            } else if (data === '✓' || data === '✔' || data === '☑') {
+                refChar = '✓'; // Check marks
+            } else if (data === '✗' || data === '✘' || data === '☒') {
+                refChar = '✗'; // X marks
+            } else if (data === '→' || data === '←' || data === '↑' || data === '↓') {
+                refChar = data; // Arrows
+            } else if (data === '♠' || data === '♥' || data === '♦' || data === '♣') {
+                refChar = data; // Card suits
+            } else if (data === '☺' || data === '☻' || data === '☹') {
+                refChar = data; // Emoticons
+            } else if (data === '☀' || data === '☁' || data === '☂' || data === '☃') {
+                refChar = data; // Weather symbols
+            } else if (data === '♫' || data === '♪' || data === '♬') {
+                refChar = data; // Music symbols
+            } else if (data === '∞' || data === '≈' || data === '≤' || data === '≥') {
+                refChar = data; // Math symbols
+            } else if (data === '∑' || data === '∏' || data === '∫' || data === '√') {
+                refChar = data; // Advanced math symbols
+            } else if (data === 'α' || data === 'β' || data === 'γ' || data === 'δ') {
+                refChar = data; // Greek letters
+            } else if (data === 'π' || data === 'μ' || data === 'σ' || data === 'τ') {
+                refChar = data; // More Greek letters
+            }
+            
+            // Debug logging for quote characters
+            if (data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === "'" || data === '`' || data === '´' || data === '′' || data === '‵' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '"' || data === '„' || data === '‟' || data === '″' || data === '‶') {
+                console.log('🔍 Quote processing complete (other input) - Final refChar:', refChar);
+            }
+            
+                        // Check if character should be recorded (simplified deduplication)
+            // For quotes, use more lenient deduplication
+            const isQuote = refChar === "'" || refChar === '"';
+            if (this.shouldRecordChar(refChar, timestamp, isQuote)) {
+                
+                console.log('📝 Recording keystroke (other input):', refChar, 'type:', inputType, 'timestamp:', timestamp);
+                    this.recordKeystroke({
+                        timestamp: timestamp,
+                        actualChar: refChar,
+                        keyCode: data.charCodeAt(0),
+                        type: inputType,
+                        sentence: this.currentSentence,
+                        position: pos - 1,
+                        clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
+                        clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
+                    });
+                    
+                // Update last character and time for mobile deduplication
+                    this.lastChar = refChar;
+                    this.lastCharTime = timestamp;
+                } else {
+                console.log('❌ Character duplicate ignored (other input):', refChar);
+            }
+        }
+    
+        // Update accuracy and check sentence completion after any input
+        this.calculateAccuracy();
+        this.checkSentenceCompletion();
+        this.updateTypingFeedback();
+    }
+    
+    updateTypingFeedback() {
+        const typed = document.getElementById('typing-input').value;
+        const target = this.sentences[this.currentSentence];
+        const feedbackDisplay = document.getElementById('typing-feedback-display');
+        
+        if (!feedbackDisplay || !target) return;
+        
+        let feedbackHTML = '';
+        const minLength = Math.min(typed.length, target.length);
+        
+        for (let i = 0; i < minLength; i++) {
+            if (typed[i] === target[i]) {
+                feedbackHTML += `<span class="typed-correct">${this.escapeHtml(typed[i])}</span>`;
+            } else {
+                feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
+            }
+        }
+        
+        for (let i = minLength; i < typed.length; i++) {
+            feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
+        }
+        
+        for (let i = typed.length; i < target.length; i++) {
+            feedbackHTML += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
+        }
+        
+        feedbackDisplay.innerHTML = feedbackHTML;
+    }
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    normalizeCharacter(char) {
+        if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵') {
+            return "'";
+        } else if (char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟' || char === '″' || char === '‶') {
+            return '"';
+        } else if (char === '-' || char === '–' || char === '—') {
+            return '-';
+        } else if (char === '.' || char === '…') {
+            return '.';
+        } else if (char === ',' || char === '،') {
+            return ',';
+        } else if (char === '!' || char === '¡') {
+            return '!';
+        } else if (char === '?' || char === '¿') {
+            return '?';
+        } else if (char === '@') {
+            return '@';
+        } else if (char === '#') {
+            return '#';
+        } else if (char === '$' || char === '€' || char === '£' || char === '¥') {
+            return '$';
+        } else if (char === '%') {
+            return '%';
+        } else if (char === '&') {
+            return '&';
+        } else if (char === '*') {
+            return '*';
+        } else if (char === '(') {
+            return '(';
+        } else if (char === ')') {
+            return ')';
+        } else if (char === '+' || char === '±') {
+            return '+';
+        } else if (char === '=' || char === '≠') {
+            return '=';
+        } else if (char === '[' || char === '【') {
+            return '[';
+        } else if (char === ']' || char === '】') {
+            return ']';
+        } else if (char === '{' || char === '｛') {
+            return '{';
+        } else if (char === '}' || char === '｝') {
+            return '}';
+        } else if (char === '\\' || char === '＼') {
+            return '\\';
+        } else if (char === '|' || char === '｜') {
+            return '|';
+        } else if (char === ';' || char === '；') {
+            return ';';
+        } else if (char === ':' || char === '：') {
+            return ':';
+        } else if (char === '/' || char === '／') {
+            return '/';
+        } else if (char === '<' || char === '＜') {
+            return '<';
+        } else if (char === '>' || char === '＞') {
+            return '>';
+        } else if (char === '`' || char === '｀') {
+            return '`';
+        } else if (char === '~' || char === '～') {
+            return '~';
+        } else if (char === '^' || char === '＾') {
+            return '^';
+        } else if (char === '_' || char === '＿') {
+            return '_';
+        } else if (char === '°' || char === '℃' || char === '℉') {
+            return '°';
+        } else if (char === '©' || char === '®' || char === '™') {
+            return char;
+        } else if (char === '§' || char === '¶') {
+            return char;
+        } else if (char === '†' || char === '‡') {
+            return char;
+        } else if (char === '•' || char === '·' || char === '▪' || char === '▫') {
+            return '•';
+        } else if (char === '✓' || char === '✔' || char === '☑') {
+            return '✓';
+        } else if (char === '✗' || char === '✘' || char === '☒') {
+            return '✗';
+        } else if (char === '→' || char === '←' || char === '↑' || char === '↓') {
+            return char;
+        } else if (char === '♠' || char === '♥' || char === '♦' || char === '♣') {
+            return char;
+        } else if (char === '☺' || char === '☻' || char === '☹') {
+            return char;
+        } else if (char === '☀' || char === '☁' || char === '☂' || char === '☃') {
+            return char;
+        } else if (char === '♫' || char === '♪' || char === '♬') {
+            return char;
+        } else if (char === '∞' || char === '≈' || char === '≤' || char === '≥') {
+            return char;
+        } else if (char === '∑' || char === '∏' || char === '∫' || char === '√') {
+            return char;
+        } else if (char === 'α' || char === 'β' || char === 'γ' || char === 'δ') {
+            return char;
+        } else if (char === 'π' || char === 'μ' || char === 'σ' || char === 'τ') {
+            return char;
+        } else {
+            return char;
+        }
+    }
+    
+    getActualTypedCharacter(e, inputValue = '') {
+        if (e.keyCode === 229 || e.key === 'Unidentified' || e.key === 'Process') {
+            if (inputValue.length > this.lastInputLength) {
+                return inputValue.slice(-1);
+            }
+            return null;
+        }
+    
+        const specialKeys = {
+            'Backspace':    'Backspace',
+            'Enter':        'enter',
+            'Tab':          'tab',
+            ' ':            'SPACE',     // ✅ updated
+            "'":            "'",         // Single quote
+            '"':            '"',         // Double quote
+            "'":            "'",         // Smart single quote
+            "'":            "'",         // Smart single quote
+            "'":            "'",         // Smart single quote
+            "'":            "'",         // Smart single quote
+            "'":            "'",         // Smart single quote
+            "'":            "'",         // Smart single quote
+            '`':            "'",         // Backtick as single quote
+            '´':            "'",         // Acute accent as single quote
+            '"':            '"',         // Smart double quote
+            '"':            '"',         // Smart double quote
+            '"':            '"',         // Smart double quote
+            '"':            '"',         // Smart double quote
+            '"':            '"',         // Smart double quote
+            '"':            '"',         // Smart double quote
+            '„':            '"',         // German opening double quote
+            '‟':            '"',         // German closing double quote
+            '-':            '-',         // Hyphen
+            '–':            '-',         // En dash
+            '—':            '-',         // Em dash
+            '.':            '.',         // Period
+            '…':            '.',         // Ellipsis
+            ',':            ',',         // Comma
+            '،':            ',',         // Arabic comma
+            '!':            '!',         // Exclamation
+            '¡':            '!',         // Inverted exclamation
+            '?':            '?',         // Question mark
+            '¿':            '?',         // Inverted question
+            '@':            '@',         // At symbol
+            '#':            '#',         // Hash
+            '$':            '$',         // Dollar
+            '€':            '$',         // Euro
+            '£':            '$',         // Pound
+            '¥':            '$',         // Yen
+            '%':            '%',         // Percent
+            '&':            '&',         // Ampersand
+            '*':            '*',         // Asterisk
+            '(':            '(',         // Left parenthesis
+            ')':            ')',         // Right parenthesis
+            '+':            '+',         // Plus
+            '±':            '+',         // Plus-minus
+            '=':            '=',         // Equals
+            '≠':            '=',         // Not equals
+            '[':            '[',         // Left bracket
+            ']':            ']',         // Right bracket
+            '【':            '[',         // Fullwidth left bracket
+            '】':            ']',         // Fullwidth right bracket
+            '{':            '{',         // Left brace
+            '}':            '}',         // Right brace
+            '｛':            '{',         // Fullwidth left brace
+            '｝':            '}',         // Fullwidth right brace
+            '\\':           '\\',        // Backslash
+            '＼':           '\\',        // Fullwidth backslash
+            '|':            '|',         // Pipe
+            '｜':            '|',         // Fullwidth pipe
+            ';':            ';',         // Semicolon
+            '；':            ';',         // Fullwidth semicolon
+            ':':            ':',         // Colon
+            '：':            ':',         // Fullwidth colon
+            '/':            '/',         // Forward slash
+            '／':            '/',         // Fullwidth forward slash
+            '<':            '<',         // Less than
+            '>':            '>',         // Greater than
+            '＜':            '<',         // Fullwidth less than
+            '＞':            '>',         // Fullwidth greater than
+            '`':            '`',         // Backtick
+            '｀':            '`',         // Fullwidth backtick
+            '~':            '~',         // Tilde
+            '～':            '~',         // Fullwidth tilde
+            '^':            '^',         // Caret
+            '＾':            '^',         // Fullwidth caret
+            '_':            '_',         // Underscore
+            '＿':            '_',         // Fullwidth underscore
+            '°':            '°',         // Degree symbol
+            '℃':            '°',         // Celsius
+            '℉':            '°',         // Fahrenheit
+            '©':            '©',         // Copyright
+            '®':            '®',         // Registered
+            '™':            '™',         // Trademark
+            '§':            '§',         // Section
+            '¶':            '¶',         // Paragraph
+            '†':            '†',         // Dagger
+            '‡':            '‡',         // Double dagger
+            '•':            '•',         // Bullet
+            '·':            '•',         // Middle dot
+            '▪':            '•',         // Black square
+            '▫':            '•',         // White square
+            '✓':            '✓',         // Check mark
+            '✔':            '✓',         // Heavy check mark
+            '☑':            '✓',         // Ballot box with check
+            '✗':            '✗',         // Ballot X
+            '✘':            '✗',         // Heavy ballot X
+            '☒':            '✗',         // Ballot box with X
+            '→':            '→',         // Right arrow
+            '←':            '←',         // Left arrow
+            '↑':            '↑',         // Up arrow
+            '↓':            '↓',         // Down arrow
+            '♠':            '♠',         // Spade
+            '♥':            '♥',         // Heart
+            '♦':            '♦',         // Diamond
+            '♣':            '♣',         // Club
+            '☺':            '☺',         // White smiling face
+            '☻':            '☻',         // Black smiling face
+            '☹':            '☹',         // White frowning face
+            '☀':            '☀',         // Black sun with rays
+            '☁':            '☁',         // Cloud
+            '☂':            '☂',         // Umbrella
+            '☃':            '☃',         // Snowman
+            '♫':            '♫',         // Beamed eighth notes
+            '♪':            '♪',         // Eighth note
+            '♬':            '♬',         // Beamed sixteenth notes
+            '∞':            '∞',         // Infinity
+            '≈':            '≈',         // Almost equal to
+            '≤':            '≤',         // Less than or equal to
+            '≥':            '≥',         // Greater than or equal to
+            '∑':            '∑',         // N-ary summation
+            '∏':            '∏',         // N-ary product
+            '∫':            '∫',         // Integral
+            '√':            '√',         // Square root
+            'α':            'α',         // Greek alpha
+            'β':            'β',         // Greek beta
+            'γ':            'γ',         // Greek gamma
+            'δ':            'δ',         // Greek delta
+            'π':            'π',         // Greek pi
+            'μ':            'μ',         // Greek mu
+            'σ':            'σ',         // Greek sigma
+            'τ':            'τ',         // Greek tau
+            'Escape':       'escape',
+            'ArrowLeft':    'arrowleft',
+            'ArrowRight':   'arrowright',
+            'ArrowUp':      'arrowup',
+            'ArrowDown':    'arrowdown',
+            'Delete':       'delete',
+            'Home':         'home',
+            'End':          'end'
+        };
+    
+        if (e.key && specialKeys.hasOwnProperty(e.key)) {
+            return specialKeys[e.key];
+        }
+    
+        if (e.key && e.key.length === 1) {
+            return e.key;
+        }
+    
+        if (e.keyCode && !isNaN(e.keyCode)) {
+            const char = String.fromCharCode(e.keyCode);
+            if (char && /\S/.test(char)) {
+                return char;
+            }
+        }
+    
+        return null;
+    }
+    
+    // handleKeydown and handleKeyup methods removed to prevent duplicate keystroke recording
+    // All keystroke recording is now handled in handleTypingInput method
+    
+    startTypingTask() {
+        this.currentSentence = 0;
+        
+        this.lastInputLength = 0;
+        this.previousChar = null;
+        this.lastSpaceTime = 0;
+        this.lastCharTime = 0;
+        this.lastChar = null;
+        this.lastCapitalLetterTime = 0;
+        this.capitalLetterCount = 0;
+        this.lastRecordedKeystroke = null;
+        
+        this.lastInputValue = '';
+        this.inputEventCount = 0;
+        this.lastInputEvent = null;
+        this.lastInputEventTime = 0;
+        
+        this.compositionActive = false;
+        
+        // Reset iOS-specific tracking
+        this.iOSInputHistory = [];
+        this.iOSLastProcessedEvent = null;
+        
+        this.displayCurrentSentence();
+        this.updateTypingProgress();
+        
+        console.log(`🔍 Starting typing task (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}) - Cooldown settings:`);
+        console.log(`  Space: ${this.spaceCooldown}ms`);
+        console.log(`  Characters: ${this.charCooldown}ms`);
+        
+        console.log('🔍 Quote handling test:');
+        this.testQuoteHandling();
+        
+        console.log('🔍 Backspace handling test:');
+        this.testBackspaceHandling();
+    }
+    
+    displayCurrentSentence() {
+        document.getElementById('target-sentence').textContent = this.sentences[this.currentSentence];
+        const input = document.getElementById('typing-input');
+        input.value = '';
+        input.focus();
+        document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
+        
+        this.calculateAccuracy();
+        const nextBtn = document.getElementById('next-sentence-btn');
+        nextBtn.disabled = true;
+        nextBtn.style.display = 'inline-flex';
+        nextBtn.style.backgroundColor = 'var(--color-secondary)';
+        nextBtn.style.opacity = '0.5';
+        
+        this.updateTypingFeedback();
+    }
+    
+    calculateAccuracy() {
+        const typed = document.getElementById('typing-input').value;
+        const target = this.sentences[this.currentSentence];
+        
+        console.log('🔍 Accuracy calculation:', {
+            typed: `"${typed}"`,
+            target: `"${target}"`,
+            typedLength: typed.length,
+            targetLength: target.length
+        });
+        
+        let accuracy = 0;
+        if (typed === target) {
+            document.getElementById('accuracy').textContent = '100%';
+            accuracy = 100;
+            console.log('✅ Perfect match - 100% accuracy');
+        } else {
+            let correct = 0;
+            const minLength = Math.min(typed.length, target.length);
+            
+            for (let i = 0; i < minLength; i++) {
+                if (typed[i] === target[i]) {
+                    correct++;
+                }
+            }
+            
+            accuracy = Math.round((correct / target.length) * 100);
+            document.getElementById('accuracy').textContent = `${accuracy}%`;
+            console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
+        }
+    
+        const nextButton = document.getElementById('next-sentence-btn');
+        if (nextButton) {
+            if (accuracy === 100) {
+                nextButton.disabled = false;
+                nextButton.classList.remove('btn--disabled');
+            } else {
+                nextButton.disabled = true;
+                nextButton.classList.add('btn--disabled');
+            }
+        }
+    
+        const accuracyRing = document.getElementById('accuracy-ring');
+        const accuracyValue = document.getElementById('accuracy');
+        const encourage = document.querySelector('.accuracy-encourage');
+    
+        if (accuracyRing && accuracyValue) {
+            let percent = Math.max(0, Math.min(accuracy, 100));
+            const circumference = 2 * Math.PI * 26;
+            const offset = circumference * (1 - percent / 100);
+            accuracyRing.setAttribute('stroke-dasharray', circumference);
+            accuracyRing.setAttribute('stroke-dashoffset', offset);
+    
+            if (encourage) {
+                if (percent === 100) {
+                    encourage.textContent = 'Perfect! 🎉';
+                    encourage.style.color = 'var(--color-success)';
+                } else if (percent >= 80) {
+                    encourage.textContent = 'Great job! Almost there!';
+                    encourage.style.color = 'var(--color-primary)';
+                } else if (percent >= 50) {
+                    encourage.textContent = 'Keep going! 💪';
+                    encourage.style.color = 'var(--color-warning)';
+                } else {
+                    encourage.textContent = 'You can do it!';
+                    encourage.style.color = 'var(--color-error)';
+                }
+            }
+        }
+    
+        return accuracy;
+    }
+
+    
+    checkSentenceCompletion() {
+        const typed = document.getElementById('typing-input').value;
+        const target = this.sentences[this.currentSentence];
+        const nextBtn = document.getElementById('next-sentence-btn');
+        const accuracy = this.calculateAccuracy();
+        if (typed === target && accuracy === 100) {
+            if (this.currentSentence === this.sentences.length - 1) {
+                nextBtn.style.display = 'none';
+                this.showNextTaskButton('crystal', 'Crystal Forge Game');
+            } else {
+                nextBtn.disabled = false;
+                nextBtn.classList.add('next-task-btn--deep');
+            }
+
+        } else {
+            nextBtn.disabled = true;
+            nextBtn.classList.remove('next-task-btn--deep');
+            nextBtn.style.display = 'inline-flex';
+        }
+    }
+    
+    nextSentence() {
+        this.currentSentence++;
+        if (this.currentSentence >= this.sentences.length) {
+            this.showNextTaskButton('crystal', 'Crystal Forge Game');
+            this.updateTaskLocks();
+        } else {
+            this.displayCurrentSentence();
+            this.updateTypingProgress();
+        }
+    }
+    
+    updateTypingProgress() {
+        const progress = ((this.currentSentence) / this.sentences.length) * 100;
+        document.getElementById('typing-progress').style.width = `${progress}%`;
+    }
+    
+
+    
+    recordKeystroke(data) {
+        // Enhanced iOS deduplication - check against actual recorded data
+        const currentTime = performance.now();
+        
+        if (this.isIOS) {
+            // Skip deduplication for BACKSPACE
+            if (data.actualChar === 'BACKSPACE') {
+                console.log(`✅ iOS: BACKSPACE bypassing deduplication (always record)`);
+            } else {
+                // Check for duplicates in the last 10 keystrokes with a 200ms window
+                const recentKeystrokes = this.keystrokeData.slice(-10);
+                const duplicateFound = recentKeystrokes.some(ks => {
+                    const timeDiff = currentTime - ks.timestamp;
+                    return ks.actualChar === data.actualChar && 
+                           ks.type === data.type && 
+                           timeDiff < 200; // 200ms window for iOS
+                });
+                
+                if (duplicateFound) {
+                    console.log(`🚫 iOS FINAL CHECK: Duplicate keystroke BLOCKED: ${data.actualChar} (type: ${data.type})`);
+                    return;
+                }
+            }
+        } else {
+            // Original deduplication for Android/Desktop
+            if (this.lastRecordedKeystroke) {
+                const timeDiff = currentTime - this.lastRecordedKeystroke.timestamp;
+                const charDiff = data.actualChar === this.lastRecordedKeystroke.actualChar;
+                const typeDiff = data.type === this.lastRecordedKeystroke.type;
+                
+                // If same character, same type, and within 50ms, it's likely a duplicate
+                if (charDiff && typeDiff && timeDiff < 50) {
+                    console.log(`🚫 Duplicate keystroke BLOCKED: ${data.actualChar} (${timeDiff}ms since last)`);
+                    return;
+                }
+            }
+        }
+        
+        if (['BACKSPACE', 'SPACE', 'ENTER', 'TAB', 'escape', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'delete', 'home', 'end'].includes(data.actualChar)) {
+            console.log(`[DEBUG] Special key recorded:`, data);
+        }
+        
+        if (data.actualChar === "'" || data.actualChar === '"') {
+            console.log('[QUOTE] Keystroke captured:', data);
+        }
+        
+        // Prevent recording synthetic events (no longer needed since we removed SHIFT/†)
+        if (data.isSynthetic) {
+            console.log('🚫 Synthetic event skipped:', data.actualChar);
+            return;
+        }
+        // Enhanced flight time calculation
+        let flightTime = 0;
+        if (this.lastKeystrokeTime > 0) {
+            flightTime = currentTime - this.lastKeystrokeTime;
+            // Ensure flight time is not negative
+            if (flightTime < 0) {
+                console.warn(`⚠️ Negative flight time detected: ${flightTime}ms, setting to 0`);
+                flightTime = 0;
+            }
+        }
+
+        // Add flight time to the data
+        data.flightTime = Math.round(flightTime);
+        
+        // Log flight time for debugging
+        if (flightTime > 0) {
+            console.log(`⏱️ Flight time: ${flightTime}ms from "${this.lastChar || 'start'}" to "${data.actualChar}"`);
+        }
+
+        // Handle character case data
+        if (data.actualChar && data.actualChar !== 'BACKSPACE') {
+            data.characterCase = this.getCharacterCase(data.actualChar);
+        }
+
+        // Update last keystroke time
+        this.lastKeystrokeTime = currentTime;
+
+        // Log specific events
+        if (data.actualChar === "'" || data.actualChar === '"') {
+            console.log('Recording keystroke with quote:', data.actualChar, 'type:', data.type);
+        }
+        if (data.actualChar === 'BACKSPACE') {
+            console.log('Recording backspace keystroke:', data.type, 'timestamp:', data.timestamp);
+        }
+
+
+        this.keystrokeData.push(data);
+        
+        // Track this keystroke to prevent duplicates
+        this.lastRecordedKeystroke = {
+            timestamp: data.timestamp,
+            actualChar: data.actualChar,
+            type: data.type
+        };
+    }
+    
+    getCharacterCase(char) {
+        if (char.length === 1) {
+            if (char >= 'A' && char <= 'Z') return 'uppercase';
+            if (char >= 'a' && char <= 'z') return 'lowercase';
+        }
+        return 'other';
+    }
+    
+
+    
+    getBackspaceStats() {
+        const backspaces = this.keystrokeData.filter(k => k.actualChar === 'BACKSPACE');
+        console.log('Backspace Statistics:');
+        console.log('Total backspaces recorded:', backspaces.length);
+        console.log('Backspace types:', [...new Set(backspaces.map(b => b.type))]);
+        
+        // Group backspaces by timestamp to detect rapid sequences
+        const backspaceGroups = [];
+        let currentGroup = [];
+        
+        backspaces.forEach((backspace, index) => {
+            if (index === 0) {
+                currentGroup.push(backspace);
+            } else {
+                const timeDiff = backspace.timestamp - backspaces[index - 1].timestamp;
+                if (timeDiff < 500) { // Group backspaces within 500ms
+                    currentGroup.push(backspace);
+                } else {
+                    if (currentGroup.length > 0) {
+                        backspaceGroups.push([...currentGroup]);
+                    }
+                    currentGroup = [backspace];
+                }
+            }
+        });
+        
+        if (currentGroup.length > 0) {
+            backspaceGroups.push(currentGroup);
+        }
+        
+        console.log('Backspace sequences:');
+        backspaceGroups.forEach((group, index) => {
+            console.log(`  Sequence ${index + 1}: ${group.length} backspaces in ${Math.round(group[group.length - 1].timestamp - group[0].timestamp)}ms`);
+        });
+        
+        console.log('Backspace details:', backspaces);
+        return backspaces;
+    }
+    
+        shouldRecordChar(char, timestamp, isQuote = false) {
+        const currentTime = performance.now();
+    
+        // Special handling for BACKSPACE - always allow it to be recorded
+        if (char === 'BACKSPACE') {
+            console.log(`✅ BACKSPACE always approved for recording (backspace press)`);
+            return true;
+        }
+    
+        // iOS: Enhanced deduplication for all characters except BACKSPACE
+        if (this.isIOS) {
+            // Check for recent duplicate keystrokes in the actual data
+            const recentKeystrokes = this.keystrokeData.slice(-5);
+            const duplicateFound = recentKeystrokes.some(ks => {
+                const timeDiff = currentTime - ks.timestamp;
+                return ks.actualChar === char && timeDiff < 150; // 150ms window for iOS
+            });
+            
+            if (duplicateFound) {
+                console.log(`🚫 iOS duplicate BLOCKED: ${char} already recorded recently`);
+                return false;
+            }
+            
+            // Check iOS input history for duplicates
+            const recentInputs = this.iOSInputHistory.slice(-3);
+            const inputDuplicate = recentInputs.some(input => {
+                const timeDiff = currentTime - input.timestamp;
+                return input.char === char && timeDiff < 200; // 200ms window
+            });
+            
+            if (inputDuplicate) {
+                console.log(`🚫 iOS input history duplicate BLOCKED: ${char}`);
+                return false;
+            }
+            
+            // Additional check for rapid input events
+            if (this.lastChar === char && this.lastCharTime) {
+                const timeSinceLast = currentTime - this.lastCharTime;
+                if (timeSinceLast < 100) { // 100ms cooldown for all characters on iOS
+                    console.log(`🚫 iOS rapid input BLOCKED: ${char} - time since last: ${timeSinceLast}ms`);
+                    return false;
+                }
+            }
+            
+            // Update tracking variables
+            this.lastChar = char;
+            this.lastCharTime = currentTime;
+            this.lastInputEvent = char;
+            this.lastInputEventTime = currentTime;
+            
+            // Add to iOS input history
+            this.iOSInputHistory.push({
+                char: char,
+                timestamp: currentTime
+            });
+            
+            // Keep only last 10 entries
+            if (this.iOSInputHistory.length > 10) {
+                this.iOSInputHistory.shift();
+            }
+            
+            console.log(`✅ iOS character approved for recording: ${char} at time: ${currentTime}`);
+            return true;
+        }
+    
+        // Android/Desktop: Keep existing cooldown logic
+        // Determine deduplication window based on character type and platform
+        let dedupWindow;
+        if (char === 'SPACE') {
+            dedupWindow = this.spaceCooldown;
+        } else if (isQuote) {
+            dedupWindow = this.isAndroid ? 30 : 20;
+        } else {
+            dedupWindow = this.charCooldown;
+        }
+    
+        // Enhanced Android capital letter deduplication
+        if (this.isAndroid && char.match(/[A-Z]/)) {
+            const recentKeystrokes = this.keystrokeData.slice(-5);
+            const duplicateCapital = recentKeystrokes.find(ks => 
+                ks.actualChar === char && 
+                (currentTime - ks.timestamp) < 250
+            );
+            if (duplicateCapital) {
+                console.log(`🚫 Android capital letter duplicate BLOCKED in shouldRecordChar: ${char} already recorded`);
+                return false;
+            }
+    
+            // Use longer cooldown for capital letters on Android
+            dedupWindow = Math.max(dedupWindow, 200);
+        }
+    
+        // General deduplication for Android/Desktop
+        if (this.lastChar === char && this.lastCharTime) {
+            const timeSinceLast = currentTime - this.lastCharTime;
+            if (timeSinceLast < dedupWindow) {
+                console.log(`🚫 Deduplication (${this.isAndroid ? 'Android' : 'Desktop'}): ${char} duplicate BLOCKED - time since last: ${timeSinceLast}ms (window: ${dedupWindow}ms)`);
+                return false;
+            }
+        }
+    
+        // Platform-specific rapid input deduplication for Android
+        if (this.isAndroid) {
+            if (this.lastInputEvent === char && this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 20) {
+                console.log(`🚫 Android input event duplicate BLOCKED: ${char} - time since last: ${currentTime - this.lastInputEventTime}ms`);
+                return false;
+            }
+        }
+    
+        // Synthetic capital letter deduplication for Android/Desktop
+        const recentSynthetic = this.keystrokeData.slice(-3).find(ks => 
+            ks.isSynthetic && ks.actualChar === char && ks.actualChar !== 'SHIFT' && 
+            (currentTime - ks.timestamp) < 500
+        );
+        if (recentSynthetic) {
+            console.log(`🚫 Synthetic capital letter duplicate BLOCKED: ${char} already recorded synthetically`);
+            return false;
+        }
+    
+        // Update tracking variables for Android/Desktop
+        this.lastChar = char;
+        this.lastCharTime = currentTime;
+        this.lastInputEvent = char;
+        this.lastInputEventTime = currentTime;
+    
+        console.log(`✅ Character approved for recording (${this.isAndroid ? 'Android' : 'Desktop'}): ${char} at time: ${currentTime}, cooldown: ${dedupWindow}ms`);
+        return true;
+    }
+
+    
+    getCharStats() {
+        const chars = this.keystrokeData.filter(k => k.actualChar && k.actualChar !== 'BACKSPACE' && k.actualChar !== 'SHIFT');
+        console.log('Character Statistics:');
+        console.log('Total characters recorded:', chars.length);
+        console.log('Character types:', [...new Set(chars.map(c => c.type))]);
+        
+        const charCounts = {};
+        chars.forEach(c => {
+            charCounts[c.actualChar] = (charCounts[c.actualChar] || 0) + 1;
+        });
+        
+        const duplicates = Object.entries(charCounts).filter(([char, count]) => count > 1);
+        if (duplicates.length > 0) {
+            console.log('Potential duplicate characters:', duplicates);
+        } else {
+            console.log('No duplicate characters detected');
+        }
+        
+        return chars;
+    }
+    
+    testQuoteHandling() {
+        console.log('🔍 Testing quote handling for mobile keyboards (Gboard, iOS):');
+        
+        const quotes = this.keystrokeData.filter(k => k.actualChar === "'" || k.actualChar === '"');
+        console.log('Quotes found in keystroke data:', quotes.length);
+        
+        if (quotes.length > 0) {
+            console.log('Quote details:');
+            quotes.forEach((quote, i) => {
+                console.log(`  Quote ${i + 1}: "${quote.actualChar}" at timestamp ${Math.round(quote.timestamp)}ms, type: ${quote.type}`);
+            });
+        } else {
+            console.log('❌ No quotes found in keystroke data!');
+        }
+        
+        const testChars = ["'", "'", "'", "'", "'", "'", "`", "´", "′", "‵", '"', '"', '"', '"', '"', '"', "„", "‟", "″", "‶"];
+        console.log('Testing character detection:');
+        testChars.forEach(char => {
+            console.log(`  "${char}" (${char.charCodeAt(0)}) -> should be normalized`);
+        });
+        
+        console.log('Quote deduplication windows:');
+        console.log('  iOS input event dedup: 50ms (vs 300ms for others)');
+        console.log('  iOS rapid input dedup: 100ms (vs 150ms for others)');
+        console.log('  iOS composition dedup: 25ms (vs 50ms for others)');
+        console.log('  iOS final keystroke dedup: 100ms (vs 300ms for others)');
+        console.log('  Android input event dedup: 30ms (vs 100ms for others)');
+        console.log('  shouldRecordChar dedup: 15-20ms (vs 30-40ms for others)');
+        
+        // Add capital letter debugging
+        console.log('🔍 Capital letter debugging:');
+        const capitalLetters = this.keystrokeData.filter(k => k.actualChar && k.actualChar.match(/[A-Z]/));
+        console.log('Capital letters found in keystroke data:', capitalLetters.length);
+        
+        if (capitalLetters.length > 0) {
+            console.log('Capital letter details:');
+            capitalLetters.forEach((cap, i) => {
+                console.log(`  Capital ${i + 1}: "${cap.actualChar}" at timestamp ${Math.round(cap.timestamp)}ms, type: ${cap.type}, synthetic: ${cap.isSynthetic || false}`);
+            });
+        }
+        
+
+        
+        return quotes;
+    }
+    
+    testBackspaceHandling() {
+        console.log('🔍 Testing backspace handling:');
+        
+        const backspaces = this.keystrokeData.filter(k => k.actualChar === 'BACKSPACE');
+        console.log('Backspaces found in keystroke data:', backspaces.length);
+        
+        if (backspaces.length > 0) {
+            console.log('Backspace details:');
+            backspaces.forEach((backspace, i) => {
+                console.log(`  Backspace ${i + 1}: timestamp ${Math.round(backspace.timestamp)}ms, type: ${backspace.type}, synthetic: ${backspace.isSynthetic || false}`);
+            });
+        } else {
+            console.log('❌ No backspaces found in keystroke data!');
+        }
+        
+        // Test rapid backspace sequences
+        console.log('Backspace deduplication settings:');
+        console.log('  iOS: No deduplication (all backspaces recorded)');
+        console.log('  Android/Desktop: Standard deduplication applies');
+        
+        return backspaces;
+    }
+    
+    // Crystal Game Methods
+    startCrystalGame() {
+        this.currentCrystalStep = 1;
+        this.resetCrystalState();
+        this.updateCrystalDisplay();
+        
+        // ULTRA-RELIABLE mobile device detection and setup
+        console.log('🎮 Crystal game started - Trial tracking initialized');
+        console.log('Initial trial state:', this.crystalState.currentTrial);
+        console.log('Device info:', {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            maxTouchPoints: navigator.maxTouchPoints,
+            isIOS: this.isIOS
+        });
+        
+        // Ensure proper touch handling for all mobile devices
+        const crystalArea = document.getElementById('crystal-area');
+        if (crystalArea) {
+            crystalArea.style.touchAction = 'none';
+            crystalArea.style.userSelect = 'none';
+            crystalArea.style.webkitUserSelect = 'none';
+            crystalArea.style.webkitTouchCallout = 'none';
+            crystalArea.style.webkitTapHighlightColor = 'transparent';
+            
+            // Additional mobile optimizations
+            crystalArea.style.webkitOverflowScrolling = 'touch';
+            crystalArea.style.webkitTransform = 'translateZ(0)';
+            
+            // Prevent all unwanted interactions
+            crystalArea.addEventListener('gesturestart', (e) => e.preventDefault());
+            crystalArea.addEventListener('gesturechange', (e) => e.preventDefault());
+            crystalArea.addEventListener('gestureend', (e) => e.preventDefault());
+        }
+        
+        console.log('✅ Crystal game initialized for all mobile devices');
+    }
+
+    // Generate facet positions around the crystal
+    generateFacets() {
+        const facets = [];
+        
+        // Get crystal area dimensions dynamically
+        const crystalArea = document.getElementById('crystal-area');
+        const crystal = document.getElementById('crystal');
+        
+        if (!crystalArea || !crystal) {
+            console.warn('Crystal elements not found, using default positioning');
+            return this.generateDefaultFacets();
+        }
+        
+        const areaRect = crystalArea.getBoundingClientRect();
+        const crystalRect = crystal.getBoundingClientRect();
+        
+        // Calculate center and safe radius based on actual crystal size
+        const centerX = areaRect.width / 2;
+        const centerY = areaRect.height / 2;
+        
+        // Use the smaller dimension to ensure facets stay within bounds
+        const crystalRadius = Math.min(crystalRect.width, crystalRect.height) / 2;
+        const safeRadius = Math.max(20, crystalRadius * 0.6); // 60% of crystal radius, minimum 20px
+        
+        console.log(`📱 Mobile device detected - Crystal radius: ${Math.round(crystalRadius)}px, Safe radius: ${Math.round(safeRadius)}px`);
+        
+        // Create 10 facets positioned within the crystal
+        for (let i = 0; i < 10; i++) {
+            let radius, angle;
+            
+            // Create different layers of facets within the crystal
+            if (i < 4) {
+                // Inner ring - 4 facets (closest to center)
+                radius = safeRadius * 0.4;
+                angle = (i * Math.PI * 2) / 4;
+            } else if (i < 8) {
+                // Middle ring - 4 facets
+                radius = safeRadius * 0.7;
+                angle = ((i - 4) * Math.PI * 2) / 4 + Math.PI / 4; // Offset by 45 degrees
+            } else {
+                // Outer ring - 2 facets (still within crystal)
+                radius = safeRadius * 0.9;
+                angle = ((i - 8) * Math.PI * 2) / 2;
+            }
+            
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius;
+            
+            // Ensure facet is within bounds
+            const facetRadius = Math.min(15, safeRadius * 0.15); // Responsive facet size
+            
+            facets.push({
+                id: i,
+                x: Math.round(x),
+                y: Math.round(y),
+                radius: facetRadius,
+                active: false,
+                tapped: false,
+                sequence: i,
+                lastTapTime: 0 // Track last tap time to prevent double-taps
+            });
+        }
+        
+        console.log(`✅ Generated ${facets.length} facets within crystal bounds`);
+        return facets;
+    }
+    
+    // Fallback method for default positioning
+    generateDefaultFacets() {
+        const facets = [];
+        const centerX = 200;
+        const centerY = 200;
+        const baseRadius = 35; // Even smaller for safety
+        
+        for (let i = 0; i < 10; i++) {
+            let radius, angle;
+            
+            if (i < 4) {
+                radius = baseRadius * 0.4;
+                angle = (i * Math.PI * 2) / 4;
+            } else if (i < 8) {
+                radius = baseRadius * 0.7;
+                angle = ((i - 4) * Math.PI * 2) / 4 + Math.PI / 4;
+            } else {
+                radius = baseRadius * 0.9;
+                angle = ((i - 8) * Math.PI * 2) / 2;
+            }
+            
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius;
+            
+            facets.push({
+                id: i,
+                x: Math.round(x),
+                y: Math.round(y),
+                radius: 12,
+                active: false,
+                tapped: false,
+                sequence: i,
+                lastTapTime: 0
+            });
+        }
+        
+        return facets;
+    }
+
+    nextCrystalStep() {
+        if (this.currentCrystalStep < this.crystalSteps.length) {
+            this.currentCrystalStep++;
+            this.resetCrystalState();
+            this.updateCrystalDisplay();
+        } else {
+            console.log("All crystal steps completed!");
+            this.taskState.crystalCompleted = true;
+            this.updateTaskLocks();
+            this.showNextTaskButton('gallery', 'Gallery Review');
+        }
+    }
+
+    
+    bindCrystalEvents() {
+        const crystalArea = document.getElementById('crystal-area');
+        
+        // ULTRA-RELIABLE mobile touch events for all Android and iOS versions
+        crystalArea.addEventListener('touchstart', (e) => this.handleCrystalTouchStart(e), { passive: false });
+        crystalArea.addEventListener('touchmove', (e) => this.handleCrystalTouchMove(e), { passive: false });
+        crystalArea.addEventListener('touchend', (e) => this.handleCrystalTouchEnd(e), { passive: false });
+        crystalArea.addEventListener('touchcancel', (e) => this.handleCrystalTouchEnd(e), { passive: false });
+        
+        // Prevent all unwanted interactions
+        crystalArea.addEventListener('contextmenu', (e) => e.preventDefault());
+        crystalArea.addEventListener('selectstart', (e) => e.preventDefault());
+        crystalArea.addEventListener('dragstart', (e) => e.preventDefault());
+        crystalArea.addEventListener('gesturestart', (e) => e.preventDefault());
+        crystalArea.addEventListener('gesturechange', (e) => e.preventDefault());
+        crystalArea.addEventListener('gestureend', (e) => e.preventDefault());
+        
+        // Enhanced mobile touch handling
+        crystalArea.style.touchAction = 'none';
+        crystalArea.style.userSelect = 'none';
+        crystalArea.style.webkitUserSelect = 'none';
+        crystalArea.style.webkitTouchCallout = 'none';
+        crystalArea.style.webkitTapHighlightColor = 'transparent';
+        crystalArea.style.webkitTouchCallout = 'none';
+        
+        // Additional iOS-specific handling
+        if (this.isIOS) {
+            crystalArea.style.webkitOverflowScrolling = 'touch';
+            crystalArea.style.webkitTransform = 'translateZ(0)';
+        }
+    }
+    
+    handleCrystalTouchStart(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const timestamp = performance.now();
+        const touches = Array.from(e.touches);
+        
+        // ULTRA-RELIABLE touch data collection for all mobile devices
+        this.recordTouchEvent({
+            timestamp,
+            type: 'touchstart',
+            touches: touches.map(t => ({
+                identifier: t.identifier,
+                clientX: t.clientX,
+                clientY: t.clientY,
+                force: t.force || 0.5,
+                radiusX: t.radiusX || 0,
+                radiusY: t.radiusY || 0,
+                rotationAngle: t.rotationAngle || 0
+            })),
+            step: this.currentCrystalStep,
+            taskId: 2
+        });
+        
+        // Add visual feedback
+        const crystalArea = document.getElementById('crystal-area');
+        crystalArea.classList.add('touching');
+        
+        // Enhanced error handling for mobile devices
+        try {
+        this.processCrystalInteraction('start', touches);
+        } catch (error) {
+            console.error('Error in crystal touch start:', error);
+        }
+    }
+    
+    handleCrystalTouchMove(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const timestamp = performance.now();
+        const touches = Array.from(e.touches);
+        
+        // ULTRA-RELIABLE touch data collection for all mobile devices
+        this.recordTouchEvent({
+            timestamp,
+            type: 'touchmove',
+            touches: touches.map(t => ({
+                identifier: t.identifier,
+                clientX: t.clientX,
+                clientY: t.clientY,
+                force: t.force || 0.5,
+                radiusX: t.radiusX || 0,
+                radiusY: t.radiusY || 0,
+                rotationAngle: t.rotationAngle || 0
+            })),
+            step: this.currentCrystalStep,
+            taskId: 2
+        });
+        
+        // Enhanced error handling for mobile devices
+        try {
+        this.processCrystalInteraction('move', touches);
+        } catch (error) {
+            console.error('Error in crystal touch move:', error);
+        }
+    }
+    
+    handleCrystalTouchEnd(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const timestamp = performance.now();
+        const touches = Array.from(e.changedTouches);
+        
+        // ULTRA-RELIABLE touch data collection for all mobile devices
+        this.recordTouchEvent({
+            timestamp,
+            type: 'touchend',
+            touches: touches.map(t => ({
+                identifier: t.identifier,
+                clientX: t.clientX,
+                clientY: t.clientY,
+                force: t.force || 0.5,
+                radiusX: t.radiusX || 0,
+                radiusY: t.radiusY || 0,
+                rotationAngle: t.rotationAngle || 0
+            })),
+            step: this.currentCrystalStep,
+            taskId: 2
+        });
+        
+        // Remove visual feedback
+        const crystalArea = document.getElementById('crystal-area');
+        crystalArea.classList.remove('touching');
+        
+        // Enhanced error handling for mobile devices
+        try {
+        this.processCrystalInteraction('end', touches);
+        } catch (error) {
+            console.error('Error in crystal touch end:', error);
+        }
+    }
+    
+    handleCrystalMouseDown(e) {
+        const timestamp = performance.now();
+        
+        this.recordTouchEvent({
+            timestamp,
+            type: 'mousedown',
+            touches: [{
+                identifier: 0,
+                clientX: e.clientX,
+                clientY: e.clientY,
+                force: 0.5
+            }],
+            step: this.currentCrystalStep,
+            taskId: 2
+        });
+        
+        this.processCrystalInteraction('start', [{ clientX: e.clientX, clientY: e.clientY }]);
+    }
+    
+    handleCrystalMouseMove(e) {
+        if (e.buttons === 1) {
+            const timestamp = performance.now();
+            
+            this.recordTouchEvent({
+                timestamp,
+                type: 'mousemove',
+                touches: [{
+                    identifier: 0,
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    force: 0.5
+                }],
+                step: this.currentCrystalStep,
+                taskId: 2
+            });
+            
+            this.processCrystalInteraction('move', [{ clientX: e.clientX, clientY: e.clientY }]);
+        }
+    }
+    
+    handleCrystalMouseUp(e) {
+        const timestamp = performance.now();
+        
+        this.recordTouchEvent({
+            timestamp,
+            type: 'mouseup',
+            touches: [{
+                identifier: 0,
+                clientX: e.clientX,
+                clientY: e.clientY,
+                force: 0.5
+            }],
+            step: this.currentCrystalStep,
+            taskId: 2
+        });
+        
+        this.processCrystalInteraction('end', [{ clientX: e.clientX, clientY: e.clientY }]);
+    }
+    
+    processCrystalInteraction(phase, touches) {
+        const step = this.crystalSteps[this.currentCrystalStep - 1];
+        const crystal = document.getElementById('crystal');
+        
+        switch (step.type) {
+            case 'tap':
+                if (phase === 'end' && touches.length === 1) {
+                    // ULTRA-RELIABLE tap detection for all mobile devices
+                    const touch = touches[0];
+                    const crystalRect = crystal.getBoundingClientRect();
+                    
+                    // Check if tap is within the crystal boundaries (more precise)
+                    const isWithinBounds = touch.clientX >= crystalRect.left && 
+                                         touch.clientX <= crystalRect.right && 
+                                         touch.clientY >= crystalRect.top && 
+                                         touch.clientY <= crystalRect.bottom;
+                    
+                    // Also check distance from center as backup (for larger touch areas)
+                    const crystalCenterX = crystalRect.left + crystalRect.width / 2;
+                    const crystalCenterY = crystalRect.top + crystalRect.height / 2;
+                    const distance = Math.sqrt(
+                        Math.pow(touch.clientX - crystalCenterX, 2) + 
+                        Math.pow(touch.clientY - crystalCenterY, 2)
+                    );
+                    
+                    // Enhanced boundary detection: within bounds OR within 120px of center
+                    if (isWithinBounds || distance <= 120) {
+                    this.crystalState.tapCount++;
+                    crystal.classList.add('tap-feedback');
+                    crystal.classList.add('active');
+                    
+                        // Enhanced visual feedback for mobile
+                    setTimeout(() => {
+                        crystal.classList.remove('tap-feedback');
+                        crystal.classList.remove('active');
+                        }, 300);
+                    
+                    this.updateStepProgress(`${this.crystalState.tapCount}/${step.target}`);
+                    
+                    if (this.crystalState.tapCount >= step.target) {
+                        this.completeStep();
+                        }
+                        
+                        console.log(`✅ Tap ${this.crystalState.tapCount}/${step.target} recorded - within bounds: ${isWithinBounds}, distance: ${Math.round(distance)}px`);
+                    } else {
+                        console.log(`❌ Tap outside crystal bounds - distance: ${Math.round(distance)}px`);
+                    }
+                }
+                break;
+                
+            case 'rotate': {
+                const touch = touches[0];
+                const crystal = document.getElementById('crystal');
+                const rect = crystal.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const angle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX);
+            
+                if (phase === 'start') {
+                    this.crystalState.initialAngle = angle;
+                    this.crystalState.lastAngle = angle;
+                    this.crystalState.rotationRounds = 0;
+                    this.crystalState.rotationDirection = null; // 1 = CW, -1 = CCW
+                    this.crystalState.rotationAccumulated = 0;
+                    crystal.classList.add('active');
+                    this.updateStepProgress(`0/3`);
+                }
+            
+                else if (phase === 'move') {
+                    let delta = angle - this.crystalState.lastAngle;
+                    if (delta > Math.PI) delta -= 2 * Math.PI;
+                    if (delta < -Math.PI) delta += 2 * Math.PI;
+                    if (!isFinite(delta)) return;
+            
+                    const direction = Math.sign(delta);
+                    const expectedDirection = (this.crystalState.rotationRounds % 2 === 0) ? 1 : -1;
+            
+                    // Set direction on first move of this round
+                    if (this.crystalState.rotationDirection === null && Math.abs(delta) > 0.02) {
+                        this.crystalState.rotationDirection = direction;
+                    }
+            
+                    // Reject wrong direction
+                    if (direction !== expectedDirection) {
+                        this.showWrongDirectionFeedback?.();
+                        this.crystalState.lastAngle = angle;
+                        return;
+                    }
+            
+                    this.crystalState.rotationAccumulated += delta;
+                    this.crystalState.lastAngle = angle;
+            
+                    const progress = Math.abs(this.crystalState.rotationAccumulated) / (2 * Math.PI);
+                    this.updateStepProgress(`${(this.crystalState.rotationRounds + Math.min(progress, 1)).toFixed(1)}/3`);
+            
+                    if (Math.abs(this.crystalState.rotationAccumulated) >= 2 * Math.PI) {
+                        this.crystalState.rotationRounds += 1;
+                        this.crystalState.rotationAccumulated = 0;
+                        this.crystalState.rotationDirection = null;
+            
+                        crystal.classList.add('rotation-feedback');
+                        setTimeout(() => crystal.classList.remove('rotation-feedback'), 300);
+            
+                        if (this.crystalState.rotationRounds >= 3) {
+                            this.completeStep();
+                        }
+                    }
+                }
+            
+                else if (phase === 'end') {
+                    crystal.classList.remove('active');
+                }
+            
+                break;
+            }
+                
+            case 'pinch':
+            case 'spread':
+                if (touches.length === 2) {
+                    if (phase === 'start') {
+                        this.crystalState.isPinching = step.type === 'pinch';
+                        this.crystalState.isSpreading = step.type === 'spread';
+                        this.crystalState.initialDistance = this.getDistance(touches[0], touches[1]);
+                        crystal.classList.add('active');
+                        console.log(`🔄 ${step.type} started - initial distance: ${Math.round(this.crystalState.initialDistance)}px`);
+                    } else if (phase === 'move' && (this.crystalState.isPinching || this.crystalState.isSpreading)) {
+                        const currentDistance = this.getDistance(touches[0], touches[1]);
+                        
+                        // ULTRA-RELIABLE mobile pinch/spread detection with validation
+                        if (currentDistance < 15) return; // Reduced minimum distance for mobile
+                        
+                        const scale = currentDistance / this.crystalState.initialDistance;
+                        const newSize = Math.max(0.2, Math.min(2.5, scale)); // Wider range for mobile
+                        
+                        this.updateCrystalSize(newSize);
+                        this.updateStepProgress(`${Math.round(newSize * 100)}%`);
+                        
+                        // ENHANCED completion detection with mobile-friendly tolerance
+                        const targetTolerance = 0.12; // Optimized tolerance for mobile precision
+                        if (Math.abs(newSize - step.target) < targetTolerance) {
+                            console.log(`✅ ${step.type} target reached: ${Math.round(newSize * 100)}% (target: ${Math.round(step.target * 100)}%)`);
+                            this.completeStep();
+                        }
+                    }
+                } else if (phase === 'end') {
+                    this.crystalState.isPinching = false;
+                    this.crystalState.isSpreading = false;
+                    crystal.classList.remove('active');
+                    console.log(`🔄 ${step.type} ended`);
+                }
+                break;
+                
+            case 'pressure':
+                if (touches.length === 3) {
+                    if (phase === 'start') {
+                        this.crystalState.pressureStart = performance.now();
+                        this.crystalState.pressureFingers = touches.length;
+                        crystal.classList.add('active');
+                        this.showPressureIndicator();
+                        console.log(`🔄 Three-finger pressure started`);
+                    } else if (phase === 'move' && this.crystalState.pressureStart) {
+                        const elapsed = performance.now() - this.crystalState.pressureStart;
+                        this.updatePressureIndicator(elapsed / step.target);
+                        this.updateStepProgress(`${Math.floor(elapsed / 1000)}s / ${step.target / 1000}s`);
+                        
+                        if (elapsed >= step.target) {
+                            console.log(`✅ Three-finger pressure completed: ${Math.floor(elapsed / 1000)}s`);
+                            this.completeStep();
+                        }
+                    }
+                } else if (phase === 'end') {
+                    // ULTRA-RELIABLE mobile pressure detection - allow finger count to vary slightly
+                    if (touches.length < 2) { // Only end if most fingers are lifted
+                        if (this.crystalState.pressureStart) {
+                            const elapsed = performance.now() - this.crystalState.pressureStart;
+                            console.log(`🔄 Three-finger pressure ended - duration: ${Math.floor(elapsed / 1000)}s`);
+                        }
+                    this.crystalState.pressureStart = null;
+                    this.crystalState.pressureFingers = 0;
+                    crystal.classList.remove('active');
+                    this.hidePressureIndicator();
+                    }
+                }
+                break;
+                
+            case 'facet_tap':
+                if (phase === 'start' && touches.length === 1) {
+                    const touch = touches[0];
+                    const currentTime = performance.now();
+                    const tappedFacet = this.findTappedFacet(touch.clientX, touch.clientY);
+                    
+                    if (tappedFacet) {
+                        // Prevent rapid double-taps on the same facet
+                        const timeSinceLastTap = currentTime - tappedFacet.lastTapTime;
+                        if (timeSinceLastTap < 300) { // 300ms cooldown
+                            console.log(`⏱️ Tap too fast on facet ${tappedFacet.id}, ignoring`);
+                            return;
+                        }
+                        
+                        // Update last tap time
+                        tappedFacet.lastTapTime = currentTime;
+                        
+                        // Check if this is the correct facet in sequence
+                        if (tappedFacet.sequence === this.crystalState.currentFacetIndex) {
+                            // Correct facet tapped
+                            tappedFacet.tapped = true;
+                            this.crystalState.tappedFacets.add(tappedFacet.id);
+                            this.crystalState.currentFacetIndex++;
+                            
+                            // Visual feedback
+                            this.highlightFacet(tappedFacet, 'success');
+                            
+                            // Update progress
+                            this.updateStepProgress(`${this.crystalState.currentFacetIndex}/${step.target}`);
+                            
+                            console.log(`✅ Facet ${tappedFacet.id} tapped correctly - Progress: ${this.crystalState.currentFacetIndex}/${step.target}`);
+                            
+                            // Check if all facets are tapped
+                            if (this.crystalState.currentFacetIndex >= step.target) {
+                                console.log(`✅ All facets tapped! Task completed.`);
+                                this.completeStep();
+                            } else {
+                                // Highlight next facet with delay to prevent confusion
+                                setTimeout(() => {
+                                    this.highlightNextFacet();
+                                }, 200);
+                            }
+                        } else {
+                            // Wrong facet tapped
+                            this.highlightFacet(tappedFacet, 'error');
+                            console.log(`❌ Wrong facet tapped: ${tappedFacet.id}, expected: ${this.crystalState.currentFacetIndex}`);
+                            
+                            // Show error feedback
+                            crystal.classList.add('error-feedback');
+                            setTimeout(() => {
+                                crystal.classList.remove('error-feedback');
+                            }, 300);
+                        }
+                    } else {
+                        // Tap outside facets - provide feedback
+                        console.log(`❌ Tap outside facet areas`);
+                        crystal.classList.add('error-feedback');
+                        setTimeout(() => {
+                            crystal.classList.remove('error-feedback');
+                        }, 300);
+                    }
+                }
+                break;
+        }
+    }
+    
+    updateCrystalSize(size) {
+        const crystal = document.getElementById('crystal');
+        const crystalSizeDisplay = document.getElementById('crystal-size-display');
+        
+        this.crystalState.currentSize = size;
+        crystal.style.transform = `scale(${size})`;
+        crystal.style.setProperty('--current-scale', size);
+        
+        const percentage = Math.round(size * 100);
+        crystalSizeDisplay.textContent = `${percentage}%`;
+        
+        if (size <= 0.6) {
+            crystal.classList.add('shrinking');
+            crystalSizeDisplay.classList.add('shrink-highlight');
+            setTimeout(() => {
+                crystal.classList.remove('shrinking');
+                crystalSizeDisplay.classList.remove('shrink-highlight');
+            }, 500);
+        } else if (size >= 1.4) {
+            crystal.classList.add('enlarging');
+            crystalSizeDisplay.classList.add('enlarge-highlight');
+            setTimeout(() => {
+                crystal.classList.remove('enlarging');
+                crystalSizeDisplay.classList.remove('enlarge-highlight');
+            }, 500);
+        }
+        
+        if (size < 0.7) {
+            crystal.style.filter = 'brightness(0.9)';
+        } else if (size > 1.3) {
+            crystal.style.filter = 'brightness(1.1)';
+        } else {
+            crystal.style.filter = 'none';
+        }
+    }
+    
+    getDistance(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    showPressureIndicator() {
+        const crystalArea = document.getElementById('crystal-area');
+        if (!crystalArea.querySelector('.pressure-indicator')) {
+            const indicator = document.createElement('div');
+            indicator.className = 'pressure-indicator';
+            indicator.innerHTML = '<div class="pressure-fill"></div>';
+            crystalArea.appendChild(indicator);
+        }
+    }
+    
+    updatePressureIndicator(progress) {
+        const fill = document.querySelector('.pressure-fill');
+        if (fill) {
+            fill.style.width = `${Math.min(progress * 100, 100)}%`;
+        }
+    }
+    
+    hidePressureIndicator() {
+        const indicator = document.querySelector('.pressure-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
+    }
+    
+    showWrongDirectionFeedback() {
+        const crystal = document.getElementById('crystal');
+        crystal.style.filter = 'drop-shadow(0 0 8px #FF4F64)';
+        setTimeout(() => {
+            crystal.style.filter = '';
+        }, 500);
+        console.log('❌ Wrong rotation direction - try again!');
+    }
+    
+    // Helper method to get expected rotation direction based on current step
+
+    
+
+    
+    completeStep() {
+        console.log('[DEBUG] completeStep, current step:', this.currentCrystalStep);
+    
+        const crystal = document.getElementById('crystal');
+        if (crystal) {
+        crystal.classList.add('success');
+        setTimeout(() => {
+            crystal.classList.remove('success');
+        }, 600);
+        }
+        
+        document.getElementById('step-status').textContent = 'Completed';
+        
+        const sizeIndicator = document.getElementById('size-indicator');
+        if (sizeIndicator) {
+        sizeIndicator.classList.add('completion-highlight');
+        setTimeout(() => sizeIndicator.classList.remove('completion-highlight'), 1000);
+    }
+    
+        const nextCrystalBtn = document.getElementById('next-crystal-btn');
+        if (nextCrystalBtn) {
+            nextCrystalBtn.style.display = 'inline-flex';
+            nextCrystalBtn.disabled = false;
+            nextCrystalBtn.style.opacity = '1';
+            nextCrystalBtn.style.backgroundColor = 'var(--color-primary)';
+        } else {
+            console.warn('[DEBUG] next-crystal-btn not found in DOM during completeStep');
+        }
+    
+        if (this.currentCrystalStep === this.crystalSteps.length) {
+            // Final step: show Next Task button (do not hide Next Step)
+            this.showNextTaskButton('gallery', 'Gallery Interaction');
+            this.updateTaskLocks(); // Lock crystal after completion
+        }
+
+    }
+
+    
+    nextCrystalStep() {
+        console.log('[DEBUG] nextCrystalStep called, current step:', this.currentCrystalStep);
+        if (this.currentCrystalStep < this.crystalSteps.length) {
+            this.currentCrystalStep++;
+            console.log('[DEBUG] nextCrystalStep incremented, new step:', this.currentCrystalStep);
+        this.resetCrystalState();
+        this.updateCrystalDisplay();
+        } else {
+            // Already at last step, do nothing
+            console.log('[DEBUG] nextCrystalStep: already at last step, no action');
+        }
+    }
+    
+    resetCrystalStep() {
+        // Increment trial counter when user resets the step
+        this.crystalState.currentTrial++;
+        console.log(`Step ${this.currentCrystalStep} reset - Trial ${this.crystalState.currentTrial}`);
+        
+        this.resetCrystalState();
+        this.updateCrystalDisplay();
+    }
+    
+    resetCrystalState() {
+        // Preserve trial counter when resetting state
+        const currentTrial = this.crystalState.currentTrial;
+        
+        console.log(`🔄 Resetting crystal state - Progress will be reset to 0/3`);
+        
+        this.crystalState = {
+            tapCount: 0,
+            rotationTime: 0,
+            rotationStart: null,
+            currentSize: 1.0,
+            isRotating: false,
+            isPinching: false,
+            isSpreading: false,
+            pressureStart: null,
+            pressureFingers: 0,
+            initialDistance: 0,
+            initialAngle: null,
+            totalRotation: 0,
+            lastAngle: null,
+            rotationAccumulated: 0,
+            rotationDirection: null,
+            rotationRounds: 0,
+            rotationSequence: [],
+            rotationCompleted: false,
+            wrongDirectionStarted: false,
+            currentTrial: currentTrial,
+            stepStartTime: null,
+            // Facet tapping state
+            facets: [],
+            currentFacetIndex: 0,
+            tappedFacets: new Set(),
+            facetSequence: []
+        };
+        
+        const crystal = document.getElementById('crystal');
+        crystal.style.transform = 'scale(1)';
+        crystal.style.setProperty('--current-scale', 1);
+        crystal.style.filter = 'none';
+        crystal.classList.remove('active', 'shrinking', 'enlarging', 'success', 'tap-feedback', 'rotation-feedback', 'error-feedback');
+        
+        document.getElementById('crystal-size-display').textContent = '100%';
+        document.getElementById('crystal-size-display').classList.remove('shrink-highlight', 'enlarge-highlight', 'completion-highlight');
+        this.hidePressureIndicator();
+        
+        // Initialize facets for step 5
+        if (this.currentCrystalStep === 5) {
+            // Add delay to ensure DOM is fully rendered
+            setTimeout(() => {
+                this.crystalState.facets = this.generateFacets();
+                this.renderFacets();
+            }, 100);
+        }
+    }
+    
+    updateCrystalDisplay() {
+        console.log('[DEBUG] updateCrystalDisplay, current step:', this.currentCrystalStep);
+        
+        const step = this.crystalSteps[this.currentCrystalStep - 1];
+        document.getElementById('step-title').textContent = `Step ${this.currentCrystalStep}: ${this.getStepTitle(step.type)}`;
+        document.getElementById('step-instruction').textContent = step.instruction;
+        document.getElementById('current-step').textContent = `${this.currentCrystalStep}/5`;
+        document.getElementById('step-status').textContent = 'Ready';
+        document.getElementById('step-progress').textContent = this.getInitialProgress(step.type);
+    
+        const nextCrystalBtn = document.getElementById('next-crystal-btn');
+        if (nextCrystalBtn) {
+            nextCrystalBtn.style.display = 'inline-flex';
+            nextCrystalBtn.disabled = true;
+            nextCrystalBtn.style.opacity = '0.5';
+            nextCrystalBtn.style.backgroundColor = 'var(--color-secondary)';
+        } else {
+            console.warn('[DEBUG] next-crystal-btn not found in DOM during updateCrystalDisplay');
+        }
+        
+        // Initialize facets for step 5
+        if (this.currentCrystalStep === 5) {
+            // Add delay to ensure DOM is fully rendered
+            setTimeout(() => {
+                this.crystalState.facets = this.generateFacets();
+                this.renderFacets();
+            }, 100);
+        }
+    }
+
+    
+    getStepTitle(type) {
+        const titles = {
+            'tap': 'Step 1: Finger Tapping (3 Taps)',
+            'rotate': 'Step 2: Finger Rotation (3 Circles)',
+            'pinch': 'Step 3: Pinch to Shrink (50%)',
+            'spread': 'Step 4: Spread to Enlarge (150%)',
+            'pressure': 'Step 5: Three-Finger Pressure',
+            'facet_tap': 'Step 5: Facet Sequence Tapping (10 Facets)'
+        };
+        return titles[type] || 'Unknown';
+    }
+    
+    getInitialProgress(type) {
+        const progress = {
+            'tap': 'Taps: 0/3',
+            'rotate': 'Rotations: 0/3',
+            'pinch': 'Target: 50% (Current: 100%)',
+            'spread': 'Target: 150% (Current: 100%)',
+            'pressure': 'Hold Time: 0s / 3s',
+            'facet_tap': 'Facets: 0/10'
+        };
+        return progress[type] || '0/0';
+    }
+    
+    updateStepProgress(progress) {
+        document.getElementById('step-progress').textContent = progress;
+        
+        // Enhanced guidance for all steps
+        const stepStatus = document.getElementById('step-status');
+        
+        if (this.currentCrystalStep === 1) {
+            // Tap step guidance
+            if (this.crystalState.tapCount === 0) {
+                stepStatus.textContent = 'Ready: Tap the crystal 3 times with your finger';
+            } else if (this.crystalState.tapCount < 3) {
+                stepStatus.textContent = `Progress: ${this.crystalState.tapCount}/3 taps completed. Continue tapping!`;
+            } else {
+                stepStatus.textContent = '✅ Complete! All 3 taps finished. Click "Next Step" to continue.';
+            }
+        } else if (this.currentCrystalStep === 2) {
+            // Rotation step guidance
+            if (this.crystalState.rotationCompleted) {
+                stepStatus.textContent = '✅ Perfect! All 3 rotations completed. Click "Next Step" to continue.';
+            } else if (this.crystalState.rotationRounds === 0) {
+                stepStatus.textContent = 'Step 1: Touch the crystal, then rotate your finger CLOCKWISE in a complete circle';
+            } else if (this.crystalState.rotationRounds === 1) {
+                stepStatus.textContent = 'Step 2: Great! Now rotate COUNTER-CLOCKWISE in a complete circle';
+            } else if (this.crystalState.rotationRounds === 2) {
+                stepStatus.textContent = 'Step 3: Almost done! Now rotate CLOCKWISE again in a complete circle';
+            } else {
+                stepStatus.textContent = 'Rotation Pattern: CLOCKWISE → COUNTER-CLOCKWISE → CLOCKWISE';
+            }
+        } else if (this.currentCrystalStep === 3) {
+            // Pinch step guidance
+            const currentSize = Math.round(this.crystalState.currentSize * 100);
+            if (currentSize > 50) {
+                stepStatus.textContent = `Current: ${currentSize}% - Pinch fingers together to reach 50%`;
+            } else {
+                stepStatus.textContent = '✅ Perfect! Crystal shrunk to 50%. Click "Next Step" to continue.';
+            }
+        } else if (this.currentCrystalStep === 4) {
+            // Spread step guidance
+            const currentSize = Math.round(this.crystalState.currentSize * 100);
+            if (currentSize < 150) {
+                stepStatus.textContent = `Current: ${currentSize}% - Spread fingers apart to reach 150%`;
+            } else {
+                stepStatus.textContent = '✅ Perfect! Crystal enlarged to 150%. Click "Next Step" to continue.';
+            }
+        } else if (this.currentCrystalStep === 5) {
+            // Facet tapping step guidance
+            if (this.crystalState.currentFacetIndex === 0) {
+                stepStatus.textContent = 'Ready: Tap the facets in the order they light up (green dots)';
+            } else if (this.crystalState.currentFacetIndex < 10) {
+                stepStatus.textContent = `Progress: ${this.crystalState.currentFacetIndex}/10 facets activated. Continue the sequence!`;
+            } else {
+                stepStatus.textContent = '✅ Complete! All 10 facets activated. Click "Next Step" to continue.';
+            }
+        }
+    }
+    
+    recordTouchEvent(data) {
+        // Add trial information for crystal game
+        if (data.taskId === 2) { // Crystal game
+            data.trial = this.crystalState.currentTrial;
+            // Enhanced debug logging for trial tracking
+            if (data.type === 'touchstart') {
+                console.log(`📊 Touch event recorded - Step: ${data.step}, Trial: ${data.trial}, Current Trial State: ${this.crystalState.currentTrial}`);
+            }
+        } else {
+            data.trial = 1; // Default trial for other tasks
+        }
+        
+        // In recordTouchEvent, update gesturePath and gesturePathLength
+        const trialStep = `${data.trial || 1}_${data.step || 1}`;
+        if (!this.gesturePath[trialStep]) {
+            this.gesturePath[trialStep] = [];
+            this.gesturePathLength[trialStep] = 0;
+        }
+        const x = Math.round(data.touches[0]?.clientX || 0);
+        const y = Math.round(data.touches[0]?.clientY || 0);
+        const last = this.gesturePath[trialStep][this.gesturePath[trialStep].length - 1];
+        if (last) {
+            const dx = x - last.x;
+            const dy = y - last.y;
+            this.gesturePathLength[trialStep] += Math.sqrt(dx * dx + dy * dy);
+        }
+        this.gesturePath[trialStep].push({ x, y });
+        this.touchData.push(data);
+    }
+    
+// --- Updated Enhanced Gallery Methods ---
+
+    // 1. Initialize thumbnail grid
+    initializeGallery() {
+        const grid = document.getElementById('gallery-grid');
+        grid.innerHTML = '';
+    
+        this.galleryImages.forEach((url, index) => {
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'gallery-item';
+    
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = `Gallery image ${index + 1}`;
+            img.loading = 'lazy';
+    
+            imageContainer.appendChild(img);
+            imageContainer.addEventListener('click', () => this.openImagePopup(index));
+    
+            grid.appendChild(imageContainer);
+        });
+    }
+    
+    // 2. Bind touch events when popup is active
+    bindGalleryEvents() {
+        this.galleryTouchStart = { x: 0, y: 0 };
+    
+        document.addEventListener('touchstart', e => {
+            if (document.querySelector('.image-popup.active')) {
+                this.handleGalleryTouchStart(e);
+            }
+        }, { passive: false });
+    
+        document.addEventListener('touchmove', e => {
+            if (document.querySelector('.image-popup.active')) {
+                this.handleGalleryTouchMove(e);
+            }
+        }, { passive: false });
+    
+        document.addEventListener('touchend', e => {
+            if (document.querySelector('.image-popup.active')) {
+                this.handleGalleryTouchEnd(e);
+            }
+        });
+    }
+    
+    // 3. On touch start: detect pan vs pinch vs swipe start
+    handleGalleryTouchStart(e) {
+        const ts = performance.now();
+    
+        if (e.touches.length === 1) {
+            // record swipe start
+            this.galleryTouchStart.x = e.touches[0].clientX;
+            this.galleryTouchStart.y = e.touches[0].clientY;
+    
+            // if already zoomed, begin panning
+            if (this.galleryZoom.scale > 1) {
+                this.galleryZoom.isPanning = true;
+                this.galleryZoom.startX = e.touches[0].clientX - this.galleryZoom.translateX;
+                this.galleryZoom.startY = e.touches[0].clientY - this.galleryZoom.translateY;
+            }
+        } else if (e.touches.length === 2) {
+            // begin pinch zoom
+            this.galleryZoom.isPinching = true;
+            this.galleryZoom.initialDistance = this.getDistance(e.touches[0], e.touches[1]);
+            e.preventDefault();
+        }
+    
+        this.recordTouchEvent({
+            timestamp: ts,
+            type: 'touchstart',
+            touches: Array.from(e.touches).map(t => ({
+                identifier: t.identifier,
+                clientX: t.clientX,
+                clientY: t.clientY,
+                force: t.force || 0.5
+            })),
+            step: this.currentGalleryImage + 1,
+            taskId: 3
+        });
+    }
+    
+    // 4. On touch move: perform pinch or pan
+    handleGalleryTouchMove(e) {
+        e.preventDefault();
+        const ts = performance.now();
+    
+        if (e.touches.length === 2 && this.galleryZoom.isPinching) {
+            // pinch-to-zoom
+            const dist = this.getDistance(e.touches[0], e.touches[1]);
+            const change = dist / this.galleryZoom.initialDistance;
+            const newScale = Math.max(1, Math.min(3.0, this.galleryZoom.scale * change));
+            // Adjust translation to keep the zoom centered on pinch midpoint
+
+            if (newScale <= 1.1) {
+                // Trigger zoom reset if user pinches out
+                this.resetZoom();
+                return;
+            }
+            const ctr = document.querySelector('.popup-image-container');
+            const img = document.querySelector('.popup-image');
+            if (img && ctr) {
+                const rect = ctr.getBoundingClientRect();
+                const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+                const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+                const scaleChange = newScale / this.galleryZoom.scale;
+                this.galleryZoom.translateX = (this.galleryZoom.translateX - midX) * scaleChange + midX;
+                this.galleryZoom.translateY = (this.galleryZoom.translateY - midY) * scaleChange + midY;
+            }
+            this.galleryZoom.scale = newScale;
+            this.galleryZoom.initialDistance = dist;
+            this.updateImageTransform();
+            this.updateZoomLevel();
+            if (this.galleryZoom.scale > 1) {
+                this.galleryZoom.isPanning = true;
+            }
+        }
+        else if (e.touches.length === 1 && this.galleryZoom.isPanning && this.galleryZoom.scale > 1) {
+            // single-finger pan after zoom
+            const t = e.touches[0];
+            this.galleryZoom.translateX = t.clientX - this.galleryZoom.startX;
+            this.galleryZoom.translateY = t.clientY - this.galleryZoom.startY;
+            this.updateImageTransform();
+        }
+    
+        this.recordTouchEvent({
+            timestamp: ts,
+            type: 'touchmove',
+            touches: Array.from(e.touches).map(t => ({
+                identifier: t.identifier,
+                clientX: t.clientX,
+                clientY: t.clientY,
+                force: t.force || 0.5
+            })),
+            step: this.currentGalleryImage + 1,
+            taskId: 3
+        });
+    }
+    
+    // 5. On touch end: finish pinch/pan and handle swipe if not zoomed
+    handleGalleryTouchEnd(e) {
+        const ts = performance.now();
+    
+        // swipe to change image only when scale ≈ 1
+        if (!this.galleryZoom.isPinching && !this.galleryZoom.isPanning
+            && e.changedTouches.length === 1 && this.galleryZoom.scale <= 1.1) {
+            const endX = e.changedTouches[0].clientX;
+            const dx = this.galleryTouchStart.x - endX;
+            if (Math.abs(dx) > 50) {
+                dx > 0 ? this.nextGalleryImage() : this.prevGalleryImage();
+            }
+        }
+    
+        // end pinch
+        if (e.touches.length < 2) {
+            this.galleryZoom.isPinching = false;
+            // Do not auto-reset zoom or translation after pinch in
+            if (this.galleryZoom.scale > 1.0) {
+                this.galleryZoom.isPanning = true;
+            } 
+            else {
+                this.resetZoom();
+            }
+        }
+        // end pan
+        if (e.touches.length === 0) {
+            this.galleryZoom.isPanning = false;
+        }
+    
+        this.recordTouchEvent({
+            timestamp: ts,
+            type: 'touchend',
+            touches: Array.from(e.changedTouches).map(t => ({
+                identifier: t.identifier,
+                clientX: t.clientX,
+                clientY: t.clientY,
+                force: t.force || 0.5
+            })),
+            step: this.currentGalleryImage + 1,
+            taskId: 3
+        });
+    }
+    
+    // 6. Open popup and attach double-tap listener once
+    openImagePopup(index) {
+        this.currentGalleryImage = index;
+        this.resetZoom();
+    
+        if (!document.querySelector('.image-popup')) {
+            this.createImagePopup();
+        }
+    
+        this.updatePopupImage();
+        const popup = document.querySelector('.image-popup');
+        popup.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // 7. Build popup DOM and set up controls
+    createImagePopup() {
+        const popup = document.createElement('div');
+        popup.className = 'image-popup';
+        popup.innerHTML = `
+            <div class="popup-overlay"></div>
+            <div class="popup-content">
+              <button class="close-popup">&times;</button>
+              <div class="popup-image-container"><img class="popup-image" src="" alt=""></div>
+              <div class="popup-counter"></div>
+              <div class="popup-nav">
+                <button class="popup-prev">❮</button>
+                <button class="popup-next">❯</button>
+              </div>
+              <div class="zoom-controls">
+                <button class="zoom-out">−</button>
+                <span class="zoom-level">100%</span>
+                <button class="zoom-in">+</button>
+                <button class="zoom-reset">Reset</button>
+              </div>
+            </div>`;
+        document.body.appendChild(popup);
+    
+        // close & nav
+        popup.querySelector('.close-popup').onclick = () => this.closeImagePopup();
+        popup.querySelector('.popup-overlay').onclick = () => this.closeImagePopup();
+        popup.querySelector('.popup-prev').onclick = () => this.prevGalleryImage();
+        popup.querySelector('.popup-next').onclick = () => this.nextGalleryImage();
+    
+        // zoom controls
+        popup.querySelector('.zoom-in').onclick = () => this.zoomIn();
+        popup.querySelector('.zoom-out').onclick = () => this.zoomOut();
+        popup.querySelector('.zoom-reset').onclick = () => this.resetZoom();
+    
+        // container events
+        const ctr = popup.querySelector('.popup-image-container');
+    
+        ctr.addEventListener('wheel', e => {
+            e.preventDefault();
+            e.deltaY < 0 ? this.zoomIn() : this.zoomOut();
+        });
+    
+        // mouse pan
+        let mousePanning = false;
+        ctr.onmousedown = e => {
+            if (this.galleryZoom.scale > 1) {
+                mousePanning = true;
+                this.galleryZoom.startX = e.clientX - this.galleryZoom.translateX;
+                this.galleryZoom.startY = e.clientY - this.galleryZoom.translateY;
+                ctr.style.cursor = 'grabbing';
+            }
+        };
+        document.onmousemove = e => {
+            if (mousePanning) {
+                this.galleryZoom.translateX = e.clientX - this.galleryZoom.startX;
+                this.galleryZoom.translateY = e.clientY - this.galleryZoom.startY;
+                this.updateImageTransform();
+            }
+        };
+        document.onmouseup = () => {
+            if (mousePanning) {
+                mousePanning = false;
+                ctr.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
+            }
+        };
+    
+        // touch pan & double-tap
+        let touchPanning = false;
+        ctr.addEventListener('touchstart', e => {
+            if (e.touches.length === 1 && this.galleryZoom.scale > 1) {
+                touchPanning = true;
+                this.galleryZoom.startX = e.touches[0].clientX - this.galleryZoom.translateX;
+                this.galleryZoom.startY = e.touches[0].clientY - this.galleryZoom.translateY;
+                ctr.style.cursor = 'grabbing';
+                e.preventDefault();
+            }
+            // If two fingers, start pinch
+            if (e.touches.length === 2) {
+                this.galleryZoom.isPinching = true;
+                this.galleryZoom.initialDistance = this.getDistance(e.touches[0], e.touches[1]);
+                e.preventDefault();
+            }
+        }, { passive: false });
+    
+        ctr.addEventListener('touchmove', e => {
+            if (touchPanning) {
+                this.galleryZoom.translateX = e.touches[0].clientX - this.galleryZoom.startX;
+                this.galleryZoom.translateY = e.touches[0].clientY - this.galleryZoom.startY;
+                this.updateImageTransform();
+                e.preventDefault();
+            }
+        }, { passive: false });
+    
+        ctr.addEventListener('touchend', e => {
+            if (touchPanning) {
+                touchPanning = false;
+                ctr.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
+            }
+            // double-tap
+            const now = Date.now();
+            const dt = now - this.galleryZoom.lastTapTime;
+            if (dt > 0 && dt < 300) {
+                if (this.galleryZoom.scale > 1.1) {
+                    this.resetZoom();
+                } else {
+                    this.galleryZoom.scale = 2.0;
+                    this.galleryZoom.translateX = 0;
+                    this.galleryZoom.translateY = 0;
+                    this.updateImageTransform();
+                    this.updateZoomLevel();
+                }
+            }
+            this.galleryZoom.lastTapTime = now;
+        });
+    
+        // keyboard
+        document.onkeydown = e => {
+            if (!popup.classList.contains('active')) return;
+            switch (e.key) {
+                case 'Escape': this.closeImagePopup(); break;
+                case 'ArrowLeft': this.prevGalleryImage(); break;
+                case 'ArrowRight': this.nextGalleryImage(); break;
+                case '+': case '=': this.zoomIn(); break;
+                case '-': this.zoomOut(); break;
+                case '0': this.resetZoom(); break;
+            }
+        };
+    }
+    
+    // 8. Zoom methods
+    zoomIn() {
+        this.galleryZoom.scale = Math.min(this.galleryZoom.scale * 1.2, 3.0);
+        this.updateImageTransform();
+        this.updateZoomLevel();
+    }
+    
+    zoomOut() {
+        this.galleryZoom.scale = Math.max(this.galleryZoom.scale / 1.2, 0.5);
+        if (this.galleryZoom.scale <= 1) {
+            this.galleryZoom.translateX = 0;
+            this.galleryZoom.translateY = 0;
+        }
+        this.updateImageTransform();
+        this.updateZoomLevel();
+    }
+    
+    resetZoom() {
+        this.galleryZoom.scale = 1;
+        this.galleryZoom.translateX = 0;
+        this.galleryZoom.translateY = 0;
+        this.galleryZoom.isPinching = false;
+        this.galleryZoom.isPanning = false;
+        this.updateImageTransform();
+        this.updateZoomLevel();
+    }
+    
+    // 9. Apply translate then scale
+    updateImageTransform() {
+        const img = document.querySelector('.popup-image');
+        const ctr = document.querySelector('.popup-image-container');
+        if (!img) return;
+        img.style.transform = 
+            `translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px) ` +
+            `scale(${this.galleryZoom.scale})`;
+        ctr.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
+    }
+    
+    // 10. Update zoom percentage display
+    updateZoomLevel() {
+        const span = document.querySelector('.zoom-level');
+        if (span) span.textContent = `${Math.round(this.galleryZoom.scale * 100)}%`;
+    }
+    
+    // 11. Refresh popup image & counter
+    updatePopupImage() {
+        const pop = document.querySelector('.image-popup');
+        if (!pop) return;
+        pop.querySelector('.popup-image').src = this.galleryImages[this.currentGalleryImage];
+        pop.querySelector('.popup-counter').textContent =
+            `${this.currentGalleryImage + 1} of ${this.galleryImages.length}`;
+        this.updateZoomLevel();
+    }
+    
+    // 12. Navigate images
+    nextGalleryImage() {
+        if (this.currentGalleryImage < this.galleryImages.length - 1) {
+            this.currentGalleryImage++;
+            this.resetZoom(); // Reset zoom when changing images
+            this.updatePopupImage();
+        }
+    }
+    
+    prevGalleryImage() {
+        if (this.currentGalleryImage > 0) {
+            this.currentGalleryImage--;
+            this.resetZoom(); // Reset zoom when changing images
+            this.updatePopupImage();
+        }
+    }
+    
+    // 13. Close popup
+    closeImagePopup() {
+        const pop = document.querySelector('.image-popup');
+        if (pop) {
+            pop.classList.remove('active');
+            document.body.style.overflow = '';
+            this.resetZoom();
+        }
+    }
+    
+    // 14. Utility: distance between two touches
+    getDistance(t1, t2) {
+        const dx = t2.clientX - t1.clientX;
+        const dy = t2.clientY - t1.clientY;
+        return Math.hypot(dx, dy);
+    }
+
+
+    // Export Methods
+    exportKeystrokeData() {
+        const features = this.extractKeystrokeFeatures();
+        const csv = this.convertToCSV(features);
+        const filename = `${this.participantId}_keystroke.csv`;
+    
+        this.uploadCSVToGoogleDrive(csv, filename);
+    
+        document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
+        document.getElementById('keystroke-features').textContent = '9'; // 9 features: participant_id, task_id, timestamp_ms, ref_char, touch_x, touch_y, was_deleted, flight_time_ms, browser_name
+    }
+
+    
+    exportTouchData() {
+        const features = this.extractTouchFeatures();
+        const csv = this.convertToCSV(features);
+        const filename = `${this.participantId}_touch.csv`;
+
+        this.uploadCSVToGoogleDrive(csv, filename);
+    
+        document.getElementById('touch-count').textContent = this.touchData.length;
+        document.getElementById('touch-features').textContent = '11'; // 11 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, num_touch_points, path_length_px, browser_name
+    }
+
+    // ENHANCED: Keystroke feature extraction with proper flight time handling
+    extractKeystrokeFeatures() {
+        const features = [];
+        
+        this.keystrokeData.forEach((keystroke, index) => {
+            if (keystroke.type === 'keydown' || keystroke.type === 'keyup' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete')) {
+                // Skip synthetic events (no longer needed since we removed SHIFT/†)
+                if (keystroke.isSynthetic) {
+                    console.log(`🚫 Skipping synthetic event in feature extraction: ${keystroke.actualChar}`);
+                    return;
+                }
+                
+                let flightTime = keystroke.flightTime || 0;
+                if (flightTime === 0 && index > 0) {
+                    const timeDiff = keystroke.timestamp - this.keystrokeData[index - 1].timestamp;
+                    flightTime = Math.max(0, Math.round(timeDiff));
+                    if (timeDiff < 0) {
+                        console.warn(`⚠️ Negative flight time detected: ${timeDiff}ms between "${this.keystrokeData[index - 1].actualChar}" and "${keystroke.actualChar}". Setting to 0.`);
+                    }
+                }
+                
+                const wasDeleted = (keystroke.actualChar === 'BACKSPACE' || keystroke.type.startsWith('delete')) ? 1 : 0;
+                let refChar = keystroke.actualChar || 'unknown';
+                if (keystroke.actualChar && keystroke.actualChar.length === 1) {
+                    refChar = keystroke.actualChar;
+                }
+                
+                features.push({
+                    participant_id: this.participantId,
+                    task_id: 1,
+                    timestamp_ms: Math.round(keystroke.timestamp),
+                    ref_char: refChar,
+                    touch_x: Math.round(keystroke.clientX || this.currentPointerX),
+                    touch_y: Math.round(keystroke.clientY || this.currentPointerY),
+                    was_deleted: wasDeleted,
+                    flight_time_ms: flightTime, // Use the flight time as recorded
+                    browser_name: this.deviceInfo.browser_name
+                });
+            }
+        });
+        return features;
+    }
+
+    // RELIABLE: Touch feature extraction with device model and browser name as separate columns
+    extractTouchFeatures() {
+        const features = [];
+        this.touchData.forEach((touch, index) => {
+            let task_step_label = '';
+            if (touch.taskId === 2) {
+                task_step_label = `1(${touch.step || 1})`;
+            } else if (touch.taskId === 3) {
+                task_step_label = '2';
+            } else {
+                task_step_label = '';
+            }
+            const baseFeature = {
+                participant_id: this.participantId,
+                task_id: task_step_label,
+                trial: touch.trial || 1,
+                timestamp_ms: Math.round(touch.timestamp),
+                touch_x: Math.round(touch.touches[0]?.clientX || 0),
+                touch_y: Math.round(touch.touches[0]?.clientY || 0),
+                btn_touch_state: touch.type,
+                inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0,
+                num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
+                path_length_px: this.gesturePathLength[`${touch.trial || 1}_${touch.step || 1}`] || 0,
+                browser_name: this.deviceInfo.browser_name  // Column 10
+            };
+            features.push(baseFeature);
+        });
+        return features;
+    }
+    
+    convertToCSV(data) {
+        if (data.length === 0) return 'No data available';
+    
+        const headers = Object.keys(data[0]);
+    
+        const escapeCsv = value => {
+            if (typeof value === 'string') {
+                // Escape inner double quotes by doubling them
+                const escaped = value.replace(/"/g, '""');
+                // Wrap everything in double quotes (safe even for apostrophes or commas)
+                return `"${escaped}"`;
+            }
+            return value;
+        };
+    
+        const csvContent = [
+            headers.join(','), // header row
+            ...data.map(row => 
+                headers.map(header => escapeCsv(row[header])).join(',')
+            )
+        ].join('\n');
+    
+        return csvContent;
+    }
+
+
+    // https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec
+
+    uploadCSVToGoogleDrive(content, filename) {
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec'; // 🔁 Replace with your actual Apps Script Web App URL
+        fetch(`${scriptURL}?filename=${encodeURIComponent(filename)}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain'
+            },
+            body: content
+        })
+        .then(res => res.text())
+        .then(response => {
+            console.log(`✅ ${filename} uploaded:`, response);
+            alert(`✅ ${filename} uploaded to Drive.`);
+        })
+        .catch(error => {
+            console.error(`❌ Upload failed:`, error);
+            alert(`❌ Upload failed for ${filename}: ` + error.message);
+        });
+    }
+
+    showCopyBlockedFeedback() {
+        // Show visual feedback when copy/paste is blocked
+        const typingInput = document.getElementById('typing-input');
+        if (typingInput) {
+            typingInput.classList.add('copy-blocked');
+            setTimeout(() => {
+                typingInput.classList.remove('copy-blocked');
+            }, 500);
+        }
+        
+        // Also show feedback on sentence display if it was targeted
+        const sentenceDisplay = document.querySelector('.sentence-display');
+        if (sentenceDisplay) {
+            sentenceDisplay.classList.add('copy-blocked');
+            setTimeout(() => {
+                sentenceDisplay.classList.remove('copy-blocked');
+            }, 500);
+        }
+    }
+    
+    updateTaskLocks() {
+        // Typing
+        const typingInput = document.getElementById('typing-input');
+        const nextSentenceBtn = document.getElementById('next-sentence-btn');
+        if (typingInput && nextSentenceBtn) {
+            if (this.taskState.studyStarted && !this.taskState.typingCompleted) {
+                typingInput.disabled = false;
+                typingInput.style.opacity = '1';
+                nextSentenceBtn.disabled = false;
+                nextSentenceBtn.style.opacity = '1';
+            } else {
+                typingInput.disabled = true;
+                typingInput.style.opacity = '0.5';
+                nextSentenceBtn.disabled = true;
+                nextSentenceBtn.style.opacity = '0.5';
+            }
+        }
+
+        // Crystal
+        const crystalArea = document.getElementById('crystal-area');
+        const nextCrystalBtn = document.getElementById('next-crystal-btn');
+        if (crystalArea && nextCrystalBtn) {
+            if (this.taskState.typingCompleted && !this.taskState.crystalCompleted) {
+                crystalArea.style.pointerEvents = 'auto';
+                crystalArea.style.opacity = '1';
+                nextCrystalBtn.disabled = false;
+                nextCrystalBtn.style.opacity = '1';
+            } else {
+                crystalArea.style.pointerEvents = 'none';
+                crystalArea.style.opacity = '0.5';
+                nextCrystalBtn.disabled = true;
+                nextCrystalBtn.style.opacity = '0.5';
+            }
+        }
+
+        // Gallery
+        const galleryGrid = document.getElementById('gallery-grid');
+        if (galleryGrid) {
+            if (this.taskState.crystalCompleted && !this.taskState.galleryCompleted) {
+                galleryGrid.style.pointerEvents = 'auto';
+                galleryGrid.style.opacity = '1';
+            } else {
+                galleryGrid.style.pointerEvents = 'none';
+                galleryGrid.style.opacity = '0.5';
+            }
+        }
+    }
+
+    // Facet tapping helper methods
+    findTappedFacet(touchX, touchY) {
+        const crystalArea = document.getElementById('crystal-area');
+        const rect = crystalArea.getBoundingClientRect();
+        const relativeX = touchX - rect.left;
+        const relativeY = touchY - rect.top;
+        
+        // Find which facet was tapped with improved detection
+        for (const facet of this.crystalState.facets) {
+            const distance = Math.sqrt(
+                Math.pow(relativeX - facet.x, 2) + 
+                Math.pow(relativeY - facet.y, 2)
+            );
+            
+            // Use a slightly larger hit area for better touch detection
+            const hitRadius = facet.radius + 5; // 5px buffer for easier tapping
+            
+            if (distance <= hitRadius) {
+                console.log(`🎯 Facet ${facet.id} detected at distance ${Math.round(distance)}px (hit radius: ${hitRadius}px)`);
+                return facet;
+            }
+        }
+        
+        console.log(`❌ No facet detected at (${Math.round(relativeX)}, ${Math.round(relativeY)})`);
+        return null;
+    }
+    
+    highlightFacet(facet, type) {
+        // Remove existing facet elements
+        const existingFacets = document.querySelectorAll('.crystal-facet');
+        existingFacets.forEach(el => el.remove());
+        
+        // Create new facet element with appropriate styling
+        const facetElement = document.createElement('div');
+        facetElement.className = `crystal-facet ${type}`;
+        facetElement.style.left = `${facet.x - facet.radius}px`;
+        facetElement.style.top = `${facet.y - facet.radius}px`;
+        facetElement.style.width = `${facet.radius * 2}px`;
+        facetElement.style.height = `${facet.radius * 2}px`;
+        
+        const crystalArea = document.getElementById('crystal-area');
+        crystalArea.appendChild(facetElement);
+        
+        // Remove highlight after animation
+        setTimeout(() => {
+            if (facetElement.parentNode) {
+                facetElement.remove();
+            }
+        }, 500);
+    }
+    
+    highlightNextFacet() {
+        if (this.crystalState.currentFacetIndex < this.crystalState.facets.length) {
+            const nextFacet = this.crystalState.facets[this.crystalState.currentFacetIndex];
+            
+            // Remove existing highlights
+            const existingHighlights = document.querySelectorAll('.facet-highlight');
+            existingHighlights.forEach(el => el.remove());
+            
+            // Create highlight for next facet with smaller size to stay within crystal
+            const highlight = document.createElement('div');
+            highlight.className = 'facet-highlight';
+            highlight.style.left = `${nextFacet.x - nextFacet.radius - 3}px`; // Reduced offset
+            highlight.style.top = `${nextFacet.y - nextFacet.radius - 3}px`; // Reduced offset
+            highlight.style.width = `${(nextFacet.radius + 3) * 2}px`; // Smaller highlight
+            highlight.style.height = `${(nextFacet.radius + 3) * 2}px`; // Smaller highlight
+            
+            const crystalArea = document.getElementById('crystal-area');
+            crystalArea.appendChild(highlight);
+        }
+    }
+    
+    renderFacets() {
+        // Remove existing facets
+        const existingFacets = document.querySelectorAll('.crystal-facet, .facet-highlight');
+        existingFacets.forEach(el => el.remove());
+        
+        // Render all facets with improved visibility
+        this.crystalState.facets.forEach(facet => {
+            const facetElement = document.createElement('div');
+            facetElement.className = 'crystal-facet';
+            
+            if (facet.tapped) {
+                facetElement.classList.add('tapped');
+            } else if (facet.sequence === this.crystalState.currentFacetIndex) {
+                facetElement.classList.add('active');
+            }
+            
+            facetElement.style.left = `${facet.x - facet.radius}px`;
+            facetElement.style.top = `${facet.y - facet.radius}px`;
+            facetElement.style.width = `${facet.radius * 2}px`;
+            facetElement.style.height = `${facet.radius * 2}px`;
+            
+            // Add data attributes for debugging
+            facetElement.setAttribute('data-facet-id', facet.id);
+            facetElement.setAttribute('data-sequence', facet.sequence);
+            
+            const crystalArea = document.getElementById('crystal-area');
+            crystalArea.appendChild(facetElement);
+        });
+        
+        // Highlight next facet with improved visibility
+        this.highlightNextFacet();
+        
+        console.log(`🎮 Rendered ${this.crystalState.facets.length} facets, current index: ${this.crystalState.currentFacetIndex}`);
     }
 }
-
-@media (max-width: 480px) {
-    .container, .screen, .welcome-content, .typing-content, .crystal-content, .gallery-content, .export-content {
-        padding-left: var(--space-12);
-        padding-right: var(--space-12);
-        margin: 0 auto;
-        width: 100%;
-        max-width: 100vw;
-        box-sizing: border-box;
-    }
-}
-
-@media (max-width: 360px) {
-    .container, .screen, .welcome-content, .typing-content, .crystal-content, .gallery-content, .export-content {
-        padding-left: var(--space-8);
-        padding-right: var(--space-8);
-        margin: 0 auto;
-        width: 100%;
-        max-width: 100vw;
-        box-sizing: border-box;
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-  .typing-feedback-display, .sentence-display, .stat, .card, .btn, input, textarea {
-    color: var(--color-text) !important;
-    background: var(--color-surface) !important;
-    border: 1.5px solid var(--color-border) !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
-  }
-  .typing-feedback-display, .sentence-display {
-    border: 2px solid var(--color-primary) !important;
-    box-shadow: 0 0 0 2px var(--color-primary), 0 2px 8px rgba(0,0,0,0.18) !important;
-  }
-  .progress-bar {
-    background: var(--color-secondary) !important;
-    border-radius: 6px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.18) !important;
-  }
-  .progress-fill {
-    background: linear-gradient(90deg, var(--color-primary), var(--color-accent)) !important;
-  }
-  .btn {
-    color: var(--color-btn-primary-text) !important;
-    background: var(--color-primary) !important;
-    border: 1.5px solid var(--color-primary) !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
-  }
-  .btn:disabled {
-    opacity: 0.6 !important;
-  }
-  .stat, .card {
-    border: 1.5px solid var(--color-border) !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
-  }
-  h1, h2, h3, h4, h5, h6, p, span, label, div, button, input, textarea, select {
-    color: var(--color-text) !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.18) !important;
-  }
-}
+// Initialize the application
+document.addEventListener('DOMContentLoaded', () => {
+    new BiometricDataCollector();
+});
