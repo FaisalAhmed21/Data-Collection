@@ -3637,7 +3637,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
     });
-    // Remove the input event handler that resets the value
+    // No input event handler here
 
     // Hide keyboard if clicking outside
     document.addEventListener('mousedown', (e) => {
@@ -3646,19 +3646,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Custom keyboard click handler and helpers remain unchanged ---
-    typingInput.addEventListener('input', (e) => {
-        typingInput.value = collector.lastInputValue || '';
-        e.preventDefault();
-        return false;
-    });
-    document.addEventListener('mousedown', (e) => {
-        if (!customKeyboard.contains(e.target) && e.target !== typingInput) {
-            customKeyboard.style.display = 'none';
-        }
-    });
-
-    // Keyboard key press handler
+    // --- Custom keyboard click handler and helpers ---
     customKeyboard.addEventListener('click', (e) => {
         if (!e.target.classList.contains('key')) return;
         const key = e.target.getAttribute('data-key');
@@ -3693,21 +3681,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (key === 'backspace') {
             if (caret > 0) {
                 newValue = value.slice(0, caret - 1) + value.slice(caret);
-                typingInput.value = newValue;
-                typingInput.setSelectionRange(caret - 1, caret - 1);
                 insertChar = 'BACKSPACE';
                 handled = true;
+                caret = caret - 1;
             }
         } else if (key === 'space') {
             newValue = value.slice(0, caret) + ' ' + value.slice(caret);
-            typingInput.value = newValue;
-            typingInput.setSelectionRange(caret + 1, caret + 1);
             insertChar = ' ';
             handled = true;
+            caret = caret + 1;
         } else if (key === 'enter') {
-            // Optionally handle enter
+            newValue = value.slice(0, caret) + '\n' + value.slice(caret);
             insertChar = '\n';
             handled = true;
+            caret = caret + 1;
         } else if (key === 'shift') {
             isShift = !isShift;
             updateKeyboardCase();
@@ -3727,16 +3714,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 char = char.toUpperCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
-            typingInput.value = newValue;
-            typingInput.setSelectionRange(caret + 1, caret + 1);
             insertChar = char;
             handled = true;
+            caret = caret + 1;
             if (isShift && !isSymbols) {
                 isShift = false;
                 updateKeyboardCase();
             }
         }
         if (handled) {
+            typingInput.value = newValue;
+            typingInput.setSelectionRange(caret, caret);
+            typingInput.focus(); // Ensure caret is visible after input
             // Record keystroke and touch data
             const timestamp = performance.now();
             collector.recordKeystroke({
