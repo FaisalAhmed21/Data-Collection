@@ -430,22 +430,6 @@ class BiometricDataCollector {
                 console.log('Composition started - monitoring for clipboard content');
             });
             
-            typingInput.addEventListener('input', function(e) {
-                const currentValue = e.target.value;
-                const previousValue = this.lastInputValue || '';
-                
-                if (currentValue.length > previousValue.length + 1) {
-                    console.log('Potential paste detected - blocking');
-                    e.target.value = previousValue;
-                    setTimeout(() => {
-                        typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
-                    }, 0);
-                    return false;
-                }
-                
-                this.lastInputValue = currentValue;
-            }.bind(this));
-            
             if (navigator.clipboard) {
                 const originalWriteText = navigator.clipboard.writeText;
                 const originalReadText = navigator.clipboard.readText;
@@ -480,6 +464,11 @@ class BiometricDataCollector {
         typingInput.addEventListener('compositionend', (e) => {
             this.compositionActive = false;
             console.log('Composition ended:', e.data);
+        });
+
+        typingInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+            console.log('Paste blocked');
         });
         typingInput.addEventListener('input', (e) => {
             this.handleTypingInput(e);
