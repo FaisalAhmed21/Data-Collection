@@ -3453,12 +3453,12 @@ class BiometricDataCollector {
         const nextSentenceBtn = document.getElementById('next-sentence-btn');
         if (typingInput && nextSentenceBtn) {
             if (this.taskState.studyStarted && !this.taskState.typingCompleted) {
-                typingInput.disabled = false;
+                typingInput.readOnly = false;
                 typingInput.style.opacity = '1';
                 nextSentenceBtn.disabled = false;
                 nextSentenceBtn.style.opacity = '1';
             } else {
-                typingInput.disabled = true;
+                typingInput.readOnly = true;
                 typingInput.style.opacity = '0.5';
                 nextSentenceBtn.disabled = true;
                 nextSentenceBtn.style.opacity = '0.5';
