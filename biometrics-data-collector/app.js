@@ -3340,8 +3340,6 @@ class BiometricDataCollector {
                     ref_char: refChar,
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
-                    touch_major: keystroke.touchMajor || 0,
-                    touch_minor: keystroke.touchMinor || 0,
                     was_deleted: wasDeleted,
                     flight_time_ms: flightTime, // Use the flight time as recorded
                     browser_name: this.deviceInfo.browser_name
@@ -3699,6 +3697,18 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = '\n';
             handled = true;
         } else if (key === 'shift') {
+            // Record SHIFT key press
+            const timestamp = performance.now();
+            collector.recordKeystroke({
+                timestamp,
+                actualChar: 'SHIFT',
+                keyCode: 16,
+                type: 'custom-keyboard',
+                sentence: collector.currentSentence,
+                position: caret,
+                clientX: Math.round(touchX),
+                clientY: Math.round(touchY)
+            });
             isShift = !isShift;
             updateKeyboardCase();
             return;
@@ -3737,9 +3747,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sentence: collector.currentSentence,
                 position: caret,
                 clientX: Math.round(touchX),
-                clientY: Math.round(touchY),
-                touchMajor: touchMajor,
-                touchMinor: touchMinor
+                clientY: Math.round(touchY)
             });
             collector.calculateAccuracy();
             collector.checkSentenceCompletion();
