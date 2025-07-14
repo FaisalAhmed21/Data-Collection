@@ -3642,11 +3642,7 @@ document.addEventListener('DOMContentLoaded', () => {
             customKeyboard.style.display = 'none';
         }
     });
-    document.addEventListener('touchstart', (e) => {
-        if (!customKeyboard.contains(e.target) && e.target !== typingInput) {
-            customKeyboard.style.display = 'none';
-        }
-    });
+
     // Keyboard key press handler
     customKeyboard.addEventListener('click', (e) => {
         if (!e.target.classList.contains('key')) return;
@@ -3656,6 +3652,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let newValue = value;
         let insertChar = '';
         let handled = false;
+        // Touch data
         let touchX = 0, touchY = 0, touchMajor = 0, touchMinor = 0;
         if (e instanceof PointerEvent) {
             touchX = e.clientX;
@@ -3667,23 +3664,15 @@ document.addEventListener('DOMContentLoaded', () => {
             touchX = e.targetTouches[0].clientX;
             touchY = e.targetTouches[0].clientY;
         } else {
+            // fallback: getBoundingClientRect
             const rect = e.target.getBoundingClientRect();
             touchX = rect.left + rect.width/2;
             touchY = rect.top + rect.height/2;
         }
+        // Try to get touch major/minor (Android/iOS)
         if (e.touches && e.touches[0]) {
             touchMajor = e.touches[0].radiusX || 0;
             touchMinor = e.touches[0].radiusY || 0;
-        }
-        // Keyboard toggle logic
-        if (key === '?123') {
-            lettersLayout.style.display = 'none';
-            symbolsLayout.style.display = 'block';
-            return;
-        } else if (key === 'ABC') {
-            symbolsLayout.style.display = 'none';
-            lettersLayout.style.display = 'block';
-            return;
         }
         // Key logic
         if (key === 'backspace') {
@@ -3700,30 +3689,44 @@ document.addEventListener('DOMContentLoaded', () => {
             typingInput.setSelectionRange(caret + 1, caret + 1);
             insertChar = ' ';
             handled = true;
+        } else if (key === 'enter') {
+            // Optionally handle enter
+            insertChar = '\n';
+            handled = true;
         } else if (key === 'shift') {
             isShift = !isShift;
             updateKeyboardCase();
             return;
-        } else if (key === 'enter') {
-            newValue = value.slice(0, caret) + '\n' + value.slice(caret);
-            typingInput.value = newValue;
-            typingInput.setSelectionRange(caret + 1, caret + 1);
-            insertChar = '\n';
-            handled = true;
+        } else if (key === '?123') {
+            isSymbols = true;
+            updateKeyboardLayout();
+            return;
+        } else if (key === 'ABC') {
+            isSymbols = false;
+            updateKeyboardLayout();
+            return;
         } else {
+            // Normal character
             let char = key;
+            if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
+                char = char.toUpperCase();
+            }
             newValue = value.slice(0, caret) + char + value.slice(caret);
             typingInput.value = newValue;
             typingInput.setSelectionRange(caret + 1, caret + 1);
             insertChar = char;
             handled = true;
+            if (isShift && !isSymbols) {
+                isShift = false;
+                updateKeyboardCase();
+            }
         }
         if (handled) {
-            collector.lastInputValue = newValue;
+            // Record keystroke and touch data
             const timestamp = performance.now();
             collector.recordKeystroke({
                 timestamp,
-                actualChar: insertChar === '\n' ? 'ENTER' : (insertChar === ' ' ? 'SPACE' : insertChar),
+                actualChar: insertChar,
                 keyCode: insertChar === 'BACKSPACE' ? 8 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
                 type: 'custom-keyboard',
                 sentence: collector.currentSentence,
@@ -3738,4 +3741,25 @@ document.addEventListener('DOMContentLoaded', () => {
             collector.updateTypingFeedback();
         }
     });
+
+    function updateKeyboardCase() {
+        const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
+        keys.forEach(btn => {
+            const key = btn.getAttribute('data-key');
+            if (key && key.length === 1 && /[a-z]/.test(key)) {
+                btn.textContent = isShift ? key.toUpperCase() : key;
+            }
+        });
+    }
+    function updateKeyboardLayout() {
+        const letterRows = customKeyboard.querySelectorAll('.keyboard-letters');
+        const symbolRows = customKeyboard.querySelectorAll('.keyboard-symbols');
+        if (isSymbols) {
+            letterRows.forEach(r => r.style.display = 'none');
+            symbolRows.forEach(r => r.style.display = 'flex');
+        } else {
+            letterRows.forEach(r => r.style.display = 'flex');
+            symbolRows.forEach(r => r.style.display = 'none');
+        }
+    }
 });
