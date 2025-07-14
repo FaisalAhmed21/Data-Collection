@@ -3832,4 +3832,14 @@ document.addEventListener('DOMContentLoaded', () => {
             delete collector.keyDwellStartTimes[key];
         }
     }, { passive: true });
+
+    // Ensure the custom keyboard instantly shows up if user touches or clicks within the typing input container
+    if (typingInput) {
+        typingInput.addEventListener('touchstart', (e) => {
+            customKeyboard.style.display = 'block';
+        });
+        typingInput.addEventListener('click', (e) => {
+            customKeyboard.style.display = 'block';
+        });
+    }
 });
