@@ -3389,3 +3389,39 @@ html, body {
     max-width: 180px;
   }
 }
+
+/* Enhanced typing input: bigger, rectangular, prominent placeholder */
+.typing-area textarea,
+#typing-input {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-2xl);
+  width: 100%;
+  min-height: 100px;
+  max-height: 180px;
+  resize: none;
+  border: 2.5px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-20) var(--space-16);
+  background: var(--color-surface);
+  color: var(--color-text);
+  line-height: 1.6;
+  box-sizing: border-box;
+  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  box-shadow: var(--shadow-md);
+}
+
+.typing-area textarea:focus,
+#typing-input:focus {
+  outline: var(--focus-outline);
+  border-color: var(--color-primary-active);
+  box-shadow: 0 0 0 3px var(--color-focus-ring), var(--shadow-md);
+}
+
+.typing-area textarea::placeholder,
+#typing-input::placeholder {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xl);
+  opacity: 0.8;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
