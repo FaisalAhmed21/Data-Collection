@@ -3770,3 +3770,39 @@ html, body {
     color: #20CFCF;
   }
 }
+
+#typing-input, .typing-input-box, .typing-area textarea {
+  background: #fff !important;
+  color: #111 !important;
+  box-shadow: none !important;
+  border: 2px solid var(--color-primary) !important;
+  border-radius: 12px !important;
+  caret-color: var(--color-primary) !important;
+}
+#typing-input:focus, .typing-input-box:focus, .typing-area textarea:focus {
+  outline: var(--focus-outline) !important;
+  border-color: var(--color-primary-active) !important;
+  box-shadow: 0 0 0 2px var(--color-primary) !important;
+}
+#typing-input::selection, .typing-input-box::selection, .typing-area textarea::selection {
+  background: transparent !important;
+  color: inherit !important;
+}
+#typing-input::-moz-selection, .typing-input-box::-moz-selection, .typing-area textarea::-moz-selection {
+  background: transparent !important;
+  color: inherit !important;
+}
+@media (prefers-color-scheme: dark) {
+  #typing-input, .typing-input-box, .typing-area textarea {
+    background: #232526 !important;
+    color: #fff !important;
+    border: 2px solid #32B8C6 !important;
+    box-shadow: none !important;
+  }
+}
+[data-color-scheme="dark"] #typing-input, [data-color-scheme="dark"] .typing-input-box, [data-color-scheme="dark"] .typing-area textarea {
+  background: #232526 !important;
+  color: #fff !important;
+  border: 2px solid #32B8C6 !important;
+  box-shadow: none !important;
+}
