@@ -63,19 +63,105 @@
                 <h2>Typing Task</h2>
                 <p class="task-instruction">Type each sentence exactly as shown. You must achieve 100% accuracy to proceed. Use the visual feedback below to see your progress and any mistakes.</p>
                 
-                <div class="sentence-display">
-                    <p id="target-sentence"></p>
-                </div>
-                
-                <!-- Visual Typing Feedback System -->
-                <div class="typing-feedback-container">
-                    <div class="typing-feedback-display" id="typing-feedback-display">
-                        <!-- Dynamic content will be inserted here -->
+                <div class="typing-section">
+                    <div class="sentence-display">
+                        <span id="target-sentence"></span>
                     </div>
-                </div>
-                
-                <div class="typing-area">
-                    <textarea id="typing-input" class="form-control" rows="3" placeholder="Start typing here..." spellcheck="false" autocomplete="off"></textarea>
+                    <input id="typing-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly />
+                    <div id="custom-keyboard" class="custom-keyboard" style="display:none;">
+                        <div class="keyboard-row keyboard-numbers">
+                            <button class="key key-num" data-key="1">1</button>
+                            <button class="key key-num" data-key="2">2</button>
+                            <button class="key key-num" data-key="3">3</button>
+                            <button class="key key-num" data-key="4">4</button>
+                            <button class="key key-num" data-key="5">5</button>
+                            <button class="key key-num" data-key="6">6</button>
+                            <button class="key key-num" data-key="7">7</button>
+                            <button class="key key-num" data-key="8">8</button>
+                            <button class="key key-num" data-key="9">9</button>
+                            <button class="key key-num" data-key="0">0</button>
+                        </div>
+                        <div class="keyboard-row keyboard-letters" id="keyboard-letters">
+                            <button class="key" data-key="q">q</button>
+                            <button class="key" data-key="w">w</button>
+                            <button class="key" data-key="e">e</button>
+                            <button class="key" data-key="r">r</button>
+                            <button class="key" data-key="t">t</button>
+                            <button class="key" data-key="y">y</button>
+                            <button class="key" data-key="u">u</button>
+                            <button class="key" data-key="i">i</button>
+                            <button class="key" data-key="o">o</button>
+                            <button class="key" data-key="p">p</button>
+                        </div>
+                        <div class="keyboard-row keyboard-letters">
+                            <button class="key" data-key="a">a</button>
+                            <button class="key" data-key="s">s</button>
+                            <button class="key" data-key="d">d</button>
+                            <button class="key" data-key="f">f</button>
+                            <button class="key" data-key="g">g</button>
+                            <button class="key" data-key="h">h</button>
+                            <button class="key" data-key="j">j</button>
+                            <button class="key" data-key="k">k</button>
+                            <button class="key" data-key="l">l</button>
+                        </div>
+                        <div class="keyboard-row keyboard-letters">
+                            <button class="key" data-key="shift">Shift</button>
+                            <button class="key" data-key="z">z</button>
+                            <button class="key" data-key="x">x</button>
+                            <button class="key" data-key="c">c</button>
+                            <button class="key" data-key="v">v</button>
+                            <button class="key" data-key="b">b</button>
+                            <button class="key" data-key="n">n</button>
+                            <button class="key" data-key="m">m</button>
+                            <button class="key" data-key="backspace">⌫</button>
+                        </div>
+                        <div class="keyboard-row keyboard-actions">
+                            <button class="key" data-key="?123">?123</button>
+                            <button class="key" data-key="space" style="flex:2;">Space</button>
+                            <button class="key" data-key="enter">Enter</button>
+                        </div>
+                        <div class="keyboard-row keyboard-symbols" id="keyboard-symbols" style="display:none;">
+                            <button class="key" data-key="1">1</button>
+                            <button class="key" data-key="2">2</button>
+                            <button class="key" data-key="3">3</button>
+                            <button class="key" data-key="4">4</button>
+                            <button class="key" data-key="5">5</button>
+                            <button class="key" data-key="6">6</button>
+                            <button class="key" data-key="7">7</button>
+                            <button class="key" data-key="8">8</button>
+                            <button class="key" data-key="9">9</button>
+                            <button class="key" data-key="0">0</button>
+                        </div>
+                        <div class="keyboard-row keyboard-symbols" style="display:none;">
+                            <button class="key" data-key="@">@</button>
+                            <button class="key" data-key="#">#</button>
+                            <button class="key" data-key="$">$</button>
+                            <button class="key" data-key="%">%</button>
+                            <button class="key" data-key="&">&</button>
+                            <button class="key" data-key="*">*</button>
+                            <button class="key" data-key="(">(</button>
+                            <button class="key" data-key=")">)</button>
+                            <button class="key" data-key="_">_</button>
+                            <button class="key" data-key="-">-</button>
+                        </div>
+                        <div class="keyboard-row keyboard-symbols" style="display:none;">
+                            <button class="key" data-key="/">/</button>
+                            <button class="key" data-key=":">:</button>
+                            <button class="key" data-key=";">;</button>
+                            <button class="key" data-key="'">'</button>
+                            <button class="key" data-key='"'>"</button>
+                            <button class="key" data-key=",">,</button>
+                            <button class="key" data-key=".">.</button>
+                            <button class="key" data-key="?">?</button>
+                            <button class="key" data-key="!">!</button>
+                            <button class="key" data-key="backspace">⌫</button>
+                        </div>
+                        <div class="keyboard-row keyboard-symbols keyboard-actions" style="display:none;">
+                            <button class="key" data-key="ABC">ABC</button>
+                            <button class="key" data-key="space" style="flex:2;">Space</button>
+                            <button class="key" data-key="enter">Enter</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="typing-stats">
