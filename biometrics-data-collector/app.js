@@ -3607,10 +3607,10 @@ class BiometricDataCollector {
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     const collector = new BiometricDataCollector();
-
-    // Custom Keyboard Logic
     const typingInput = document.getElementById('typing-input');
     const customKeyboard = document.getElementById('custom-keyboard');
+    const lettersLayout = customKeyboard.querySelector('.keyboard-letters-layout');
+    const symbolsLayout = customKeyboard.querySelector('.keyboard-symbols-layout');
 
     // Show keyboard on focus
     typingInput.addEventListener('focus', (e) => {
@@ -3618,11 +3618,6 @@ document.addEventListener('DOMContentLoaded', () => {
             customKeyboard.style.display = 'block';
         }, 50);
     });
-    typingInput.addEventListener('blur', (e) => {
-        // Optionally hide keyboard on blur
-        // setTimeout(() => { customKeyboard.style.display = 'none'; }, 200);
-    });
-    // Prevent native keyboard on touch/click, but allow caret movement
     typingInput.addEventListener('touchstart', (e) => {
         e.preventDefault();
         typingInput.focus();
@@ -3633,18 +3628,15 @@ document.addEventListener('DOMContentLoaded', () => {
         typingInput.focus();
         customKeyboard.style.display = 'block';
     });
-    // Block physical keyboard input
     typingInput.addEventListener('keydown', (e) => {
         e.preventDefault();
         return false;
     });
     typingInput.addEventListener('input', (e) => {
-        // Prevent any input except via custom keyboard
         typingInput.value = collector.lastInputValue || '';
         e.preventDefault();
         return false;
     });
-    // Hide keyboard if clicking outside
     document.addEventListener('mousedown', (e) => {
         if (!customKeyboard.contains(e.target) && e.target !== typingInput) {
             customKeyboard.style.display = 'none';
@@ -3664,7 +3656,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let newValue = value;
         let insertChar = '';
         let handled = false;
-        // Touch data
         let touchX = 0, touchY = 0, touchMajor = 0, touchMinor = 0;
         if (e instanceof PointerEvent) {
             touchX = e.clientX;
@@ -3676,15 +3667,23 @@ document.addEventListener('DOMContentLoaded', () => {
             touchX = e.targetTouches[0].clientX;
             touchY = e.targetTouches[0].clientY;
         } else {
-            // fallback: getBoundingClientRect
             const rect = e.target.getBoundingClientRect();
             touchX = rect.left + rect.width/2;
             touchY = rect.top + rect.height/2;
         }
-        // Try to get touch major/minor (Android/iOS)
         if (e.touches && e.touches[0]) {
             touchMajor = e.touches[0].radiusX || 0;
             touchMinor = e.touches[0].radiusY || 0;
+        }
+        // Keyboard toggle logic
+        if (key === '?123') {
+            lettersLayout.style.display = 'none';
+            symbolsLayout.style.display = 'block';
+            return;
+        } else if (key === 'ABC') {
+            symbolsLayout.style.display = 'none';
+            lettersLayout.style.display = 'block';
+            return;
         }
         // Key logic
         if (key === 'backspace') {
@@ -3708,7 +3707,6 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = '\n';
             handled = true;
         } else {
-            // Normal character
             let char = key;
             newValue = value.slice(0, caret) + char + value.slice(caret);
             typingInput.value = newValue;
@@ -3718,7 +3716,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (handled) {
             collector.lastInputValue = newValue;
-            // Record keystroke and touch data
             const timestamp = performance.now();
             collector.recordKeystroke({
                 timestamp,
