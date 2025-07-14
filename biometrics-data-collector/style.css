@@ -3430,3 +3430,182 @@ html, body {
   border-color: var(--color-primary-active);
   box-shadow: 0 0 0 2px var(--color-primary);
 }
+
+/* --- ENHANCED DARK MODE & CURSOR VISIBILITY FOR TYPING INPUT AND CUSTOM KEYBOARD --- */
+
+#typing-input, .typing-input-box {
+  caret-color: var(--color-primary) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border: 2px solid var(--color-primary);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  position: relative;
+  z-index: 2;
+}
+#typing-input:focus, .typing-input-box:focus {
+  outline: var(--focus-outline) !important;
+  border-color: var(--color-primary-active) !important;
+  box-shadow: 0 0 0 2px var(--color-primary), 0 2px 8px rgba(0,0,0,0.12) !important;
+}
+
+/* Always-visible, high-contrast caret for all modes */
+#typing-input, .typing-input-box {
+  caret-color: #20CFCF !important; /* fallback for light */
+}
+@media (prefers-color-scheme: dark) {
+  #typing-input, .typing-input-box {
+    caret-color: #32B8C6 !important; /* bright teal for dark mode */
+    background: #232526 !important;
+    color: #fff !important;
+    border: 2px solid #32B8C6 !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.28) !important;
+  }
+}
+[data-color-scheme="dark"] #typing-input, [data-color-scheme="dark"] .typing-input-box {
+  caret-color: #32B8C6 !important;
+  background: #232526 !important;
+  color: #fff !important;
+  border: 2px solid #32B8C6 !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.28) !important;
+}
+
+/* Custom keyboard dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .custom-keyboard {
+    background: #232526 !important;
+    box-shadow: 0 -2px 24px rgba(0,0,0,0.45) !important;
+    border-top: 2px solid #32B8C6 !important;
+  }
+  .custom-keyboard .key {
+    background: #2d3136 !important;
+    color: #fff !important;
+    border: 1.5px solid #444 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18) !important;
+  }
+  .custom-keyboard .key:active {
+    background: #222c33 !important;
+  }
+  .custom-keyboard .key[data-key="backspace"] {
+    background: #3a2323 !important;
+    color: #ff4f64 !important;
+    border-color: #ff4f64 !important;
+  }
+  .custom-keyboard .key[data-key="shift"],
+  .custom-keyboard .key[data-key="?123"],
+  .custom-keyboard .key[data-key="ABC"] {
+    background: #223a3a !important;
+    color: #32B8C6 !important;
+    border-color: #32B8C6 !important;
+  }
+  .custom-keyboard .key[data-key="space"] {
+    background: #232526 !important;
+    color: #fff !important;
+    border-color: #444 !important;
+  }
+  .custom-keyboard .key[data-key="enter"] {
+    background: #233a23 !important;
+    color: #20CFCF !important;
+    border-color: #20CFCF !important;
+  }
+}
+[data-color-scheme="dark"] .custom-keyboard {
+  background: #232526 !important;
+  box-shadow: 0 -2px 24px rgba(0,0,0,0.45) !important;
+  border-top: 2px solid #32B8C6 !important;
+}
+[data-color-scheme="dark"] .custom-keyboard .key {
+  background: #2d3136 !important;
+  color: #fff !important;
+  border: 1.5px solid #444 !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18) !important;
+}
+[data-color-scheme="dark"] .custom-keyboard .key:active {
+  background: #222c33 !important;
+}
+[data-color-scheme="dark"] .custom-keyboard .key[data-key="backspace"] {
+  background: #3a2323 !important;
+  color: #ff4f64 !important;
+  border-color: #ff4f64 !important;
+}
+[data-color-scheme="dark"] .custom-keyboard .key[data-key="shift"],
+[data-color-scheme="dark"] .custom-keyboard .key[data-key="?123"],
+[data-color-scheme="dark"] .custom-keyboard .key[data-key="ABC"] {
+  background: #223a3a !important;
+  color: #32B8C6 !important;
+  border-color: #32B8C6 !important;
+}
+[data-color-scheme="dark"] .custom-keyboard .key[data-key="space"] {
+  background: #232526 !important;
+  color: #fff !important;
+  border-color: #444 !important;
+}
+[data-color-scheme="dark"] .custom-keyboard .key[data-key="enter"] {
+  background: #233a23 !important;
+  color: #20CFCF !important;
+  border-color: #20CFCF !important;
+}
+
+/* Extra: Add a subtle glow to the caret for visibility */
+#typing-input, .typing-input-box {
+  text-shadow: 0 0 2px #20CFCF, 0 0 4px #32B8C6;
+}
+@media (prefers-color-scheme: dark) {
+  #typing-input, .typing-input-box {
+    text-shadow: 0 0 4px #32B8C6, 0 0 8px #20CFCF;
+  }
+}
+[data-color-scheme="dark"] #typing-input, [data-color-scheme="dark"] .typing-input-box {
+  text-shadow: 0 0 4px #32B8C6, 0 0 8px #20CFCF;
+}
+
+/* --- INCREASED CUSTOM KEYBOARD HEIGHT AND KEY SIZE --- */
+.custom-keyboard {
+  padding: 18px 0 18px 0 !important; /* more vertical padding */
+  min-height: 260px;
+}
+.custom-keyboard .keyboard-row {
+  margin-bottom: 12px;
+}
+.custom-keyboard .key {
+  min-width: 54px;
+  min-height: 62px;
+  font-size: 1.35rem;
+  max-width: 80px;
+  border-radius: 12px;
+  margin: 0 7px;
+}
+.custom-keyboard .keyboard-actions .key {
+  min-width: 100px;
+  max-width: 150px;
+  font-size: 1.2rem;
+}
+.custom-keyboard .key[data-key="space"] {
+  min-width: 180px;
+  max-width: 400px;
+  font-size: 1.18rem;
+}
+@media (max-width: 600px) {
+  .custom-keyboard {
+    padding: 12px 0 12px 0 !important;
+    min-height: 180px;
+  }
+  .custom-keyboard .key {
+    min-width: 40px;
+    min-height: 44px;
+    font-size: 1.08rem;
+    max-width: 54px;
+    border-radius: 8px;
+    margin: 0 4px;
+  }
+  .custom-keyboard .keyboard-actions .key {
+    min-width: 70px;
+    max-width: 110px;
+    font-size: 1rem;
+  }
+  .custom-keyboard .key[data-key="space"] {
+    min-width: 120px;
+    max-width: 220px;
+    font-size: 1rem;
+  }
+}
