@@ -895,24 +895,24 @@ select.form-control {
   min-height: 80px;
   max-height: 120px;
   resize: none;
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border: 1px solid #ccc;
+  border-radius: 4px;
   padding: var(--space-16);
-  background: var(--color-surface);
-  color: var(--color-text);
+  background: #ffffff;
+  color: #333333;
   line-height: 1.5;
   -webkit-user-select: text;
   -moz-user-select: text;
   -ms-user-select: text;
   user-select: text;
   box-sizing: border-box;
-  transition: border-color var(--duration-normal) var(--ease-standard);
+  transition: none;
 }
 
 .typing-area textarea:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(32, 207, 207, 0.1);
+  border-color: #999;
+  box-shadow: none;
 }
 
 /* Typing Feedback System */
@@ -967,10 +967,61 @@ select.form-control {
   font-weight: var(--font-weight-normal);
 }
 
+/* Target feedback styles - shows the target sentence with error highlighting */
+.target-feedback {
+  margin-top: var(--space-16);
+  padding: var(--space-12);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  word-wrap: break-word;
+  position: relative;
+}
+
+.target-feedback .target-correct {
+  color: var(--color-text);
+  font-weight: var(--font-weight-normal);
+  background: transparent;
+  border-bottom: 1px solid rgba(32, 207, 207, 0.2);
+}
+
+.target-feedback .target-incorrect {
+  background: rgba(255, 79, 100, 0.15);
+  color: var(--color-error);
+  padding: 2px 1px;
+  border-radius: 3px;
+  font-weight: var(--font-weight-medium);
+  border-bottom: 2px solid rgba(255, 79, 100, 0.4);
+  text-decoration: underline;
+  text-decoration-color: var(--color-error);
+  text-decoration-thickness: 2px;
+}
+
+.target-feedback .target-remaining {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+  font-weight: var(--font-weight-normal);
+  background: transparent;
+  border-bottom: 1px solid rgba(32, 207, 207, 0.1);
+}
+
 
 
 /* Dark mode adjustments for typing feedback */
 @media (prefers-color-scheme: dark) {
+  .typing-area textarea {
+    background: #2a2a2a;
+    color: #ffffff;
+    border-color: #555;
+  }
+  
+  .typing-area textarea:focus {
+    border-color: #777;
+  }
+  
   .typing-feedback-display .typed-correct {
     background: rgba(50, 184, 198, 0.2);
     border-bottom-color: rgba(50, 184, 198, 0.4);
@@ -988,6 +1039,16 @@ select.form-control {
   }
 }
 
+[data-color-scheme="dark"] .typing-area textarea {
+  background: #2a2a2a;
+  color: #ffffff;
+  border-color: #555;
+}
+
+[data-color-scheme="dark"] .typing-area textarea:focus {
+  border-color: #777;
+}
+
 [data-color-scheme="dark"] .typing-feedback-display .typed-correct {
   background: rgba(50, 184, 198, 0.2);
   border-bottom-color: rgba(50, 184, 198, 0.4);
@@ -1002,6 +1063,55 @@ select.form-control {
 [data-color-scheme="dark"] .typing-feedback-display .to-type {
   color: var(--color-text-secondary);
   opacity: 0.6;
+}
+
+/* Dark mode adjustments for target feedback */
+@media (prefers-color-scheme: dark) {
+  .target-feedback {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+  }
+  
+  .target-feedback .target-correct {
+    color: var(--color-text);
+    border-bottom-color: rgba(50, 184, 198, 0.3);
+  }
+  
+  .target-feedback .target-incorrect {
+    background: rgba(255, 84, 89, 0.2);
+    color: var(--color-error);
+    border-bottom-color: rgba(255, 84, 89, 0.5);
+    text-decoration-color: var(--color-error);
+  }
+  
+  .target-feedback .target-remaining {
+    color: var(--color-text-secondary);
+    opacity: 0.5;
+    border-bottom-color: rgba(50, 184, 198, 0.2);
+  }
+}
+
+[data-color-scheme="dark"] .target-feedback {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-color-scheme="dark"] .target-feedback .target-correct {
+  color: var(--color-text);
+  border-bottom-color: rgba(50, 184, 198, 0.3);
+}
+
+[data-color-scheme="dark"] .target-feedback .target-incorrect {
+  background: rgba(255, 84, 89, 0.2);
+  color: var(--color-error);
+  border-bottom-color: rgba(255, 84, 89, 0.5);
+  text-decoration-color: var(--color-error);
+}
+
+[data-color-scheme="dark"] .target-feedback .target-remaining {
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+  border-bottom-color: rgba(50, 184, 198, 0.2);
 }
 
 /* Mobile responsive adjustments for typing feedback */
@@ -1023,6 +1133,19 @@ select.form-control {
     padding: 1px 0.5px;
     border-radius: 2px;
   }
+  
+  .target-feedback {
+    margin-top: var(--space-12);
+    padding: var(--space-8);
+    font-size: var(--font-size-xs);
+  }
+  
+  .target-feedback .target-correct,
+  .target-feedback .target-incorrect,
+  .target-feedback .target-remaining {
+    padding: 1px 0.5px;
+    border-radius: 2px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1040,6 +1163,19 @@ select.form-control {
   .typing-feedback-display .typed-correct,
   .typing-feedback-display .typed-incorrect,
   .typing-feedback-display .to-type {
+    padding: 0.5px 0.25px;
+    border-radius: 1px;
+  }
+  
+  .target-feedback {
+    margin-top: var(--space-8);
+    padding: var(--space-6);
+    font-size: var(--font-size-xs);
+  }
+  
+  .target-feedback .target-correct,
+  .target-feedback .target-incorrect,
+  .target-feedback .target-remaining {
     padding: 0.5px 0.25px;
     border-radius: 1px;
   }
@@ -1942,6 +2078,9 @@ select.form-control {
     min-height: 80px;
     max-height: 100px;
     padding: var(--space-12);
+    background: #ffffff;
+    color: #333333;
+    border: 1px solid #ccc;
   }
 
   .crystal-feedback {
@@ -2102,6 +2241,9 @@ select.form-control {
     min-height: 60px;
     max-height: 80px;
     padding: var(--space-8);
+    background: #ffffff;
+    color: #333333;
+    border: 1px solid #ccc;
   }
   .crystal-feedback {
     grid-template-columns: 1fr;
