@@ -68,6 +68,9 @@
                         <span id="target-sentence"></span>
                     </div>
                     <textarea id="typing-input" class="typing-input-box" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+                    <div class="typing-feedback-container">
+                        <div id="typing-feedback-display" class="typing-feedback-display"></div>
+                    </div>
                     <div id="custom-keyboard" class="custom-keyboard" style="display:none;">
                         <div class="keyboard-row keyboard-numbers">
                             <button class="key key-num" data-key="1">1</button>
@@ -117,7 +120,9 @@
                         </div>
                         <div class="keyboard-row keyboard-actions">
                             <button class="key" data-key="?123">?123</button>
+                            <button class="key" data-key=",">,</button>
                             <button class="key" data-key="space" style="flex:2;">Space</button>
+                            <button class="key" data-key=".">.</button>
                             <button class="key" data-key="enter">Enter</button>
                         </div>
                         <div class="keyboard-row keyboard-symbols" style="display:none;">
@@ -134,8 +139,8 @@
                         </div>
                         <div class="keyboard-row keyboard-symbols" style="display:none;">
                             <button class="key" data-key="/">/</button>
-                            <button class="key" data-key=".">.</button>
-                            <button class="key" data-key=",">,</button>
+                            <button class="key" data-key="\\">\</button>
+                            <button class="key" data-key="°">°</button>
                             <button class="key" data-key="?">?</button>
                             <button class="key" data-key="!">!</button>
                             <button class="key" data-key="'">'</button>
