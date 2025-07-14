@@ -3774,4 +3774,173 @@ document.addEventListener('DOMContentLoaded', () => {
             symbolRows.forEach(r => r.style.display = 'none');
         }
     }
+
+    // Keyboard layout JSON (Pixel 6 Pro reference)
+    const PIXEL_KEYBOARD_LAYOUT = {
+      device_info: {
+        model: "Pixel 6 Pro",
+        whole_screen_width: 1440.0,
+        whole_screen_height: 3120.0,
+        num_all_heatmap_rows: 39,
+        num_all_heatmap_cols: 18,
+        num_valid_heatmap_rows: 16
+      },
+      keyboard_info: {
+        keyboard_width: 1440.0,
+        keyboard_height: 854.0,
+        top_left_x_position: 0.0,
+        top_left_y_position: 2098.0,
+        most_common_key_width: 135.0,
+        most_common_key_height: 206.0
+      },
+      keys_info: {
+        q: { key_id: "q", text_literal: "Q", key_center_x: 112.0, key_center_y: 131.0, key_width: 135.0, key_height: 206.0 },
+        w: { key_id: "w", text_literal: "W", key_center_x: 247.0, key_center_y: 131.0, key_width: 135.0, key_height: 206.0 },
+        e: { key_id: "e", text_literal: "E", key_center_x: 382.0, key_center_y: 131.0, key_width: 135.0, key_height: 206.0 },
+        r: { key_id: "r", text_literal: "R", key_center_x: 517.0, key_center_y: 131.0, key_width: 135.0, key_height: 206.0 },
+        t: { key_id: "t", text_literal: "T", key_center_x: 652.0, key_center_y: 131.0, key_width: 135.0, key_height: 206.0 },
+        y: { key_id: "y", text_literal: "Y", key_center_x: 787.0, key_center_y: 131.0, key_width: 135.0, key_height: 206.0 },
+        u: { key_id: "u", text_literal: "U", key_center_x: 922.0, key_center_y: 131.0, key_width: 135.0, key_height: 206.0 },
+        i: { key_id: "i", text_literal: "I", key_center_x: 1057.0, key_center_y: 131.0, key_width: 135.0, key_height: 206.0 },
+        o: { key_id: "o", text_literal: "O", key_center_x: 1192.0, key_center_y: 131.0, key_width: 135.0, key_height: 206.0 },
+        p: { key_id: "p", text_literal: "P", key_center_x: 1327.0, key_center_y: 131.0, key_width: 135.0, key_height: 206.0 },
+        a: { key_id: "a", text_literal: "A", key_center_x: 180.0, key_center_y: 337.0, key_width: 134.0, key_height: 206.0 },
+        s: { key_id: "s", text_literal: "S", key_center_x: 314.0, key_center_y: 337.0, key_width: 135.0, key_height: 206.0 },
+        d: { key_id: "d", text_literal: "D", key_center_x: 449.0, key_center_y: 337.0, key_width: 135.0, key_height: 206.0 },
+        f: { key_id: "f", text_literal: "F", key_center_x: 584.0, key_center_y: 337.0, key_width: 135.0, key_height: 206.0 },
+        g: { key_id: "g", text_literal: "G", key_center_x: 719.0, key_center_y: 337.0, key_width: 135.0, key_height: 206.0 },
+        h: { key_id: "h", text_literal: "H", key_center_x: 854.0, key_center_y: 337.0, key_width: 135.0, key_height: 206.0 },
+        j: { key_id: "j", text_literal: "J", key_center_x: 989.0, key_center_y: 337.0, key_width: 135.0, key_height: 206.0 },
+        k: { key_id: "k", text_literal: "K", key_center_x: 1124.0, key_center_y: 337.0, key_width: 135.0, key_height: 206.0 },
+        l: { key_id: "l", text_literal: "L", key_center_x: 1259.0, key_center_y: 337.0, key_width: 135.0, key_height: 206.0 },
+        z: { key_id: "z", text_literal: "Z", key_center_x: 314.0, key_center_y: 543.0, key_width: 135.0, key_height: 206.0 },
+        x: { key_id: "x", text_literal: "X", key_center_x: 449.0, key_center_y: 543.0, key_width: 135.0, key_height: 206.0 },
+        c: { key_id: "c", text_literal: "C", key_center_x: 584.0, key_center_y: 543.0, key_width: 135.0, key_height: 206.0 },
+        v: { key_id: "v", text_literal: "V", key_center_x: 719.0, key_center_y: 543.0, key_width: 135.0, key_height: 206.0 },
+        b: { key_id: "b", text_literal: "B", key_center_x: 854.0, key_center_y: 543.0, key_width: 135.0, key_height: 206.0 },
+        n: { key_id: "n", text_literal: "N", key_center_x: 989.0, key_center_y: 543.0, key_width: 135.0, key_height: 206.0 },
+        m: { key_id: "m", text_literal: "M", key_center_x: 1124.0, key_center_y: 543.0, key_width: 135.0, key_height: 206.0 },
+        ".": { key_id: ".", text_literal: ".", key_center_x: 1124.0, key_center_y: 750.0, key_width: 135.0, key_height: 208.0 },
+        SPACE: { key_id: "SPACE", text_literal: " ", key_center_x: 719.0, key_center_y: 750.0, key_width: 675.0, key_height: 208.0 }
+      }
+    };
+
+    // Responsive scaling for all phones
+    const refWidth = PIXEL_KEYBOARD_LAYOUT.keyboard_info.keyboard_width;
+    const refHeight = PIXEL_KEYBOARD_LAYOUT.keyboard_info.keyboard_height;
+    const screenWidth = window.innerWidth;
+    const scale = screenWidth / refWidth;
+    // Set keyboard container size and position
+    if (customKeyboard) {
+        customKeyboard.style.position = 'fixed';
+        customKeyboard.style.left = '0px';
+        customKeyboard.style.width = (refWidth * scale) + 'px';
+        customKeyboard.style.height = (refHeight * scale) + 'px';
+        customKeyboard.style.bottom = '0px';
+        customKeyboard.style.background = '#f8f8fa';
+        customKeyboard.style.zIndex = 1000;
+        customKeyboard.innerHTML = '';
+        // Render each key
+        Object.values(PIXEL_KEYBOARD_LAYOUT.keys_info).forEach(key => {
+            const btn = document.createElement('button');
+            btn.className = 'key';
+            btn.setAttribute('data-key', key.key_id);
+            btn.textContent = key.text_literal;
+            btn.style.position = 'absolute';
+            btn.style.left = ((key.key_center_x - key.key_width / 2) * scale) + 'px';
+            btn.style.top = ((key.key_center_y - key.key_height / 2) * scale) + 'px';
+            btn.style.width = (key.key_width * scale) + 'px';
+            btn.style.height = (key.key_height * scale) + 'px';
+            btn.style.fontSize = (2 * scale) + 'rem';
+            btn.style.borderRadius = (16 * scale) + 'px';
+            btn.style.border = '1px solid #ccc';
+            btn.style.background = '#fff';
+            btn.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)';
+            btn.style.margin = '0';
+            btn.style.padding = '0';
+            btn.style.display = 'flex';
+            btn.style.alignItems = 'center';
+            btn.style.justifyContent = 'center';
+            btn.style.userSelect = 'none';
+            // Key press handler
+            btn.addEventListener('click', (e) => {
+                let value = typingInput.value;
+                let caret = typingInput.selectionStart || value.length;
+                let newValue = value;
+                let insertChar = '';
+                let handled = false;
+                // Touch data
+                let touchX = 0, touchY = 0, touchMajor = 0, touchMinor = 0;
+                if (e instanceof PointerEvent) {
+                    touchX = e.clientX;
+                    touchY = e.clientY;
+                } else if (e.changedTouches && e.changedTouches[0]) {
+                    touchX = e.changedTouches[0].clientX;
+                    touchY = e.changedTouches[0].clientY;
+                } else if (e.targetTouches && e.targetTouches[0]) {
+                    touchX = e.targetTouches[0].clientX;
+                    touchY = e.targetTouches[0].clientY;
+                } else {
+                    // fallback: getBoundingClientRect
+                    const rect = e.target.getBoundingClientRect();
+                    touchX = rect.left + rect.width/2;
+                    touchY = rect.top + rect.height/2;
+                }
+                // Try to get touch major/minor (Android/iOS)
+                if (e.touches && e.touches[0]) {
+                    touchMajor = e.touches[0].radiusX || 0;
+                    touchMinor = e.touches[0].radiusY || 0;
+                }
+                // Key logic
+                if (key.key_id === 'BACKSPACE' || key.key_id === 'backspace') {
+                    if (caret > 0) {
+                        newValue = value.slice(0, caret - 1) + value.slice(caret);
+                        insertChar = 'BACKSPACE';
+                        handled = true;
+                        caret = caret - 1;
+                    }
+                } else if (key.key_id === 'SPACE' || key.key_id === 'space') {
+                    newValue = value.slice(0, caret) + ' ' + value.slice(caret);
+                    insertChar = ' ';
+                    handled = true;
+                    caret = caret + 1;
+                } else if (key.key_id === 'ENTER' || key.key_id === 'enter') {
+                    newValue = value.slice(0, caret) + '\n' + value.slice(caret);
+                    insertChar = '\n';
+                    handled = true;
+                    caret = caret + 1;
+                } else {
+                    // Normal character
+                    let char = key.text_literal;
+                    newValue = value.slice(0, caret) + char + value.slice(caret);
+                    insertChar = char;
+                    handled = true;
+                    caret = caret + 1;
+                }
+                if (handled) {
+                    typingInput.value = newValue;
+                    typingInput.setSelectionRange(caret, caret);
+                    typingInput.focus();
+                    // Record keystroke and touch data
+                    const timestamp = performance.now();
+                    collector.recordKeystroke({
+                        timestamp,
+                        actualChar: insertChar,
+                        keyCode: insertChar === 'BACKSPACE' ? 8 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
+                        type: 'custom-keyboard',
+                        sentence: collector.currentSentence,
+                        position: caret,
+                        clientX: Math.round(touchX),
+                        clientY: Math.round(touchY),
+                        touchMajor: touchMajor,
+                        touchMinor: touchMinor
+                    });
+                    collector.calculateAccuracy();
+                    collector.checkSentenceCompletion();
+                    collector.updateTypingFeedback();
+                }
+            });
+            customKeyboard.appendChild(btn);
+        });
+    }
 });
