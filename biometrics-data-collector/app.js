@@ -3700,6 +3700,10 @@ document.addEventListener('DOMContentLoaded', () => {
             typingInput.setSelectionRange(caret + 1, caret + 1);
             insertChar = ' ';
             handled = true;
+        } else if (key === 'shift') {
+            isShift = !isShift;
+            updateKeyboardCase();
+            return;
         } else if (key === 'enter') {
             newValue = value.slice(0, caret) + '\n' + value.slice(caret);
             typingInput.value = newValue;
