@@ -3611,10 +3611,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Custom Keyboard Logic
     const typingInput = document.getElementById('typing-input');
     const customKeyboard = document.getElementById('custom-keyboard');
-    let isShift = false;
-    let isSymbols = false;
 
-    // Prevent native keyboard
+    // Show keyboard on focus
     typingInput.addEventListener('focus', (e) => {
         setTimeout(() => {
             customKeyboard.style.display = 'block';
@@ -3624,7 +3622,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Optionally hide keyboard on blur
         // setTimeout(() => { customKeyboard.style.display = 'none'; }, 200);
     });
-    // Prevent native keyboard on touch/click
+    // Prevent native keyboard on touch/click, but allow caret movement
     typingInput.addEventListener('touchstart', (e) => {
         e.preventDefault();
         typingInput.focus();
@@ -3635,7 +3633,17 @@ document.addEventListener('DOMContentLoaded', () => {
         typingInput.focus();
         customKeyboard.style.display = 'block';
     });
-
+    // Block physical keyboard input
+    typingInput.addEventListener('keydown', (e) => {
+        e.preventDefault();
+        return false;
+    });
+    typingInput.addEventListener('input', (e) => {
+        // Prevent any input except via custom keyboard
+        typingInput.value = collector.lastInputValue || '';
+        e.preventDefault();
+        return false;
+    });
     // Hide keyboard if clicking outside
     document.addEventListener('mousedown', (e) => {
         if (!customKeyboard.contains(e.target) && e.target !== typingInput) {
@@ -3647,7 +3655,6 @@ document.addEventListener('DOMContentLoaded', () => {
             customKeyboard.style.display = 'none';
         }
     });
-
     // Keyboard key press handler
     customKeyboard.addEventListener('click', (e) => {
         if (!e.target.classList.contains('key')) return;
@@ -3695,43 +3702,27 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = ' ';
             handled = true;
         } else if (key === 'enter') {
-            // Optionally handle enter
+            newValue = value.slice(0, caret) + '\n' + value.slice(caret);
+            typingInput.value = newValue;
+            typingInput.setSelectionRange(caret + 1, caret + 1);
             insertChar = '\n';
             handled = true;
-        } else if (key === 'shift') {
-            isShift = !isShift;
-            updateKeyboardCase();
-            return;
-        } else if (key === '?123') {
-            isSymbols = true;
-            updateKeyboardLayout();
-            return;
-        } else if (key === 'ABC') {
-            isSymbols = false;
-            updateKeyboardLayout();
-            return;
         } else {
             // Normal character
             let char = key;
-            if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
-                char = char.toUpperCase();
-            }
             newValue = value.slice(0, caret) + char + value.slice(caret);
             typingInput.value = newValue;
             typingInput.setSelectionRange(caret + 1, caret + 1);
             insertChar = char;
             handled = true;
-            if (isShift && !isSymbols) {
-                isShift = false;
-                updateKeyboardCase();
-            }
         }
         if (handled) {
+            collector.lastInputValue = newValue;
             // Record keystroke and touch data
             const timestamp = performance.now();
             collector.recordKeystroke({
                 timestamp,
-                actualChar: insertChar,
+                actualChar: insertChar === '\n' ? 'ENTER' : (insertChar === ' ' ? 'SPACE' : insertChar),
                 keyCode: insertChar === 'BACKSPACE' ? 8 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
                 type: 'custom-keyboard',
                 sentence: collector.currentSentence,
@@ -3746,28 +3737,4 @@ document.addEventListener('DOMContentLoaded', () => {
             collector.updateTypingFeedback();
         }
     });
-
-    function updateKeyboardCase() {
-        const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
-        keys.forEach(btn => {
-            const key = btn.getAttribute('data-key');
-            if (key && key.length === 1 && /[a-z]/.test(key)) {
-                btn.textContent = isShift ? key.toUpperCase() : key;
-            }
-        });
-    }
-    function updateKeyboardLayout() {
-        const letterRows = customKeyboard.querySelectorAll('.keyboard-letters');
-        const symbolRows = customKeyboard.querySelectorAll('.keyboard-symbols');
-        if (isSymbols) {
-            letterRows.forEach(r => r.style.display = 'none');
-            symbolRows.forEach(r => r.style.display = 'flex');
-        } else {
-            letterRows.forEach(r => r.style.display = 'flex');
-            symbolRows.forEach(r => r.style.display = 'none');
-        }
-    }
-
-    // Optionally, always show keyboard on page load for demo
-    // customKeyboard.style.display = 'block';
 });
