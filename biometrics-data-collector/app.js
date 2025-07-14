@@ -3612,26 +3612,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const lettersLayout = customKeyboard.querySelector('.keyboard-letters-layout');
     const symbolsLayout = customKeyboard.querySelector('.keyboard-symbols-layout');
 
-    // Show keyboard on focus
-    typingInput.addEventListener('focus', (e) => {
+    // --- Robust native keyboard prevention and custom keyboard support ---
+    function preventNativeKeyboard(e) {
+        e.preventDefault();
+        // Set readonly, focus, then remove readonly after a short delay
+        typingInput.setAttribute('readonly', 'readonly');
+        typingInput.focus();
         setTimeout(() => {
-            customKeyboard.style.display = 'block';
-        }, 50);
-    });
-    typingInput.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        typingInput.focus();
+            typingInput.removeAttribute('readonly');
+        }, 100);
         customKeyboard.style.display = 'block';
-    });
-    typingInput.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        typingInput.focus();
-        customKeyboard.style.display = 'block';
-    });
+    }
+
+    typingInput.addEventListener('focus', preventNativeKeyboard);
+    typingInput.addEventListener('touchstart', preventNativeKeyboard);
+    typingInput.addEventListener('mousedown', preventNativeKeyboard);
+
+    // Block only physical keyboard input
     typingInput.addEventListener('keydown', (e) => {
-        e.preventDefault();
-        return false;
+        // Allow navigation keys (arrows, tab, etc.) if you want caret movement
+        // But block all character input from physical keyboard
+        if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
+            e.preventDefault();
+            return false;
+        }
     });
+    // Remove the input event handler that resets the value
+
+    // Hide keyboard if clicking outside
+    document.addEventListener('mousedown', (e) => {
+        if (!customKeyboard.contains(e.target) && e.target !== typingInput) {
+            customKeyboard.style.display = 'none';
+        }
+    });
+
+    // --- Custom keyboard click handler and helpers remain unchanged ---
     typingInput.addEventListener('input', (e) => {
         typingInput.value = collector.lastInputValue || '';
         e.preventDefault();
