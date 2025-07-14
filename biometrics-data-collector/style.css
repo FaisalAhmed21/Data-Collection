@@ -943,7 +943,7 @@ select.form-control {
 
 .typing-feedback-display .typed-correct {
   background: rgba(32, 207, 207, 0.15);
-  color: var(--color-text);
+  color: var(--color-success);
   padding: 2px 1px;
   border-radius: 3px;
   font-weight: var(--font-weight-medium);
@@ -952,7 +952,7 @@ select.form-control {
 
 .typing-feedback-display .typed-incorrect {
   background: rgba(255, 79, 100, 0.15);
-  color: var(--color-text);
+  color: var(--color-error);
   padding: 2px 1px;
   border-radius: 3px;
   font-weight: var(--font-weight-medium);
@@ -971,10 +971,12 @@ select.form-control {
 @media (prefers-color-scheme: dark) {
   .typing-feedback-display .typed-correct {
     background: rgba(50, 184, 198, 0.2);
+    color: #32B8C6;
     border-bottom-color: rgba(50, 184, 198, 0.4);
   }
   .typing-feedback-display .typed-incorrect {
     background: rgba(255, 84, 89, 0.2);
+    color: #ff4f64;
     border-bottom-color: rgba(255, 84, 89, 0.5);
     text-decoration-color: rgba(255, 84, 89, 0.7);
   }
@@ -986,13 +988,17 @@ select.form-control {
 
 [data-color-scheme="dark"] .typing-feedback-display .typed-correct {
   background: rgba(50, 184, 198, 0.2);
+  color: #32B8C6;
   border-bottom-color: rgba(50, 184, 198, 0.4);
 }
+
 [data-color-scheme="dark"] .typing-feedback-display .typed-incorrect {
   background: rgba(255, 84, 89, 0.2);
+  color: #ff4f64;
   border-bottom-color: rgba(255, 84, 89, 0.5);
   text-decoration-color: rgba(255, 84, 89, 0.7);
 }
+
 [data-color-scheme="dark"] .typing-feedback-display .to-type {
   color: var(--color-text-secondary);
   opacity: 0.6;
