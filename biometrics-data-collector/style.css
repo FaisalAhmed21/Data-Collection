@@ -895,24 +895,16 @@ select.form-control {
   min-height: 80px;
   max-height: 120px;
   resize: none;
-  border: 1px solid #ccc;
+  border: 1px solid transparent; /* changed from #ccc */
   border-radius: 4px;
   padding: var(--space-16);
-  background: #ffffff;
-  color: #333333;
+  background-color: #ffffff !important;
+  color: #000000 !important;       /* force pure black */
   line-height: 1.5;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
   user-select: text;
   box-sizing: border-box;
   transition: none;
-}
-
-.typing-area textarea:focus {
-  outline: none;
-  border-color: #999;
-  box-shadow: none;
+  box-shadow: none !important;     /* remove any shadow */
 }
 
 /* Typing Feedback System */
