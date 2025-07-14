@@ -3295,7 +3295,7 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '9'; // 9 features: participant_id, task_id, timestamp_ms, ref_char, touch_x, touch_y, was_deleted, flight_time_ms, browser_name
+        document.getElementById('keystroke-features').textContent = '11'; // 11 features: participant_id, task_id, timestamp_ms, ref_char, touch_x, touch_y, touch_major, touch_minor, was_deleted, flight_time_ms, browser_name
     }
 
     
@@ -3313,15 +3313,13 @@ class BiometricDataCollector {
     // ENHANCED: Keystroke feature extraction with proper flight time handling
     extractKeystrokeFeatures() {
         const features = [];
-        
         this.keystrokeData.forEach((keystroke, index) => {
-            if (keystroke.type === 'keydown' || keystroke.type === 'keyup' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete')) {
+            if (keystroke.type === 'keydown' || keystroke.type === 'keyup' || keystroke.type === 'insertText' || keystroke.type === 'compositionend' || keystroke.type.startsWith('delete') || keystroke.type === 'custom-keyboard') {
                 // Skip synthetic events (no longer needed since we removed SHIFT/†)
                 if (keystroke.isSynthetic) {
                     console.log(`🚫 Skipping synthetic event in feature extraction: ${keystroke.actualChar}`);
                     return;
                 }
-                
                 let flightTime = keystroke.flightTime || 0;
                 if (flightTime === 0 && index > 0) {
                     const timeDiff = keystroke.timestamp - this.keystrokeData[index - 1].timestamp;
@@ -3330,13 +3328,11 @@ class BiometricDataCollector {
                         console.warn(`⚠️ Negative flight time detected: ${timeDiff}ms between "${this.keystrokeData[index - 1].actualChar}" and "${keystroke.actualChar}". Setting to 0.`);
                     }
                 }
-                
                 const wasDeleted = (keystroke.actualChar === 'BACKSPACE' || keystroke.type.startsWith('delete')) ? 1 : 0;
                 let refChar = keystroke.actualChar || 'unknown';
                 if (keystroke.actualChar && keystroke.actualChar.length === 1) {
                     refChar = keystroke.actualChar;
                 }
-                
                 features.push({
                     participant_id: this.participantId,
                     task_id: 1,
@@ -3344,6 +3340,8 @@ class BiometricDataCollector {
                     ref_char: refChar,
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
+                    touch_major: keystroke.touchMajor || 0,
+                    touch_minor: keystroke.touchMinor || 0,
                     was_deleted: wasDeleted,
                     flight_time_ms: flightTime, // Use the flight time as recorded
                     browser_name: this.deviceInfo.browser_name
@@ -3608,5 +3606,168 @@ class BiometricDataCollector {
 }
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-    new BiometricDataCollector();
+    const collector = new BiometricDataCollector();
+
+    // Custom Keyboard Logic
+    const typingInput = document.getElementById('typing-input');
+    const customKeyboard = document.getElementById('custom-keyboard');
+    let isShift = false;
+    let isSymbols = false;
+
+    // Prevent native keyboard
+    typingInput.addEventListener('focus', (e) => {
+        setTimeout(() => {
+            customKeyboard.style.display = 'block';
+        }, 50);
+    });
+    typingInput.addEventListener('blur', (e) => {
+        // Optionally hide keyboard on blur
+        // setTimeout(() => { customKeyboard.style.display = 'none'; }, 200);
+    });
+    // Prevent native keyboard on touch/click
+    typingInput.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        typingInput.focus();
+        customKeyboard.style.display = 'block';
+    });
+    typingInput.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        typingInput.focus();
+        customKeyboard.style.display = 'block';
+    });
+
+    // Hide keyboard if clicking outside
+    document.addEventListener('mousedown', (e) => {
+        if (!customKeyboard.contains(e.target) && e.target !== typingInput) {
+            customKeyboard.style.display = 'none';
+        }
+    });
+    document.addEventListener('touchstart', (e) => {
+        if (!customKeyboard.contains(e.target) && e.target !== typingInput) {
+            customKeyboard.style.display = 'none';
+        }
+    });
+
+    // Keyboard key press handler
+    customKeyboard.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('key')) return;
+        const key = e.target.getAttribute('data-key');
+        let value = typingInput.value;
+        let caret = typingInput.selectionStart || value.length;
+        let newValue = value;
+        let insertChar = '';
+        let handled = false;
+        // Touch data
+        let touchX = 0, touchY = 0, touchMajor = 0, touchMinor = 0;
+        if (e instanceof PointerEvent) {
+            touchX = e.clientX;
+            touchY = e.clientY;
+        } else if (e.changedTouches && e.changedTouches[0]) {
+            touchX = e.changedTouches[0].clientX;
+            touchY = e.changedTouches[0].clientY;
+        } else if (e.targetTouches && e.targetTouches[0]) {
+            touchX = e.targetTouches[0].clientX;
+            touchY = e.targetTouches[0].clientY;
+        } else {
+            // fallback: getBoundingClientRect
+            const rect = e.target.getBoundingClientRect();
+            touchX = rect.left + rect.width/2;
+            touchY = rect.top + rect.height/2;
+        }
+        // Try to get touch major/minor (Android/iOS)
+        if (e.touches && e.touches[0]) {
+            touchMajor = e.touches[0].radiusX || 0;
+            touchMinor = e.touches[0].radiusY || 0;
+        }
+        // Key logic
+        if (key === 'backspace') {
+            if (caret > 0) {
+                newValue = value.slice(0, caret - 1) + value.slice(caret);
+                typingInput.value = newValue;
+                typingInput.setSelectionRange(caret - 1, caret - 1);
+                insertChar = 'BACKSPACE';
+                handled = true;
+            }
+        } else if (key === 'space') {
+            newValue = value.slice(0, caret) + ' ' + value.slice(caret);
+            typingInput.value = newValue;
+            typingInput.setSelectionRange(caret + 1, caret + 1);
+            insertChar = ' ';
+            handled = true;
+        } else if (key === 'enter') {
+            // Optionally handle enter
+            insertChar = '\n';
+            handled = true;
+        } else if (key === 'shift') {
+            isShift = !isShift;
+            updateKeyboardCase();
+            return;
+        } else if (key === '?123') {
+            isSymbols = true;
+            updateKeyboardLayout();
+            return;
+        } else if (key === 'ABC') {
+            isSymbols = false;
+            updateKeyboardLayout();
+            return;
+        } else {
+            // Normal character
+            let char = key;
+            if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
+                char = char.toUpperCase();
+            }
+            newValue = value.slice(0, caret) + char + value.slice(caret);
+            typingInput.value = newValue;
+            typingInput.setSelectionRange(caret + 1, caret + 1);
+            insertChar = char;
+            handled = true;
+            if (isShift && !isSymbols) {
+                isShift = false;
+                updateKeyboardCase();
+            }
+        }
+        if (handled) {
+            // Record keystroke and touch data
+            const timestamp = performance.now();
+            collector.recordKeystroke({
+                timestamp,
+                actualChar: insertChar,
+                keyCode: insertChar === 'BACKSPACE' ? 8 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
+                type: 'custom-keyboard',
+                sentence: collector.currentSentence,
+                position: caret,
+                clientX: Math.round(touchX),
+                clientY: Math.round(touchY),
+                touchMajor: touchMajor,
+                touchMinor: touchMinor
+            });
+            collector.calculateAccuracy();
+            collector.checkSentenceCompletion();
+            collector.updateTypingFeedback();
+        }
+    });
+
+    function updateKeyboardCase() {
+        const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
+        keys.forEach(btn => {
+            const key = btn.getAttribute('data-key');
+            if (key && key.length === 1 && /[a-z]/.test(key)) {
+                btn.textContent = isShift ? key.toUpperCase() : key;
+            }
+        });
+    }
+    function updateKeyboardLayout() {
+        const letterRows = customKeyboard.querySelectorAll('.keyboard-letters');
+        const symbolRows = customKeyboard.querySelectorAll('.keyboard-symbols');
+        if (isSymbols) {
+            letterRows.forEach(r => r.style.display = 'none');
+            symbolRows.forEach(r => r.style.display = 'flex');
+        } else {
+            letterRows.forEach(r => r.style.display = 'flex');
+            symbolRows.forEach(r => r.style.display = 'none');
+        }
+    }
+
+    // Optionally, always show keyboard on page load for demo
+    // customKeyboard.style.display = 'block';
 });
