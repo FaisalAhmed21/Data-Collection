@@ -2972,6 +2972,7 @@ h1, h2, h3, h4, h5, h6, p, span, label, div, button, input, textarea, select {
   text-rendering: optimizeLegibility !important;
   -webkit-font-smoothing: antialiased !important;
   -moz-osx-font-smoothing: grayscale !important;
+  caret-color: var(--color-text) !important;
 }
 
 /* Make text selection invisible but allow cursor movement */
@@ -3410,6 +3411,7 @@ html, body {
   margin: 0 auto 18px auto;
   transition: border-color 0.2s, box-shadow 0.2s;
   overflow-y: auto;
+  caret-color: var(--color-text) !important;
 }
 #typing-input:focus, .typing-input-box:focus {
   outline: var(--focus-outline);
