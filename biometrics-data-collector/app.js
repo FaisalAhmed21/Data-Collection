@@ -3640,15 +3640,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // (Remove these handlers entirely)
 
     // Hide keyboard if clicking outside
+    function isKeyboardOrInput(target) {
+      return customKeyboard.contains(target) || target === typingInput;
+    }
     document.addEventListener('mousedown', (e) => {
-        if (!customKeyboard.contains(e.target) && e.target !== typingInput) {
-            customKeyboard.style.display = 'none';
-        }
+      if (!isKeyboardOrInput(e.target)) {
+        customKeyboard.style.display = 'none';
+      }
     });
-    document.addEventListener('touchstart', (e) => {
-        if (!customKeyboard.contains(e.target) && e.target !== typingInput) {
-            customKeyboard.style.display = 'none';
-        }
+    document.addEventListener('touchend', (e) => {
+      if (!isKeyboardOrInput(e.target)) {
+        customKeyboard.style.display = 'none';
+      }
     });
 
     // Keyboard key press handler
