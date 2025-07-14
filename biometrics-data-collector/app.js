@@ -1092,20 +1092,20 @@ class BiometricDataCollector {
         
         let feedbackHTML = '';
         
-        // Only show target sentence with red highlighting where user made mistakes
+        // Show target sentence with color marking based on user's typing
         for (let i = 0; i < target.length; i++) {
             if (i < typed.length) {
                 // User has typed this position
                 if (typed[i] === target[i]) {
-                    // Correct character - show in normal color
-                    feedbackHTML += `<span class="target-correct">${this.escapeHtml(target[i])}</span>`;
+                    // Correct character - show in green
+                    feedbackHTML += `<span class="typed-correct">${this.escapeHtml(target[i])}</span>`;
                 } else {
                     // Wrong character - show target character in red
-                    feedbackHTML += `<span class="target-incorrect">${this.escapeHtml(target[i])}</span>`;
+                    feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(target[i])}</span>`;
                 }
             } else {
                 // User hasn't typed this position yet - show in normal color
-                feedbackHTML += `<span class="target-remaining">${this.escapeHtml(target[i])}</span>`;
+                feedbackHTML += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
             }
         }
         
