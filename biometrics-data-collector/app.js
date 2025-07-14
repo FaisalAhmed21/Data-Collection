@@ -653,6 +653,25 @@ class BiometricDataCollector {
         const currentTime = performance.now();
         
         const eventSignature = `${inputType}-${data}-${value.length}-${pos}`;
+
+        if (!e.isTrusted && data) {
+            // Custom virtual keyboard / simulated input
+            this.recordKeystroke({
+                timestamp: performance.now(),
+                actualChar: data,
+                keyCode: data.charCodeAt(0),
+                type: inputType,
+                sentence: this.currentSentence,
+                position: e.target.selectionStart - 1,
+                clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
+                clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
+            });
+            this.updateTypingFeedback();
+            this.calculateAccuracy();
+            this.checkSentenceCompletion();
+            return;
+        }
+
         
         if (this.compositionActive && inputType === 'insertText') {
             console.log('🔄 Composition active, skipping insertText');
