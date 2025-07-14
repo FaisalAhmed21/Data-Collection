@@ -3617,8 +3617,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const collector = new BiometricDataCollector();
     const typingInput = document.getElementById('typing-input');
     const customKeyboard = document.getElementById('custom-keyboard');
-    const lettersLayout = customKeyboard.querySelector('.keyboard-letters-layout');
-    const symbolsLayout = customKeyboard.querySelector('.keyboard-symbols-layout');
 
     // --- Robust native keyboard prevention and custom keyboard support ---
     function preventNativeKeyboard(e) {
