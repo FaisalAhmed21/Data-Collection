@@ -3351,6 +3351,8 @@ class BiometricDataCollector {
                     ref_char: refChar,
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
+                    key_x: keystroke.key_x || '',
+                    key_y: keystroke.key_y || '',
                     was_deleted: wasDeleted,
                     flight_time_ms: flightTime, // Use the flight time as recorded
                     dwell_time_ms: keystroke.dwell_time_ms || '',
@@ -3767,7 +3769,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 clientY: Math.round(touchY),
                 first_frame_touch_x: Math.round(touchX),
                 first_frame_touch_y: Math.round(touchY),
-                // Optionally, add overlap vector if present
+                key_x: Math.round(touchX),
+                key_y: Math.round(touchY),
                 first_frame_overlap: collector.firstFrameOverlapVectors.length > 0 ? JSON.stringify(collector.firstFrameOverlapVectors) : ''
             });
             collector.calculateAccuracy();
