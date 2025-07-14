@@ -580,8 +580,10 @@ class BiometricDataCollector {
             document.getElementById('keystroke-features').textContent = keystrokeFeatureCount;
             document.getElementById('keystroke-feature-list').textContent = featureNames.join(', ');
             const touchFeatures = this.extractTouchFeatures();
-            const touchFeatureCount = touchFeatures.length > 0 ? Object.keys(touchFeatures[0]).length : 0;
+            const touchFeatureNames = touchFeatures.length > 0 ? Object.keys(touchFeatures[0]) : [];
+            const touchFeatureCount = touchFeatureNames.length;
             document.getElementById('touch-features').textContent = touchFeatureCount;
+            document.getElementById('touch-feature-list').textContent = touchFeatureNames.join(', ');
         }
     }
     
