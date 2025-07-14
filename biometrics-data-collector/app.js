@@ -1093,6 +1093,7 @@ class BiometricDataCollector {
         let feedbackHTML = '';
         const minLength = Math.min(typed.length, target.length);
         
+        // First, show user's typed text with original color scheme
         for (let i = 0; i < minLength; i++) {
             if (typed[i] === target[i]) {
                 feedbackHTML += `<span class="typed-correct">${this.escapeHtml(typed[i])}</span>`;
@@ -1101,13 +1102,29 @@ class BiometricDataCollector {
             }
         }
         
+        // Show remaining user's typed characters (if any) in red
         for (let i = minLength; i < typed.length; i++) {
             feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
         }
         
-        for (let i = typed.length; i < target.length; i++) {
-            feedbackHTML += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
+        // Add target sentence with red highlighting where user made mistakes
+        feedbackHTML += '<div class="target-feedback">';
+        for (let i = 0; i < target.length; i++) {
+            if (i < typed.length) {
+                // User has typed this position
+                if (typed[i] === target[i]) {
+                    // Correct character - show in normal color
+                    feedbackHTML += `<span class="target-correct">${this.escapeHtml(target[i])}</span>`;
+                } else {
+                    // Wrong character - show target character in red
+                    feedbackHTML += `<span class="target-incorrect">${this.escapeHtml(target[i])}</span>`;
+                }
+            } else {
+                // User hasn't typed this position yet - show in normal color
+                feedbackHTML += `<span class="target-remaining">${this.escapeHtml(target[i])}</span>`;
+            }
         }
+        feedbackHTML += '</div>';
         
         feedbackDisplay.innerHTML = feedbackHTML;
     }
