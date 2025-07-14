@@ -3612,27 +3612,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let isShift = false;
     let isSymbols = false;
 
-    // Prevent native keyboard
+    // Prevent native keyboard by setting inputmode and tabindex
+    typingInput.setAttribute('inputmode', 'none');
+    typingInput.setAttribute('tabindex', '0');
+
+    // Only show custom keyboard on focus
     typingInput.addEventListener('focus', (e) => {
-        setTimeout(() => {
-            customKeyboard.style.display = 'block';
-        }, 50);
+        customKeyboard.style.display = 'block';
     });
     typingInput.addEventListener('blur', (e) => {
         // Optionally hide keyboard on blur
         // setTimeout(() => { customKeyboard.style.display = 'none'; }, 200);
     });
-    // Prevent native keyboard on touch/click
-    typingInput.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        typingInput.focus();
-        customKeyboard.style.display = 'block';
-    });
-    typingInput.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        typingInput.focus();
-        customKeyboard.style.display = 'block';
-    });
+    // Remove preventDefault from mousedown/touchstart so cursor can move
+    // typingInput.addEventListener('touchstart', ...)
+    // typingInput.addEventListener('mousedown', ...)
+    // (Remove these handlers entirely)
 
     // Hide keyboard if clicking outside
     document.addEventListener('mousedown', (e) => {
