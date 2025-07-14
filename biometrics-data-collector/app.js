@@ -3718,7 +3718,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 sentence: collector.currentSentence,
                 position: caret,
                 clientX: Math.round(touchX),
-                clientY: Math.round(touchY)
+                clientY: Math.round(touchY),
+                first_frame_touch_x: Math.round(touchX),
+                first_frame_touch_y: Math.round(touchY),
+                first_frame_overlap: collector.firstFrameOverlapVectors.length > 0 ? JSON.stringify(collector.firstFrameOverlapVectors) : ''
             });
             isShift = !isShift;
             updateKeyboardCase();
