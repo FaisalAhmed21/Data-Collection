@@ -137,6 +137,8 @@ class BiometricDataCollector {
         this.firstFrameTouches = [];
         this.firstFrameHeatmap = [];
         this.firstFrameOverlapVectors = [];
+        // 1. In the BiometricDataCollector constructor, add dwell tracking:
+        this.keyDwellStartTimes = {};
     }
     
     detectDeviceInfo() {
@@ -3349,9 +3351,8 @@ class BiometricDataCollector {
                     touch_y: Math.round(keystroke.clientY || this.currentPointerY),
                     was_deleted: wasDeleted,
                     flight_time_ms: flightTime, // Use the flight time as recorded
+                    dwell_time_ms: keystroke.dwell_time_ms || '',
                     browser_name: this.deviceInfo.browser_name,
-                    first_frame_touch_x: keystroke.first_frame_touch_x || '',
-                    first_frame_touch_y: keystroke.first_frame_touch_y || '',
                     first_frame_overlap: keystroke.first_frame_overlap || ''
                 });
             }
@@ -3796,4 +3797,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Optionally, always show keyboard on page load for demo
     // customKeyboard.style.display = 'block';
+
+    // Add touchstart and touchend listeners for dwell time
+    customKeyboard.addEventListener('touchstart', (e) => {
+        const target = e.target.closest('.key');
+        if (!target) return;
+        const key = target.getAttribute('data-key');
+        const touch = e.touches[0];
+        if (key && touch) {
+            // Use identifier for multi-touch safety
+            collector.keyDwellStartTimes[key] = performance.now();
+        }
+    }, { passive: true });
+    customKeyboard.addEventListener('touchend', (e) => {
+        const target = e.target.closest('.key');
+        if (!target) return;
+        const key = target.getAttribute('data-key');
+        const touch = e.changedTouches[0];
+        if (key && touch) {
+            const dwellStart = collector.keyDwellStartTimes[key];
+            const dwellTime = dwellStart ? Math.round(performance.now() - dwellStart) : '';
+            // Find the last keystroke for this key and add dwell_time_ms
+            for (let i = collector.keystrokeData.length - 1; i >= 0; i--) {
+                if (collector.keystrokeData[i].actualChar === key || (key === 'backspace' && collector.keystrokeData[i].actualChar === 'BACKSPACE') || (key === 'shift' && collector.keystrokeData[i].actualChar === 'SHIFT')) {
+                    collector.keystrokeData[i].dwell_time_ms = dwellTime;
+                    break;
+                }
+            }
+            delete collector.keyDwellStartTimes[key];
+        }
+    }, { passive: true });
 });
