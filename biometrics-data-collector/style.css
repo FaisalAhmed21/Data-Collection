@@ -911,16 +911,17 @@ select.form-control {
   min-height: 80px;
   max-height: 120px;
   resize: none;
-  border: 1px solid transparent; /* changed from #ccc */
+  border: 1px solid #ccc;
   border-radius: 4px;
   padding: var(--space-16);
   background-color: #ffffff !important;
-  color: #000000 !important;       /* force pure black */
+  color: #000000 !important;
+  caret-color: auto;
+  opacity: 1 !important;
+  visibility: visible !important;
   line-height: 1.5;
   user-select: text;
   box-sizing: border-box;
-  transition: none;
-  box-shadow: none !important;     /* remove any shadow */
 }
 
 /* Typing Feedback System */
@@ -4579,5 +4580,124 @@ html, body {
 @media (max-width: 350px) {
   .gallery-grid {
     grid-template-columns: 1fr !important;
+  }
+}
+
+/* --- Make space button much larger --- */
+.custom-keyboard .keyboard-row.keyboard-actions {
+  grid-template-columns: 1fr 1fr 7fr 1fr 1fr !important;
+}
+.key-space.key-large {
+  min-width: 180px !important;
+  max-width: 700px !important;
+  font-size: 1.2rem !important;
+}
+@media (max-width: 600px) {
+  .custom-keyboard .keyboard-row.keyboard-actions {
+    grid-template-columns: 1fr 1fr 8fr 1fr 1fr !important;
+  }
+  .key-space.key-large {
+    min-width: 100px !important;
+    max-width: 300px !important;
+    font-size: 1.05rem !important;
+  }
+}
+
+/* --- Typing input font: Times New Roman 12pt equivalent --- */
+#typing-input, .typing-input-box {
+  font-family: 'Times New Roman', Times, serif !important;
+  font-size: 12pt !important;
+  line-height: 1.5 !important;
+}
+
+/* --- Custom Key Sizing for Keyboard Actions Row (MODIFIED) --- */
+.key-small[data-key="?123"],
+.key-small[data-key="ABC"] {
+  min-width: 48px !important;
+  max-width: 64px !important;
+  font-size: 1.08rem !important;
+}
+.key-enter.key-small {
+  min-width: 48px !important;
+  max-width: 64px !important;
+  font-size: 1.08rem !important;
+}
+@media (max-width: 600px) {
+  .key-small[data-key="?123"],
+  .key-small[data-key="ABC"],
+  .key-enter.key-small {
+    min-width: 32px !important;
+    max-width: 44px !important;
+    font-size: 0.92rem !important;
+  }
+}
+
+/* Left-shift the . and enter keys a bit (add margin-left) */
+.key-dot.key-small {
+  margin-left: 6px !important;
+}
+.key-enter.key-small {
+  margin-left: 6px !important;
+}
+@media (max-width: 600px) {
+  .key-dot.key-small,
+  .key-enter.key-small {
+    margin-left: 3px !important;
+  }
+}
+
+/* --- Custom Keyboard Key Sizing and Positioning Enhancements --- */
+.key-wide {
+  min-width: 80px !important;
+  max-width: 120px !important;
+  font-size: 1.18rem !important;
+}
+@media (max-width: 600px) {
+  .key-wide {
+    min-width: 60px !important;
+    max-width: 90px !important;
+    font-size: 1rem !important;
+  }
+}
+.shift-left {
+  margin-left: -8px !important;
+}
+@media (max-width: 600px) {
+  .shift-left {
+    margin-left: -4px !important;
+  }
+}
+
+/* --- Custom Keyboard Actions Row: Reduce gap between space, dot, and enter keys --- */
+.keyboard-row.keyboard-actions {
+  gap: 0 !important;
+}
+.key-dot.shift-left {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+.key-enter.key-wide.shift-left {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* --- Center and make the custom keyboard actions row responsive and always centered --- */
+.keyboard-row.keyboard-actions {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0 !important;
+  width: 100%;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+@media (max-width: 600px) {
+  .keyboard-row.keyboard-actions {
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }
