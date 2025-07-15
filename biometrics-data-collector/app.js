@@ -757,6 +757,7 @@ class BiometricDataCollector {
             this.calculateAccuracy();
             this.checkSentenceCompletion();
             this.updateTypingFeedback();
+            inputEl.setSelectionRange(startPos, endPos);
             return;
         }
     
@@ -776,6 +777,7 @@ class BiometricDataCollector {
             this.calculateAccuracy();
             this.checkSentenceCompletion();
             this.updateTypingFeedback();
+            inputEl.setSelectionRange(startPos, endPos);
             return;
         }
 
@@ -800,6 +802,7 @@ class BiometricDataCollector {
             this.calculateAccuracy();
             this.checkSentenceCompletion();
             this.updateTypingFeedback();
+            inputEl.setSelectionRange(startPos, endPos);
             return;
         }
 
@@ -1081,6 +1084,7 @@ class BiometricDataCollector {
         this.calculateAccuracy();
         this.checkSentenceCompletion();
         this.updateTypingFeedback();
+        inputEl.setSelectionRange(startPos, endPos);
     }
     
     updateTypingFeedback() {
