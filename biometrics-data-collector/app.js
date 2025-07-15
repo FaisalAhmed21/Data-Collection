@@ -579,12 +579,24 @@ class BiometricDataCollector {
             const featureNames = keystrokeFeatures.length > 0 ? Object.keys(keystrokeFeatures[0]) : [];
             const keystrokeFeatureCount = featureNames.length;
             document.getElementById('keystroke-features').textContent = keystrokeFeatureCount;
-            document.getElementById('keystroke-feature-list').textContent = featureNames.join(', ');
+            const keystrokeFeatureList = document.getElementById('keystroke-feature-list');
+            keystrokeFeatureList.innerHTML = '';
+            featureNames.forEach((name, idx) => {
+                const li = document.createElement('li');
+                li.textContent = name;
+                keystrokeFeatureList.appendChild(li);
+            });
             const touchFeatures = this.extractTouchFeatures();
             const touchFeatureNames = touchFeatures.length > 0 ? Object.keys(touchFeatures[0]) : [];
             const touchFeatureCount = touchFeatureNames.length;
             document.getElementById('touch-features').textContent = touchFeatureCount;
-            document.getElementById('touch-feature-list').textContent = touchFeatureNames.join(', ');
+            const touchFeatureList = document.getElementById('touch-feature-list');
+            touchFeatureList.innerHTML = '';
+            touchFeatureNames.forEach((name, idx) => {
+                const li = document.createElement('li');
+                li.textContent = name;
+                touchFeatureList.appendChild(li);
+            });
         }
     }
     
