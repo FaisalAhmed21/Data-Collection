@@ -3696,7 +3696,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 newValue = value.slice(0, caret - 1) + value.slice(caret);
                 typingInput.value = newValue;
                 caret = caret - 1;
-                typingInput.setSelectionRange(caret, caret);
+                requestAnimationFrame(() => typingInput.setSelectionRange(caret, caret));
                 insertChar = 'BACKSPACE';
                 handled = true;
             }
@@ -3704,7 +3704,7 @@ document.addEventListener('DOMContentLoaded', () => {
             newValue = value.slice(0, caret) + ' ' + value.slice(caret);
             typingInput.value = newValue;
             caret = caret + 1;
-            typingInput.setSelectionRange(caret, caret);
+            requestAnimationFrame(() => typingInput.setSelectionRange(caret, caret));
             insertChar = ' ';
             handled = true;
         } else if (key === 'enter') {
@@ -3712,7 +3712,7 @@ document.addEventListener('DOMContentLoaded', () => {
             newValue = value.slice(0, caret) + '\n' + value.slice(caret);
             typingInput.value = newValue;
             caret = caret + 1;
-            typingInput.setSelectionRange(caret, caret);
+            requestAnimationFrame(() => typingInput.setSelectionRange(caret, caret));
             insertChar = '\n';
             handled = true;
         } else if (key === 'shift') {
@@ -3738,7 +3738,7 @@ document.addEventListener('DOMContentLoaded', () => {
             newValue = value.slice(0, caret) + char + value.slice(caret);
             typingInput.value = newValue;
             caret = caret + 1;
-            typingInput.setSelectionRange(caret, caret);
+            requestAnimationFrame(() => typingInput.setSelectionRange(caret, caret));
             insertChar = char;
             handled = true;
             if (isShift && !isSymbols) {
@@ -3748,7 +3748,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (handled) {
             // Always use the updated caret position for keystroke recording
-            const updatedCaret = typingInput.selectionStart;
+            const updatedCaret = caret;
             const timestamp = performance.now();
             collector.recordKeystroke({
                 timestamp,
