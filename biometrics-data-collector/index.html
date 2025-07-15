@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Behavioral Biometrics Data Collection</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -84,7 +84,7 @@
                             <button class="key key-num" data-key="9">9</button>
                             <button class="key key-num" data-key="0">0</button>
                         </div>
-                        <div class="keyboard-row keyboard-letters" id="keyboard-letters">
+                        <div class="keyboard-row keyboard-letters active">
                             <button class="key" data-key="q">q</button>
                             <button class="key" data-key="w">w</button>
                             <button class="key" data-key="e">e</button>
@@ -96,7 +96,7 @@
                             <button class="key" data-key="o">o</button>
                             <button class="key" data-key="p">p</button>
                         </div>
-                        <div class="keyboard-row keyboard-letters">
+                        <div class="keyboard-row keyboard-letters active">
                             <button class="key" data-key="a">a</button>
                             <button class="key" data-key="s">s</button>
                             <button class="key" data-key="d">d</button>
@@ -118,14 +118,14 @@
                             <button class="key" data-key="m">m</button>
                             <button class="key" data-key="backspace">⌫</button>
                         </div>
-                        <div class="keyboard-row keyboard-actions">
-                            <button class="key" data-key="?123">?123</button>
-                            <button class="key" data-key=",">,</button>
-                            <button class="key" data-key="space" style="flex:2;">Space</button>
-                            <button class="key" data-key=".">.</button>
-                            <button class="key" data-key="enter">Enter</button>
+                        <div class="keyboard-row keyboard-actions active">
+                            <button class="key key-small" data-key="?123">?123</button>
+                            <button class="key key-comma key-small" data-key=",">,</button>
+                            <button class="key key-space key-large" data-key="space">Space</button>
+                            <button class="key key-dot key-small" data-key=".">.</button>
+                            <button class="key key-enter key-small" data-key="enter">Enter</button>
                         </div>
-                        <div class="keyboard-row keyboard-symbols" style="display:none;">
+                        <div class="keyboard-row keyboard-symbols">
                             <button class="key" data-key="@">@</button>
                             <button class="key" data-key="#">#</button>
                             <button class="key" data-key="$">$</button>
@@ -137,7 +137,7 @@
                             <button class="key" data-key="_">_</button>
                             <button class="key" data-key="-">-</button>
                         </div>
-                        <div class="keyboard-row keyboard-symbols" style="display:none;">
+                        <div class="keyboard-row keyboard-symbols">
                             <button class="key" data-key="/">/</button>
                             <button class="key" data-key="\\">\</button>
                             <button class="key" data-key="°">°</button>
@@ -149,7 +149,7 @@
                             <button class="key" data-key=";">;</button>
                             <button class="key" data-key="backspace">⌫</button>
                         </div>
-                        <div class="keyboard-row keyboard-symbols" style="display:none;">
+                        <div class="keyboard-row keyboard-symbols">
                             <button class="key" data-key="+">+</button>
                             <button class="key" data-key="=">=</button>
                             <button class="key" data-key="~">~</button>
@@ -161,10 +161,10 @@
                             <button class="key" data-key="{">{</button>
                             <button class="key" data-key="}">}</button>
                         </div>
-                        <div class="keyboard-row keyboard-symbols keyboard-actions" style="display:none;">
-                            <button class="key" data-key="ABC">ABC</button>
-                            <button class="key" data-key="space" style="flex:2;">Space</button>
-                            <button class="key" data-key="enter">Enter</button>
+                        <div class="keyboard-row keyboard-symbols keyboard-actions">
+                            <button class="key key-small" data-key="ABC">ABC</button>
+                            <button class="key key-space key-large" data-key="space" style="flex:2;">Space</button>
+                            <button class="key key-enter key-small" data-key="enter">Enter</button>
                         </div>
                     </div>
                 </div>
@@ -263,18 +263,36 @@
                     <div class="stat-card">
                         <h4>Keystroke Data</h4>
                         <p><span id="keystroke-count">0</span> keystrokes recorded</p>
-                        <p><span id="keystroke-features">0</span> features extracted</p>
-                        <p style="font-size:13px; margin:8px 0 0 0; padding-left:18px; text-align:left;">
-                            <b>Features:</b> <span id="keystroke-feature-list"></span>
-                        </p>
+                        <p><span id="keystroke-features">9</span> features extracted</p>
+                        <ul style="text-align:left; font-size:13px; margin:8px 0 0 0; padding-left:18px;">
+                            <li>1. participant_id</li>
+                            <li>2. task_id</li>
+                            <li>3. timestamp_ms</li>
+                            <li>4. ref_char</li>
+                            <li>5. touch_x</li>
+                            <li>6. touch_y</li>
+                            <li>7. was_deleted</li>
+                            <li>8. flight_time_ms</li>
+                            <li>9. browser_name</li>
+                        </ul>
                     </div>
                     <div class="stat-card">
                         <h4>Touch Data (Combined)</h4>
                         <p><span id="touch-count">0</span> touch events recorded</p>
-                        <p><span id="touch-features">0</span> features extracted</p>
-                        <p style="font-size:13px; margin:8px 0 0 0; padding-left:18px; text-align:left;">
-                            <b>Features:</b> <span id="touch-feature-list"></span>
-                        </p>
+                        <p><span id="touch-features">11</span> features extracted</p>
+                        <ul style="text-align:left; font-size:13px; margin:8px 0 0 0; padding-left:18px;">
+                            <li>1. participant_id</li>
+                            <li>2. task_id</li>
+                            <li>3. trial</li>
+                            <li>4. timestamp_ms</li>
+                            <li>5. touch_x</li>
+                            <li>6. touch_y</li>
+                            <li>7. btn_touch_state</li>
+                            <li>8. inter_touch_timing</li>
+                            <li>9. num_touch_points</li>
+                            <li>10. path_length_px</li>
+                            <li>11. browser_name</li>
+                        </ul>
                     </div>
                 </div>
                 
