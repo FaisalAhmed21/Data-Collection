@@ -72,6 +72,7 @@
                         <div id="typing-feedback-display" class="typing-feedback-display"></div>
                     </div>
                     <div id="custom-keyboard" class="custom-keyboard" style="display:none;">
+                        <!-- Number row, always visible -->
                         <div class="keyboard-row keyboard-numbers">
                             <button class="key key-num" data-key="1">1</button>
                             <button class="key key-num" data-key="2">2</button>
@@ -84,7 +85,8 @@
                             <button class="key key-num" data-key="9">9</button>
                             <button class="key key-num" data-key="0">0</button>
                         </div>
-                        <div class="keyboard-row keyboard-letters active">
+                        <!-- Letter rows -->
+                        <div class="keyboard-row keyboard-letters">
                             <button class="key" data-key="q">q</button>
                             <button class="key" data-key="w">w</button>
                             <button class="key" data-key="e">e</button>
@@ -96,7 +98,7 @@
                             <button class="key" data-key="o">o</button>
                             <button class="key" data-key="p">p</button>
                         </div>
-                        <div class="keyboard-row keyboard-letters active">
+                        <div class="keyboard-row keyboard-letters">
                             <button class="key" data-key="a">a</button>
                             <button class="key" data-key="s">s</button>
                             <button class="key" data-key="d">d</button>
@@ -118,13 +120,14 @@
                             <button class="key" data-key="m">m</button>
                             <button class="key" data-key="backspace">⌫</button>
                         </div>
-                        <div class="keyboard-row keyboard-actions active">
+                        <div class="keyboard-row keyboard-actions">
                             <button class="key key-small key-wide" data-key="?123">?123</button>
                             <button class="key key-comma key-small" data-key=",">,</button>
                             <button class="key key-space key-large" data-key="space">Space</button>
                             <button class="key key-dot key-small shift-left" data-key=".">.</button>
                             <button class="key key-enter key-small key-wide shift-left" data-key="enter">Enter</button>
                         </div>
+                        <!-- Symbol rows -->
                         <div class="keyboard-row keyboard-symbols">
                             <button class="key" data-key="@">@</button>
                             <button class="key" data-key="#">#</button>
@@ -263,14 +266,14 @@
                     <div class="stat-card">
                         <h4>Keystroke Data</h4>
                         <p><span id="keystroke-count">0</span> keystrokes recorded</p>
-                        <p><span id="keystroke-features">0</span> features extracted</p>
-                        <ul id="keystroke-feature-list" style="text-align:left; font-size:13px; margin:8px 0 0 0; padding-left:18px;"></ul>
+                        <p><span id="keystroke-features">9</span> features extracted</p>
+                        <div id="keystroke-feature-list" style="text-align:left; font-size:13px; margin:8px 0 0 0; padding-left:18px;"></div>
                     </div>
                     <div class="stat-card">
                         <h4>Touch Data (Combined)</h4>
                         <p><span id="touch-count">0</span> touch events recorded</p>
-                        <p><span id="touch-features">0</span> features extracted</p>
-                        <ul id="touch-feature-list" style="text-align:left; font-size:13px; margin:8px 0 0 0; padding-left:18px;"></ul>
+                        <p><span id="touch-features">11</span> features extracted</p>
+                        <div id="touch-feature-list" style="text-align:left; font-size:13px; margin:8px 0 0 0; padding-left:18px;"></div>
                     </div>
                 </div>
                 
