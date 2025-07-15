@@ -255,20 +255,32 @@
 
         <!-- Export Screen -->
         <div id="export-screen" class="screen">
-            <div class="export-content">
-                <h2>Export Data</h2>
-                <div class="export-section">
-                    <button id="export-keystroke-btn" class="btn btn--primary">Export Keystroke Data</button>
-                    <span>Keystroke Records: <span id="keystroke-count">0</span></span><br>
-                    <span>Keystroke Features Extracted: <span id="keystroke-features">0</span></span><br>
-                    <span>Feature List: <span id="keystroke-feature-list"></span></span>
+            <div class="export-content export-flex">
+                <div class="export-card">
+                    <h3>Keystroke Data</h3>
+                    <div class="export-meta">
+                        <span><b>Records:</b> <span id="keystroke-count">0</span></span>
+                        <span><b>Features:</b> <span id="keystroke-features">0</span></span>
+                    </div>
+                    <button id="export-keystroke-btn" class="btn btn--primary export-btn">Export Keystroke Data</button>
+                    <div class="feature-list-container">
+                        <ul id="keystroke-feature-list" class="feature-list"></ul>
+                    </div>
                 </div>
-                <div class="export-section">
-                    <button id="export-touch-btn" class="btn btn--primary">Export Touch Data</button>
-                    <span>Touch Records: <span id="touch-count">0</span></span><br>
-                    <span>Touch Features Extracted: <span id="touch-features">0</span></span><br>
-                    <span>Feature List: <span id="touch-feature-list"></span></span>
+                <div class="export-card">
+                    <h3>Touch Data</h3>
+                    <div class="export-meta">
+                        <span><b>Records:</b> <span id="touch-count">0</span></span>
+                        <span><b>Features:</b> <span id="touch-features">0</span></span>
+                    </div>
+                    <button id="export-touch-btn" class="btn btn--primary export-btn">Export Touch Data</button>
+                    <div class="feature-list-container">
+                        <ul id="touch-feature-list" class="feature-list"></ul>
+                    </div>
                 </div>
+            </div>
+            <div class="export-thankyou">
+                <p>Thank you for participating in this behavioral biometrics study! Your contribution helps advance our understanding of human-mobile interaction patterns.</p>
             </div>
         </div>
     </div>
