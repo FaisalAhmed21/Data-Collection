@@ -3407,32 +3407,37 @@ html, body {
   }
 }
 
-#typing-input, .typing-input-box {
-  display: block;
+#typing-input, .typing-input-box, .typing-area textarea {
   width: 100%;
-  min-width: 400px;
-  max-width: 100%;
-  min-height: 80px;
+  max-width: 600px;
+  min-width: 220px;
+  min-height: 60px;
   max-height: 200px;
   height: 120px;
-  font-size: 1.25rem;
-  font-family: var(--font-family-mono);
-  padding: 18px 20px;
-  border: 2px solid var(--color-primary);
-  border-radius: 12px;
-  background: var(--color-surface);
-  color: var(--color-text);
   box-sizing: border-box;
-  resize: vertical;
   margin: 0 auto 18px auto;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  resize: vertical;
+  border-radius: 12px !important;
+  padding: 18px 20px;
+  font-size: 1.15rem;
+  font-family: var(--font-family-mono);
   overflow-y: auto;
-  caret-color: var(--color-text) !important;
 }
-#typing-input:focus, .typing-input-box:focus {
-  outline: var(--focus-outline);
-  border-color: var(--color-primary-active);
-  box-shadow: 0 0 0 2px var(--color-primary);
+@media (max-width: 700px) {
+  #typing-input, .typing-input-box, .typing-area textarea {
+    max-width: 98vw;
+    min-width: 0;
+    padding: 14px 8px;
+    font-size: 1rem;
+  }
+}
+@media (max-width: 480px) {
+  #typing-input, .typing-input-box, .typing-area textarea {
+    max-width: 99vw;
+    min-width: 0;
+    padding: 10px 4px;
+    font-size: 0.95rem;
+  }
 }
 
 /* --- ENHANCED DARK MODE & CURSOR VISIBILITY FOR TYPING INPUT AND CUSTOM KEYBOARD --- */
@@ -3770,12 +3775,13 @@ html, body {
 }
 
 #typing-input, .typing-input-box, .typing-area textarea {
-  background: #fff !important;
   color: #111 !important;
-  box-shadow: none !important;
+  background: #fff !important;
   border: 2px solid var(--color-primary) !important;
+  box-shadow: none !important;
   border-radius: 12px !important;
   caret-color: var(--color-primary) !important;
+  text-shadow: none !important;
 }
 #typing-input:focus, .typing-input-box:focus, .typing-area textarea:focus {
   outline: var(--focus-outline) !important;
@@ -3796,6 +3802,7 @@ html, body {
     color: #fff !important;
     border: 2px solid #32B8C6 !important;
     box-shadow: none !important;
+    text-shadow: none !important;
   }
 }
 [data-color-scheme="dark"] #typing-input, [data-color-scheme="dark"] .typing-input-box, [data-color-scheme="dark"] .typing-area textarea {
@@ -3803,6 +3810,7 @@ html, body {
   color: #fff !important;
   border: 2px solid #32B8C6 !important;
   box-shadow: none !important;
+  text-shadow: none !important;
 }
 
 /* --- GBOARD-STYLE CUSTOM KEYBOARD ENHANCEMENTS (COMPACT) --- */
@@ -4068,7 +4076,7 @@ html, body {
   padding: 0.5em 0 0.5em 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   border-top: 1px solid #e0e0e0;
 }
 .keyboard-row {
@@ -4078,13 +4086,12 @@ html, body {
   align-items: stretch;
   width: 100%;
   margin: 0.1em 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .key {
-  flex: 1 1 8%;
-  min-width: 32px;
-  max-width: 1fr;
-  margin: 0.1em;
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0.08em;
   padding: 0.7em 0.2em;
   font-size: 1.2em;
   border: none;
@@ -4092,16 +4099,31 @@ html, body {
   background: #fff;
   color: #222;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-  text-align: center;
+  transition: background 0.15s, color 0.15s;
   outline: none;
-  transition: background 0.2s, color 0.2s;
+  user-select: none;
+  touch-action: manipulation;
+  max-width: 3.2em;
+  white-space: nowrap;
 }
-.key:active {
-  background: #e0e0e0;
+.key:active, .key:focus {
+  background: #e0eaff;
+  color: #0a4b8c;
 }
-.key.wide {
-  flex: 2 1 18%;
-  min-width: 60px;
+.key.key-space {
+  flex: 3 1 0;
+  max-width: none;
+}
+.key.key-large {
+  font-size: 1.2em;
+}
+.key.key-small {
+  font-size: 1em;
+  max-width: 2.5em;
+}
+.key.key-wide {
+  flex: 2 1 0;
+  max-width: none;
 }
 .keyboard-numbers {
   margin-bottom: 0.1em;
@@ -4113,11 +4135,7 @@ html, body {
   }
   .key {
     font-size: 1em;
-    min-width: 24px;
     padding: 0.5em 0.1em;
-  }
-  .key.wide {
-    min-width: 40px;
   }
 }
 @media (max-width: 400px) {
@@ -4126,11 +4144,7 @@ html, body {
   }
   .key {
     font-size: 0.9em;
-    min-width: 18px;
     padding: 0.4em 0.05em;
-  }
-  .key.wide {
-    min-width: 30px;
   }
 }
 
@@ -4145,4 +4159,219 @@ html, body {
   color: #111 !important;
   background: #fff !important;
   caret-color: #111 !important;
+}
+
+/* Responsive custom keyboard styles - update for no cutoff, wrapping */
+.custom-keyboard {
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 0;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f7f7fa;
+  z-index: 1000;
+  box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
+  padding: 0.5em 0 0.5em 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border-top: 1px solid #e0e0e0;
+}
+.keyboard-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  width: 100%;
+  margin: 0.1em 0;
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+.key {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0.08em;
+  padding: 0.7em 0.2em;
+  font-size: 1.2em;
+  border: none;
+  border-radius: 0.4em;
+  background: #fff;
+  color: #222;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition: background 0.15s, color 0.15s;
+  outline: none;
+  user-select: none;
+  touch-action: manipulation;
+  max-width: 3.2em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.key:active, .key:focus {
+  background: #e0eaff;
+  color: #0a4b8c;
+}
+.key.key-space {
+  flex: 3 1 0;
+  max-width: none;
+}
+.key.key-large {
+  font-size: 1.2em;
+}
+.key.key-small {
+  font-size: 1em;
+  max-width: 2.5em;
+}
+.key.key-wide {
+  flex: 2 1 0;
+  max-width: none;
+}
+.keyboard-numbers {
+  margin-bottom: 0.1em;
+}
+@media (max-width: 600px) {
+  .custom-keyboard {
+    font-size: 0.95em;
+    padding: 0.2em 0 0.2em 0;
+  }
+  .key {
+    font-size: 1em;
+    padding: 0.5em 0.1em;
+  }
+}
+@media (max-width: 400px) {
+  .custom-keyboard {
+    font-size: 0.85em;
+  }
+  .key {
+    font-size: 0.9em;
+    padding: 0.4em 0.05em;
+  }
+}
+
+/* --- FIXED RESPONSIVE CUSTOM KEYBOARD --- */
+.custom-keyboard {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 0;
+  margin: 0;
+  padding: 10px 0 10px 0 !important;
+  background: #f8f8fa;
+  box-shadow: 0 -2px 16px rgba(0,0,0,0.12);
+  z-index: 1000;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  border-radius: 18px 18px 0 0;
+  transform: none !important;
+  overflow-x: auto;
+}
+.custom-keyboard .keyboard-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  width: 100%;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+  gap: 4px;
+}
+.custom-keyboard .key {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 0 2px;
+  min-width: 32px;
+  min-height: 40px;
+  font-size: 1.1rem;
+  font-family: inherit;
+  color: #222;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition: background 0.1s, box-shadow 0.1s;
+  outline: none;
+  cursor: pointer;
+  flex: 1 1 0;
+  max-width: none;
+  min-width: 0;
+  overflow: hidden;
+}
+.custom-keyboard .key[data-key="space"] {
+  min-width: 80px;
+  max-width: 100vw;
+  flex-grow: 4;
+}
+@media (max-width: 600px) {
+  .custom-keyboard {
+    padding: 6px 0 6px 0 !important;
+    border-radius: 14px 14px 0 0;
+    min-height: 120px;
+    max-width: 100vw;
+    left: 0;
+    right: 0;
+    margin: 0;
+    width: 100vw;
+    transform: none !important;
+    overflow-x: auto;
+  }
+  .custom-keyboard .keyboard-row {
+    gap: 2px;
+    margin-bottom: 2px;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .custom-keyboard .key {
+    min-width: 28px;
+    min-height: 32px;
+    font-size: 0.95rem;
+    border-radius: 6px;
+    margin: 0 1px;
+    max-width: none;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .custom-keyboard .key[data-key="space"] {
+    min-width: 60px;
+    max-width: 100vw;
+    flex-grow: 4;
+  }
+}
+@media (max-width: 480px) {
+  .custom-keyboard {
+    padding: 4px 0 4px 0 !important;
+    border-radius: 10px 10px 0 0;
+    min-height: 90px;
+  }
+  .custom-keyboard .key {
+    min-width: 22px;
+    min-height: 24px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    margin: 0 0.5px;
+  }
+  .custom-keyboard .key[data-key="space"] {
+    min-width: 40px;
+  }
+}
+@media (max-width: 400px) {
+  .custom-keyboard {
+    min-height: 70px;
+    padding: 2px 0 2px 0 !important;
+  }
+  .custom-keyboard .key {
+    min-width: 16px;
+    min-height: 18px;
+    font-size: 0.7rem;
+    border-radius: 3px;
+  }
+  .custom-keyboard .key[data-key="space"] {
+    min-width: 24px;
+  }
 }
