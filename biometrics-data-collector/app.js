@@ -3754,9 +3754,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateKeyboardLayout() {
         const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
         const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
-        const numberRow = customKeyboard.querySelector('.keyboard-row.keyboard-numbers');
-        // Number row always visible
-        if (numberRow) numberRow.style.display = 'flex';
         if (isSymbols) {
             letterRows.forEach(r => r.style.display = 'none');
             symbolRows.forEach(r => r.style.display = 'flex');
