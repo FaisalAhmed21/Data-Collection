@@ -437,6 +437,21 @@ class BiometricDataCollector {
                 console.log('Composition started - monitoring for clipboard content');
             });
             
+            typingInput.addEventListener('input', function(e) {
+                const currentValue = e.target.value;
+                const previousValue = this.lastInputValue || '';
+                
+                if (currentValue.length > previousValue.length + 1) {
+                    console.log('Potential paste detected - blocking');
+                    e.target.value = previousValue;
+                    setTimeout(() => {
+                        typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                    }, 0);
+                    return false;
+                }
+                
+                this.lastInputValue = currentValue;
+            }.bind(this));
             
             if (navigator.clipboard) {
                 const originalWriteText = navigator.clipboard.writeText;
@@ -652,13 +667,9 @@ class BiometricDataCollector {
     }
     
     handleTypingInput(e) {
-        const el = e.target;
-        const start = el.selectionStart;
-        const end   = el.selectionEnd;
-        // Mark as actively typing
-        this.isActivelyTyping = true;
-        clearTimeout(this.typingTimeout);
-
+        const { inputType, data } = e;
+        const inputEl = e.target;
+        const value = inputEl.value;
         const pos = inputEl.selectionStart || value.length;
         const timestamp = performance.now();
         const currentTime = performance.now();
@@ -756,17 +767,7 @@ class BiometricDataCollector {
             console.log(`✅ SPACE recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}): cooldown: ${this.spaceCooldown} ms`);
             this.calculateAccuracy();
             this.checkSentenceCompletion();
-            // Schedule feedback update after typing stops
-            this.typingTimeout = setTimeout(() => {
-                this.isActivelyTyping = false;
-                this.updateTypingFeedback();
-            }, 300);
-
-            // Restore cursor immediately
-            if (document.activeElement === el) {
-                el.setSelectionRange(start, end);
-            }
-
+            this.updateTypingFeedback();
             return;
         }
     
@@ -785,17 +786,7 @@ class BiometricDataCollector {
             console.log('✅ Backspace recorded (every press)');
             this.calculateAccuracy();
             this.checkSentenceCompletion();
-            // Schedule feedback update after typing stops
-            this.typingTimeout = setTimeout(() => {
-                this.isActivelyTyping = false;
-                this.updateTypingFeedback();
-            }, 300);
-
-            // Restore cursor immediately
-            if (document.activeElement === el) {
-                el.setSelectionRange(start, end);
-            }
-
+            this.updateTypingFeedback();
             return;
         }
 
@@ -819,17 +810,7 @@ class BiometricDataCollector {
             this.lastKeystrokeTime = timestamp;
             this.calculateAccuracy();
             this.checkSentenceCompletion();
-            // Schedule feedback update after typing stops
-            this.typingTimeout = setTimeout(() => {
-                this.isActivelyTyping = false;
-                this.updateTypingFeedback();
-            }, 300);
-
-            // Restore cursor immediately
-            if (document.activeElement === el) {
-                el.setSelectionRange(start, end);
-            }
-            
+            this.updateTypingFeedback();
             return;
         }
 
@@ -1110,51 +1091,42 @@ class BiometricDataCollector {
         // Update accuracy and check sentence completion after any input
         this.calculateAccuracy();
         this.checkSentenceCompletion();
-        // Schedule feedback update after typing stops
-        this.typingTimeout = setTimeout(() => {
-            this.isActivelyTyping = false;
-            this.updateTypingFeedback();
-        }, 300);
-
-        // Restore cursor immediately
-        if (document.activeElement === el) {
-            el.setSelectionRange(start, end);
-        }
-
+        this.updateTypingFeedback();
     }
     
     updateTypingFeedback() {
-        // Skip updates if user is actively typing
-        if (this.isActivelyTyping) {
-            return;
+        const typed = document.getElementById('typing-input').value;
+        const target = this.sentences[this.currentSentence];
+        const feedbackDisplay = document.getElementById('typing-feedback-display');
+        
+        if (!feedbackDisplay || !target) return;
+        
+        let feedbackHTML = '';
+        
+        // Show target sentence with color marking based on user's typing
+        for (let i = 0; i < target.length; i++) {
+            if (i < typed.length) {
+                // User has typed this position
+                if (typed[i] === target[i]) {
+                    // Correct character - show in green
+                    feedbackHTML += `<span class="typed-correct">${this.escapeHtml(target[i])}</span>`;
+                } else {
+                    // Wrong character - show target character in red
+                    feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(target[i])}</span>`;
+                }
+            } else {
+                // User hasn't typed this position yet - show in normal color
+                feedbackHTML += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
+            }
         }
         
-        const typed   = this.typingInput.value;
-        const target  = this.sentences[this.currentSentence];
-        const display = document.getElementById('typing-feedback-display');
-      
-        if (!display) return;
-      
-        let html = '';
-    
-        for (let i = 0; i < target.length; i++) {
-          if (i < typed.length) {
-            html += typed[i] === target[i]
-              ? `<span class="typed-correct">${this.escapeHtml(target[i])}</span>`
-              : `<span class="typed-incorrect">${this.escapeHtml(target[i])}</span>`;
-          } else {
-            html += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
-          }
-        }
-        // Extra chars beyond target
+        // If user typed more characters than target, show them in red
         for (let i = target.length; i < typed.length; i++) {
-          html += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
+            feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
         }
-    
-        display.innerHTML = html;
+        
+        feedbackDisplay.innerHTML = feedbackHTML;
     }
-    
-
     
     escapeHtml(text) {
         const div = document.createElement('div');
@@ -1486,15 +1458,8 @@ class BiometricDataCollector {
         nextBtn.style.display = 'inline-flex';
         nextBtn.style.backgroundColor = 'var(--color-secondary)';
         nextBtn.style.opacity = '0.5';
-        this.typingTimeout = setTimeout(() => {
-            this.isActivelyTyping = false;
-            this.updateTypingFeedback();
-        }, 300);
-        // Restore cursor immediately
-        if (document.activeElement === el) {
-            el.setSelectionRange(start, end);
-        }
-
+        
+        this.updateTypingFeedback();
     }
     
     calculateAccuracy() {
@@ -3673,10 +3638,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Optionally hide keyboard on blur
         // setTimeout(() => { customKeyboard.style.display = 'none'; }, 200);
     });
-    // Remove preventDefault from mousedown/touchstart so cursor can move
-    // typingInput.addEventListener('touchstart', ...)
-    // typingInput.addEventListener('mousedown', ...)
-    // (Remove these handlers entirely)
 
     // Hide keyboard if clicking outside
     function isKeyboardOrInput(target) {
@@ -3693,18 +3654,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Keyboard key press handler
+    // Keyboard key press handler (improved: records first frame touches, heatmap, overlap vectors)
     customKeyboard.addEventListener('click', (e) => {
         if (!e.target.classList.contains('key')) return;
         const key = e.target.getAttribute('data-key');
         let value = typingInput.value;
-        // Always get the latest caret position
-        let caret = typingInput.selectionStart;
-        if (caret === null || caret === undefined) caret = value.length;
+        let caret = typingInput.selectionStart || value.length;
         let newValue = value;
         let insertChar = '';
         let handled = false;
-        // Touch/click position (actual finger/pointer location)
+        // Touch data
         let touchX = 0, touchY = 0;
         if (e instanceof PointerEvent) {
             touchX = e.clientX;
@@ -3721,33 +3680,31 @@ document.addEventListener('DOMContentLoaded', () => {
             touchX = rect.left + rect.width/2;
             touchY = rect.top + rect.height/2;
         }
-        // Key center (always use getBoundingClientRect)
-        const rect = e.target.getBoundingClientRect();
-        const keyX = rect.left + rect.width/2;
-        const keyY = rect.top + rect.height/2;
+        // --- NEW: Record first frame touch for heatmap and overlap vector ---
+        if (collector.firstFrameTouches.length === 0) {
+            collector.firstFrameTouches.push({ x: touchX, y: touchY, key });
+            collector.firstFrameHeatmap.push({ x: touchX, y: touchY });
+        } else {
+            // If multiple touches in the same frame (not likely with click, but for extensibility)
+            collector.firstFrameOverlapVectors.push({ x: touchX, y: touchY, key });
+        }
         // Key logic
         if (key === 'backspace') {
             if (caret > 0) {
                 newValue = value.slice(0, caret - 1) + value.slice(caret);
                 typingInput.value = newValue;
-                caret = caret - 1;
-                requestAnimationFrame(() => typingInput.setSelectionRange(caret, caret));
+                typingInput.setSelectionRange(caret - 1, caret - 1);
                 insertChar = 'BACKSPACE';
                 handled = true;
             }
         } else if (key === 'space') {
             newValue = value.slice(0, caret) + ' ' + value.slice(caret);
             typingInput.value = newValue;
-            caret = caret + 1;
-            requestAnimationFrame(() => typingInput.setSelectionRange(caret, caret));
+            typingInput.setSelectionRange(caret + 1, caret + 1);
             insertChar = ' ';
             handled = true;
         } else if (key === 'enter') {
             // Optionally handle enter
-            newValue = value.slice(0, caret) + '\n' + value.slice(caret);
-            typingInput.value = newValue;
-            caret = caret + 1;
-            requestAnimationFrame(() => typingInput.setSelectionRange(caret, caret));
             insertChar = '\n';
             handled = true;
         } else if (key === 'shift') {
@@ -3772,8 +3729,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
             typingInput.value = newValue;
-            caret = caret + 1;
-            requestAnimationFrame(() => typingInput.setSelectionRange(caret, caret));
+            typingInput.setSelectionRange(caret + 1, caret + 1);
             insertChar = char;
             handled = true;
             if (isShift && !isSymbols) {
@@ -3782,8 +3738,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (handled) {
-            // Always use the updated caret position for keystroke recording
-            const updatedCaret = caret;
+            // Record keystroke and touch data
             const timestamp = performance.now();
             collector.recordKeystroke({
                 timestamp,
@@ -3791,12 +3746,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === 'SHIFT' ? 16 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
                 type: 'custom-keyboard',
                 sentence: collector.currentSentence,
-                position: updatedCaret, // always use current caret
+                position: caret,
                 clientX: Math.round(touchX),
                 clientY: Math.round(touchY),
-                key_x: Math.round(keyX),
-                key_y: Math.round(keyY),
-                dwell_time_ms: '' // Will be set on touchend
+                key_x: Math.round(touchX),
+                key_y: Math.round(touchY),
+                dwell_time_ms: '', // Will be set on touchend
+                first_frame_overlap: collector.firstFrameOverlapVectors.length > 0 ? JSON.stringify(collector.firstFrameOverlapVectors) : ''
             });
             collector.calculateAccuracy();
             collector.checkSentenceCompletion();
@@ -3814,16 +3770,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     function updateKeyboardLayout() {
-        const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
-        const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
-        // Remove .active from all rows first
-        letterRows.forEach(r => r.classList.remove('active'));
-        symbolRows.forEach(r => r.classList.remove('active'));
-        // Add .active only to the correct set
+        const letterRows = customKeyboard.querySelectorAll('.keyboard-letters');
+        const symbolRows = customKeyboard.querySelectorAll('.keyboard-symbols');
         if (isSymbols) {
-            symbolRows.forEach(r => r.classList.add('active'));
+            letterRows.forEach(r => r.style.display = 'none');
+            symbolRows.forEach(r => r.style.display = 'flex');
         } else {
-            letterRows.forEach(r => r.classList.add('active'));
+            letterRows.forEach(r => r.style.display = 'flex');
+            symbolRows.forEach(r => r.style.display = 'none');
         }
     }
 
