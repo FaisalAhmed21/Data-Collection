@@ -443,12 +443,20 @@ class BiometricDataCollector {
                 
                 if (currentValue.length > previousValue.length + 1) {
                     console.log('Potential paste detected - blocking');
+                    
+                    // Prevent destructive cursor reset
+                    const cursorPos = e.target.selectionStart;
                     e.target.value = previousValue;
+                
+                    // Restore cursor position safely
                     setTimeout(() => {
-                        typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                        typingInput.setSelectionRange(cursorPos, cursorPos);
                     }, 0);
+                    
                     return false;
                 }
+
+
                 
                 this.lastInputValue = currentValue;
             }.bind(this));
@@ -3356,8 +3364,7 @@ class BiometricDataCollector {
                     was_deleted: wasDeleted,
                     flight_time_ms: flightTime, // Use the flight time as recorded
                     dwell_time_ms: keystroke.dwell_time_ms || '',
-                    browser_name: this.deviceInfo.browser_name,
-                    first_frame_overlap: keystroke.first_frame_overlap || ''
+                    browser_name: this.deviceInfo.browser_name
                 });
             }
         });
@@ -3664,7 +3671,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!e.target.classList.contains('key')) return;
         const key = e.target.getAttribute('data-key');
         let value = typingInput.value;
-        let caret = typingInput.selectionStart || value.length;
+        // Always get the latest caret position
+        let caret = typingInput.selectionStart;
+        if (caret === null || caret === undefined) caret = value.length;
         let newValue = value;
         let insertChar = '';
         let handled = false;
@@ -3706,6 +3715,9 @@ document.addEventListener('DOMContentLoaded', () => {
             handled = true;
         } else if (key === 'enter') {
             // Optionally handle enter
+            newValue = value.slice(0, caret) + '\n' + value.slice(caret);
+            typingInput.value = newValue;
+            typingInput.setSelectionRange(caret + 1, caret + 1);
             insertChar = '\n';
             handled = true;
         } else if (key === 'shift') {
@@ -3739,7 +3751,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (handled) {
-            // Record keystroke and touch data
+            // Always use the updated caret position for keystroke recording
+            const updatedCaret = typingInput.selectionStart;
             const timestamp = performance.now();
             collector.recordKeystroke({
                 timestamp,
@@ -3747,13 +3760,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === 'SHIFT' ? 16 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
                 type: 'custom-keyboard',
                 sentence: collector.currentSentence,
-                position: caret,
+                position: updatedCaret, // always use current caret
                 clientX: Math.round(touchX),
                 clientY: Math.round(touchY),
                 key_x: Math.round(keyX),
                 key_y: Math.round(keyY),
-                dwell_time_ms: '', // Will be set on touchend
-                first_frame_overlap: collector.firstFrameOverlapVectors.length > 0 ? JSON.stringify(collector.firstFrameOverlapVectors) : ''
+                dwell_time_ms: '' // Will be set on touchend
             });
             collector.calculateAccuracy();
             collector.checkSentenceCompletion();
