@@ -655,6 +655,10 @@ class BiometricDataCollector {
         const el = e.target;
         const start = el.selectionStart;
         const end   = el.selectionEnd;
+        // Mark as actively typing
+        this.isActivelyTyping = true;
+        clearTimeout(this.typingTimeout);
+
         const pos = inputEl.selectionStart || value.length;
         const timestamp = performance.now();
         const currentTime = performance.now();
@@ -752,13 +756,17 @@ class BiometricDataCollector {
             console.log(`✅ SPACE recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}): cooldown: ${this.spaceCooldown} ms`);
             this.calculateAccuracy();
             this.checkSentenceCompletion();
-            this.updateTypingFeedback();
-            window.requestAnimationFrame(() => {
-                if (document.activeElement !== el) 
-                    return;
-                
-                el.setSelectionRange(start, end);      // restore AFTER feedback paint
-            });
+            // Schedule feedback update after typing stops
+            this.typingTimeout = setTimeout(() => {
+                this.isActivelyTyping = false;
+                this.updateTypingFeedback();
+            }, 300);
+
+            // Restore cursor immediately
+            if (document.activeElement === el) {
+                el.setSelectionRange(start, end);
+            }
+
             return;
         }
     
@@ -777,13 +785,17 @@ class BiometricDataCollector {
             console.log('✅ Backspace recorded (every press)');
             this.calculateAccuracy();
             this.checkSentenceCompletion();
-            this.updateTypingFeedback();
-            window.requestAnimationFrame(() => {
-                if (document.activeElement !== el) 
-                    return;
-                
-                el.setSelectionRange(start, end);      // restore AFTER feedback paint
-            });
+            // Schedule feedback update after typing stops
+            this.typingTimeout = setTimeout(() => {
+                this.isActivelyTyping = false;
+                this.updateTypingFeedback();
+            }, 300);
+
+            // Restore cursor immediately
+            if (document.activeElement === el) {
+                el.setSelectionRange(start, end);
+            }
+
             return;
         }
 
@@ -807,13 +819,17 @@ class BiometricDataCollector {
             this.lastKeystrokeTime = timestamp;
             this.calculateAccuracy();
             this.checkSentenceCompletion();
-            this.updateTypingFeedback();
-            window.requestAnimationFrame(() => {
-                if (document.activeElement !== el) 
-                    return;
-                
-                el.setSelectionRange(start, end);      // restore AFTER feedback paint
-            });
+            // Schedule feedback update after typing stops
+            this.typingTimeout = setTimeout(() => {
+                this.isActivelyTyping = false;
+                this.updateTypingFeedback();
+            }, 300);
+
+            // Restore cursor immediately
+            if (document.activeElement === el) {
+                el.setSelectionRange(start, end);
+            }
+            
             return;
         }
 
@@ -1094,16 +1110,25 @@ class BiometricDataCollector {
         // Update accuracy and check sentence completion after any input
         this.calculateAccuracy();
         this.checkSentenceCompletion();
-        this.updateTypingFeedback();
-        window.requestAnimationFrame(() => {
-            if (document.activeElement !== el) 
-                return;
-            
-            el.setSelectionRange(start, end);      // restore AFTER feedback paint
-        });
+        // Schedule feedback update after typing stops
+        this.typingTimeout = setTimeout(() => {
+            this.isActivelyTyping = false;
+            this.updateTypingFeedback();
+        }, 300);
+
+        // Restore cursor immediately
+        if (document.activeElement === el) {
+            el.setSelectionRange(start, end);
+        }
+
     }
     
     updateTypingFeedback() {
+        // Skip updates if user is actively typing
+        if (this.isActivelyTyping) {
+            return;
+        }
+        
         const typed   = this.typingInput.value;
         const target  = this.sentences[this.currentSentence];
         const display = document.getElementById('typing-feedback-display');
@@ -1127,8 +1152,8 @@ class BiometricDataCollector {
         }
     
         display.innerHTML = html;
-
     }
+    
 
     
     escapeHtml(text) {
@@ -1461,13 +1486,15 @@ class BiometricDataCollector {
         nextBtn.style.display = 'inline-flex';
         nextBtn.style.backgroundColor = 'var(--color-secondary)';
         nextBtn.style.opacity = '0.5';
-        this.updateTypingFeedback();
-        window.requestAnimationFrame(() => {
-            if (document.activeElement !== el) 
-                return;
-            
-            el.setSelectionRange(start, end);      // restore AFTER feedback paint
-        });
+        this.typingTimeout = setTimeout(() => {
+            this.isActivelyTyping = false;
+            this.updateTypingFeedback();
+        }, 300);
+        // Restore cursor immediately
+        if (document.activeElement === el) {
+            el.setSelectionRange(start, end);
+        }
+
     }
     
     calculateAccuracy() {
