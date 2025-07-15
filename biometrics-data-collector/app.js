@@ -11,8 +11,7 @@ class BiometricDataCollector {
             typingCompleted: false,
             crystalCompleted: false,
             galleryCompleted: false
-        };
-        
+        }; 
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         this.isAndroid = /Android/.test(navigator.userAgent);
