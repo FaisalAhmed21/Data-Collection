@@ -5,12 +5,14 @@ class BiometricDataCollector {
         this.currentSentence = 0;
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
+        
         this.taskState = {
             studyStarted: false,
             typingCompleted: false,
             crystalCompleted: false,
             galleryCompleted: false
-        }; 
+        };
+        
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         this.isAndroid = /Android/.test(navigator.userAgent);
@@ -3711,24 +3713,11 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = '\n';
             handled = true;
         } else if (key === 'shift') {
-            // Record SHIFT key press
-            const timestamp = performance.now();
-            collector.recordKeystroke({
-                timestamp,
-                actualChar: 'SHIFT',
-                keyCode: 16,
-                type: 'custom-keyboard',
-                sentence: collector.currentSentence,
-                position: caret,
-                clientX: Math.round(touchX),
-                clientY: Math.round(touchY),
-                first_frame_touch_x: Math.round(touchX),
-                first_frame_touch_y: Math.round(touchY),
-                first_frame_overlap: collector.firstFrameOverlapVectors.length > 0 ? JSON.stringify(collector.firstFrameOverlapVectors) : ''
-            });
+            insertChar = 'SHIFT';
+            handled = true;
             isShift = !isShift;
             updateKeyboardCase();
-            return;
+        // (do not return here, let it fall through to the unified keystroke recording below)
         } else if (key === '?123') {
             isSymbols = true;
             updateKeyboardLayout();
@@ -3759,16 +3748,15 @@ document.addEventListener('DOMContentLoaded', () => {
             collector.recordKeystroke({
                 timestamp,
                 actualChar: insertChar,
-                keyCode: insertChar === 'BACKSPACE' ? 8 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
+                keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === 'SHIFT' ? 16 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
                 type: 'custom-keyboard',
                 sentence: collector.currentSentence,
                 position: caret,
                 clientX: Math.round(touchX),
                 clientY: Math.round(touchY),
-                first_frame_touch_x: Math.round(touchX),
-                first_frame_touch_y: Math.round(touchY),
                 key_x: Math.round(touchX),
                 key_y: Math.round(touchY),
+                dwell_time_ms: '', // Will be set on touchend
                 first_frame_overlap: collector.firstFrameOverlapVectors.length > 0 ? JSON.stringify(collector.firstFrameOverlapVectors) : ''
             });
             collector.calculateAccuracy();
