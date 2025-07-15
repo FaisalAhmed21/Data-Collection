@@ -4052,3 +4052,193 @@ html, body {
     margin-bottom: 6px !important; /* Slightly more vertical space on mobile */
   }
 }
+
+/* Responsive custom keyboard styles */
+.custom-keyboard {
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 0;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f7f7fa;
+  z-index: 1000;
+  box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
+  padding: 0.5em 0 0.5em 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border-top: 1px solid #e0e0e0;
+}
+.keyboard-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  width: 100%;
+  margin: 0.1em 0;
+  flex-wrap: nowrap;
+}
+.key {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0.08em;
+  padding: 0.7em 0.2em;
+  font-size: 1.2em;
+  border: none;
+  border-radius: 0.4em;
+  background: #fff;
+  color: #222;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition: background 0.15s, color 0.15s;
+  outline: none;
+  user-select: none;
+  touch-action: manipulation;
+  max-width: 3.2em;
+  white-space: nowrap;
+}
+.key:active, .key:focus {
+  background: #e0eaff;
+  color: #0a4b8c;
+}
+.key.key-space {
+  flex: 3 1 0;
+  max-width: none;
+}
+.key.key-large {
+  font-size: 1.2em;
+}
+.key.key-small {
+  font-size: 1em;
+  max-width: 2.5em;
+}
+.key.key-wide {
+  flex: 2 1 0;
+  max-width: none;
+}
+.keyboard-numbers {
+  margin-bottom: 0.1em;
+}
+@media (max-width: 600px) {
+  .custom-keyboard {
+    font-size: 0.95em;
+    padding: 0.2em 0 0.2em 0;
+  }
+  .key {
+    font-size: 1em;
+    padding: 0.5em 0.1em;
+  }
+}
+@media (max-width: 400px) {
+  .custom-keyboard {
+    font-size: 0.85em;
+  }
+  .key {
+    font-size: 0.9em;
+    padding: 0.4em 0.05em;
+  }
+}
+
+/* Remove highlight/color from typed sentence in feedback */
+.typed-correct, .typed-incorrect, .to-type {
+  color: #111 !important;
+  background: none !important;
+  font-weight: normal !important;
+  text-shadow: none !important;
+}
+#typing-input, .typing-input-box {
+  color: #111 !important;
+  background: #fff !important;
+  caret-color: #111 !important;
+}
+
+/* Responsive custom keyboard styles - update for no cutoff, wrapping */
+.custom-keyboard {
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 0;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f7f7fa;
+  z-index: 1000;
+  box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
+  padding: 0.5em 0 0.5em 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border-top: 1px solid #e0e0e0;
+}
+.keyboard-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  width: 100%;
+  margin: 0.1em 0;
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+.key {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0.08em;
+  padding: 0.7em 0.2em;
+  font-size: 1.2em;
+  border: none;
+  border-radius: 0.4em;
+  background: #fff;
+  color: #222;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition: background 0.15s, color 0.15s;
+  outline: none;
+  user-select: none;
+  touch-action: manipulation;
+  max-width: 3.2em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.key:active, .key:focus {
+  background: #e0eaff;
+  color: #0a4b8c;
+}
+.key.key-space {
+  flex: 3 1 0;
+  max-width: none;
+}
+.key.key-large {
+  font-size: 1.2em;
+}
+.key.key-small {
+  font-size: 1em;
+  max-width: 2.5em;
+}
+.key.key-wide {
+  flex: 2 1 0;
+  max-width: none;
+}
+.keyboard-numbers {
+  margin-bottom: 0.1em;
+}
+@media (max-width: 600px) {
+  .custom-keyboard {
+    font-size: 0.95em;
+    padding: 0.2em 0 0.2em 0;
+  }
+  .key {
+    font-size: 1em;
+    padding: 0.5em 0.1em;
+  }
+}
+@media (max-width: 400px) {
+  .custom-keyboard {
+    font-size: 0.85em;
+  }
+  .key {
+    font-size: 0.9em;
+    padding: 0.4em 0.05em;
+  }
+}
