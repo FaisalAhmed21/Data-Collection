@@ -270,7 +270,7 @@ class BiometricDataCollector {
     }
     
     setupPointerTracking() {
-        // Enhanced pointer tracking for accurate touch coordinates
+        // Modern cursor logic from provided code
         document.addEventListener('mousemove', (e) => {
             this.currentPointerX = e.clientX;
             this.currentPointerY = e.clientY;
@@ -280,7 +280,6 @@ class BiometricDataCollector {
                 timestamp: performance.now()
             };
         });
-        
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length > 0) {
                 const touch = e.touches[0];
@@ -293,7 +292,6 @@ class BiometricDataCollector {
                 };
             }
         });
-        
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length > 0) {
                 const touch = e.touches[0];
@@ -306,8 +304,6 @@ class BiometricDataCollector {
                 };
             }
         });
-        
-        // Enhanced touch tracking for mobile devices
         document.addEventListener('touchend', (e) => {
             if (e.changedTouches.length > 0) {
                 const touch = e.changedTouches[0];
@@ -495,6 +491,7 @@ class BiometricDataCollector {
         // Remove keydown and keyup handlers to prevent duplicate recording
         // All keystroke recording is now handled in handleTypingInput
         typingInput.addEventListener('focus', (e) => {
+            // Modern cursor logic from provided code
             const rect = e.target.getBoundingClientRect();
             this.currentPointerX = rect.left + rect.width / 2;
             this.currentPointerY = rect.top + rect.height / 2;
@@ -502,6 +499,7 @@ class BiometricDataCollector {
             this.pointerTracking.y = this.currentPointerY;
         });
         typingInput.addEventListener('click', (e) => {
+            // Modern cursor logic from provided code
             this.currentPointerX = e.clientX;
             this.currentPointerY = e.clientY;
             this.pointerTracking.x = e.clientX;
@@ -569,39 +567,21 @@ class BiometricDataCollector {
         if (targetScreen) {
             targetScreen.classList.add('active');
             this.currentScreen = screenName;
+            
+            // Smooth scroll to the target screen
             this.smoothScrollToScreen(targetScreen);
         }
         if (screenName === 'export') {
-            // Keystroke features
             const keystrokeFeatures = this.extractKeystrokeFeatures();
             const featureNames = keystrokeFeatures.length > 0 ? Object.keys(keystrokeFeatures[0]) : [];
             const keystrokeFeatureCount = featureNames.length;
             document.getElementById('keystroke-features').textContent = keystrokeFeatureCount;
-            // Dynamically generate the feature list
-            const keystrokeFeatureList = document.getElementById('keystroke-feature-list');
-            if (keystrokeFeatureList) {
-                keystrokeFeatureList.innerHTML = '';
-                featureNames.forEach((name, idx) => {
-                    const li = document.createElement('li');
-                    li.textContent = `${idx + 1}. ${name}`;
-                    keystrokeFeatureList.appendChild(li);
-                });
-            }
-            // Touch features
+            document.getElementById('keystroke-feature-list').textContent = featureNames.join(', ');
             const touchFeatures = this.extractTouchFeatures();
             const touchFeatureNames = touchFeatures.length > 0 ? Object.keys(touchFeatures[0]) : [];
             const touchFeatureCount = touchFeatureNames.length;
             document.getElementById('touch-features').textContent = touchFeatureCount;
-            // Dynamically generate the feature list
-            const touchFeatureList = document.getElementById('touch-feature-list');
-            if (touchFeatureList) {
-                touchFeatureList.innerHTML = '';
-                touchFeatureNames.forEach((name, idx) => {
-                    const li = document.createElement('li');
-                    li.textContent = `${idx + 1}. ${name}`;
-                    touchFeatureList.appendChild(li);
-                });
-            }
+            document.getElementById('touch-feature-list').textContent = touchFeatureNames.join(', ');
         }
     }
     
@@ -1113,40 +1093,30 @@ class BiometricDataCollector {
     }
     
     updateTypingFeedback() {
+        // Feedback system logic from provided code
         const typed = document.getElementById('typing-input').value;
         const target = this.sentences[this.currentSentence];
         const feedbackDisplay = document.getElementById('typing-feedback-display');
-        
         if (!feedbackDisplay || !target) return;
-        
         let feedbackHTML = '';
-        
-        // Show target sentence with color marking based on user's typing
         for (let i = 0; i < target.length; i++) {
             if (i < typed.length) {
-                // User has typed this position
                 if (typed[i] === target[i]) {
-                    // Correct character - show in green
                     feedbackHTML += `<span class="typed-correct">${this.escapeHtml(target[i])}</span>`;
                 } else {
-                    // Wrong character - show target character in red
                     feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(target[i])}</span>`;
                 }
             } else {
-                // User hasn't typed this position yet - show in normal color
                 feedbackHTML += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
             }
         }
-        
-        // If user typed more characters than target, show them in red
         for (let i = target.length; i < typed.length; i++) {
             feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
         }
-        
         feedbackDisplay.innerHTML = feedbackHTML;
     }
-    
     escapeHtml(text) {
+        // Helper from provided code
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
@@ -3656,6 +3626,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Optionally hide keyboard on blur
         // setTimeout(() => { customKeyboard.style.display = 'none'; }, 200);
     });
+    // Remove preventDefault from mousedown/touchstart so cursor can move
+    // typingInput.addEventListener('touchstart', ...)
+    // typingInput.addEventListener('mousedown', ...)
+    // (Remove these handlers entirely)
 
     // Hide keyboard if clicking outside
     function isKeyboardOrInput(target) {
@@ -3672,7 +3646,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Keyboard key press handler (improved: records first frame touches, heatmap, overlap vectors)
+    // Keyboard key press handler
     customKeyboard.addEventListener('click', (e) => {
         if (!e.target.classList.contains('key')) return;
         const key = e.target.getAttribute('data-key');
@@ -3681,8 +3655,12 @@ document.addEventListener('DOMContentLoaded', () => {
         let newValue = value;
         let insertChar = '';
         let handled = false;
-        // Touch data
-        let touchX = 0, touchY = 0;
+        // Always use the center of the key for key_x and key_y
+        const rect = e.target.getBoundingClientRect();
+        const keyX = rect.left + rect.width / 2;
+        const keyY = rect.top + rect.height / 2;
+        // Touch/click position (actual finger/pointer location)
+        let touchX = keyX, touchY = keyY; // Default to center if not pointer event
         if (e instanceof PointerEvent) {
             touchX = e.clientX;
             touchY = e.clientY;
@@ -3692,22 +3670,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (e.targetTouches && e.targetTouches[0]) {
             touchX = e.targetTouches[0].clientX;
             touchY = e.targetTouches[0].clientY;
-        } else {
-            // fallback: getBoundingClientRect
-            const rect = e.target.getBoundingClientRect();
-            touchX = rect.left + rect.width/2;
-            touchY = rect.top + rect.height/2;
-        }
-        // Always get the key center for key_x and key_y
-        const rect = e.target.getBoundingClientRect();
-        const keyX = rect.left + rect.width/2;
-        const keyY = rect.top + rect.height/2;
-        // --- NEW: Record first frame touch for heatmap and overlap vector ---
-        if (collector.firstFrameTouches.length === 0) {
-            collector.firstFrameTouches.push({ x: touchX, y: touchY, key });
-            collector.firstFrameHeatmap.push({ x: touchX, y: touchY });
-        } else {
-            collector.firstFrameOverlapVectors.push({ x: touchX, y: touchY, key });
         }
         // Key logic
         if (key === 'backspace') {
@@ -3725,6 +3687,7 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = ' ';
             handled = true;
         } else if (key === 'enter') {
+            // Optionally handle enter
             insertChar = '\n';
             handled = true;
         } else if (key === 'shift') {
@@ -3732,6 +3695,7 @@ document.addEventListener('DOMContentLoaded', () => {
             handled = true;
             isShift = !isShift;
             updateKeyboardCase();
+        // (do not return here, let it fall through to the unified keystroke recording below)
         } else if (key === '?123') {
             isSymbols = true;
             updateKeyboardLayout();
@@ -3741,6 +3705,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateKeyboardLayout();
             return;
         } else {
+            // Normal character
             let char = key;
             if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
@@ -3756,10 +3721,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (handled) {
+            // Record keystroke and touch data
             const timestamp = performance.now();
-            // Store a unique key for dwell tracking (element reference)
-            const dwellKey = e.target;
-            collector.keyDwellStartTimes.set(dwellKey, timestamp);
             collector.recordKeystroke({
                 timestamp,
                 actualChar: insertChar,
@@ -3771,8 +3734,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clientY: Math.round(touchY),
                 key_x: Math.round(keyX),
                 key_y: Math.round(keyY),
-                dwell_time_ms: '', // Will be set on touchend
-                first_frame_overlap: collector.firstFrameOverlapVectors.length > 0 ? JSON.stringify(collector.firstFrameOverlapVectors) : ''
+                dwell_time_ms: '' // Will be set on touchend
             });
             collector.calculateAccuracy();
             collector.checkSentenceCompletion();
@@ -3780,15 +3742,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Use a Map for dwell tracking for accuracy
-    collector.keyDwellStartTimes = new Map();
+    function updateKeyboardCase() {
+        const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
+        keys.forEach(btn => {
+            const key = btn.getAttribute('data-key');
+            if (key && key.length === 1 && /[a-z]/.test(key)) {
+                btn.textContent = isShift ? key.toUpperCase() : key;
+            }
+        });
+    }
+    function updateKeyboardLayout() {
+        const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
+        const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
+        if (isSymbols) {
+            letterRows.forEach(r => r.style.display = 'none');
+            symbolRows.forEach(r => r.style.display = 'flex');
+        } else {
+            letterRows.forEach(r => r.style.display = 'flex');
+            symbolRows.forEach(r => r.style.display = 'none');
+        }
+    }
+
+    // Optionally, always show keyboard on page load for demo
+    // customKeyboard.style.display = 'block';
+
+    // Add touchstart and touchend listeners for dwell time
     customKeyboard.addEventListener('touchstart', (e) => {
         const target = e.target.closest('.key');
         if (!target) return;
         const key = target.getAttribute('data-key');
         const touch = e.touches[0];
         if (key && touch) {
-            collector.keyDwellStartTimes.set(target, performance.now());
+            collector.keyDwellStartTimes[key] = performance.now();
         }
     }, { passive: true });
     customKeyboard.addEventListener('touchend', (e) => {
@@ -3797,21 +3782,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const key = target.getAttribute('data-key');
         const touch = e.changedTouches[0];
         if (key && touch) {
-            const dwellStart = collector.keyDwellStartTimes.get(target);
+            const dwellStart = collector.keyDwellStartTimes[key];
             const dwellTime = dwellStart ? Math.round(performance.now() - dwellStart) : '';
-            // Find the last keystroke for this key element and add dwell_time_ms
+            // Find the last keystroke for this key and add dwell_time_ms (match by actualChar and key_x/key_y)
             for (let i = collector.keystrokeData.length - 1; i >= 0; i--) {
-                const ks = collector.keystrokeData[i];
-                if (
-                    ks.key_x === Math.round(target.getBoundingClientRect().left + target.getBoundingClientRect().width/2) &&
-                    ks.key_y === Math.round(target.getBoundingClientRect().top + target.getBoundingClientRect().height/2) &&
-                    ks.dwell_time_ms === ''
-                ) {
-                    ks.dwell_time_ms = dwellTime;
+                const k = collector.keystrokeData[i];
+                if ((k.actualChar === key || (key === 'backspace' && k.actualChar === 'BACKSPACE') || (key === 'shift' && k.actualChar === 'SHIFT')) &&
+                    k.key_x !== undefined && k.key_y !== undefined && k.dwell_time_ms === '') {
+                    k.dwell_time_ms = dwellTime;
                     break;
                 }
             }
-            collector.keyDwellStartTimes.delete(target);
+            delete collector.keyDwellStartTimes[key];
         }
     }, { passive: true });
 
