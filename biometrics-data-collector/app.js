@@ -574,34 +574,17 @@ class BiometricDataCollector {
             this.smoothScrollToScreen(targetScreen);
         }
         if (screenName === 'export') {
+            // Dynamically extract feature names from the exported data
             const keystrokeFeatures = this.extractKeystrokeFeatures();
             const featureNames = keystrokeFeatures.length > 0 ? Object.keys(keystrokeFeatures[0]) : [];
             const keystrokeFeatureCount = featureNames.length;
             document.getElementById('keystroke-features').textContent = keystrokeFeatureCount;
-            // Dynamically populate the keystroke feature list
-            const keystrokeFeatureListUl = document.getElementById('keystroke-feature-list-ul');
-            if (keystrokeFeatureListUl) {
-                keystrokeFeatureListUl.innerHTML = '';
-                featureNames.forEach((name, idx) => {
-                    const li = document.createElement('li');
-                    li.textContent = `${idx + 1}. ${name}`;
-                    keystrokeFeatureListUl.appendChild(li);
-                });
-            }
+            document.getElementById('keystroke-feature-list').textContent = featureNames.join(', ');
             const touchFeatures = this.extractTouchFeatures();
             const touchFeatureNames = touchFeatures.length > 0 ? Object.keys(touchFeatures[0]) : [];
             const touchFeatureCount = touchFeatureNames.length;
             document.getElementById('touch-features').textContent = touchFeatureCount;
-            // Dynamically populate the touch feature list
-            const touchFeatureListUl = document.getElementById('touch-feature-list-ul');
-            if (touchFeatureListUl) {
-                touchFeatureListUl.innerHTML = '';
-                touchFeatureNames.forEach((name, idx) => {
-                    const li = document.createElement('li');
-                    li.textContent = `${idx + 1}. ${name}`;
-                    touchFeatureListUl.appendChild(li);
-                });
-            }
+            document.getElementById('touch-feature-list').textContent = touchFeatureNames.join(', ');
         }
     }
     
@@ -3677,17 +3660,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!e.target.classList.contains('key')) return;
         const key = e.target.getAttribute('data-key');
         let value = typingInput.value;
-        let caret = typingInput.selectionStart;
-        if (caret === null || caret === undefined) caret = value.length;
+        let caret = typingInput.selectionStart || value.length;
         let newValue = value;
         let insertChar = '';
         let handled = false;
-        // Always get the key center for key_x/key_y
-        const rect = e.target.getBoundingClientRect();
-        const keyX = rect.left + rect.width / 2;
-        const keyY = rect.top + rect.height / 2;
-        // Touch/click position (for clientX/clientY, but not for key_x/key_y)
+        // Touch/click position (actual finger/pointer location)
         let touchX = 0, touchY = 0;
+        let keyX = 0, keyY = 0;
+        const rect = e.target.getBoundingClientRect();
+        keyX = rect.left + rect.width / 2;
+        keyY = rect.top + rect.height / 2;
         if (e instanceof PointerEvent) {
             touchX = e.clientX;
             touchY = e.clientY;
@@ -3713,23 +3695,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (caret > 0) {
                 newValue = value.slice(0, caret - 1) + value.slice(caret);
                 typingInput.value = newValue;
-                caret = newValue.length;
-                typingInput.setSelectionRange(caret, caret);
+                typingInput.setSelectionRange(caret - 1, caret - 1);
                 insertChar = 'BACKSPACE';
                 handled = true;
             }
         } else if (key === 'space') {
             newValue = value.slice(0, caret) + ' ' + value.slice(caret);
-            caret = newValue.length;
             typingInput.value = newValue;
-            typingInput.setSelectionRange(caret, caret);
+            typingInput.setSelectionRange(caret + 1, caret + 1);
             insertChar = ' ';
             handled = true;
         } else if (key === 'enter') {
-            newValue = value.slice(0, caret) + '\n' + value.slice(caret);
-            caret = newValue.length;
-            typingInput.value = newValue;
-            typingInput.setSelectionRange(caret, caret);
+            // Optionally handle enter
             insertChar = '\n';
             handled = true;
         } else if (key === 'shift') {
@@ -3737,6 +3714,7 @@ document.addEventListener('DOMContentLoaded', () => {
             handled = true;
             isShift = !isShift;
             updateKeyboardCase();
+        // (do not return here, let it fall through to the unified keystroke recording below)
         } else if (key === '?123') {
             isSymbols = true;
             updateKeyboardLayout();
@@ -3752,9 +3730,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 char = char.toUpperCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
-            caret = newValue.length;
             typingInput.value = newValue;
-            typingInput.setSelectionRange(caret, caret);
+            typingInput.setSelectionRange(caret + 1, caret + 1);
             insertChar = char;
             handled = true;
             if (isShift && !isSymbols) {
@@ -3763,19 +3740,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (handled) {
+            // Record keystroke and touch data
             const timestamp = performance.now();
+            let dwellTime = '';
+            if (collector.keyDwellStartTimes[key]) {
+                dwellTime = Math.round(timestamp - collector.keyDwellStartTimes[key]);
+                delete collector.keyDwellStartTimes[key];
+            }
             collector.recordKeystroke({
                 timestamp,
                 actualChar: insertChar,
                 keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === 'SHIFT' ? 16 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
                 type: 'custom-keyboard',
                 sentence: collector.currentSentence,
-                position: caret, // store the caret after the change
+                position: caret,
                 clientX: Math.round(touchX),
                 clientY: Math.round(touchY),
                 key_x: Math.round(keyX),
                 key_y: Math.round(keyY),
-                dwell_time_ms: '', // Will be set on touchend/mouseup
+                dwell_time_ms: dwellTime,
                 first_frame_overlap: collector.firstFrameOverlapVectors.length > 0 ? JSON.stringify(collector.firstFrameOverlapVectors) : ''
             });
             collector.calculateAccuracy();
