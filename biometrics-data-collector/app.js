@@ -578,12 +578,30 @@ class BiometricDataCollector {
             const featureNames = keystrokeFeatures.length > 0 ? Object.keys(keystrokeFeatures[0]) : [];
             const keystrokeFeatureCount = featureNames.length;
             document.getElementById('keystroke-features').textContent = keystrokeFeatureCount;
-            document.getElementById('keystroke-feature-list').textContent = featureNames.join(', ');
+            // Dynamically populate the keystroke feature list
+            const keystrokeFeatureListUl = document.getElementById('keystroke-feature-list-ul');
+            if (keystrokeFeatureListUl) {
+                keystrokeFeatureListUl.innerHTML = '';
+                featureNames.forEach((name, idx) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${idx + 1}. ${name}`;
+                    keystrokeFeatureListUl.appendChild(li);
+                });
+            }
             const touchFeatures = this.extractTouchFeatures();
             const touchFeatureNames = touchFeatures.length > 0 ? Object.keys(touchFeatures[0]) : [];
             const touchFeatureCount = touchFeatureNames.length;
             document.getElementById('touch-features').textContent = touchFeatureCount;
-            document.getElementById('touch-feature-list').textContent = touchFeatureNames.join(', ');
+            // Dynamically populate the touch feature list
+            const touchFeatureListUl = document.getElementById('touch-feature-list-ul');
+            if (touchFeatureListUl) {
+                touchFeatureListUl.innerHTML = '';
+                touchFeatureNames.forEach((name, idx) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${idx + 1}. ${name}`;
+                    touchFeatureListUl.appendChild(li);
+                });
+            }
         }
     }
     
@@ -3695,21 +3713,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (caret > 0) {
                 newValue = value.slice(0, caret - 1) + value.slice(caret);
                 typingInput.value = newValue;
-                caret = caret - 1;
+                caret = newValue.length;
                 typingInput.setSelectionRange(caret, caret);
                 insertChar = 'BACKSPACE';
                 handled = true;
             }
         } else if (key === 'space') {
             newValue = value.slice(0, caret) + ' ' + value.slice(caret);
-            caret = caret + 1;
+            caret = newValue.length;
             typingInput.value = newValue;
             typingInput.setSelectionRange(caret, caret);
             insertChar = ' ';
             handled = true;
         } else if (key === 'enter') {
             newValue = value.slice(0, caret) + '\n' + value.slice(caret);
-            caret = caret + 1;
+            caret = newValue.length;
             typingInput.value = newValue;
             typingInput.setSelectionRange(caret, caret);
             insertChar = '\n';
@@ -3734,7 +3752,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 char = char.toUpperCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
-            caret = caret + 1;
+            caret = newValue.length;
             typingInput.value = newValue;
             typingInput.setSelectionRange(caret, caret);
             insertChar = char;
