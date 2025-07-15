@@ -437,10 +437,6 @@ class BiometricDataCollector {
                 console.log('Composition started - monitoring for clipboard content');
             });
             
-            typingInput.addEventListener('input', function(e) {
-                this.handleTypingInput(e)
-
-            });
             
             if (navigator.clipboard) {
                 const originalWriteText = navigator.clipboard.writeText;
@@ -756,8 +752,11 @@ class BiometricDataCollector {
             console.log(`✅ SPACE recorded (${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}): cooldown: ${this.spaceCooldown} ms`);
             this.calculateAccuracy();
             this.checkSentenceCompletion();
+            this.updateTypingFeedback();
             window.requestAnimationFrame(() => {
-                this.updateTypingFeedback();
+                if (document.activeElement !== el) 
+                    return;
+                
                 el.setSelectionRange(start, end);      // restore AFTER feedback paint
             });
             return;
@@ -778,8 +777,11 @@ class BiometricDataCollector {
             console.log('✅ Backspace recorded (every press)');
             this.calculateAccuracy();
             this.checkSentenceCompletion();
+            this.updateTypingFeedback();
             window.requestAnimationFrame(() => {
-                this.updateTypingFeedback();
+                if (document.activeElement !== el) 
+                    return;
+                
                 el.setSelectionRange(start, end);      // restore AFTER feedback paint
             });
             return;
@@ -805,8 +807,11 @@ class BiometricDataCollector {
             this.lastKeystrokeTime = timestamp;
             this.calculateAccuracy();
             this.checkSentenceCompletion();
+            this.updateTypingFeedback();
             window.requestAnimationFrame(() => {
-                this.updateTypingFeedback();
+                if (document.activeElement !== el) 
+                    return;
+                
                 el.setSelectionRange(start, end);      // restore AFTER feedback paint
             });
             return;
@@ -1089,45 +1094,43 @@ class BiometricDataCollector {
         // Update accuracy and check sentence completion after any input
         this.calculateAccuracy();
         this.checkSentenceCompletion();
+        this.updateTypingFeedback();
         window.requestAnimationFrame(() => {
-            this.updateTypingFeedback();
+            if (document.activeElement !== el) 
+                return;
+            
             el.setSelectionRange(start, end);      // restore AFTER feedback paint
         });
     }
     
     updateTypingFeedback() {
-        const typed = document.getElementById('typing-input').value;
-        const target = this.sentences[this.currentSentence];
-        const feedbackDisplay = document.getElementById('typing-feedback-display');
-        
-        if (!feedbackDisplay || !target) return;
-        
-        let feedbackHTML = '';
-        
-        // Show target sentence with color marking based on user's typing
-        for (let i = 0; i < target.length; i++) {
+        const typed   = this.typingInput.value;
+        const target  = this.sentences[this.currentSentence];
+        const display = document.getElementById('typing-feedback-display');
+      
+        if (!display) return;
+      
+        window.requestAnimationFrame(() => {
+          let html = '';
+      
+          for (let i = 0; i < target.length; i++) {
             if (i < typed.length) {
-                // User has typed this position
-                if (typed[i] === target[i]) {
-                    // Correct character - show in green
-                    feedbackHTML += `<span class="typed-correct">${this.escapeHtml(target[i])}</span>`;
-                } else {
-                    // Wrong character - show target character in red
-                    feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(target[i])}</span>`;
-                }
+              html += typed[i] === target[i]
+                ? `<span class="typed-correct">${this.escapeHtml(target[i])}</span>`
+                : `<span class="typed-incorrect">${this.escapeHtml(target[i])}</span>`;
             } else {
-                // User hasn't typed this position yet - show in normal color
-                feedbackHTML += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
+              html += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
             }
-        }
-        
-        // If user typed more characters than target, show them in red
-        for (let i = target.length; i < typed.length; i++) {
-            feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
-        }
-        
-        feedbackDisplay.innerHTML = feedbackHTML;
+          }
+          // Extra chars beyond target
+          for (let i = target.length; i < typed.length; i++) {
+            html += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
+          }
+      
+          display.innerHTML = html;
+        });
     }
+
     
     escapeHtml(text) {
         const div = document.createElement('div');
@@ -1459,9 +1462,11 @@ class BiometricDataCollector {
         nextBtn.style.display = 'inline-flex';
         nextBtn.style.backgroundColor = 'var(--color-secondary)';
         nextBtn.style.opacity = '0.5';
-        
+        this.updateTypingFeedback();
         window.requestAnimationFrame(() => {
-            this.updateTypingFeedback();
+            if (document.activeElement !== el) 
+                return;
+            
             el.setSelectionRange(start, end);      // restore AFTER feedback paint
         });
     }
