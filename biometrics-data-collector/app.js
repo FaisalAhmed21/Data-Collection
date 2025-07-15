@@ -1110,25 +1110,24 @@ class BiometricDataCollector {
       
         if (!display) return;
       
-        window.requestAnimationFrame(() => {
-          let html = '';
-      
-          for (let i = 0; i < target.length; i++) {
-            if (i < typed.length) {
-              html += typed[i] === target[i]
-                ? `<span class="typed-correct">${this.escapeHtml(target[i])}</span>`
-                : `<span class="typed-incorrect">${this.escapeHtml(target[i])}</span>`;
-            } else {
-              html += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
-            }
+        let html = '';
+    
+        for (let i = 0; i < target.length; i++) {
+          if (i < typed.length) {
+            html += typed[i] === target[i]
+              ? `<span class="typed-correct">${this.escapeHtml(target[i])}</span>`
+              : `<span class="typed-incorrect">${this.escapeHtml(target[i])}</span>`;
+          } else {
+            html += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
           }
-          // Extra chars beyond target
-          for (let i = target.length; i < typed.length; i++) {
-            html += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
-          }
-      
-          display.innerHTML = html;
-        });
+        }
+        // Extra chars beyond target
+        for (let i = target.length; i < typed.length; i++) {
+          html += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
+        }
+    
+        display.innerHTML = html;
+
     }
 
     
