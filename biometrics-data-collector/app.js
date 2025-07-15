@@ -441,16 +441,10 @@ class BiometricDataCollector {
                 const currentValue = e.target.value;
                 const previousValue = this.lastInputValue || '';
                 if (currentValue.length > previousValue.length + 1) {
-                    console.log('Potential paste detected - blocking');
-                    // Prevent destructive cursor reset
-                    const cursorPos = e.target.selectionStart;
-                    e.target.value = previousValue;
-                    // Restore cursor position safely
-                    setTimeout(() => {
-                        typingInput.setSelectionRange(cursorPos, cursorPos);
-                    }, 0);
-                    return false;
+                    console.warn('Rapid input detected – likely mobile autocorrect or paste, monitor only');
+                    // Don't overwrite value or move cursor
                 }
+
             }.bind(this));
             
             if (navigator.clipboard) {
