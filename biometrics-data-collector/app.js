@@ -3668,7 +3668,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let newValue = value;
         let insertChar = '';
         let handled = false;
-        // Touch data
+        // Touch/click position (actual finger/pointer location)
         let touchX = 0, touchY = 0;
         if (e instanceof PointerEvent) {
             touchX = e.clientX;
@@ -3685,14 +3685,10 @@ document.addEventListener('DOMContentLoaded', () => {
             touchX = rect.left + rect.width/2;
             touchY = rect.top + rect.height/2;
         }
-        // --- NEW: Record first frame touch for heatmap and overlap vector ---
-        if (collector.firstFrameTouches.length === 0) {
-            collector.firstFrameTouches.push({ x: touchX, y: touchY, key });
-            collector.firstFrameHeatmap.push({ x: touchX, y: touchY });
-        } else {
-            // If multiple touches in the same frame (not likely with click, but for extensibility)
-            collector.firstFrameOverlapVectors.push({ x: touchX, y: touchY, key });
-        }
+        // Key center (always use getBoundingClientRect)
+        const rect = e.target.getBoundingClientRect();
+        const keyX = rect.left + rect.width/2;
+        const keyY = rect.top + rect.height/2;
         // Key logic
         if (key === 'backspace') {
             if (caret > 0) {
@@ -3754,8 +3750,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 position: caret,
                 clientX: Math.round(touchX),
                 clientY: Math.round(touchY),
-                key_x: Math.round(touchX),
-                key_y: Math.round(touchY),
+                key_x: Math.round(keyX),
+                key_y: Math.round(keyY),
                 dwell_time_ms: '', // Will be set on touchend
                 first_frame_overlap: collector.firstFrameOverlapVectors.length > 0 ? JSON.stringify(collector.firstFrameOverlapVectors) : ''
             });
