@@ -3659,11 +3659,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!e.target.classList.contains('key')) return;
         const key = e.target.getAttribute('data-key');
         let value = typingInput.value;
-        let caret = typingInput.selectionStart || value.length;
+        let caret = typingInput.selectionStart;
+        if (caret === null || caret === undefined) caret = value.length;
         let newValue = value;
         let insertChar = '';
         let handled = false;
-        // Touch data
+        // Always get the key center for key_x/key_y
+        const rect = e.target.getBoundingClientRect();
+        const keyX = rect.left + rect.width / 2;
+        const keyY = rect.top + rect.height / 2;
+        // Touch/click position (for clientX/clientY, but not for key_x/key_y)
         let touchX = 0, touchY = 0;
         if (e instanceof PointerEvent) {
             touchX = e.clientX;
@@ -3675,17 +3680,14 @@ document.addEventListener('DOMContentLoaded', () => {
             touchX = e.targetTouches[0].clientX;
             touchY = e.targetTouches[0].clientY;
         } else {
-            // fallback: getBoundingClientRect
-            const rect = e.target.getBoundingClientRect();
-            touchX = rect.left + rect.width/2;
-            touchY = rect.top + rect.height/2;
+            touchX = keyX;
+            touchY = keyY;
         }
         // --- NEW: Record first frame touch for heatmap and overlap vector ---
         if (collector.firstFrameTouches.length === 0) {
             collector.firstFrameTouches.push({ x: touchX, y: touchY, key });
             collector.firstFrameHeatmap.push({ x: touchX, y: touchY });
         } else {
-            // If multiple touches in the same frame (not likely with click, but for extensibility)
             collector.firstFrameOverlapVectors.push({ x: touchX, y: touchY, key });
         }
         // Key logic
@@ -3693,18 +3695,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if (caret > 0) {
                 newValue = value.slice(0, caret - 1) + value.slice(caret);
                 typingInput.value = newValue;
-                typingInput.setSelectionRange(caret - 1, caret - 1);
+                caret = caret - 1;
+                typingInput.setSelectionRange(caret, caret);
                 insertChar = 'BACKSPACE';
                 handled = true;
             }
         } else if (key === 'space') {
             newValue = value.slice(0, caret) + ' ' + value.slice(caret);
+            caret = caret + 1;
             typingInput.value = newValue;
-            typingInput.setSelectionRange(caret + 1, caret + 1);
+            typingInput.setSelectionRange(caret, caret);
             insertChar = ' ';
             handled = true;
         } else if (key === 'enter') {
-            // Optionally handle enter
+            newValue = value.slice(0, caret) + '\n' + value.slice(caret);
+            caret = caret + 1;
+            typingInput.value = newValue;
+            typingInput.setSelectionRange(caret, caret);
             insertChar = '\n';
             handled = true;
         } else if (key === 'shift') {
@@ -3712,7 +3719,6 @@ document.addEventListener('DOMContentLoaded', () => {
             handled = true;
             isShift = !isShift;
             updateKeyboardCase();
-        // (do not return here, let it fall through to the unified keystroke recording below)
         } else if (key === '?123') {
             isSymbols = true;
             updateKeyboardLayout();
@@ -3728,8 +3734,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 char = char.toUpperCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
+            caret = caret + 1;
             typingInput.value = newValue;
-            typingInput.setSelectionRange(caret + 1, caret + 1);
+            typingInput.setSelectionRange(caret, caret);
             insertChar = char;
             handled = true;
             if (isShift && !isSymbols) {
@@ -3738,7 +3745,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (handled) {
-            // Record keystroke and touch data
             const timestamp = performance.now();
             collector.recordKeystroke({
                 timestamp,
@@ -3746,12 +3752,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === 'SHIFT' ? 16 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
                 type: 'custom-keyboard',
                 sentence: collector.currentSentence,
-                position: caret,
+                position: caret, // store the caret after the change
                 clientX: Math.round(touchX),
                 clientY: Math.round(touchY),
-                key_x: Math.round(touchX),
-                key_y: Math.round(touchY),
-                dwell_time_ms: '', // Will be set on touchend
+                key_x: Math.round(keyX),
+                key_y: Math.round(keyY),
+                dwell_time_ms: '', // Will be set on touchend/mouseup
                 first_frame_overlap: collector.firstFrameOverlapVectors.length > 0 ? JSON.stringify(collector.firstFrameOverlapVectors) : ''
             });
             collector.calculateAccuracy();
