@@ -3761,7 +3761,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function updateKeyboardCase() {
-        const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
+        // Use the correct selector for letter keys
+        const keys = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters .key');
         keys.forEach(btn => {
             const key = btn.getAttribute('data-key');
             if (key && key.length === 1 && /[a-z]/.test(key)) {
@@ -3770,14 +3771,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     function updateKeyboardLayout() {
-        const letterRows = customKeyboard.querySelectorAll('.keyboard-letters');
-        const symbolRows = customKeyboard.querySelectorAll('.keyboard-symbols');
+        // Only toggle the .active class for the correct rows, do not hide or remove any keys or rows
+        const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
+        const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
+        const actionRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-actions');
         if (isSymbols) {
-            letterRows.forEach(r => r.style.display = 'none');
-            symbolRows.forEach(r => r.style.display = 'flex');
+            letterRows.forEach(r => r.classList.remove('active'));
+            symbolRows.forEach(r => r.classList.add('active'));
+            actionRows.forEach(r => r.classList.remove('active'));
+            // Show the symbol actions row if present
+            const symbolActions = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols.keyboard-actions');
+            symbolActions.forEach(r => r.classList.add('active'));
         } else {
-            letterRows.forEach(r => r.style.display = 'flex');
-            symbolRows.forEach(r => r.style.display = 'none');
+            letterRows.forEach(r => r.classList.add('active'));
+            symbolRows.forEach(r => r.classList.remove('active'));
+            actionRows.forEach(r => r.classList.add('active'));
+            // Hide the symbol actions row if present
+            const symbolActions = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols.keyboard-actions');
+            symbolActions.forEach(r => r.classList.remove('active'));
         }
     }
 
