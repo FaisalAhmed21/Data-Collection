@@ -438,14 +438,9 @@ class BiometricDataCollector {
             });
             
             typingInput.addEventListener('input', function(e) {
-                const currentValue = e.target.value;
-                const previousValue = this.lastInputValue || '';
-                if (currentValue.length > previousValue.length + 1) {
-                    console.warn('Rapid input detected – likely mobile autocorrect or paste, monitor only');
-                    // Don't overwrite value or move cursor
-                }
+                this.handleTypingInput(e)
 
-            }.bind(this));
+            });
             
             if (navigator.clipboard) {
                 const originalWriteText = navigator.clipboard.writeText;
