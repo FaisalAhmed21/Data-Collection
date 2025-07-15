@@ -579,7 +579,7 @@ class BiometricDataCollector {
             const featureNames = keystrokeFeatures.length > 0 ? Object.keys(keystrokeFeatures[0]) : [];
             const keystrokeFeatureCount = featureNames.length;
             document.getElementById('keystroke-features').textContent = keystrokeFeatureCount;
-            const keystrokeFeatureList = document.getElementById('keystroke-feature-list');
+            const keystrokeFeatureList = document.getElementById('keystroke-feature-list-ul');
             keystrokeFeatureList.innerHTML = '';
             featureNames.forEach((name, idx) => {
                 const li = document.createElement('li');
@@ -590,7 +590,7 @@ class BiometricDataCollector {
             const touchFeatureNames = touchFeatures.length > 0 ? Object.keys(touchFeatures[0]) : [];
             const touchFeatureCount = touchFeatureNames.length;
             document.getElementById('touch-features').textContent = touchFeatureCount;
-            const touchFeatureList = document.getElementById('touch-feature-list');
+            const touchFeatureList = document.getElementById('touch-feature-list-ul');
             touchFeatureList.innerHTML = '';
             touchFeatureNames.forEach((name, idx) => {
                 const li = document.createElement('li');
