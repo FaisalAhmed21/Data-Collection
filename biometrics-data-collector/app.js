@@ -3771,14 +3771,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     function updateKeyboardLayout() {
-        const letterRows = customKeyboard.querySelectorAll('.keyboard-letters');
-        const symbolRows = customKeyboard.querySelectorAll('.keyboard-symbols');
+        const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
+        const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
+        // Remove .active from all rows first
+        letterRows.forEach(r => r.classList.remove('active'));
+        symbolRows.forEach(r => r.classList.remove('active'));
+        // Add .active only to the correct set
         if (isSymbols) {
-            letterRows.forEach(r => r.style.display = 'none');
-            symbolRows.forEach(r => r.style.display = 'flex');
+            symbolRows.forEach(r => r.classList.add('active'));
         } else {
-            letterRows.forEach(r => r.style.display = 'flex');
-            symbolRows.forEach(r => r.style.display = 'none');
+            letterRows.forEach(r => r.classList.add('active'));
         }
     }
 
@@ -3824,4 +3826,7 @@ document.addEventListener('DOMContentLoaded', () => {
             customKeyboard.style.display = 'block';
         });
     }
+
+    // Ensure only the correct keyboard layout is visible on load
+    updateKeyboardLayout();
 });
