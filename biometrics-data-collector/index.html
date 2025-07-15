@@ -256,31 +256,18 @@
         <!-- Export Screen -->
         <div id="export-screen" class="screen">
             <div class="export-content">
-                <h2>Data Export</h2>
-                <p>Congratulations! You have successfully completed all tasks. Your typing and touch interaction data has been collected for research purposes.</p>
-                
-                <div class="export-stats">
-                    <div class="stat-card">
-                        <h4>Keystroke Data</h4>
-                        <p><span id="keystroke-count">0</span> keystrokes recorded</p>
-                        <p><span id="keystroke-features">9</span> features extracted</p>
-                        <ul id="keystroke-feature-list-ul" style="text-align:left; font-size:13px; margin:8px 0 0 0; padding-left:18px;"></ul>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Touch Data (Combined)</h4>
-                        <p><span id="touch-count">0</span> touch events recorded</p>
-                        <p><span id="touch-features">11</span> features extracted</p>
-                        <ul id="touch-feature-list-ul" style="text-align:left; font-size:13px; margin:8px 0 0 0; padding-left:18px;"></ul>
-                    </div>
-                </div>
-                
-                <div class="export-actions">
+                <h2>Export Data</h2>
+                <div class="export-section">
                     <button id="export-keystroke-btn" class="btn btn--primary">Export Keystroke Data</button>
-                    <button id="export-touch-btn" class="btn btn--primary">Export Touch Data</button>
+                    <span>Keystroke Records: <span id="keystroke-count">0</span></span><br>
+                    <span>Keystroke Features Extracted: <span id="keystroke-features">0</span></span><br>
+                    <span>Feature List: <span id="keystroke-feature-list"></span></span>
                 </div>
-                
-                <div class="completion-message">
-                    <p>Thank you for participating in this behavioral biometrics study! Your contribution helps advance our understanding of human-mobile interaction patterns.</p>
+                <div class="export-section">
+                    <button id="export-touch-btn" class="btn btn--primary">Export Touch Data</button>
+                    <span>Touch Records: <span id="touch-count">0</span></span><br>
+                    <span>Touch Features Extracted: <span id="touch-features">0</span></span><br>
+                    <span>Feature List: <span id="touch-feature-list"></span></span>
                 </div>
             </div>
         </div>
