@@ -3829,6 +3829,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, { passive: true });
 
+    // Add mouse event listeners for dwell time (all keys/rows)
+    customKeyboard.addEventListener('mousedown', (e) => {
+        const target = e.target.closest('.key');
+        if (!target) return;
+        const key = target.getAttribute('data-key');
+        if (key) {
+            collector.keyDwellStartTimes[key] = performance.now();
+        }
+    }, { passive: true });
+    customKeyboard.addEventListener('mouseup', (e) => {
+        const target = e.target.closest('.key');
+        if (!target) return;
+        const key = target.getAttribute('data-key');
+        if (key) {
+            const dwellStart = collector.keyDwellStartTimes[key];
+            const dwellTime = dwellStart ? Math.round(performance.now() - dwellStart) : '';
+            // Find the last keystroke for this key and add dwell_time_ms (match by actualChar and key_x/key_y)
+            for (let i = collector.keystrokeData.length - 1; i >= 0; i--) {
+                const k = collector.keystrokeData[i];
+                if ((k.actualChar === key || (key === 'backspace' && k.actualChar === 'BACKSPACE') || (key === 'shift' && k.actualChar === 'SHIFT')) &&
+                    k.key_x !== undefined && k.key_y !== undefined && k.dwell_time_ms === '') {
+                    k.dwell_time_ms = dwellTime;
+                    break;
+                }
+            }
+            delete collector.keyDwellStartTimes[key];
+        }
+    }, { passive: true });
+
     // Ensure the custom keyboard instantly shows up if user touches or clicks within the typing input container
     if (typingInput) {
         typingInput.addEventListener('touchstart', (e) => {
