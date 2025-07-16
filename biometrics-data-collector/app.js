@@ -12,6 +12,7 @@ class BiometricDataCollector {
             crystalCompleted: false,
             galleryCompleted: false
         };
+        
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         this.isAndroid = /Android/.test(navigator.userAgent);
@@ -435,16 +436,17 @@ class BiometricDataCollector {
             typingInput.addEventListener('input', function(e) {
                 const currentValue = e.target.value;
                 const previousValue = this.lastInputValue || '';
-                
+                // Save caret position before any programmatic change
+                const caretPos = typingInput.selectionStart;
                 if (currentValue.length > previousValue.length + 1) {
                     console.log('Potential paste detected - blocking');
                     e.target.value = previousValue;
+                    // Restore caret position after blocking paste
                     setTimeout(() => {
-                        typingInput.setSelectionRange(typingInput.value.length, typingInput.value.length);
+                        typingInput.setSelectionRange(caretPos, caretPos);
                     }, 0);
                     return false;
                 }
-                
                 this.lastInputValue = currentValue;
             }.bind(this));
             
@@ -1435,17 +1437,19 @@ class BiometricDataCollector {
     displayCurrentSentence() {
         document.getElementById('target-sentence').textContent = this.sentences[this.currentSentence];
         const input = document.getElementById('typing-input');
+        // Save caret position before clearing value
+        const caretPos = input.selectionStart;
         input.value = '';
+        // Restore caret to start (0) after clearing
+        input.setSelectionRange(0, 0);
         input.focus();
         document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
-        
         this.calculateAccuracy();
         const nextBtn = document.getElementById('next-sentence-btn');
         nextBtn.disabled = true;
         nextBtn.style.display = 'inline-flex';
         nextBtn.style.backgroundColor = 'var(--color-secondary)';
         nextBtn.style.opacity = '0.5';
-        
         this.updateTypingFeedback();
     }
     
@@ -3680,19 +3684,18 @@ document.addEventListener('DOMContentLoaded', () => {
             touchX = e.targetTouches[0].clientX;
             touchY = e.targetTouches[0].clientY;
         }
-        // Key logic
+        // --- Caret position preservation ---
+        let newCaret = caret;
         if (key === 'backspace') {
             if (caret > 0) {
                 newValue = value.slice(0, caret - 1) + value.slice(caret);
-                typingInput.value = newValue;
-                typingInput.setSelectionRange(caret - 1, caret - 1);
+                newCaret = caret - 1;
                 insertChar = 'BACKSPACE';
                 handled = true;
             }
         } else if (key === 'space') {
             newValue = value.slice(0, caret) + ' ' + value.slice(caret);
-            typingInput.value = newValue;
-            typingInput.setSelectionRange(caret + 1, caret + 1);
+            newCaret = caret + 1;
             insertChar = ' ';
             handled = true;
         } else if (key === 'enter') {
@@ -3720,8 +3723,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 char = char.toUpperCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
-            typingInput.value = newValue;
-            typingInput.setSelectionRange(caret + 1, caret + 1);
+            newCaret = caret + 1;
             insertChar = char;
             handled = true;
             if (isShift && !isSymbols) {
@@ -3730,6 +3732,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (handled) {
+            // Set value and restore caret position
+            typingInput.value = newValue;
+            typingInput.setSelectionRange(newCaret, newCaret);
             // Record keystroke and touch data
             const timestamp = performance.now();
             collector.recordKeystroke({
@@ -3738,7 +3743,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === 'SHIFT' ? 16 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
                 type: 'custom-keyboard',
                 sentence: collector.currentSentence,
-                position: caret,
+                position: newCaret,
                 clientX: Math.round(touchX),
                 clientY: Math.round(touchY),
                 key_x: Math.round(keyX),
