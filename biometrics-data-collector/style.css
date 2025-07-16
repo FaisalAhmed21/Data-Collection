@@ -5174,3 +5174,126 @@ html, body {
 }
 
 /* End FLUID RESPONSIVE CUSTOM KEYBOARD */
+
+/* Remove all duplicate/conflicting .custom-keyboard .keyboard-row rules and keep only the correct grid-based horizontal row rule */
+.custom-keyboard .keyboard-row {
+  display: grid;
+  /* JS should set --key-count to the number of keys in this row */
+  grid-template-columns: repeat(var(--key-count, 10), 1fr);
+  gap: clamp(1px, 1.5vw, 18px) clamp(1px, 2vw, 18px);
+  width: 100vw;
+  max-width: 100vw;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+@media (max-width: 400px) {
+  .custom-keyboard .keyboard-row {
+    gap: clamp(0.5px, 0.5vw, 6px) clamp(0.5px, 1vw, 8px);
+  }
+}
+/* End enforced horizontal grid row for custom keyboard */
+
+/* Fallback for keyboard rows: number row always 10 columns, others default to 9 or 5 */
+.custom-keyboard .keyboard-row.keyboard-numbers {
+  grid-template-columns: repeat(10, 1fr) !important;
+}
+.custom-keyboard .keyboard-row.keyboard-letters {
+  grid-template-columns: repeat(10, 1fr);
+}
+.custom-keyboard .keyboard-row.keyboard-letters:nth-child(3) {
+  grid-template-columns: repeat(9, 1fr);
+}
+.custom-keyboard .keyboard-row.keyboard-letters:nth-child(4) {
+  grid-template-columns: repeat(9, 1fr);
+}
+.custom-keyboard .keyboard-row.keyboard-actions {
+  grid-template-columns: repeat(5, 1fr);
+}
+/* End fallback for keyboard row columns */
+
+/* Align number row so 1 is above Q and 0 is above P */
+.custom-keyboard .keyboard-row.keyboard-numbers {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr) !important;
+  width: 100vw;
+  max-width: 100vw;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  gap: clamp(1px, 1.5vw, 18px) clamp(1px, 2vw, 18px);
+}
+.custom-keyboard .keyboard-row.keyboard-numbers .key:nth-child(1) { grid-column: 2; }
+.custom-keyboard .keyboard-row.keyboard-numbers .key:nth-child(2) { grid-column: 3; }
+.custom-keyboard .keyboard-row.keyboard-numbers .key:nth-child(3) { grid-column: 4; }
+.custom-keyboard .keyboard-row.keyboard-numbers .key:nth-child(4) { grid-column: 5; }
+.custom-keyboard .keyboard-row.keyboard-numbers .key:nth-child(5) { grid-column: 6; }
+.custom-keyboard .keyboard-row.keyboard-numbers .key:nth-child(6) { grid-column: 7; }
+.custom-keyboard .keyboard-row.keyboard-numbers .key:nth-child(7) { grid-column: 8; }
+.custom-keyboard .keyboard-row.keyboard-numbers .key:nth-child(8) { grid-column: 9; }
+.custom-keyboard .keyboard-row.keyboard-numbers .key:nth-child(9) { grid-column: 10; }
+.custom-keyboard .keyboard-row.keyboard-numbers .key:nth-child(10) { grid-column: 11; }
+/* End number row alignment */
+
+/* Remove previous number row offset and enforce perfect column alignment */
+.custom-keyboard .keyboard-row.keyboard-numbers,
+.custom-keyboard .keyboard-row.keyboard-letters {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr) !important;
+  width: 100vw;
+  max-width: 100vw;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  gap: clamp(1px, 1.5vw, 18px) clamp(1px, 2vw, 18px);
+}
+/* Remove any previous grid-column offset for number row keys */
+.custom-keyboard .keyboard-row.keyboard-numbers .key {
+  grid-column: auto !important;
+}
+/* Only a vertical gap between rows */
+.custom-keyboard .keyboard-row {
+  margin-bottom: clamp(4px, 1vw, 16px);
+}
+
+/* Keyboard area container for perfect alignment */
+.keyboard-area {
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+@media (max-width: 600px) {
+  .keyboard-area {
+    max-width: 100vw;
+    padding-left: 2vw;
+    padding-right: 2vw;
+  }
+}
+
+.custom-keyboard .keyboard-row,
+.custom-keyboard .keyboard-row.keyboard-numbers,
+.custom-keyboard .keyboard-row.keyboard-letters {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(10, minmax(32px, 1fr));
+  gap: 4px;
+  width: auto;
+  max-width: none;
+}
+
+.custom-keyboard .keyboard-row.keyboard-numbers .key {
+  grid-column: auto !important;
+}
+
+.custom-keyboard .keyboard-row {
+  margin-bottom: clamp(4px, 1vw, 16px);
+}
+
+/* Remove any previous width: 100vw or max-width: 100vw from keyboard rows */
