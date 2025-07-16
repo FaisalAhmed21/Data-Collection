@@ -3608,6 +3608,16 @@ class BiometricDataCollector {
 document.addEventListener('DOMContentLoaded', () => {
     const collector = new BiometricDataCollector();
 
+    // Set --key-count for each keyboard row for perfect grid alignment
+    const keyboardRows = document.querySelectorAll('#custom-keyboard .keyboard-row');
+    keyboardRows.forEach(row => {
+        // Only count visible keys (in case of dynamic layouts)
+        const keys = Array.from(row.children).filter(
+            el => el.classList && el.classList.contains('key') && el.offsetParent !== null
+        );
+        row.style.setProperty('--key-count', keys.length);
+    });
+
     // Custom Keyboard Logic
     const typingInput = document.getElementById('typing-input');
     const customKeyboard = document.getElementById('custom-keyboard');
