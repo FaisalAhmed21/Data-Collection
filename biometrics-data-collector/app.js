@@ -3773,14 +3773,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
         const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
         if (isSymbols) {
-            letterRows.forEach(r => r.style.display = 'none');
-            symbolRows.forEach(r => r.style.display = 'flex');
+            letterRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
+            symbolRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
         } else {
-            letterRows.forEach(r => r.style.display = 'flex');
-            symbolRows.forEach(r => r.style.display = 'none');
+            letterRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
+            symbolRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
         }
     }
-
     // Optionally, always show keyboard on page load for demo
     // customKeyboard.style.display = 'block';
 
@@ -3826,16 +3825,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Ensure only the correct keyboard layout is visible on load
-    function updateKeyboardLayout() {
-    const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
-    const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
-    if (isSymbols) {
-        letterRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
-        symbolRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
-    } else {
-        letterRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
-        symbolRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
-    }
-}
-
+    updateKeyboardLayout();
+    // --- END: Only one keyboard page visible at a time ---
 });
