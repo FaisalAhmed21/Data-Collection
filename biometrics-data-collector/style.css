@@ -3976,3 +3976,8 @@ html, body {
   cursor: pointer;
   overflow: hidden;
 }
+
+/* Hide symbol rows by default */
+.keyboard-row.keyboard-symbols {
+  display: none !important;
+}
