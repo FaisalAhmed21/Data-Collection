@@ -3733,11 +3733,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateKeyboardCase();
             }
         }
-        // --- Add active class for 0.5s visual feedback ---
+        // --- Add active class for 0.25s visual feedback ---
         e.target.classList.add('active');
         setTimeout(() => {
             e.target.classList.remove('active');
-        }, 500);
+        }, 250);
         // --- End active class logic ---
         if (handled) {
             isProgrammaticInput = true;
