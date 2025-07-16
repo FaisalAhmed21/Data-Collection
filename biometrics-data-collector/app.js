@@ -3844,20 +3844,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (page === 'letters') {
             letterRows.forEach(r => r.style.display = 'flex');
             symbolRows.forEach(r => r.style.display = 'none');
+            customKeyboard.setAttribute('data-page', 'letters');
         } else {
             letterRows.forEach(r => r.style.display = 'none');
             symbolRows.forEach(r => r.style.display = 'flex');
+            customKeyboard.setAttribute('data-page', 'symbols');
         }
     }
-    // Initial state: show letters
+    // Initial state: show only letters, hide symbols
     showKeyboardPage('letters');
     // Listen for ?123 and ABC key presses
     customKeyboard.addEventListener('click', (e) => {
         if (!e.target.classList.contains('key')) return;
         const key = e.target.getAttribute('data-key');
-        if (key === '?123') {
+        if (key === '?123' && customKeyboard.getAttribute('data-page') !== 'symbols') {
             showKeyboardPage('symbols');
-        } else if (key === 'ABC') {
+        } else if (key === 'ABC' && customKeyboard.getAttribute('data-page') !== 'letters') {
             showKeyboardPage('letters');
         }
     });
@@ -3866,9 +3868,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const target = e.target.closest('.key');
         if (!target) return;
         const key = target.getAttribute('data-key');
-        if (key === '?123') {
+        if (key === '?123' && customKeyboard.getAttribute('data-page') !== 'symbols') {
             showKeyboardPage('symbols');
-        } else if (key === 'ABC') {
+        } else if (key === 'ABC' && customKeyboard.getAttribute('data-page') !== 'letters') {
             showKeyboardPage('letters');
         }
     }, { passive: true });
