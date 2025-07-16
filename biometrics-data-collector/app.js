@@ -3707,7 +3707,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (key === 'shift') {
             insertChar = 'SHIFT';
             handled = true;
-            isShift = true; // Only set to true, not toggle
+            isShift = !isShift; // Toggle shift on each press
             updateKeyboardCase();
         } else if (key === '?123') {
             isSymbols = true;
@@ -3727,11 +3727,18 @@ document.addEventListener('DOMContentLoaded', () => {
             newCaret = caret + 1;
             insertChar = char;
             handled = true;
-            if (isShift && !isSymbols) {
-                isShift = false; // Reset shift after one use
+            // If shift is active, turn it off after any key except shift
+            if (isShift) {
+                isShift = false;
                 updateKeyboardCase();
             }
         }
+        // --- Add active class for 0.5s visual feedback ---
+        e.target.classList.add('active');
+        setTimeout(() => {
+            e.target.classList.remove('active');
+        }, 500);
+        // --- End active class logic ---
         if (handled) {
             isProgrammaticInput = true;
             typingInput.value = newValue;
