@@ -434,6 +434,11 @@ class BiometricDataCollector {
             });
             
             typingInput.addEventListener('input', function(e) {
+                if (isProgrammaticInput) {
+                    // Skip paste-blocking logic for programmatic input
+                    this.lastInputValue = e.target.value;
+                    return;
+                }
                 const currentValue = e.target.value;
                 const previousValue = this.lastInputValue || '';
                 // Save caret position before any programmatic change
@@ -3732,9 +3737,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (handled) {
-            // Set value and restore caret position
+            // Set flag before programmatic update
+            isProgrammaticInput = true;
             typingInput.value = newValue;
             typingInput.setSelectionRange(newCaret, newCaret);
+            // Reset flag after update
+            setTimeout(() => { isProgrammaticInput = false; }, 0);
             // Record keystroke and touch data
             const timestamp = performance.now();
             collector.recordKeystroke({
