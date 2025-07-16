@@ -3745,6 +3745,7 @@ document.addEventListener('DOMContentLoaded', () => {
             collector.recordKeystroke({
                 timestamp,
                 actualChar: insertChar,
+                refChar: insertChar === ' ' ? 'SPACE' : insertChar, // <-- Add this line for ref_char
                 keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === 'SHIFT' ? 16 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
                 type: 'custom-keyboard',
                 sentence: collector.currentSentence,
