@@ -3673,12 +3673,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let newValue = value;
         let insertChar = '';
         let handled = false;
-        // Always use the center of the key for key_x and key_y
         const rect = e.target.getBoundingClientRect();
         const keyX = rect.left + rect.width / 2;
         const keyY = rect.top + rect.height / 2;
-        // Touch/click position (actual finger/pointer location)
-        let touchX = keyX, touchY = keyY; // Default to center if not pointer event
+        let touchX = keyX, touchY = keyY;
         if (e instanceof PointerEvent) {
             touchX = e.clientX;
             touchY = e.clientY;
@@ -3689,7 +3687,6 @@ document.addEventListener('DOMContentLoaded', () => {
             touchX = e.targetTouches[0].clientX;
             touchY = e.targetTouches[0].clientY;
         }
-        // --- Caret position preservation ---
         let newCaret = caret;
         if (key === 'backspace') {
             if (caret > 0) {
@@ -3704,15 +3701,13 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = ' ';
             handled = true;
         } else if (key === 'enter') {
-            // Optionally handle enter
             insertChar = '\n';
             handled = true;
         } else if (key === 'shift') {
             insertChar = 'SHIFT';
             handled = true;
-            isShift = !isShift;
+            isShift = true; // Only set to true, not toggle
             updateKeyboardCase();
-        // (do not return here, let it fall through to the unified keystroke recording below)
         } else if (key === '?123') {
             isSymbols = true;
             updateKeyboardLayout();
@@ -3732,23 +3727,19 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = char;
             handled = true;
             if (isShift && !isSymbols) {
-                isShift = false;
+                isShift = false; // Reset shift after one use
                 updateKeyboardCase();
             }
         }
         if (handled) {
-            // Set flag before programmatic update
             isProgrammaticInput = true;
             typingInput.value = newValue;
             typingInput.setSelectionRange(newCaret, newCaret);
-            // Ensure input is focused so caret is visible and active
             if (document.activeElement !== typingInput) {
                 typingInput.focus();
                 typingInput.setSelectionRange(newCaret, newCaret);
             }
-            // Reset flag after update
             setTimeout(() => { isProgrammaticInput = false; }, 0);
-            // Record keystroke and touch data
             const timestamp = performance.now();
             collector.recordKeystroke({
                 timestamp,
@@ -3761,7 +3752,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clientY: Math.round(touchY),
                 key_x: Math.round(keyX),
                 key_y: Math.round(keyY),
-                dwell_time_ms: '' // Will be set on touchend
+                dwell_time_ms: ''
             });
             collector.calculateAccuracy();
             collector.checkSentenceCompletion();
