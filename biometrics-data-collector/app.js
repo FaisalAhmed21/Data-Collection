@@ -3741,6 +3741,11 @@ document.addEventListener('DOMContentLoaded', () => {
             isProgrammaticInput = true;
             typingInput.value = newValue;
             typingInput.setSelectionRange(newCaret, newCaret);
+            // Ensure input is focused so caret is visible and active
+            if (document.activeElement !== typingInput) {
+                typingInput.focus();
+                typingInput.setSelectionRange(newCaret, newCaret);
+            }
             // Reset flag after update
             setTimeout(() => { isProgrammaticInput = false; }, 0);
             // Record keystroke and touch data
