@@ -3827,41 +3827,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Ensure only the correct keyboard layout is visible on load
     updateKeyboardLayout();
-
-    // --- BEGIN: Only one keyboard page visible at a time ---
-    function showKeyboardPage(page) {
-        const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
-        const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
-        if (page === 'letters') {
-            letterRows.forEach(r => r.style.display = 'flex');
-            symbolRows.forEach(r => r.style.display = 'none');
-        } else {
-            letterRows.forEach(r => r.style.display = 'none');
-            symbolRows.forEach(r => r.style.display = 'flex');
-        }
-    }
-    // Initial state: show letters
-    showKeyboardPage('letters');
-    // Listen for ?123 and ABC key presses
-    customKeyboard.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('key')) return;
-        const key = e.target.getAttribute('data-key');
-        if (key === '?123') {
-            showKeyboardPage('symbols');
-        } else if (key === 'ABC') {
-            showKeyboardPage('letters');
-        }
-    });
-    // Also support touch events for mobile
-    customKeyboard.addEventListener('touchend', (e) => {
-        const target = e.target.closest('.key');
-        if (!target) return;
-        const key = target.getAttribute('data-key');
-        if (key === '?123') {
-            showKeyboardPage('symbols');
-        } else if (key === 'ABC') {
-            showKeyboardPage('letters');
-        }
-    }, { passive: true });
     // --- END: Only one keyboard page visible at a time ---
 });
