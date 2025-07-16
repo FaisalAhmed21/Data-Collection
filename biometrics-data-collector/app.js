@@ -759,6 +759,7 @@ class BiometricDataCollector {
                     this.recordKeystroke({
                 timestamp,
                 actualChar: 'SPACE',
+                refChar: 'SPACE',
                 keyCode: 32,
                         type: inputType,
                         sentence: this.currentSentence,
