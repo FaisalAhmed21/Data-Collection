@@ -3731,7 +3731,7 @@ document.addEventListener('DOMContentLoaded', () => {
             newCaret = caret + 1;
             insertChar = char;
             handled = true;
-            if (isShift && !isSymbols) {
+            if (isShift && !isSymbols && char.length === 1 && /[A-Z]/.test(char)) {
                 isShift = false;
                 updateKeyboardCase();
             }
@@ -3857,9 +3857,9 @@ document.addEventListener('DOMContentLoaded', () => {
     customKeyboard.addEventListener('click', (e) => {
         if (!e.target.classList.contains('key')) return;
         const key = e.target.getAttribute('data-key');
-        if (key === '?123' && customKeyboard.getAttribute('data-page') !== 'symbols') {
+        if (key === '?123') {
             showKeyboardPage('symbols');
-        } else if (key === 'ABC' && customKeyboard.getAttribute('data-page') !== 'letters') {
+        } else if (key === 'ABC') {
             showKeyboardPage('letters');
         }
     });
@@ -3868,9 +3868,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const target = e.target.closest('.key');
         if (!target) return;
         const key = target.getAttribute('data-key');
-        if (key === '?123' && customKeyboard.getAttribute('data-page') !== 'symbols') {
+        if (key === '?123') {
             showKeyboardPage('symbols');
-        } else if (key === 'ABC' && customKeyboard.getAttribute('data-page') !== 'letters') {
+        } else if (key === 'ABC') {
             showKeyboardPage('letters');
         }
     }, { passive: true });
