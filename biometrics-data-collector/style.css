@@ -3959,3 +3959,10 @@ html, body {
   box-shadow: 0 4px 16px rgba(32, 207, 207, 0.18), 0 1.5px 8px rgba(0,0,0,0.12) !important;
   transform: scale(0.97) !important;
 }
+.custom-keyboard .key:hover:not(.active),
+.custom-keyboard .key:focus:not(.active) {
+  background: #f5fafd;
+  color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(32, 207, 207, 0.10), 0 1px 4px rgba(0,0,0,0.08);
+  transform: scale(0.99);
+}
