@@ -3749,10 +3749,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             setTimeout(() => { isProgrammaticInput = false; }, 0);
             const timestamp = performance.now();
+            let actualChar = insertChar;
+            let refChar = insertChar;
+            if (insertChar === ' ') {
+                actualChar = 'SPACE';
+                refChar = 'SPACE';
+            }
             collector.recordKeystroke({
                 timestamp,
-                actualChar: insertChar,
-                refChar: insertChar === ' ' ? 'SPACE' : insertChar, // <-- Add this line for ref_char
+                actualChar: actualChar,
+                refChar: refChar,
                 keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === 'SHIFT' ? 16 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
                 type: 'custom-keyboard',
                 sentence: collector.currentSentence,
