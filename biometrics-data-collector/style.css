@@ -5116,78 +5116,61 @@ html, body {
   justify-content: flex-end;
   box-sizing: border-box;
   overflow-x: hidden;
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
 }
+
 .custom-keyboard .keyboard-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: clamp(2px, 2vw, 18px);
-  gap: clamp(1px, 2vw, 18px) clamp(1px, 2vw, 18px);
-  width: 100%;
+  display: grid;
+  /* JS should set --key-count to the number of keys in this row */
+  grid-template-columns: repeat(var(--key-count, 10), 1fr);
+  gap: clamp(1px, 1.5vw, 18px) clamp(1px, 2vw, 18px);
+  width: 100vw;
+  max-width: 100vw;
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
+
 .custom-keyboard .key {
-  background: linear-gradient(180deg, #fafdff 80%, #e6f7fa 100%);
-  border: none;
-  border-radius: clamp(5px, 2vw, 20px);
-  margin: 0 clamp(0.5px, 1vw, 10px);
   min-width: 0;
   min-height: clamp(22px, 7vw, 72px);
   font-size: clamp(0.8rem, 3vw, 1.5rem);
-  font-family: inherit;
-  color: #222;
+  border-radius: clamp(5px, 2vw, 20px);
+  background: linear-gradient(180deg, #fafdff 80%, #e6f7fa 100%);
+  border: none;
   box-shadow: 0 2px 8px rgba(32, 207, 207, 0.08), 0 1px 2px rgba(0,0,0,0.04);
+  color: #222;
   transition: background 0.18s, box-shadow 0.18s, color 0.18s, transform 0.12s;
   outline: none;
   cursor: pointer;
-  flex: 1 1 0;
-  max-width: none;
-  position: relative;
-  overflow: hidden;
   will-change: background, box-shadow, color, transform;
   touch-action: manipulation;
   box-sizing: border-box;
-  padding: 0 clamp(2px, 1vw, 16px);
+  margin: 0; /* Remove all margins */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.custom-keyboard .key:active, .custom-keyboard .key:focus {
-  background: linear-gradient(180deg, #e6f7fa 60%, #c2e9f7 100%);
-  color: var(--color-primary);
-  box-shadow: 0 4px 16px rgba(32, 207, 207, 0.18), 0 1.5px 8px rgba(0,0,0,0.12);
-  transform: scale(0.97);
+
+/* Ensure no horizontal scroll or cutoff on any device */
+.custom-keyboard, .custom-keyboard .keyboard-row {
+  overflow-x: hidden !important;
 }
-.custom-keyboard .key:hover {
-  background: linear-gradient(180deg, #e6f7fa 60%, #c2e9f7 100%);
-  color: var(--color-primary);
-  box-shadow: 0 4px 16px rgba(32, 207, 207, 0.12), 0 1.5px 8px rgba(0,0,0,0.10);
+
+/* Responsive: shrink gap and font size further for very small screens */
+@media (max-width: 400px) {
+  .custom-keyboard .keyboard-row {
+    gap: clamp(0.5px, 0.5vw, 6px) clamp(0.5px, 1vw, 8px);
+  }
+  .custom-keyboard .key {
+    font-size: clamp(0.7rem, 2vw, 1rem);
+    min-height: clamp(16px, 5vw, 36px);
+    border-radius: clamp(3px, 1vw, 10px);
+  }
 }
-.custom-keyboard .keyboard-actions .key {
-  min-width: clamp(20px, 8vw, 120px);
-  font-size: clamp(0.7rem, 2.5vw, 1.25rem);
-  font-weight: 600;
-}
-.custom-keyboard .key[data-key="space"] {
-  min-width: clamp(30px, 20vw, 480px);
-  font-size: clamp(0.7rem, 2.5vw, 1.2rem);
-  background: linear-gradient(90deg, #e6f7fa 60%, #fafdff 100%);
-  flex-grow: 2;
-}
-.custom-keyboard .key[data-key="backspace"] {
-  background: linear-gradient(180deg, #ffeaea 80%, #ffd6d6 100%);
-  color: #ff4f64;
-  font-size: clamp(0.9rem, 3vw, 1.4rem);
-  font-weight: 600;
-}
-.custom-keyboard .key[data-key="shift"],
-.custom-keyboard .key[data-key="?123"],
-.custom-keyboard .key[data-key="ABC"] {
-  background: linear-gradient(180deg, #eaf7ff 80%, #d0f0f7 100%);
-  color: #32B8C6;
-  font-weight: 600;
-}
-.custom-keyboard .key[data-key="enter"] {
-  background: linear-gradient(180deg, #eaffea 80%, #d6ffd6 100%);
-  color: #20CFCF;
-  font-weight: 600;
-}
-/* --- END GBOARD-STYLE CUSTOM KEYBOARD (FLUID KEY & GAP SIZING) --- */
+
+/* End FLUID RESPONSIVE CUSTOM KEYBOARD */
