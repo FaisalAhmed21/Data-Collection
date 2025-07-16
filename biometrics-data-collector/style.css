@@ -3640,12 +3640,12 @@ html, body {
 
 /* --- DARK MODE ADJUSTMENTS FOR CUSTOM KEYBOARD --- */
 @media (prefers-color-scheme: dark) {
-  .custom-keyboard {
+.custom-keyboard {
     background: #232526 !important;
     box-shadow: 0 -2px 24px rgba(0,0,0,0.45) !important;
     border-top: 2px solid #32B8C6 !important;
-  }
-  .custom-keyboard .key {
+}
+.custom-keyboard .key {
     background: linear-gradient(180deg, #2d3136 80%, #232526 100%) !important;
     color: #fff !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.18) !important;
@@ -3655,22 +3655,22 @@ html, body {
     background: linear-gradient(180deg, #223a3a 60%, #2d3136 100%) !important;
     color: #32B8C6 !important;
     box-shadow: 0 4px 16px rgba(50, 184, 198, 0.18), 0 1.5px 8px rgba(0,0,0,0.18) !important;
-  }
-  .custom-keyboard .key[data-key="backspace"] {
+}
+.custom-keyboard .key[data-key="backspace"] {
     background: linear-gradient(180deg, #3a2323 80%, #2d1313 100%) !important;
     color: #ff4f64 !important;
-  }
-  .custom-keyboard .key[data-key="shift"],
-  .custom-keyboard .key[data-key="?123"],
-  .custom-keyboard .key[data-key="ABC"] {
+}
+.custom-keyboard .key[data-key="shift"],
+.custom-keyboard .key[data-key="?123"],
+.custom-keyboard .key[data-key="ABC"] {
     background: linear-gradient(180deg, #223a3a 80%, #2d3136 100%) !important;
     color: #32B8C6 !important;
   }
   .custom-keyboard .key[data-key="space"] {
     background: linear-gradient(90deg, #232526 60%, #2d3136 100%) !important;
     color: #fff !important;
-  }
-  .custom-keyboard .key[data-key="enter"] {
+}
+.custom-keyboard .key[data-key="enter"] {
     background: linear-gradient(180deg, #233a23 80%, #1a2d1a 100%) !important;
     color: #20CFCF !important;
   }
@@ -3859,12 +3859,12 @@ html, body {
 }
 /* --- DARK MODE ADJUSTMENTS FOR CUSTOM KEYBOARD --- */
 @media (prefers-color-scheme: dark) {
-  .custom-keyboard {
+.custom-keyboard {
     background: #232526 !important;
     box-shadow: 0 -2px 24px rgba(0,0,0,0.45) !important;
     border-top: 2px solid #32B8C6 !important;
-  }
-  .custom-keyboard .key {
+}
+.custom-keyboard .key {
     background: linear-gradient(180deg, #2d3136 80%, #232526 100%) !important;
     color: #fff !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.18) !important;
@@ -3874,22 +3874,22 @@ html, body {
     background: linear-gradient(180deg, #223a3a 60%, #2d3136 100%) !important;
     color: #32B8C6 !important;
     box-shadow: 0 4px 16px rgba(50, 184, 198, 0.18), 0 1.5px 8px rgba(0,0,0,0.18) !important;
-  }
-  .custom-keyboard .key[data-key="backspace"] {
+}
+.custom-keyboard .key[data-key="backspace"] {
     background: linear-gradient(180deg, #3a2323 80%, #2d1313 100%) !important;
     color: #ff4f64 !important;
-  }
-  .custom-keyboard .key[data-key="shift"],
-  .custom-keyboard .key[data-key="?123"],
-  .custom-keyboard .key[data-key="ABC"] {
+}
+.custom-keyboard .key[data-key="shift"],
+.custom-keyboard .key[data-key="?123"],
+.custom-keyboard .key[data-key="ABC"] {
     background: linear-gradient(180deg, #223a3a 80%, #2d3136 100%) !important;
     color: #32B8C6 !important;
   }
   .custom-keyboard .key[data-key="space"] {
     background: linear-gradient(90deg, #232526 60%, #2d3136 100%) !important;
     color: #fff !important;
-  }
-  .custom-keyboard .key[data-key="enter"] {
+}
+.custom-keyboard .key[data-key="enter"] {
     background: linear-gradient(180deg, #233a23 80%, #1a2d1a 100%) !important;
     color: #20CFCF !important;
   }
@@ -3975,9 +3975,4 @@ html, body {
   justify-content: center;
   cursor: pointer;
   overflow: hidden;
-}
-
-/* Hide symbol rows by default */
-.keyboard-row.keyboard-symbols {
-  display: none !important;
 }
