@@ -3630,39 +3630,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const typingInput = document.getElementById('typing-input');
     const customKeyboard = document.getElementById('custom-keyboard');
     let isShift = false;
-    let isSymbols = false;
-
-    // Prevent native keyboard by setting inputmode and tabindex
-    typingInput.setAttribute('inputmode', 'none');
-    typingInput.setAttribute('tabindex', '0');
-
-    // Only show custom keyboard on focus
-    typingInput.addEventListener('focus', (e) => {
-        customKeyboard.style.display = 'block';
-    });
-    typingInput.addEventListener('blur', (e) => {
-        // Optionally hide keyboard on blur
-        // setTimeout(() => { customKeyboard.style.display = 'none'; }, 200);
-    });
-    // Remove preventDefault from mousedown/touchstart so cursor can move
-    // typingInput.addEventListener('touchstart', ...)
-    // typingInput.addEventListener('mousedown', ...)
-    // (Remove these handlers entirely)
-
-    // Hide keyboard if clicking outside
-    function isKeyboardOrInput(target) {
-      return customKeyboard.contains(target) || target === typingInput;
-    }
-    document.addEventListener('mousedown', (e) => {
-      if (!isKeyboardOrInput(e.target)) {
-        customKeyboard.style.display = 'none';
-      }
-    });
-    document.addEventListener('touchend', (e) => {
-      if (!isKeyboardOrInput(e.target)) {
-        customKeyboard.style.display = 'none';
-      }
-    });
+    // Remove isSymbols and updateKeyboardLayout logic
 
     // Keyboard key press handler
     customKeyboard.addEventListener('click', (e) => {
@@ -3704,51 +3672,46 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = ' ';
             handled = true;
         } else if (key === 'enter') {
-            // Optionally handle enter
             insertChar = '\n';
             handled = true;
         } else if (key === 'shift') {
             insertChar = 'SHIFT';
             handled = true;
-            isShift = !isShift;
+            isShift = true;
             updateKeyboardCase();
-        // (do not return here, let it fall through to the unified keystroke recording below)
+            return;
         } else if (key === '?123') {
-            isSymbols = true;
-            updateKeyboardLayout();
+            showKeyboardPage('symbols');
+            updateKeyboardCase();
             return;
         } else if (key === 'ABC') {
-            isSymbols = false;
-            updateKeyboardLayout();
+            showKeyboardPage('letters');
+            updateKeyboardCase();
             return;
         } else {
             // Normal character
             let char = key;
-            if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
+            if (isShift && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
             newCaret = caret + 1;
             insertChar = char;
             handled = true;
-            if (isShift && !isSymbols && char.length === 1 && /[A-Z]/.test(char)) {
+            if (isShift) {
                 isShift = false;
                 updateKeyboardCase();
             }
         }
         if (handled) {
-            // Set flag before programmatic update
             isProgrammaticInput = true;
             typingInput.value = newValue;
             typingInput.setSelectionRange(newCaret, newCaret);
-            // Ensure input is focused so caret is visible and active
             if (document.activeElement !== typingInput) {
                 typingInput.focus();
                 typingInput.setSelectionRange(newCaret, newCaret);
             }
-            // Reset flag after update
             setTimeout(() => { isProgrammaticInput = false; }, 0);
-            // Record keystroke and touch data
             const timestamp = performance.now();
             collector.recordKeystroke({
                 timestamp,
@@ -3761,7 +3724,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clientY: Math.round(touchY),
                 key_x: Math.round(keyX),
                 key_y: Math.round(keyY),
-                dwell_time_ms: '' // Will be set on touchend
+                dwell_time_ms: ''
             });
             collector.calculateAccuracy();
             collector.checkSentenceCompletion();
