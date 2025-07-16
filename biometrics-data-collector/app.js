@@ -3826,6 +3826,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Ensure only the correct keyboard layout is visible on load
-    updateKeyboardLayout();
-    // --- END: Only one keyboard page visible at a time ---
+    function updateKeyboardLayout() {
+    const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
+    const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
+    if (isSymbols) {
+        letterRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
+        symbolRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
+    } else {
+        letterRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
+        symbolRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
+    }
+}
+
 });
