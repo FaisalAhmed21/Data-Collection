@@ -3800,7 +3800,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!e.target.classList.contains('key')) return;
         const key = e.target.getAttribute('data-key');
         let value = typingInput.value;
-        let caret = typingInput.selectionStart || value.length;
+        let caret = typingInput.selectionStart;
         let newValue = value;
         let insertChar = '';
         let handled = false;
@@ -4001,7 +4001,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Simulate click logic
         const key = target.getAttribute('data-key');
         let value = typingInput.value;
-        let caret = typingInput.selectionStart || value.length;
+        let caret = typingInput.selectionStart;
         let newValue = value;
         let insertChar = '';
         let handled = false;
