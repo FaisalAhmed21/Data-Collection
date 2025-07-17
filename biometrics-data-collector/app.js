@@ -4088,4 +4088,17 @@ document.addEventListener('DOMContentLoaded', () => {
             collector.updateTypingFeedback();
         }
     }, { passive: true });
+
+    // In the DOMContentLoaded handler, after customKeyboard is defined, add this utility:
+    function removeAllKeyActiveStates() {
+        const keys = customKeyboard.querySelectorAll('.key.active');
+        keys.forEach(key => key.classList.remove('active'));
+    }
+
+    // As a global fallback, remove all .active states on document touchend/mouseup/visibilitychange:
+    document.addEventListener('touchend', removeAllKeyActiveStates);
+    document.addEventListener('mouseup', removeAllKeyActiveStates);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') removeAllKeyActiveStates();
+    });
 });
