@@ -5,7 +5,6 @@ class BiometricDataCollector {
         this.currentSentence = 0;
         this.currentCrystalStep = 1;
         this.currentGalleryImage = 0;
-        
         this.taskState = {
             studyStarted: false,
             typingCompleted: false,
