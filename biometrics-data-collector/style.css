@@ -3966,3 +3966,37 @@ html, body {
   box-shadow: 0 2px 8px rgba(32, 207, 207, 0.10), 0 1px 4px rgba(0,0,0,0.08);
   transform: scale(0.99);
 }
+
+.custom-keyboard .key[data-key="shift"].shift-on {
+  background: var(--color-primary, #20cfcf) !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 2px var(--color-primary, #20cfcf) !important;
+}
+.custom-keyboard .key[data-key="shift"].shift-caps {
+  background: var(--color-warning, #f7b731) !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 2px var(--color-warning, #f7b731) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .custom-keyboard .key[data-key="shift"].shift-on {
+    background: var(--color-primary, #20cfcf) !important;
+    color: #222 !important;
+    box-shadow: 0 0 0 2px var(--color-primary, #20cfcf) !important;
+  }
+  .custom-keyboard .key[data-key="shift"].shift-caps {
+    background: var(--color-warning, #f7b731) !important;
+    color: #222 !important;
+    box-shadow: 0 0 0 2px var(--color-warning, #f7b731) !important;
+  }
+}
+[data-color-scheme="dark"] .custom-keyboard .key[data-key="shift"].shift-on {
+  background: var(--color-primary, #20cfcf) !important;
+  color: #222 !important;
+  box-shadow: 0 0 0 2px var(--color-primary, #20cfcf) !important;
+}
+[data-color-scheme="dark"] .custom-keyboard .key[data-key="shift"].shift-caps {
+  background: var(--color-warning, #f7b731) !important;
+  color: #222 !important;
+  box-shadow: 0 0 0 2px var(--color-warning, #f7b731) !important;
+}
