@@ -3975,6 +3975,7 @@ html, body {
     color: #32B8C6 !important;
     box-shadow: 0 4px 16px rgba(50, 184, 198, 0.18), 0 1.5px 8px rgba(0,0,0,0.18) !important;
     transform: scale(0.97) !important;
+    transition: background 0.18s, box-shadow 0.18s, color 0.18s, transform 0.12s !important;
   }
 }
 
