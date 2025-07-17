@@ -3762,67 +3762,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const customKeyboard = document.getElementById('custom-keyboard');
     let isShift = false;
     let isSymbols = false;
-    let autoCapitalizeNext = false; // <-- NEW: Track auto-capitalization after '. '
 
-    // Helper: Should the next letter be uppercase?
-    function shouldAutoCapitalize() {
-        // If input is empty or caret is at 0, or autoCapitalizeNext is set
-        const caret = typingInput.selectionStart;
-        const value = typingInput.value;
-        if (autoCapitalizeNext) return true;
-        if (caret === 0) return true;
-        return false;
-    }
-
-    // Update keyboard case for letters (now considers auto-capitalization)
-    function updateKeyboardCase() {
-        const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
-        const caret = typingInput.selectionStart;
-        const value = typingInput.value;
-        const autoCap = shouldAutoCapitalize();
-        keys.forEach(btn => {
-            const key = btn.getAttribute('data-key');
-            if (key && key.length === 1 && /[a-z]/.test(key)) {
-                // Show uppercase if shift is on, or if autoCapitalize applies and not in symbols
-                btn.textContent = (isShift || (autoCap && !isSymbols)) ? key.toUpperCase() : key;
-            }
-        });
-    }
-
-    // Update keyboard layout (unchanged, but call updateKeyboardCase after)
-    function updateKeyboardLayout() {
-        const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
-        const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
-        if (isSymbols) {
-            letterRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
-            symbolRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
-        } else {
-            letterRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
-            symbolRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
-        }
-        updateKeyboardCase(); // <-- Always update case after layout change
-    }
-
-    // Listen for input changes to update autoCapitalizeNext
-    typingInput.addEventListener('input', (e) => {
-        // Check for ". " at the end of the input (period + space)
-        const value = typingInput.value;
-        const caret = typingInput.selectionStart;
-        if (caret >= 2 && value[caret - 2] === '.' && value[caret - 1] === ' ') {
-            autoCapitalizeNext = true;
-            updateKeyboardCase();
-        }
-        // If input is cleared, update keyboard case
-        if (value.length === 0) {
-            autoCapitalizeNext = false;
-            updateKeyboardCase();
-        }
-    });
+    // Prevent native keyboard by setting inputmode and tabindex
+    typingInput.setAttribute('inputmode', 'none');
+    typingInput.setAttribute('tabindex', '0');
 
     // Only show custom keyboard on focus
     typingInput.addEventListener('focus', (e) => {
         customKeyboard.style.display = 'block';
-        updateKeyboardCase(); // <-- Update case on focus
     });
     typingInput.addEventListener('blur', (e) => {
         // Optionally hide keyboard on blur
@@ -3903,10 +3850,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Normal character
             let char = key;
-            // Capitalize if at position 0 or after . + space, unless shift is toggled
-            if ((shouldAutoCapitalize() && !isShift && !isSymbols)) {
-                char = char.toUpperCase();
-            } else if (isShift && !isSymbols) {
+            if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
@@ -3916,11 +3860,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // If shift is active, turn it off after any key except shift
             if (isShift) {
                 isShift = false;
-                updateKeyboardCase();
-            }
-            // If autoCapitalizeNext was set, reset it after first letter
-            if (autoCapitalizeNext) {
-                autoCapitalizeNext = false;
                 updateKeyboardCase();
             }
         }
@@ -4040,6 +3979,8 @@ document.addEventListener('DOMContentLoaded', () => {
     customKeyboard.addEventListener('touchstart', (e) => {
         const target = e.target.closest('.key');
         if (!target) return;
+        // Remove .active from all keys before adding to current
+        customKeyboard.querySelectorAll('.key.active').forEach(key => key.classList.remove('active'));
         target.classList.add('active');
         // Remove .active on touchend/touchcancel to prevent sticky state
         const removeActive = () => target.classList.remove('active');
@@ -4099,22 +4040,18 @@ document.addEventListener('DOMContentLoaded', () => {
             updateKeyboardLayout();
             return;
         } else {
+            // Normal character
             let char = key;
-            if ((shouldAutoCapitalize() && !isShift && !isSymbols)) {
-                char = char.toUpperCase();
-            } else if (isShift && !isSymbols) {
+            if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
             newCaret = caret + 1;
             insertChar = char;
             handled = true;
+            // If shift is active, turn it off after any key except shift
             if (isShift) {
                 isShift = false;
-                updateKeyboardCase();
-            }
-            if (autoCapitalizeNext) {
-                autoCapitalizeNext = false;
                 updateKeyboardCase();
             }
         }
@@ -4157,8 +4094,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // After all customKeyboard event listeners, add this global handler:
 document.addEventListener('touchend', function() {
-    document.querySelectorAll('.custom-keyboard .key.active').forEach(key => key.classList.remove('active'));
+    document.querySelectorAll('#custom-keyboard .key.active').forEach(key => key.classList.remove('active'));
 }, { passive: true });
 document.addEventListener('touchcancel', function() {
-    document.querySelectorAll('.custom-keyboard .key.active').forEach(key => key.classList.remove('active'));
+    document.querySelectorAll('#custom-keyboard .key.active').forEach(key => key.classList.remove('active'));
 }, { passive: true });
