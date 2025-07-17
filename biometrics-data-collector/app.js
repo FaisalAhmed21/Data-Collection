@@ -3871,9 +3871,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // --- Add active class for 0.25s visual feedback ---
         e.target.classList.add('active');
-        setTimeout(() => {
-            e.target.classList.remove('active');
-        }, 250);
+        // Remove .active on mouseup/mouseleave to prevent sticky state
+        const removeActive = () => e.target.classList.remove('active');
+        e.target.addEventListener('mouseup', removeActive, { once: true });
+        e.target.addEventListener('mouseleave', removeActive, { once: true });
+        setTimeout(removeActive, 250);
         // --- End active class logic ---
         if (handled) {
             isProgrammaticInput = true;
@@ -3984,10 +3986,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const target = e.target.closest('.key');
         if (!target) return;
         target.classList.add('active');
-        // Remove .active after 0.25s (same as click)
-        setTimeout(() => {
-            target.classList.remove('active');
-        }, 250);
+        // Remove .active on touchend/touchcancel to prevent sticky state
+        const removeActive = () => target.classList.remove('active');
+        target.addEventListener('touchend', removeActive, { once: true });
+        target.addEventListener('touchcancel', removeActive, { once: true });
+        setTimeout(removeActive, 250);
         // Prevent default to avoid stuck state
         e.preventDefault();
     }, { passive: false });
