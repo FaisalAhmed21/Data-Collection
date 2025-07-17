@@ -442,21 +442,15 @@ class BiometricDataCollector {
             
             typingInput.addEventListener('input', function(e) {
                 if (isProgrammaticInput) {
-                    // Skip paste-blocking logic for programmatic input
+                    // For programmatic input (custom keyboard), do not interfere with caret
                     this.lastInputValue = e.target.value;
                     return;
                 }
                 const currentValue = e.target.value;
                 const previousValue = this.lastInputValue || '';
-                // Save caret position before any programmatic change
-                const caretPos = typingInput.selectionStart;
                 if (currentValue.length > previousValue.length + 1) {
                     console.log('Potential paste detected - blocking');
                     e.target.value = previousValue;
-                    // Restore caret position after blocking paste
-                    setTimeout(() => {
-                        typingInput.setSelectionRange(caretPos, caretPos);
-                    }, 0);
                     return false;
                 }
                 this.lastInputValue = currentValue;
