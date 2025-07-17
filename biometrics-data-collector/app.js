@@ -3991,4 +3991,104 @@ document.addEventListener('DOMContentLoaded', () => {
         // Prevent default to avoid stuck state
         e.preventDefault();
     }, { passive: false });
+
+    // Add this improved touchend handler:
+    customKeyboard.addEventListener('touchend', (e) => {
+        const target = e.target.closest('.key');
+        if (!target) return;
+        // Run the same logic as click
+        target.classList.add('active');
+        setTimeout(() => {
+            target.classList.remove('active');
+        }, 250);
+        // Simulate click logic
+        const key = target.getAttribute('data-key');
+        let value = typingInput.value;
+        let caret = typingInput.selectionStart || value.length;
+        let newValue = value;
+        let insertChar = '';
+        let handled = false;
+        const rect = target.getBoundingClientRect();
+        const keyX = rect.left + rect.width / 2;
+        const keyY = rect.top + rect.height / 2;
+        let newCaret = caret;
+        if (key === 'backspace') {
+            if (caret > 0) {
+                newValue = value.slice(0, caret - 1) + value.slice(caret);
+                newCaret = caret - 1;
+                insertChar = 'BACKSPACE';
+                handled = true;
+            }
+        } else if (key === 'space') {
+            newValue = value.slice(0, caret) + ' ' + value.slice(caret);
+            newCaret = caret + 1;
+            insertChar = ' ';
+            handled = true;
+        } else if (key === 'enter') {
+            insertChar = '\n';
+            handled = true;
+        } else if (key === 'shift') {
+            insertChar = 'SHIFT';
+            handled = true;
+            isShift = !isShift; // Toggle shift on each press
+            updateKeyboardCase();
+        } else if (key === '?123') {
+            isSymbols = true;
+            updateKeyboardLayout();
+            return;
+        } else if (key === 'ABC') {
+            isSymbols = false;
+            updateKeyboardLayout();
+            return;
+        } else {
+            // Normal character
+            let char = key;
+            if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
+                char = char.toUpperCase();
+            }
+            newValue = value.slice(0, caret) + char + value.slice(caret);
+            newCaret = caret + 1;
+            insertChar = char;
+            handled = true;
+            // If shift is active, turn it off after any key except shift
+            if (isShift) {
+                isShift = false;
+                updateKeyboardCase();
+            }
+        }
+        if (handled) {
+            isProgrammaticInput = true;
+            typingInput.value = newValue;
+            typingInput.setSelectionRange(newCaret, newCaret);
+            if (document.activeElement !== typingInput) {
+                typingInput.focus();
+                typingInput.setSelectionRange(newCaret, newCaret);
+            }
+            setTimeout(() => { isProgrammaticInput = false; }, 0);
+            const timestamp = performance.now();
+            let actualChar = insertChar;
+            let refChar = insertChar;
+            if (insertChar === ' ') {
+                actualChar = 'SPACE';
+                refChar = 'SPACE';
+            }
+            collector.recordKeystroke({
+                timestamp,
+                actualChar: actualChar,
+                refChar: refChar,
+                keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === 'SHIFT' ? 16 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
+                type: 'custom-keyboard',
+                sentence: collector.currentSentence,
+                position: newCaret,
+                clientX: Math.round(keyX),
+                clientY: Math.round(keyY),
+                key_x: Math.round(keyX),
+                key_y: Math.round(keyY),
+                dwell_time_ms: ''
+            });
+            collector.calculateAccuracy();
+            collector.checkSentenceCompletion();
+            collector.updateTypingFeedback();
+        }
+    }, { passive: true });
 });
