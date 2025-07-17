@@ -13,6 +13,11 @@ class BiometricDataCollector {
             galleryCompleted: false
         };
         
+        // Inactivity tracking
+        this.inactivityTimer = null;
+        this.inactivityTimeout = 3 * 60 * 1000; // 3 minutes in milliseconds
+        this.lastActivityTime = Date.now();
+        
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         this.isAndroid = /Android/.test(navigator.userAgent);
@@ -267,6 +272,7 @@ class BiometricDataCollector {
         this.initializeGallery();
         this.setupPointerTracking();
         this.updateTaskLocks();
+        this.setupInactivityTracking();
     }
     
     setupPointerTracking() {
@@ -363,6 +369,7 @@ class BiometricDataCollector {
             this.updateTaskLocks();
             this.switchScreen('typing');
             this.startTypingTask();
+            this.startInactivityTimer(); // Start inactivity timer when study begins
         });
         // Consent checkbox logic
         const consentCheckbox = document.getElementById('consent-checkbox');
@@ -3611,6 +3618,135 @@ class BiometricDataCollector {
         this.highlightNextFacet();
         
         console.log(`🎮 Rendered ${this.crystalState.facets.length} facets, current index: ${this.crystalState.currentFacetIndex}`);
+    }
+
+    setupInactivityTracking() {
+        // Activity events to reset the timer
+        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click', 'input'];
+        
+        activityEvents.forEach(event => {
+            document.addEventListener(event, () => {
+                this.resetInactivityTimer();
+            }, { passive: true });
+        });
+    }
+    
+    startInactivityTimer() {
+        this.lastActivityTime = Date.now();
+        this.inactivityTimer = setTimeout(() => {
+            this.terminateSession();
+        }, this.inactivityTimeout);
+        console.log('⏰ Inactivity timer started - session will terminate after 3 minutes of inactivity');
+    }
+    
+    resetInactivityTimer() {
+        if (this.taskState.studyStarted) {
+            this.lastActivityTime = Date.now();
+            if (this.inactivityTimer) {
+                clearTimeout(this.inactivityTimer);
+            }
+            this.inactivityTimer = setTimeout(() => {
+                this.terminateSession();
+            }, this.inactivityTimeout);
+        }
+    }
+    
+    stopInactivityTimer() {
+        if (this.inactivityTimer) {
+            clearTimeout(this.inactivityTimer);
+            this.inactivityTimer = null;
+        }
+    }
+    
+    terminateSession() {
+        console.log('⏰ Session terminated due to inactivity (3 minutes)');
+        
+        // Clear all data
+        this.keystrokeData = [];
+        this.touchData = [];
+        this.gesturePath = {};
+        this.gesturePathLength = {};
+        
+        // Reset task state
+        this.taskState = {
+            studyStarted: false,
+            typingCompleted: false,
+            crystalCompleted: false,
+            galleryCompleted: false
+        };
+        
+        // Reset current positions
+        this.currentSentence = 0;
+        this.currentCrystalStep = 1;
+        this.currentGalleryImage = 0;
+        
+        // Generate new participant ID
+        this.generateParticipantId();
+        
+        // Stop inactivity timer
+        this.stopInactivityTimer();
+        
+        // Return to welcome screen
+        this.switchScreen('welcome');
+        
+        // Show notification to user
+        this.showInactivityNotification();
+    }
+    
+    showInactivityNotification() {
+        // Create and show a notification
+        const notification = document.createElement('div');
+        notification.className = 'inactivity-notification';
+        notification.innerHTML = `
+            <div class="notification-content">
+                <h3>Session Expired</h3>
+                <p>Your session was terminated due to 3 minutes of inactivity.</p>
+                <p>A new session has been started. Please click "Start Study" to begin again.</p>
+                <button onclick="this.parentElement.parentElement.remove()">OK</button>
+            </div>
+        `;
+        notification.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+        `;
+        
+        const content = notification.querySelector('.notification-content');
+        content.style.cssText = `
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            margin: 20px;
+        `;
+        
+        content.querySelector('button').style.cssText = `
+            background: var(--color-primary, #20cfcf);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 10000);
     }
 }
 // Initialize the application
