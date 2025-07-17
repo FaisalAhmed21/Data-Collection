@@ -3260,7 +3260,7 @@ class BiometricDataCollector {
         this.updateZoomLevel();
     }
     
-    // 12. Navigate images
+    // 12. Navigate images 
     nextGalleryImage() {
         if (this.currentGalleryImage < this.galleryImages.length - 1) {
             this.currentGalleryImage++;
@@ -4087,18 +4087,13 @@ document.addEventListener('DOMContentLoaded', () => {
             collector.checkSentenceCompletion();
             collector.updateTypingFeedback();
         }
-    }, { passive: true });
-
-    // In the DOMContentLoaded handler, after customKeyboard is defined, add this utility:
-    function removeAllKeyActiveStates() {
-        const keys = customKeyboard.querySelectorAll('.key.active');
-        keys.forEach(key => key.classList.remove('active'));
-    }
-
-    // As a global fallback, remove all .active states on document touchend/mouseup/visibilitychange:
-    document.addEventListener('touchend', removeAllKeyActiveStates);
-    document.addEventListener('mouseup', removeAllKeyActiveStates);
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') removeAllKeyActiveStates();
-    });
+    }, { passive: true });                      
 });
+
+// After all customKeyboard event listeners, add this global handler:
+document.addEventListener('touchend', function() {
+    document.querySelectorAll('.custom-keyboard .key.active').forEach(key => key.classList.remove('active'));
+}, { passive: true });
+document.addEventListener('touchcancel', function() {
+    document.querySelectorAll('.custom-keyboard .key.active').forEach(key => key.classList.remove('active'));
+}, { passive: true });
