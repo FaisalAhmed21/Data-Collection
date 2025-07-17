@@ -3978,4 +3978,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ensure only the correct keyboard layout is visible on load
     updateKeyboardLayout();
     // --- END: Only one keyboard page visible at a time ---
+
+    // --- Fix for sticky .active on touch devices ---
+    customKeyboard.addEventListener('touchstart', (e) => {
+        const target = e.target.closest('.key');
+        if (!target) return;
+        target.classList.add('active');
+        // Remove .active after 0.25s (same as click)
+        setTimeout(() => {
+            target.classList.remove('active');
+        }, 250);
+        // Prevent default to avoid stuck state
+        e.preventDefault();
+    }, { passive: false });
 });
