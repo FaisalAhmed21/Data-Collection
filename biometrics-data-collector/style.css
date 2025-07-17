@@ -3998,3 +3998,22 @@ html, body {
   text-shadow: none !important;
   transition: background 0.18s, color 0.18s, border 0.18s;
 }
+
+@media (prefers-color-scheme: dark) {
+  #typing-input, .typing-input-box, .typing-area textarea, input#typing-input, div.typing-input-box {
+    background: #232526 !important;
+    color: #fff !important;
+    border: 2px solid #32B8C6 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transition: background 0.18s, color 0.18s, border 0.18s;
+  }
+}
+[data-color-scheme="dark"] #typing-input, [data-color-scheme="dark"] .typing-input-box, [data-color-scheme="dark"] .typing-area textarea, [data-color-scheme="dark"] input#typing-input, [data-color-scheme="dark"] div.typing-input-box {
+  background: #232526 !important;
+  color: #fff !important;
+  border: 2px solid #32B8C6 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+}
