@@ -3801,7 +3801,51 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Keyboard key press handler
+    // --- Shift/Caps Lock Visual Feedback ---
+    function updateShiftVisual() {
+        const shiftKey = customKeyboard.querySelector('.key[data-key="shift"]');
+        if (!shiftKey) return;
+        shiftKey.classList.remove('shift-on', 'shift-caps');
+        if (shiftState === 'on') {
+            shiftKey.classList.add('shift-on');
+        } else if (shiftState === 'caps') {
+            shiftKey.classList.add('shift-caps');
+        }
+    }
+
+    // --- Keyboard Case Update ---
+    function updateKeyboardCase() {
+        const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
+        keys.forEach(btn => {
+            const key = btn.getAttribute('data-key');
+            if (key && key.length === 1 && /[a-z]/.test(key)) {
+                btn.textContent = (shiftState === 'on' || shiftState === 'caps') ? key.toUpperCase() : key;
+            }
+        });
+        updateShiftVisual();
+    }
+
+    // --- Keyboard Layout Update ---
+    function updateKeyboardLayout() {
+        const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
+        const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
+        if (isSymbols) {
+            letterRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
+            symbolRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
+        } else {
+            letterRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
+            symbolRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
+        }
+        updateKeyboardCase();
+    }
+
+    // --- Initial Keyboard State ---
+    updateKeyboardLayout();
+    shiftState = "on";
+    updateKeyboardCase();
+    // --- END: Only one keyboard page visible at a time ---
+
+    // --- Keyboard key press handler ---
     customKeyboard.addEventListener('click', (e) => {
         if (!e.target.classList.contains('key')) return;
         const key = e.target.getAttribute('data-key');
@@ -3832,19 +3876,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 insertChar = 'BACKSPACE';
                 handled = true;
             }
+            // If backspace, do not change shift state
         } else if (key === 'space') {
             newValue = value.slice(0, caret) + ' ' + value.slice(caret);
             newCaret = caret + 1;
             insertChar = ' ';
             handled = true;
+            // --- Auto-cap after period+space ---
+            if (caret >= 2 && value[caret-2] === '.' && value[caret-1] === ' ') {
+                shiftState = 'on';
+                updateKeyboardCase();
+            }
         } else if (key === 'enter') {
             insertChar = '\n';
             handled = true;
         } else if (key === 'shift') {
-            insertChar = 'SHIFT';
-            handled = true;
-            isShift = !isShift; // Toggle shift on each press
+            const now = Date.now();
+            if (shiftState === 'caps') {
+                shiftState = 'off';
+            } else if (shiftState === 'on') {
+                // If shift is already on, check for double tap
+                if (now - lastShiftTap < 400) {
+                    shiftState = 'caps';
+                } else {
+                    shiftState = 'off';
+                }
+            } else if (shiftState === 'off') {
+                if (now - lastShiftTap < 400) {
+                    shiftState = 'caps';
+                } else {
+                    shiftState = 'on';
+                }
+            }
+            lastShiftTap = now;
             updateKeyboardCase();
+            handled = false; // Don't insert anything
+            return;
         } else if (key === '?123') {
             isSymbols = true;
             updateKeyboardLayout();
@@ -3856,16 +3923,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Normal character
             let char = key;
-            if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
+            if ((shiftState === 'on' || shiftState === 'caps') && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
             newCaret = caret + 1;
             insertChar = char;
             handled = true;
-            // If shift is active, turn it off after any key except shift
-            if (isShift) {
-                isShift = false;
+            // If shift is on (not caps), turn it off after one letter
+            if (shiftState === 'on') {
+                shiftState = 'off';
                 updateKeyboardCase();
             }
         }
@@ -3911,30 +3978,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function updateKeyboardCase() {
-        const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
-        keys.forEach(btn => {
-            const key = btn.getAttribute('data-key');
-            if (key && key.length === 1 && /[a-z]/.test(key)) {
-                btn.textContent = isShift ? key.toUpperCase() : key;
-            }
-        });
-    }
-    function updateKeyboardLayout() {
-        const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
-        const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
-        if (isSymbols) {
-            letterRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
-            symbolRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
-        } else {
-            letterRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
-            symbolRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
+    // --- Listen for input changes for auto-cap after . + space ---
+    typingInput.addEventListener('input', function() {
+        const v = typingInput.value;
+        if (v.length === 1) {
+            shiftState = 'off'; // After first letter, turn off shift
+            updateKeyboardCase();
         }
-    }
-    // Optionally, always show keyboard on page load for demo
-    // customKeyboard.style.display = 'block';
+        if (v.length >= 2 && v[v.length-2] === '.' && v[v.length-1] === ' ') {
+            shiftState = 'on';
+            updateKeyboardCase();
+        }
+    });
 
-    // Add touchstart and touchend listeners for dwell time
+    // --- Dwell time logic (unchanged) ---
     customKeyboard.addEventListener('touchstart', (e) => {
         const target = e.target.closest('.key');
         if (!target) return;
@@ -3974,8 +4031,4 @@ document.addEventListener('DOMContentLoaded', () => {
             customKeyboard.style.display = 'block';
         });
     }
-
-    // Ensure only the correct keyboard layout is visible on load
-    updateKeyboardLayout();
-    // --- END: Only one keyboard page visible at a time ---
 });
