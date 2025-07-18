@@ -3496,7 +3496,8 @@ class BiometricDataCollector {
             )
         ].join('\n');
     
-        return csvContent;
+        // Add UTF-8 BOM to ensure Excel and others recognize encoding
+        return '\uFEFF' + csvContent;
     }
 
 
