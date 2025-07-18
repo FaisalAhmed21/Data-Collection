@@ -1356,9 +1356,9 @@ class BiometricDataCollector {
             '@':            '@',         // At symbol
             '#':            '#',         // Hash
             '$':            '$',         // Dollar
-            '€':            '$',         // Euro
-            '£':            '$',         // Pound
-            '¥':            '$',         // Yen
+            '€':            '€',         // Euro (FIXED: store as itself)
+            '£':            '£',         // Pound (FIXED: store as itself)
+            '¥':            '¥',         // Yen
             '%':            '%',         // Percent
             '&':            '&',         // Ampersand
             '*':            '*',         // Asterisk
