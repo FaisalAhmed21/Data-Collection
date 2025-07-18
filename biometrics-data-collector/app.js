@@ -1164,7 +1164,14 @@ class BiometricDataCollector {
 
 
     updateKeyboardDisplay() {
-        updateKeyboardCase();
+        if (this.autoCapitalizeNext && !this.userShiftOverride) {
+            this.setKeyboardCaps(true);
+        } else if (this.userShiftOverride) {
+            // If user shift override is active, show caps
+            this.setKeyboardCaps(true);
+        } else {
+            this.setKeyboardCaps(false);
+        }
     }
 
 
@@ -3867,10 +3874,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Optionally hide keyboard on blur
         // setTimeout(() => { customKeyboard.style.display = 'none'; }, 200);
     });
-    // Remove preventDefault from mousedown/touchstart so cursor can move
-    // typingInput.addEventListener('touchstart', ...)
-    // typingInput.addEventListener('mousedown', ...)
-    // (Remove these handlers entirely)
+
 
     // Hide keyboard if clicking outside
     function isKeyboardOrInput(target) {
@@ -3933,18 +3937,17 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (key === 'shift') {
             e.preventDefault();
             
-            // Simple toggle shift state
-            isShift = !isShift;
-            collector.userShiftOverride = isShift;
-            console.log('Shift toggled:', isShift ? 'ON' : 'OFF');
-            
-            // Update keyboard display immediately
-            updateKeyboardCase();
-            collector.updateKeyboardDisplay();
-            
-            // Shift key should not update the input field, only change keyboard state
+            if (collector.autoCapitalizeNext) {
+                collector.userShiftOverride = !collector.userShiftOverride;
+                updateKeyboardCase();
+            } else {
+                isShift = !isShift;
+                collector.userShiftOverride = isShift;
+                updateKeyboardCase();
+                collector.updateKeyboardDisplay();
+            }
             handled = false;
-            console.log('Shift key handled - isShift:', isShift);
+            console.log('Shift key handled - isShift:', isShift, 'userShiftOverride:', collector.userShiftOverride, 'autoCapitalizeNext:', collector.autoCapitalizeNext);
         }
         else if (key === '?123') {
             isSymbols = true;
@@ -4176,13 +4179,10 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = '\n';
             handled = true;
         } else if (key?.toLowerCase?.() === 'shift') {
-            // If autoCapitalizeNext is active, toggle userShiftOverride to allow lowercase for next letter
             if (collector.autoCapitalizeNext) {
                 collector.userShiftOverride = !collector.userShiftOverride;
                 updateKeyboardCase();
-                collector.updateKeyboardDisplay();
             } else {
-                // Simple shift toggle for normal typing
                 isShift = !isShift;
                 collector.userShiftOverride = isShift;
                 updateKeyboardCase();
