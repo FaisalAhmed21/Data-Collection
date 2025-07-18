@@ -1204,6 +1204,12 @@ class BiometricDataCollector {
     }
     
     normalizeCharacter(char) {
+        // Normalize all euro and pound variants to the correct symbol
+        if (char === '€' || char === '\u20AC') {
+            return '€';
+        } else if (char === '£' || char === '\u00A3') {
+            return '£';
+        }
         if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵') {
             return "'";
         } else if (char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '"' || char === '„' || char === '‟' || char === '″' || char === '‶') {
