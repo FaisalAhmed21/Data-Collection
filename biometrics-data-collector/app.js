@@ -3519,7 +3519,7 @@ class BiometricDataCollector {
         // Add device and browser info as a comment line at the top
         let deviceInfoLine = '';
         if (this.deviceInfo) {
-            deviceInfoLine = `# Device: ${this.deviceInfo.device_model} | Browser: ${this.deviceInfo.browser_name} ${this.deviceInfo.browser_version}`;
+            deviceInfoLine = `Device: ${this.deviceInfo.device_model} | Browser: ${this.deviceInfo.browser_name} ${this.deviceInfo.browser_version}`;
         }
     
         const csvContent = [
