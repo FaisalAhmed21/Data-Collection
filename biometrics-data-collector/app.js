@@ -1164,14 +1164,7 @@ class BiometricDataCollector {
 
 
     updateKeyboardDisplay() {
-        if (this.autoCapitalizeNext && !this.userShiftOverride) {
-            this.setKeyboardCaps(true);
-        } else if (this.userShiftOverride) {
-            // If user shift override is active, show caps
-            this.setKeyboardCaps(true);
-        } else {
-            this.setKeyboardCaps(false);
-        }
+        updateKeyboardCase();
     }
 
 
