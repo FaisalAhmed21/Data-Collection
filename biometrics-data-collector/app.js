@@ -1643,6 +1643,8 @@ class BiometricDataCollector {
                 nextBtn.classList.add('next-task-btn--deep');
                 // Change button text to clearly indicate it's active
                 nextBtn.textContent = '✅ Next Sentence - Ready!';
+                // Force white text color with !important
+                nextBtn.style.setProperty('color', '#FFFFFF', 'important');
             }
 
         } else {
@@ -1651,10 +1653,15 @@ class BiometricDataCollector {
             nextBtn.style.display = 'inline-flex';
             // Reset button text to original
             nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
+            // Reset text color
+            nextBtn.style.removeProperty('color');
         }
     }
     
     nextSentence() {
+        // Reset keyboard state IMMEDIATELY when button is clicked
+        this.resetKeyboardState();
+        
         this.currentSentence++;
         if (this.currentSentence >= this.sentences.length) {
             this.showNextTaskButton('crystal', 'Crystal Forge Game');
@@ -1662,25 +1669,17 @@ class BiometricDataCollector {
         } else {
             this.displayCurrentSentence();
             this.updateTypingProgress();
-            // Reset keyboard state for new sentence
-            this.resetKeyboardState();
         }
     }
     
     resetKeyboardState() {
+        console.log('🔄 Starting keyboard state reset...');
+        
         // Reset all keyboard-related state variables
         this.capsLockEnabled = false;
         this.userShiftOverride = false;
         this.autoCapitalizeNext = true; // Reset to true for new sentence
         this.shiftTimestamps = [];
-        
-        // Reset global keyboard variables (from DOMContentLoaded)
-        if (typeof isShift !== 'undefined') {
-            window.isShift = false;
-        }
-        if (typeof isSymbols !== 'undefined') {
-            window.isSymbols = false;
-        }
         
         // Update keyboard display to reflect reset state
         this.updateKeyboardDisplay();
@@ -1701,7 +1700,21 @@ class BiometricDataCollector {
             this.updateKeyboardCase();
         }
         
-        console.log('🔄 Keyboard state reset for new sentence');
+        // Reset global variables by calling the global reset function
+        if (typeof resetGlobalKeyboardState === 'function') {
+            resetGlobalKeyboardState();
+        }
+        
+        // Force update keyboard display again after a short delay
+        setTimeout(() => {
+            this.updateKeyboardDisplay();
+            this.updateKeyboardCase();
+            if (typeof resetGlobalKeyboardState === 'function') {
+                resetGlobalKeyboardState();
+            }
+        }, 50);
+        
+        console.log('🔄 Keyboard state reset completed');
     }
     
     updateKeyboardCase() {
@@ -4626,4 +4639,23 @@ function updateKeyboardCase() {
         }
     });
     console.log('Global updateKeyboardCase called - isShift:', isShift);
+}
+
+// Global function to reset keyboard state
+function resetGlobalKeyboardState() {
+    // Reset global variables
+    isShift = false;
+    isSymbols = false;
+    
+    // Update keyboard display
+    updateKeyboardCase();
+    updateKeyboardLayout();
+    
+    // Remove all active states from keys
+    const customKeyboard = document.getElementById('custom-keyboard');
+    if (customKeyboard) {
+        customKeyboard.querySelectorAll('.key.active').forEach(key => key.classList.remove('active'));
+    }
+    
+    console.log('🔄 Global keyboard state reset - isShift:', isShift, 'isSymbols:', isSymbols);
 }
