@@ -151,12 +151,64 @@ class BiometricDataCollector {
         this.keyDwellStartTimes = {};
     }
     
-    detectDeviceInfo() {
-        const userAgent = navigator.userAgent;
+    // Update detectDeviceInfo to be async and use Client Hints if available
+    async detectDeviceInfo() {
+        let deviceModel = 'Unknown';
+        let platform = 'Unknown';
+        let platformVersion = 'Unknown';
         let browser_name = 'Unknown';
         let browser_version = 'Unknown';
-        // Robust browser detection
-        if (/Edg\//.test(userAgent)) {
+        const userAgent = navigator.userAgent;
+
+        // --- Browser detection (existing logic, keep as is) ---
+        // Special handling for iOS browsers
+        if (/CriOS/.test(userAgent)) {
+            browser_name = 'Chrome';
+            const match = userAgent.match(/CriOS\/(\d+\.\d+)/);
+            if (match) browser_version = match[1];
+        } else if (/FxiOS/.test(userAgent)) {
+            browser_name = 'Firefox';
+            const match = userAgent.match(/FxiOS\/(\d+\.\d+)/);
+            if (match) browser_version = match[1];
+        } else if (/EdgiOS/.test(userAgent)) {
+            browser_name = 'Edge';
+            const match = userAgent.match(/EdgiOS\/(\d+\.\d+)/);
+            if (match) browser_version = match[1];
+        } else if (/OPiOS/.test(userAgent)) {
+            browser_name = 'Opera';
+            const match = userAgent.match(/OPiOS\/(\d+\.\d+)/);
+            if (match) browser_version = match[1];
+        }
+        // Enhanced Android browser detection
+        else if (/Android/.test(userAgent)) {
+            if (/EdgA\//.test(userAgent)) {
+                browser_name = 'Edge';
+                const match = userAgent.match(/EdgA\/(\d+\.\d+)/);
+                if (match) browser_version = match[1];
+            } else if (/OPR\//.test(userAgent)) {
+                browser_name = 'Opera';
+                const match = userAgent.match(/OPR\/(\d+\.\d+)/);
+                if (match) browser_version = match[1];
+            } else if (/SamsungBrowser\//.test(userAgent)) {
+                browser_name = 'Samsung Internet';
+                const match = userAgent.match(/SamsungBrowser\/(\d+\.\d+)/);
+                if (match) browser_version = match[1];
+            } else if (/Firefox\//.test(userAgent)) {
+                browser_name = 'Firefox';
+                const match = userAgent.match(/Firefox\/(\d+\.\d+)/);
+                if (match) browser_version = match[1];
+            } else if (/Chrome\//.test(userAgent)) {
+                browser_name = 'Chrome';
+                const match = userAgent.match(/Chrome\/(\d+\.\d+)/);
+                if (match) browser_version = match[1];
+            } else if (/wv/.test(userAgent) || /Version\//.test(userAgent)) {
+                browser_name = 'Android WebView';
+                const match = userAgent.match(/Version\/(\d+\.\d+)/);
+                if (match) browser_version = match[1];
+            }
+        }
+        // Fallback to previous logic for other platforms
+        else if (/Edg\//.test(userAgent)) {
             browser_name = 'Edge';
             const match = userAgent.match(/Edg\/(\d+\.\d+)/);
             if (match) browser_version = match[1];
@@ -177,90 +229,47 @@ class BiometricDataCollector {
             const match = userAgent.match(/Version\/(\d+\.\d+)/);
             if (match) browser_version = match[1];
         }
-        
+
+        // --- Device detection ---
+        if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+            try {
+                const values = await navigator.userAgentData.getHighEntropyValues(['model', 'platform', 'platformVersion']);
+                if (values.model) deviceModel = values.model;
+                if (values.platform) platform = values.platform;
+                if (values.platformVersion) platformVersion = values.platformVersion;
+            } catch (e) {
+                // fallback below
+            }
+        }
+        // Fallback for older browsers
+        if (deviceModel === 'Unknown') {
+            // Try to extract model from user agent (may be generic)
+            const modelMatch = userAgent.match(/Android.*?;\s*([^)]+)\)/);
+            if (modelMatch) {
+                deviceModel = modelMatch[1].split('Build')[0].trim();
+            }
+            if (/Android/.test(userAgent)) platform = 'Android';
+            const versionMatch = userAgent.match(/Android (\d+(\.\d+)?)/);
+            if (versionMatch) platformVersion = versionMatch[1];
+        }
+
         let deviceInfo = {
-            device_type: 'unknown',
-            device_model: 'unknown',
+            device_type: /iPad|iPhone|iPod/.test(userAgent) ? 'iOS' : /Android/.test(userAgent) ? 'Android' : 'Mobile',
+            device_model: deviceModel,
             browser_name: browser_name,
             browser_version: browser_version,
-            os_name: 'unknown',
-            os_version: 'unknown',
-            platform: 'unknown'
+            os_name: platform,
+            os_version: platformVersion,
+            platform: `${deviceModel} (${browser_name})`
         };
-        
-        if (/iPad|iPhone|iPod/.test(userAgent)) {
-            deviceInfo.device_type = 'iOS';
-            deviceInfo.os_name = 'iOS';
-            
-            const iosMatch = userAgent.match(/OS (\d+_\d+)/);
-            if (iosMatch) {
-                deviceInfo.os_version = iosMatch[1].replace('_', '.');
-            }
-            
-            if (/iPhone/.test(userAgent)) {
-                if (/iPhone OS 17_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 15 Pro Max';
-                else if (/iPhone OS 16_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 14 Pro Max';
-                else if (/iPhone OS 15_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 13 Pro Max';
-                else if (/iPhone OS 14_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 12 Pro Max';
-                else if (/iPhone OS 13_0/.test(userAgent)) deviceInfo.device_model = 'iPhone 11 Pro Max';
-                else deviceInfo.device_model = 'iPhone (Unknown Model)';
-            }
-            else if (/iPad/.test(userAgent)) {
-                deviceInfo.device_model = 'iPad';
-            }
-        }
-        else if (/Android/.test(userAgent)) {
-            deviceInfo.device_type = 'Android';
-            deviceInfo.os_name = 'Android';
-            
-            const androidMatch = userAgent.match(/Android (\d+\.?\d*)/);
-            if (androidMatch) {
-                deviceInfo.os_version = androidMatch[1];
-            }
-            
-            const modelMatch = userAgent.match(/\(Linux.*?;\s*([^;]+)\s*Build/);
-            if (modelMatch) {
-                const model = modelMatch[1].trim();
-                if (model.includes('SM-')) {
-                    const samsungMatch = model.match(/SM-([A-Z0-9]+)/);
-                    if (samsungMatch) {
-                        const modelCode = samsungMatch[1];
-                        switch(modelCode) {
-                            case 'G991': deviceInfo.device_model = 'Samsung Galaxy S21'; break;
-                            case 'G998': deviceInfo.device_model = 'Samsung Galaxy S21 Ultra'; break;
-                            case 'G996': deviceInfo.device_model = 'Samsung Galaxy S21+'; break;
-                            case 'G781': deviceInfo.device_model = 'Samsung Galaxy S20 FE'; break;
-                            case 'G970': deviceInfo.device_model = 'Samsung Galaxy S10e'; break;
-                            case 'G973': deviceInfo.device_model = 'Samsung Galaxy S10'; break;
-                            case 'G975': deviceInfo.device_model = 'Samsung Galaxy S10+'; break;
-                            case 'N976': deviceInfo.device_model = 'Samsung Galaxy Note 10+'; break;
-                            default: deviceInfo.device_model = `Samsung Galaxy (${modelCode})`;
-                        }
-                    }
-                } else if (model.includes('Pixel')) {
-                    deviceInfo.device_model = model;
-                } else if (model.includes('OnePlus')) {
-                    deviceInfo.device_model = model;
-                } else {
-                    deviceInfo.device_model = model;
-                }
-            }
-        }
-        else {
-            deviceInfo.device_type = 'Mobile';
-            deviceInfo.device_model = 'Unknown Mobile Device';
-            deviceInfo.os_name = 'Unknown';
-            deviceInfo.os_version = 'Unknown';
-        }
-        
-        deviceInfo.platform = `${deviceInfo.device_model} (${deviceInfo.browser_name})`;
-        
         console.log('Device Info:', deviceInfo);
-        
         return deviceInfo;
     }
     
-    init() {
+    // In constructor and init, update to await this.detectDeviceInfo()
+    // ... existing code ...
+    async init() {
+        this.deviceInfo = await this.detectDeviceInfo();
         this.bindEvents();
         this.generateParticipantId();
         this.initializeGallery();
@@ -268,7 +277,9 @@ class BiometricDataCollector {
         this.updateTaskLocks();
         this.setupInactivityTracking();
     }
-    
+// ... existing code ...
+    // In constructor, call this.init() as before (no change needed)
+
     setupPointerTracking() {
         // Modern cursor logic from provided code
         document.addEventListener('mousemove', (e) => {
@@ -3505,12 +3516,19 @@ class BiometricDataCollector {
             return value;
         };
     
+        // Add device and browser info as a comment line at the top
+        let deviceInfoLine = '';
+        if (this.deviceInfo) {
+            deviceInfoLine = `# Device: ${this.deviceInfo.device_model} | Browser: ${this.deviceInfo.browser_name} ${this.deviceInfo.browser_version}`;
+        }
+    
         const csvContent = [
+            deviceInfoLine,
             headers.join(','), // header row
             ...data.map(row => 
                 headers.map(header => escapeCsv(row[header])).join(',')
             )
-        ].join('\n');
+        ].filter(Boolean).join('\n');
     
         // Add UTF-8 BOM to ensure Excel and others recognize encoding
         return '\uFEFF' + csvContent;
@@ -4415,6 +4433,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (insertChar === ' ') {
                 actualChar = 'SPACE';
                 refChar = 'SPACE';
+            }
+            // Fix: Ensure only the symbol is stored for pilcrow and section sign
+            if (insertChar === '¶' || insertChar === '§') {
+                actualChar = insertChar;
+                refChar = insertChar;
             }
             // Only record keystroke if there's an actual character to insert
             if (insertChar && insertChar !== 'SHIFT') {
