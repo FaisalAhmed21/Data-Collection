@@ -153,12 +153,36 @@ class BiometricDataCollector {
     
     detectDeviceInfo() {
         const userAgent = navigator.userAgent;
+        let browser_name = 'Unknown';
+        let browser_version = 'Unknown';
+        // Robust browser detection
+        if (/Edg\//.test(userAgent)) {
+            browser_name = 'Edge';
+            const match = userAgent.match(/Edg\/(\d+\.\d+)/);
+            if (match) browser_version = match[1];
+        } else if (/OPR\//.test(userAgent)) {
+            browser_name = 'Opera';
+            const match = userAgent.match(/OPR\/(\d+\.\d+)/);
+            if (match) browser_version = match[1];
+        } else if (/Chrome\//.test(userAgent) && !/Edg\//.test(userAgent) && !/OPR\//.test(userAgent)) {
+            browser_name = 'Chrome';
+            const match = userAgent.match(/Chrome\/(\d+\.\d+)/);
+            if (match) browser_version = match[1];
+        } else if (/Firefox\//.test(userAgent)) {
+            browser_name = 'Firefox';
+            const match = userAgent.match(/Firefox\/(\d+\.\d+)/);
+            if (match) browser_version = match[1];
+        } else if (/Safari\//.test(userAgent) && !/Chrome\//.test(userAgent) && !/Edg\//.test(userAgent) && !/OPR\//.test(userAgent)) {
+            browser_name = 'Safari';
+            const match = userAgent.match(/Version\/(\d+\.\d+)/);
+            if (match) browser_version = match[1];
+        }
         
         let deviceInfo = {
             device_type: 'unknown',
             device_model: 'unknown',
-            browser_name: 'unknown',
-            browser_version: 'unknown',
+            browser_name: browser_name,
+            browser_version: browser_version,
             os_name: 'unknown',
             os_version: 'unknown',
             platform: 'unknown'
@@ -227,41 +251,6 @@ class BiometricDataCollector {
             deviceInfo.device_model = 'Unknown Mobile Device';
             deviceInfo.os_name = 'Unknown';
             deviceInfo.os_version = 'Unknown';
-        }
-        
-        if (/Chrome/.test(userAgent) && !/Edge/.test(userAgent)) {
-            deviceInfo.browser_name = 'Chrome';
-            const chromeMatch = userAgent.match(/Chrome\/(\d+\.\d+)/);
-            if (chromeMatch) {
-                deviceInfo.browser_version = chromeMatch[1];
-            }
-        } else if (/Firefox/.test(userAgent)) {
-            deviceInfo.browser_name = 'Firefox';
-            const firefoxMatch = userAgent.match(/Firefox\/(\d+\.\d+)/);
-            if (firefoxMatch) {
-                deviceInfo.browser_version = firefoxMatch[1];
-            }
-        } else if (/Safari/.test(userAgent) && !/Chrome/.test(userAgent)) {
-            deviceInfo.browser_name = 'Safari';
-            const safariMatch = userAgent.match(/Version\/(\d+\.\d+)/);
-            if (safariMatch) {
-                deviceInfo.browser_version = safariMatch[1];
-            }
-        } else if (/Edge/.test(userAgent)) {
-            deviceInfo.browser_name = 'Edge';
-            const edgeMatch = userAgent.match(/Edge\/(\d+\.\d+)/);
-            if (edgeMatch) {
-                deviceInfo.browser_version = edgeMatch[1];
-            }
-        } else if (/Opera/.test(userAgent)) {
-            deviceInfo.browser_name = 'Opera';
-            const operaMatch = userAgent.match(/Opera\/(\d+\.\d+)/);
-            if (operaMatch) {
-                deviceInfo.browser_version = operaMatch[1];
-            }
-        } else {
-            deviceInfo.browser_name = 'Unknown Browser';
-            deviceInfo.browser_version = 'Unknown';
         }
         
         deviceInfo.platform = `${deviceInfo.device_model} (${deviceInfo.browser_name})`;
@@ -357,11 +346,15 @@ class BiometricDataCollector {
 
         const phoneModelElement = document.getElementById('phone-model');
         const browserNameElement = document.getElementById('browser-name');
+        const deviceModelElement = document.getElementById('device-model');
         if (phoneModelElement) {
           phoneModelElement.textContent = this.deviceInfo.device_model;
         }
         if (browserNameElement) {
           browserNameElement.textContent = this.deviceInfo.browser_name;
+        }
+        if (deviceModelElement) {
+          deviceModelElement.textContent = this.deviceInfo.device_model;
         }
     }
     
@@ -3384,7 +3377,10 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
-        document.getElementById('keystroke-features').textContent = '11'; // 11 features: participant_id, task_id, timestamp_ms, ref_char, touch_x, touch_y, touch_major, touch_minor, was_deleted, flight_time_ms, browser_name
+        // Dynamically set feature count and list
+        const featureNames = features.length > 0 ? Object.keys(features[0]) : [];
+        document.getElementById('keystroke-features').textContent = featureNames.length;
+        document.getElementById('keystroke-feature-list').textContent = featureNames.join(', ');
     }
 
     
@@ -3396,7 +3392,10 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
     
         document.getElementById('touch-count').textContent = this.touchData.length;
-        document.getElementById('touch-features').textContent = '11'; // 11 features: participant_id, task_id, trial, timestamp_ms, touch_x, touch_y, btn_touch_state, inter_touch_timing, num_touch_points, path_length_px, browser_name
+        // Dynamically set feature count and list
+        const featureNames = features.length > 0 ? Object.keys(features[0]) : [];
+        document.getElementById('touch-features').textContent = featureNames.length;
+        document.getElementById('touch-feature-list').textContent = featureNames.join(', ');
     }
 
     // ENHANCED: Keystroke feature extraction with proper flight time handling
@@ -3422,6 +3421,7 @@ class BiometricDataCollector {
                 if (keystroke.actualChar && keystroke.actualChar.length === 1) {
                     refChar = keystroke.actualChar;
                 }
+                // Remove browser_name from features
                 features.push({
                     participant_id: this.participantId,
                     task_id: 1,
@@ -3433,8 +3433,7 @@ class BiometricDataCollector {
                     key_y: keystroke.key_y || '',
                     was_deleted: wasDeleted,
                     flight_time_ms: flightTime, // Use the flight time as recorded
-                    dwell_time_ms: keystroke.dwell_time_ms || '',
-                    browser_name: this.deviceInfo.browser_name
+                    dwell_time_ms: keystroke.dwell_time_ms || ''
                 });
             }
         });
@@ -3463,8 +3462,8 @@ class BiometricDataCollector {
                 btn_touch_state: touch.type,
                 inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0,
                 num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
-                path_length_px: this.gesturePathLength[`${touch.trial || 1}_${touch.step || 1}`] || 0,
-                browser_name: this.deviceInfo.browser_name  // Column 10
+                path_length_px: this.gesturePathLength[`${touch.trial || 1}_${touch.step || 1}`] || 0
+                // browser_name removed
             };
             features.push(baseFeature);
         });
@@ -4444,6 +4443,7 @@ function updateKeyboardCase() {
             // Show uppercase if shift is active
             const shouldShowUppercase = isShift;
             btn.textContent = shouldShowUppercase ? key.toUpperCase() : key;
+     
         }
     });
     console.log('Global updateKeyboardCase called - isShift:', isShift);
