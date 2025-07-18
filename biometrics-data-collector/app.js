@@ -4179,17 +4179,20 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = '\n';
             handled = true;
         } else if (key?.toLowerCase?.() === 'shift') {
-            // Simple shift toggle - like a standard keyboard
-            isShift = !isShift;
-            collector.userShiftOverride = isShift;
-            console.log('Shift toggled:', isShift ? 'ON' : 'OFF');
-            
-            // Update keyboard display immediately
-            updateKeyboardCase();
-            collector.updateKeyboardDisplay();
-            
-            // Shift key should not update the input field, only change keyboard state
+            // If autoCapitalizeNext is active, toggle userShiftOverride to allow lowercase for next letter
+            if (collector.autoCapitalizeNext) {
+                collector.userShiftOverride = !collector.userShiftOverride;
+                updateKeyboardCase();
+                collector.updateKeyboardDisplay();
+            } else {
+                // Simple shift toggle for normal typing
+                isShift = !isShift;
+                collector.userShiftOverride = isShift;
+                updateKeyboardCase();
+                collector.updateKeyboardDisplay();
+            }
             handled = false;
+            console.log('Shift key handled - isShift:', isShift, 'userShiftOverride:', collector.userShiftOverride, 'autoCapitalizeNext:', collector.autoCapitalizeNext);
         } else if (key === '?123') {
             isSymbols = true;
             updateKeyboardLayout();
@@ -4204,6 +4207,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- AUTO-CAPITALIZATION FOR CUSTOM KEYBOARD ---
             if ((collector.autoCapitalizeNext && !collector.userShiftOverride) && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
+                collector.autoCapitalizeNext = false;
+                collector.userShiftOverride = false;
+                collector.updateKeyboardDisplay();
+            } else if ((collector.autoCapitalizeNext && collector.userShiftOverride) && char.length === 1 && /[a-z]/.test(char)) {
+                char = char.toLowerCase();
                 collector.autoCapitalizeNext = false;
                 collector.userShiftOverride = false;
                 collector.updateKeyboardDisplay();
