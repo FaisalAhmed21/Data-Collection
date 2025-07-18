@@ -3923,7 +3923,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const rect = e.target.getBoundingClientRect();
         const keyX = rect.left + rect.width / 2;
         const keyY = rect.top + rect.height / 2;
-        let touchX = keyX, touchY = keyY;
+        // Always use the actual click location for touch_x/touch_y
+        let touchX = (typeof e.clientX === 'number') ? e.clientX : keyX;
+        let touchY = (typeof e.clientY === 'number') ? e.clientY : keyY;
         if (e instanceof PointerEvent) {
             touchX = e.clientX;
             touchY = e.clientY;
@@ -4154,10 +4156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             symbolRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
         }
     }
-    // Optionally, always show keyboard on page load for demo
-    // customKeyboard.style.display = 'block';
-
-    // Add touchstart and touchend listeners for dwell time
+    
     customKeyboard.addEventListener('touchstart', (e) => {
         const target = e.target.closest('.key');
         if (!target) return;
@@ -4187,7 +4186,6 @@ document.addEventListener('DOMContentLoaded', () => {
             delete collector.keyDwellStartTimes[key];
         }
     }, { passive: true });
-
     // Ensure the custom keyboard instantly shows up if user touches or clicks within the typing input container
     if (typingInput) {
         typingInput.addEventListener('touchstart', (e) => {
@@ -4200,8 +4198,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Ensure only the correct keyboard layout is visible on load
     updateKeyboardLayout();
-    // --- END: Only one keyboard page visible at a time ---
-
     // --- Fix for sticky .active on touch devices ---
     customKeyboard.addEventListener('touchstart', (e) => {
         const target = e.target.closest('.key');
@@ -4228,10 +4224,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             target.classList.remove('active');
         }, 10); // Remove after 10ms for instant feedback
-        // ... existing code ...
-        // As a safety net, remove .active from all keys after 10ms
         setTimeout(removeAllActiveKeys, 10);
-        // ... existing code ...
         // Simulate click logic
         const key = target.getAttribute('data-key');
         let value = typingInput.value;
@@ -4242,6 +4235,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const rect = target.getBoundingClientRect();
         const keyX = rect.left + rect.width / 2;
         const keyY = rect.top + rect.height / 2;
+        // Always use the actual touch location for touch_x/touch_y
+        let touchX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : keyX;
+        let touchY = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientY : keyY;
         let newCaret = caret;
         if (key === 'backspace') {
             if (caret > 0) {
@@ -4269,8 +4265,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: 'custom-keyboard',
                 sentence: collector.currentSentence,
                 position: caret,
-                clientX: Math.round(keyX),
-                clientY: Math.round(keyY),
+                clientX: Math.round(touchX),
+                clientY: Math.round(touchY),
                 key_x: Math.round(keyX),
                 key_y: Math.round(keyY),
                 dwell_time_ms: ''
@@ -4363,8 +4359,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: 'custom-keyboard',
                 sentence: collector.currentSentence,
                 position: caret,
-                clientX: Math.round(keyX),
-                clientY: Math.round(keyY),
+                clientX: Math.round(touchX),
+                clientY: Math.round(touchY),
                 key_x: Math.round(keyX),
                 key_y: Math.round(keyY),
                 dwell_time_ms: ''
@@ -4405,8 +4401,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: 'custom-keyboard',
                     sentence: collector.currentSentence,
                     position: newCaret,
-                    clientX: Math.round(keyX),
-                    clientY: Math.round(keyY),
+                    clientX: Math.round(touchX),
+                    clientY: Math.round(touchY),
                     key_x: Math.round(keyX),
                     key_y: Math.round(keyY),
                     dwell_time_ms: ''
@@ -4432,8 +4428,6 @@ document.addEventListener('touchcancel', function() {
     document.querySelectorAll('#custom-keyboard .key.active').forEach(key => key.classList.remove('active'));
 }, { passive: true });
 
-
-
 // Global updateKeyboardCase function
 function updateKeyboardCase() {
     const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
@@ -4443,7 +4437,6 @@ function updateKeyboardCase() {
             // Show uppercase if shift is active
             const shouldShowUppercase = isShift;
             btn.textContent = shouldShowUppercase ? key.toUpperCase() : key;
-     
         }
     });
     console.log('Global updateKeyboardCase called - isShift:', isShift);
