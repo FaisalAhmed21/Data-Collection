@@ -1807,7 +1807,7 @@ class BiometricDataCollector {
             const recentKeystrokes = this.keystrokeData.slice(-5);
             const duplicateFound = recentKeystrokes.some(ks => {
                 const timeDiff = currentTime - ks.timestamp;
-                return ks.actualChar === char && timeDiff < 150; // 150ms window for iOS
+                return ks.actualChar === char && timeDiff < 10; // 10ms window for iOS (was 150)
             });
             
             if (duplicateFound) {
@@ -1819,7 +1819,7 @@ class BiometricDataCollector {
             const recentInputs = this.iOSInputHistory.slice(-3);
             const inputDuplicate = recentInputs.some(input => {
                 const timeDiff = currentTime - input.timestamp;
-                return input.char === char && timeDiff < 200; // 200ms window
+                return input.char === char && timeDiff < 10; // 10ms window
             });
             
             if (inputDuplicate) {
@@ -1830,7 +1830,7 @@ class BiometricDataCollector {
             // Additional check for rapid input events
             if (this.lastChar === char && this.lastCharTime) {
                 const timeSinceLast = currentTime - this.lastCharTime;
-                if (timeSinceLast < 100) { // 100ms cooldown for all characters on iOS
+                if (timeSinceLast < 10) { // 10ms cooldown for all characters on iOS (was 100)
                     console.log(`🚫 iOS rapid input BLOCKED: ${char} - time since last: ${timeSinceLast}ms`);
                     return false;
                 }
@@ -1861,11 +1861,11 @@ class BiometricDataCollector {
         // Determine deduplication window based on character type and platform
         let dedupWindow;
         if (char === 'SPACE') {
-            dedupWindow = this.spaceCooldown;
+            dedupWindow = 10; // was this.spaceCooldown
         } else if (isQuote) {
-            dedupWindow = this.isAndroid ? 30 : 20;
+            dedupWindow = 5; // was 20/30
         } else {
-            dedupWindow = this.charCooldown;
+            dedupWindow = 5; // was this.charCooldown
         }
     
         // Enhanced Android capital letter deduplication
@@ -1873,15 +1873,15 @@ class BiometricDataCollector {
             const recentKeystrokes = this.keystrokeData.slice(-5);
             const duplicateCapital = recentKeystrokes.find(ks => 
                 ks.actualChar === char && 
-                (currentTime - ks.timestamp) < 250
+                (currentTime - ks.timestamp) < 10 // was 250
             );
             if (duplicateCapital) {
                 console.log(`🚫 Android capital letter duplicate BLOCKED in shouldRecordChar: ${char} already recorded`);
                 return false;
             }
     
-            // Use longer cooldown for capital letters on Android
-            dedupWindow = Math.max(dedupWindow, 200);
+            // Use shorter cooldown for capital letters on Android
+            dedupWindow = Math.min(dedupWindow, 10);
         }
     
         // General deduplication for Android/Desktop
@@ -1895,7 +1895,7 @@ class BiometricDataCollector {
     
         // Platform-specific rapid input deduplication for Android
         if (this.isAndroid) {
-            if (this.lastInputEvent === char && this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 20) {
+            if (this.lastInputEvent === char && this.lastInputEventTime && (currentTime - this.lastInputEventTime) < 5) { // was 20
                 console.log(`🚫 Android input event duplicate BLOCKED: ${char} - time since last: ${currentTime - this.lastInputEventTime}ms`);
                 return false;
             }
@@ -1904,7 +1904,7 @@ class BiometricDataCollector {
         // Synthetic capital letter deduplication for Android/Desktop
         const recentSynthetic = this.keystrokeData.slice(-3).find(ks => 
             ks.isSynthetic && ks.actualChar === char && ks.actualChar !== 'SHIFT' && 
-            (currentTime - ks.timestamp) < 500
+            (currentTime - ks.timestamp) < 10 // was 500
         );
         if (recentSynthetic) {
             console.log(`🚫 Synthetic capital letter duplicate BLOCKED: ${char} already recorded synthetically`);
@@ -4160,7 +4160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             symbolRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
         }
     }
-
+    
     customKeyboard.addEventListener('touchstart', (e) => {
         const target = e.target.closest('.key');
         if (!target) return;
