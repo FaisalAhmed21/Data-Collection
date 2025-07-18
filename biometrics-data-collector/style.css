@@ -940,23 +940,17 @@ select.form-control {
 }
 
 .typing-feedback-display .typed-correct {
-  background: rgba(32, 207, 207, 0.15);
-  color: var(--color-success);
-  padding: 2px 1px;
+  background-color: var(--color-primary, #20cfcf);
+  color: #fff;
   border-radius: 3px;
-  font-weight: var(--font-weight-medium);
-  border-bottom: 2px solid rgba(32, 207, 207, 0.3);
+  padding: 0 2px;
 }
 
 .typing-feedback-display .typed-incorrect {
-  background: rgba(255, 79, 100, 0.15);
-  color: var(--color-error);
-  padding: 2px 1px;
+  background-color: var(--color-error, #ff4f64);
+  color: #fff;
   border-radius: 3px;
-  font-weight: var(--font-weight-medium);
-  border-bottom: 2px solid rgba(255, 79, 100, 0.4);
-  text-decoration: line-through;
-  text-decoration-color: rgba(255, 79, 100, 0.6);
+  padding: 0 2px;
 }
 
 .typing-feedback-display .to-type {
