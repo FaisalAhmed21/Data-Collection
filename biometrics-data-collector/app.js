@@ -3939,7 +3939,22 @@ document.addEventListener('DOMContentLoaded', () => {
         } 
         // --- Standard shift logic ---
         else if (key === 'shift') {
-            e.preventDefault();
+            // Always record Shift key press before any logic
+            const timestamp = performance.now();
+            collector.recordKeystroke({
+                timestamp,
+                actualChar: 'SHIFT',
+                refChar: 'SHIFT',
+                keyCode: 16,
+                type: 'custom-keyboard',
+                sentence: collector.currentSentence,
+                position: caret,
+                clientX: Math.round(touchX),
+                clientY: Math.round(touchY),
+                key_x: Math.round(keyX),
+                key_y: Math.round(keyY),
+                dwell_time_ms: ''
+            });
             const now = performance.now();
             // Remove old timestamps (older than 1s)
             collector.shiftTimestamps = collector.shiftTimestamps.filter(ts => now - ts < 1000);
@@ -4214,6 +4229,22 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = '\n';
             handled = true;
         } else if (key?.toLowerCase?.() === 'shift') {
+            // Always record Shift key press before any logic
+            const timestamp = performance.now();
+            collector.recordKeystroke({
+                timestamp,
+                actualChar: 'SHIFT',
+                refChar: 'SHIFT',
+                keyCode: 16,
+                type: 'custom-keyboard',
+                sentence: collector.currentSentence,
+                position: caret,
+                clientX: Math.round(keyX),
+                clientY: Math.round(keyY),
+                key_x: Math.round(keyX),
+                key_y: Math.round(keyY),
+                dwell_time_ms: ''
+            });
             const now = performance.now();
             collector.shiftTimestamps = collector.shiftTimestamps.filter(ts => now - ts < 1000);
             collector.shiftTimestamps.push(now);
