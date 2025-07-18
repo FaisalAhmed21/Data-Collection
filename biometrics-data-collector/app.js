@@ -1206,9 +1206,9 @@ class BiometricDataCollector {
     normalizeCharacter(char) {
         // Normalize all euro and pound variants to the correct symbol
         if (char === '€' || char === '\u20AC') {
-            return '€';
+            return '§';
         } else if (char === '£' || char === '\u00A3') {
-            return '£';
+            return '¶';
         }
         if (char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === "'" || char === '`' || char === '´' || char === '′' || char === '‵') {
             return "'";
@@ -1356,8 +1356,8 @@ class BiometricDataCollector {
             '@':            '@',         // At symbol
             '#':            '#',         // Hash
             '$':            '$',         // Dollar
-            '€':            '€',         // Euro (FIXED: store as itself)
-            '£':            '£',         // Pound (FIXED: store as itself)
+            '€':            '§',         // Euro replaced with section sign
+            '£':            '¶',         // Pound replaced with pilcrow
             '¥':            '¥',         // Yen
             '%':            '%',         // Percent
             '&':            '&',         // Ampersand
