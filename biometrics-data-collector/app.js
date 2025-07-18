@@ -4058,15 +4058,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateKeyboardCase() {
         const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
+        let showUppercase;
+        if (collector.autoCapitalizeNext) {
+            showUppercase = !collector.userShiftOverride;
+        } else {
+            showUppercase = isShift;
+        }
         keys.forEach(btn => {
             const key = btn.getAttribute('data-key');
             if (key && key.length === 1 && /[a-z]/.test(key)) {
-                // Show uppercase if shift is active
-                const shouldShowUppercase = isShift;
-                btn.textContent = shouldShowUppercase ? key.toUpperCase() : key;
+                btn.textContent = showUppercase ? key.toUpperCase() : key;
             }
         });
-        console.log('updateKeyboardCase called - isShift:', isShift);
+        console.log('updateKeyboardCase called - showUppercase:', showUppercase, 'autoCapitalizeNext:', collector.autoCapitalizeNext, 'userShiftOverride:', collector.userShiftOverride, 'isShift:', isShift);
     }
     function updateKeyboardLayout() {
         const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
