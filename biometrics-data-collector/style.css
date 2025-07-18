@@ -3576,6 +3576,13 @@ html, body {
   color: #32B8C6;
   font-weight: 600;
 }
+
+/* Caps lock active state */
+.custom-keyboard .key[data-key="shift"].capslock {
+  background: linear-gradient(180deg, #20cfcf 80%, #1bb8b8 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(32, 207, 207, 0.3), 0 1.5px 8px rgba(0,0,0,0.12) !important;
+}
 .custom-keyboard .key[data-key="enter"] {
   background: linear-gradient(180deg, #eaffea 80%, #d6ffd6 100%);
   color: #20CFCF;
@@ -3690,6 +3697,13 @@ html, body {
 [data-color-scheme="dark"] .custom-keyboard .key[data-key="ABC"] {
   background: linear-gradient(180deg, #223a3a 80%, #2d3136 100%) !important;
   color: #32B8C6 !important;
+}
+
+/* Caps lock active state for dark mode */
+[data-color-scheme="dark"] .custom-keyboard .key[data-key="shift"].capslock {
+  background: linear-gradient(180deg, #20cfcf 80%, #1bb8b8 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(32, 207, 207, 0.4), 0 1.5px 8px rgba(0,0,0,0.2) !important;
 }
 [data-color-scheme="dark"] .custom-keyboard .key[data-key="space"] {
   background: linear-gradient(90deg, #232526 60%, #2d3136 100%) !important;
