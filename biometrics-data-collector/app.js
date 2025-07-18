@@ -3342,25 +3342,40 @@ class BiometricDataCollector {
         const img = document.querySelector('.popup-image');
         const ctr = document.querySelector('.popup-image-container');
         if (!img) return;
-        // Clamp translation so image cannot be moved beyond its edges
+        
         const scale = this.galleryZoom.scale;
-        if (img && ctr && scale > 1) {
-            const imgRect = img.getBoundingClientRect();
-            const ctrRect = ctr.getBoundingClientRect();
-            // Use natural size for more accurate clamping
-            const imgWidth = img.naturalWidth * scale;
-            const imgHeight = img.naturalHeight * scale;
-            const ctrWidth = ctrRect.width;
-            const ctrHeight = ctrRect.height;
-            // Calculate max allowed translation (centered at 0)
-            const maxX = Math.max(0, (imgWidth - ctrWidth) / 2);
-            const maxY = Math.max(0, (imgHeight - ctrHeight) / 2);
-            this.galleryZoom.translateX = Math.max(-maxX, Math.min(maxX, this.galleryZoom.translateX));
-            this.galleryZoom.translateY = Math.max(-maxY, Math.min(maxY, this.galleryZoom.translateY));
-        }
+        
+        // Apply transform first to get accurate dimensions
         img.style.transform = 
             `translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px) ` +
-            `scale(${this.galleryZoom.scale})`;
+            `scale(${scale})`;
+        
+        // Clamp translation so image cannot be moved beyond its edges
+        if (img && ctr && scale > 1) {
+            // Get the actual displayed image dimensions after scaling
+            const imgRect = img.getBoundingClientRect();
+            const ctrRect = ctr.getBoundingClientRect();
+            
+            // Calculate the actual scaled image dimensions
+            const scaledImgWidth = imgRect.width;
+            const scaledImgHeight = imgRect.height;
+            const ctrWidth = ctrRect.width;
+            const ctrHeight = ctrRect.height;
+            
+            // Calculate max allowed translation to prevent black areas
+            const maxX = Math.max(0, (scaledImgWidth - ctrWidth) / 2);
+            const maxY = Math.max(0, (scaledImgHeight - ctrHeight) / 2);
+            
+            // Clamp the translation values
+            this.galleryZoom.translateX = Math.max(-maxX, Math.min(maxX, this.galleryZoom.translateX));
+            this.galleryZoom.translateY = Math.max(-maxY, Math.min(maxY, this.galleryZoom.translateY));
+            
+            // Re-apply transform with clamped values
+            img.style.transform = 
+                `translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px) ` +
+                `scale(${scale})`;
+        }
+        
         ctr.style.cursor = this.galleryZoom.scale > 1 ? 'grab' : 'default';
     }
     
