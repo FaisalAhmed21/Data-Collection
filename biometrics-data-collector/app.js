@@ -3895,11 +3895,26 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // Remove .active from all keys utility
+    function removeAllActiveKeys() {
+        customKeyboard.querySelectorAll('.key.active').forEach(key => key.classList.remove('active'));
+    }
+
     // Keyboard key press handler
     customKeyboard.addEventListener('click', (e) => {
         if (!e.target.classList.contains('key')) return;
-        // Remove .active from all keys before adding to current
-        customKeyboard.querySelectorAll('.key.active').forEach(key => key.classList.remove('active'));
+        // Remove .active from all keys at the start (iOS fix)
+        removeAllActiveKeys();
+        // --- Add active class for 0.25s visual feedback ---
+        e.target.classList.add('active');
+        e.target.addEventListener('mouseup', function removeActiveClick() { e.target.classList.remove('active'); }, { once: true });
+        e.target.addEventListener('mouseleave', function removeActiveClick() { e.target.classList.remove('active'); }, { once: true });
+        setTimeout(() => e.target.classList.remove('active'), 10); // Remove after 10ms for instant feedback
+        // --- End active class logic ---
+        // ... existing code ...
+        // As a safety net, remove .active from all keys after 10ms
+        setTimeout(removeAllActiveKeys, 10);
+        // ... existing code ...
         const key = e.target.getAttribute('data-key');
         let value = typingInput.value;
         let caret = typingInput.selectionStart;
@@ -4038,7 +4053,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const removeActive = () => e.target.classList.remove('active');
         e.target.addEventListener('mouseup', removeActive, { once: true });
         e.target.addEventListener('mouseleave', removeActive, { once: true });
-        setTimeout(removeActive, 150); // Remove after 150ms for instant feedback
+        setTimeout(removeActive, 100); // Remove after 100ms for instant feedback
         // --- End active class logic ---
         // Record keystroke for shift key separately (outside handled block)
         if (key === 'shift') {
@@ -4067,11 +4082,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.activeElement !== typingInput) {
                 typingInput.focus();
             }
-            // Always set caret position after value update, using setTimeout to avoid iOS jump
-            setTimeout(() => {
-                typingInput.setSelectionRange(newCaret, newCaret);
+            // Only set caret if a character was inserted or deleted
+            if (insertChar && insertChar !== 'SHIFT') {
+                setTimeout(() => {
+                    typingInput.setSelectionRange(newCaret, newCaret);
+                    isProgrammaticInput = false;
+                }, 0);
+            } else {
                 isProgrammaticInput = false;
-            }, 0);
+            }
             const timestamp = performance.now();
             let actualChar = insertChar;
             let refChar = insertChar;
@@ -4101,10 +4120,10 @@ document.addEventListener('DOMContentLoaded', () => {
             collector.updateTypingFeedback();
             setTimeout(() => collector.updateAutoCapState(), 0);
         }
-        // As a safety net, remove .active from all keys after 300ms
+        // As a safety net, remove .active from all keys after 100ms
         setTimeout(() => {
             customKeyboard.querySelectorAll('.key.active').forEach(key => key.classList.remove('active'));
-        }, 300);
+        }, 100);
     });
 
     function updateKeyboardCase() {
@@ -4189,26 +4208,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const target = e.target.closest('.key');
         if (!target) return;
         // Remove .active from all keys before adding to current
-        customKeyboard.querySelectorAll('.key.active').forEach(key => key.classList.remove('active'));
+        removeAllActiveKeys();
         target.classList.add('active');
-        // Remove .active on touchend/touchcancel to prevent sticky state
-        const removeActive = () => target.classList.remove('active');
-        target.addEventListener('touchend', removeActive, { once: true });
-        target.addEventListener('touchcancel', removeActive, { once: true });
-        setTimeout(removeActive, 250);
-        // Prevent default to avoid stuck state
         e.preventDefault();
     }, { passive: false });
+
+    // Remove .active from all keys on touchcancel (iOS fix)
+    customKeyboard.addEventListener('touchcancel', removeAllActiveKeys);
+    // Global document-level handlers as failsafe for iOS
+    document.addEventListener('touchend', removeAllActiveKeys, true);
+    document.addEventListener('touchcancel', removeAllActiveKeys, true);
 
     // Add this improved touchend handler:
     customKeyboard.addEventListener('touchend', (e) => {
         const target = e.target.closest('.key');
         if (!target) return;
-        // Run the same logic as click
+        // Remove .active from all keys at the start (iOS fix)
+        removeAllActiveKeys();
         target.classList.add('active');
         setTimeout(() => {
             target.classList.remove('active');
-        }, 150); // Remove after 150ms for instant feedback
+        }, 10); // Remove after 10ms for instant feedback
+        // ... existing code ...
+        // As a safety net, remove .active from all keys after 10ms
+        setTimeout(removeAllActiveKeys, 10);
+        // ... existing code ...
         // Simulate click logic
         const key = target.getAttribute('data-key');
         let value = typingInput.value;
@@ -4356,11 +4380,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.activeElement !== typingInput) {
                 typingInput.focus();
             }
-            // Always set caret position after value update, using setTimeout to avoid iOS jump
-            setTimeout(() => {
-                typingInput.setSelectionRange(newCaret, newCaret);
+            // Only set caret if a character was inserted or deleted
+            if (insertChar && insertChar !== 'SHIFT') {
+                setTimeout(() => {
+                    typingInput.setSelectionRange(newCaret, newCaret);
+                    isProgrammaticInput = false;
+                }, 0);
+            } else {
                 isProgrammaticInput = false;
-            }, 0);
+            }
             const timestamp = performance.now();
             let actualChar = insertChar;
             let refChar = insertChar;
@@ -4390,10 +4418,10 @@ document.addEventListener('DOMContentLoaded', () => {
             collector.updateTypingFeedback();
             setTimeout(() => collector.updateAutoCapState(), 0);
         }
-        // As a safety net, remove .active from all keys after 300ms
+        // As a safety net, remove .active from all keys after 10ms
         setTimeout(() => {
             customKeyboard.querySelectorAll('.key.active').forEach(key => key.classList.remove('active'));
-        }, 300);
+        }, 10);
     }, { passive: true });                      
 });
 
