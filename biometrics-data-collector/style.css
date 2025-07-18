@@ -22,7 +22,6 @@
   --color-info: #AEEBFB;
   --color-focus-ring: rgba(32, 207, 207, 0.18);
   --color-select-caret: #20CFCF;
-
   /* Common style patterns */
   --focus-ring: 0 0 0 3px var(--color-focus-ring);
   --focus-outline: 2px solid var(--color-primary);
