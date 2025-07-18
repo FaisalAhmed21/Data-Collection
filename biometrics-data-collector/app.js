@@ -19,6 +19,8 @@ class BiometricDataCollector {
         this.lastActivityTime = Date.now();
         this.autoCapitalizeNext = false;
         this.userShiftOverride = false; // track if user toggled shift
+        this.capsLockEnabled = false; // Track Caps Lock state
+        this.shiftTimestamps = []; // Track Shift press timestamps
 
 
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
@@ -1156,7 +1158,8 @@ class BiometricDataCollector {
         keys.forEach(key => {
             const keyValue = key.getAttribute('data-key');
             if (keyValue && keyValue.length === 1 && /[a-z]/i.test(keyValue)) {
-                key.textContent = isCaps ? keyValue.toUpperCase() : keyValue.toLowerCase();
+                // If Caps Lock is enabled, always show uppercase
+                key.textContent = (this.capsLockEnabled || isCaps) ? keyValue.toUpperCase() : keyValue.toLowerCase();
             }
         });
     }
@@ -1164,10 +1167,11 @@ class BiometricDataCollector {
 
 
     updateKeyboardDisplay() {
-        if (this.autoCapitalizeNext && !this.userShiftOverride) {
+        if (this.capsLockEnabled) {
+            this.setKeyboardCaps(true);
+        } else if (this.autoCapitalizeNext && !this.userShiftOverride) {
             this.setKeyboardCaps(true);
         } else if (this.userShiftOverride) {
-            // If user shift override is active, show caps
             this.setKeyboardCaps(true);
         } else {
             this.setKeyboardCaps(false);
@@ -3936,7 +3940,34 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Standard shift logic ---
         else if (key === 'shift') {
             e.preventDefault();
-            
+            const now = performance.now();
+            // Remove old timestamps (older than 1s)
+            collector.shiftTimestamps = collector.shiftTimestamps.filter(ts => now - ts < 1000);
+            collector.shiftTimestamps.push(now);
+            // Check for double shift within 0.5s
+            if (
+                collector.shiftTimestamps.length >= 2 &&
+                (collector.shiftTimestamps[collector.shiftTimestamps.length - 1] - collector.shiftTimestamps[collector.shiftTimestamps.length - 2] < 500)
+            ) {
+                // Toggle Caps Lock
+                collector.capsLockEnabled = !collector.capsLockEnabled;
+                collector.userShiftOverride = false;
+                isShift = false;
+                collector.shiftTimestamps = []; // Reset
+                collector.updateKeyboardDisplay();
+                updateKeyboardCase();
+                return;
+            }
+            if (collector.capsLockEnabled) {
+                // If Caps Lock is on, pressing Shift disables it
+                collector.capsLockEnabled = false;
+                collector.userShiftOverride = false;
+                isShift = false;
+                collector.shiftTimestamps = [];
+                collector.updateKeyboardDisplay();
+                updateKeyboardCase();
+                return;
+            }
             if (collector.autoCapitalizeNext) {
                 collector.userShiftOverride = !collector.userShiftOverride;
                 updateKeyboardCase();
@@ -3947,7 +3978,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 collector.updateKeyboardDisplay();
             }
             handled = false;
-            console.log('Shift key handled - isShift:', isShift, 'userShiftOverride:', collector.userShiftOverride, 'autoCapitalizeNext:', collector.autoCapitalizeNext);
+            console.log('Shift key handled - isShift:', isShift, 'userShiftOverride:', collector.userShiftOverride, 'autoCapitalizeNext:', collector.autoCapitalizeNext, 'capsLockEnabled:', collector.capsLockEnabled);
         }
         else if (key === '?123') {
             isSymbols = true;
@@ -3961,7 +3992,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Normal character
             let char = key;
             // --- AUTO-CAPITALIZATION FOR CUSTOM KEYBOARD ---
-            if ((collector.autoCapitalizeNext && !collector.userShiftOverride) && char.length === 1 && /[a-z]/.test(char)) {
+            if (collector.capsLockEnabled && char.length === 1 && /[a-z]/.test(char)) {
+                char = char.toUpperCase();
+            } else if ((collector.autoCapitalizeNext && !collector.userShiftOverride) && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
                 collector.autoCapitalizeNext = false;
                 collector.updateKeyboardDisplay();
@@ -4055,7 +4088,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateKeyboardCase() {
         const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
         let showUppercase;
-        if (collector.autoCapitalizeNext) {
+        if (collector.capsLockEnabled) {
+            showUppercase = true;
+        } else if (collector.autoCapitalizeNext) {
             showUppercase = !collector.userShiftOverride;
         } else {
             showUppercase = isShift;
@@ -4066,7 +4101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.textContent = showUppercase ? key.toUpperCase() : key;
             }
         });
-        console.log('updateKeyboardCase called - showUppercase:', showUppercase, 'autoCapitalizeNext:', collector.autoCapitalizeNext, 'userShiftOverride:', collector.userShiftOverride, 'isShift:', isShift);
+        console.log('updateKeyboardCase called - showUppercase:', showUppercase, 'autoCapitalizeNext:', collector.autoCapitalizeNext, 'userShiftOverride:', collector.userShiftOverride, 'isShift:', isShift, 'capsLockEnabled:', collector.capsLockEnabled);
     }
     function updateKeyboardLayout() {
         const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
@@ -4179,6 +4214,30 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = '\n';
             handled = true;
         } else if (key?.toLowerCase?.() === 'shift') {
+            const now = performance.now();
+            collector.shiftTimestamps = collector.shiftTimestamps.filter(ts => now - ts < 1000);
+            collector.shiftTimestamps.push(now);
+            if (
+                collector.shiftTimestamps.length >= 2 &&
+                (collector.shiftTimestamps[collector.shiftTimestamps.length - 1] - collector.shiftTimestamps[collector.shiftTimestamps.length - 2] < 500)
+            ) {
+                collector.capsLockEnabled = !collector.capsLockEnabled;
+                collector.userShiftOverride = false;
+                isShift = false;
+                collector.shiftTimestamps = [];
+                collector.updateKeyboardDisplay();
+                updateKeyboardCase();
+                return;
+            }
+            if (collector.capsLockEnabled) {
+                collector.capsLockEnabled = false;
+                collector.userShiftOverride = false;
+                isShift = false;
+                collector.shiftTimestamps = [];
+                collector.updateKeyboardDisplay();
+                updateKeyboardCase();
+                return;
+            }
             if (collector.autoCapitalizeNext) {
                 collector.userShiftOverride = !collector.userShiftOverride;
                 updateKeyboardCase();
@@ -4189,7 +4248,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 collector.updateKeyboardDisplay();
             }
             handled = false;
-            console.log('Shift key handled - isShift:', isShift, 'userShiftOverride:', collector.userShiftOverride, 'autoCapitalizeNext:', collector.autoCapitalizeNext);
+            console.log('Shift key handled (touch) - isShift:', isShift, 'userShiftOverride:', collector.userShiftOverride, 'autoCapitalizeNext:', collector.autoCapitalizeNext, 'capsLockEnabled:', collector.capsLockEnabled);
         } else if (key === '?123') {
             isSymbols = true;
             updateKeyboardLayout();
@@ -4201,8 +4260,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Normal character
             let char = key;
-            // --- AUTO-CAPITALIZATION FOR CUSTOM KEYBOARD ---
-            if ((collector.autoCapitalizeNext && !collector.userShiftOverride) && char.length === 1 && /[a-z]/.test(char)) {
+            if (collector.capsLockEnabled && char.length === 1 && /[a-z]/.test(char)) {
+                char = char.toUpperCase();
+            } else if ((collector.autoCapitalizeNext && !collector.userShiftOverride) && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
                 collector.autoCapitalizeNext = false;
                 collector.userShiftOverride = false;
