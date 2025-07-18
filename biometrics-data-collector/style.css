@@ -3549,6 +3549,12 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid rgba(32, 207, 207, 0.18); /* Subtle teal border for light mode */
+}
+@media (prefers-color-scheme: dark) {
+  .custom-keyboard .key {
+    border: 1px solid rgba(245, 245, 245, 0.18) !important; /* Subtle light border for dark mode */
+  }
 }
 .custom-keyboard .key:active, .custom-keyboard .key:focus {
   background: linear-gradient(180deg, #e6f7fa 60%, #c2e9f7 100%);
@@ -3785,6 +3791,12 @@ html, body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  border: 1px solid rgba(32, 207, 207, 0.18); /* Subtle teal border for light mode */
+}
+@media (prefers-color-scheme: dark) {
+  .custom-keyboard .key {
+    border: 1px solid rgba(245, 245, 245, 0.18) !important; /* Subtle light border for dark mode */
+  }
 }
 .custom-keyboard .key:active, .custom-keyboard .key:focus {
   background: linear-gradient(180deg, #e6f7fa 60%, #c2e9f7 100%);
@@ -4186,5 +4198,19 @@ html, body {
     padding: 0 !important;
     row-gap: 0 !important;
     gap: 0 !important;
+  }
+}
+
+.custom-keyboard .key {
+    border: 1.5px solid rgba(32, 207, 207, 0.35); /* More visible teal border for light mode */
+}
+@media (prefers-color-scheme: dark) {
+  .custom-keyboard .key {
+    border: 1.5px solid rgba(245, 245, 245, 0.32) !important; /* More visible light border for dark mode */
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .custom-keyboard .key {
+    border: 1.5px solid #32B8C6 !important; /* Teal accent border for dark mode */
   }
 }
