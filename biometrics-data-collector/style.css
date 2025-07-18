@@ -3942,6 +3942,13 @@ html, body {
   background: linear-gradient(180deg, #223a3a 80%, #2d3136 100%) !important;
   color: #32B8C6 !important;
 }
+
+/* Caps lock active state for dark mode */
+[data-color-scheme="dark"] .custom-keyboard .key[data-key="shift"].capslock {
+  background: linear-gradient(180deg, #20cfcf 80%, #1bb8b8 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(32, 207, 207, 0.4), 0 1.5px 8px rgba(0,0,0,0.2) !important;
+}
 [data-color-scheme="dark"] .custom-keyboard .key[data-key="space"] {
   background: linear-gradient(90deg, #232526 60%, #2d3136 100%) !important;
   color: #fff !important;
@@ -4116,5 +4123,68 @@ html, body {
 @media (prefers-color-scheme: dark) {
   .custom-keyboard-bottom-gap {
     background: linear-gradient(180deg, #23272a 80%, #181818 100%);
+  }
+}
+.custom-keyboard .keyboard-area {
+    row-gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.custom-keyboard .keyboard-row {
+    margin: 0 !important;
+    padding: 0 !important;
+    row-gap: 0 !important;
+}
+@media (max-width: 600px) {
+  .custom-keyboard .keyboard-area {
+    row-gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .custom-keyboard .keyboard-row {
+    margin: 0 !important;
+    padding: 0 !important;
+    row-gap: 0 !important;
+  }
+}
+
+.keyboard-row,
+.custom-keyboard .keyboard-row {
+    margin: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    row-gap: 0 !important;
+}
+.keyboard-row .key {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+.keyboard-area,
+.custom-keyboard .keyboard-area {
+    margin: 0 !important;
+    padding: 0 !important;
+    row-gap: 0 !important;
+    gap: 0 !important;
+}
+@media (max-width: 600px), (max-width: 480px), (max-width: 400px), (max-width: 360px) {
+  .keyboard-row,
+  .custom-keyboard .keyboard-row {
+    margin: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    row-gap: 0 !important;
+  }
+  .keyboard-row .key {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  .keyboard-area,
+  .custom-keyboard .keyboard-area {
+    margin: 0 !important;
+    padding: 0 !important;
+    row-gap: 0 !important;
+    gap: 0 !important;
   }
 }
