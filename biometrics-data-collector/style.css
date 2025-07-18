@@ -22,6 +22,7 @@
   --color-info: #AEEBFB;
   --color-focus-ring: rgba(32, 207, 207, 0.18);
   --color-select-caret: #20CFCF;
+
   /* Common style patterns */
   --focus-ring: 0 0 0 3px var(--color-focus-ring);
   --focus-outline: 2px solid var(--color-primary);
@@ -29,6 +30,7 @@
   --status-border-opacity: 0.25;
   --select-caret-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23001F3F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   --select-caret-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+
   /* RGB versions for opacity control */
   --color-success-rgb: 32, 207, 207;
   --color-error-rgb: 255, 79, 100;
@@ -3602,7 +3604,8 @@ html, body {
     border-radius: clamp(6px, 2vw, 18px) clamp(6px, 2vw, 18px) 0 0;
   }
   .custom-keyboard .keyboard-row {
-    gap: clamp(2px, 1vw, 10px) clamp(2px, 1vw, 10px);
+    gap: 1px !important; /* Further reduce vertical gap between keys */
+    margin-bottom: 1px !important; /* Further reduce space between rows */
   }
   .custom-keyboard .key {
     min-height: 70px;
@@ -3626,7 +3629,8 @@ html, body {
     border-radius: clamp(4px, 1vw, 10px) clamp(4px, 1vw, 10px) 0 0;
   }
   .custom-keyboard .keyboard-row {
-    gap: clamp(1px, 0.5vw, 6px) clamp(1px, 0.5vw, 6px);
+    gap: 1px !important;
+    margin-bottom: 1px !important;
   }
   .custom-keyboard .key {
     min-height: 58px;
@@ -3752,7 +3756,8 @@ html, body {
   flex-direction: row;
   justify-content: center;
   align-items: stretch;
-  gap: clamp(4px, 1vw, 16px);
+  gap: 1px !important; /* Further reduce vertical gap between keys */
+  margin-bottom: 1px !important; /* Further reduce space between rows */
   width: 100%;
   margin: 0.1em 0;
   flex-wrap: nowrap;
@@ -3831,7 +3836,8 @@ html, body {
     border-radius: clamp(6px, 2vw, 18px) clamp(6px, 2vw, 18px) 0 0;
   }
   .custom-keyboard .keyboard-row {
-    gap: clamp(2px, 1vw, 10px);
+    gap: 0px !important; /* No vertical gap between keys */
+    margin-bottom: 0px !important; /* No space between rows */
   }
   .custom-keyboard .key {
     min-height: 70px;
@@ -3855,7 +3861,8 @@ html, body {
     border-radius: clamp(4px, 1vw, 10px) clamp(4px, 1vw, 10px) 0 0;
   }
   .custom-keyboard .keyboard-row {
-    gap: clamp(1px, 0.5vw, 6px);
+    gap: 1px !important;
+    margin-bottom: 1px !important;
   }
   .custom-keyboard .key {
     min-height: 58px;
