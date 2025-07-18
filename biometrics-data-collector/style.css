@@ -4206,11 +4206,6 @@ html, body {
 }
 @media (prefers-color-scheme: dark) {
   .custom-keyboard .key {
-    border: 1.5px solid rgba(245, 245, 245, 0.32) !important; /* More visible light border for dark mode */
-  }
-}
-@media (prefers-color-scheme: dark) {
-  .custom-keyboard .key {
     border: 1.5px solid #32B8C6 !important; /* Teal accent border for dark mode */
   }
 }
