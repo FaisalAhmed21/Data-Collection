@@ -3125,17 +3125,17 @@ class BiometricDataCollector {
     // 5. On touch end: finish pinch/pan and handle swipe if not zoomed
     handleGalleryTouchEnd(e) {
         const ts = performance.now();
-    
-        // swipe to change image only when scale ≈ 1
+
+        // Only allow swipe to change image if not pinching or panning and scale ≈ 1
         if (!this.galleryZoom.isPinching && !this.galleryZoom.isPanning
-            && e.changedTouches.length === 1 && this.galleryZoom.scale <= 1.1) {
+            && e.changedTouches.length === 1 && Math.abs(this.galleryZoom.scale - 1) < 0.05) {
             const endX = e.changedTouches[0].clientX;
             const dx = this.galleryTouchStart.x - endX;
             if (Math.abs(dx) > 50) {
                 dx > 0 ? this.nextGalleryImage() : this.prevGalleryImage();
             }
         }
-    
+
         // end pinch
         if (e.touches.length < 2) {
             this.galleryZoom.isPinching = false;
@@ -3151,7 +3151,7 @@ class BiometricDataCollector {
         if (e.touches.length === 0) {
             this.galleryZoom.isPanning = false;
         }
-    
+
         this.recordTouchEvent({
             timestamp: ts,
             type: 'touchend',
@@ -3342,6 +3342,22 @@ class BiometricDataCollector {
         const img = document.querySelector('.popup-image');
         const ctr = document.querySelector('.popup-image-container');
         if (!img) return;
+        // Clamp translation so image cannot be moved beyond its edges
+        const scale = this.galleryZoom.scale;
+        if (img && ctr && scale > 1) {
+            const imgRect = img.getBoundingClientRect();
+            const ctrRect = ctr.getBoundingClientRect();
+            // Use natural size for more accurate clamping
+            const imgWidth = img.naturalWidth * scale;
+            const imgHeight = img.naturalHeight * scale;
+            const ctrWidth = ctrRect.width;
+            const ctrHeight = ctrRect.height;
+            // Calculate max allowed translation (centered at 0)
+            const maxX = Math.max(0, (imgWidth - ctrWidth) / 2);
+            const maxY = Math.max(0, (imgHeight - ctrHeight) / 2);
+            this.galleryZoom.translateX = Math.max(-maxX, Math.min(maxX, this.galleryZoom.translateX));
+            this.galleryZoom.translateY = Math.max(-maxY, Math.min(maxY, this.galleryZoom.translateY));
+        }
         img.style.transform = 
             `translate(${this.galleryZoom.translateX}px, ${this.galleryZoom.translateY}px) ` +
             `scale(${this.galleryZoom.scale})`;
