@@ -2729,6 +2729,10 @@ class BiometricDataCollector {
             // Final step: show Next Task button (do not hide Next Step)
             this.showNextTaskButton('gallery', 'Gallery Interaction');
             this.updateTaskLocks(); // Lock crystal after completion
+            // Hide Next Step button after final step
+            if (nextCrystalBtn) {
+                nextCrystalBtn.style.display = 'none';
+            }
         }
 
     }
@@ -4058,7 +4062,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const removeActive = () => e.target.classList.remove('active');
         e.target.addEventListener('mouseup', removeActive, { once: true });
         e.target.addEventListener('mouseleave', removeActive, { once: true });
-        setTimeout(removeActive, 100); // Remove after 100ms for instant feedback
+        setTimeout(removeActive, 100); // Remove after 10ms for instant feedback
         // --- End active class logic ---
         // Record keystroke for shift key separately (outside handled block)
         if (key === 'shift') {
@@ -4431,7 +4435,6 @@ document.addEventListener('touchend', function() {
 document.addEventListener('touchcancel', function() {
     document.querySelectorAll('#custom-keyboard .key.active').forEach(key => key.classList.remove('active'));
 }, { passive: true });
-
 // Global updateKeyboardCase function
 function updateKeyboardCase() {
     const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
