@@ -4016,6 +4016,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 collector.updateKeyboardDisplay();
             } else if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
+            } else if (isShift && !isSymbols && char.length === 1 && /[A-Z]/.test(char)) {
+                char = char.toLowerCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
             newCaret = caret + 1;
@@ -4267,6 +4269,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 collector.updateKeyboardDisplay();
             } else if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
+            } else if (isShift && !isSymbols && char.length === 1 && /[A-Z]/.test(char)) {
+                char = char.toLowerCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
             newCaret = caret + 1;
