@@ -3784,24 +3784,24 @@ class BiometricDataCollector {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: var(--inact-bg, rgba(0,0,0,0.8));
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 10000;
             font-family: Arial, sans-serif;
         `;
-        
         const content = notification.querySelector('.notification-content');
         content.style.cssText = `
-            background: white;
+            background: var(--inact-content-bg, white);
+            color: var(--inact-content-text, #222);
             padding: 30px;
             border-radius: 10px;
             text-align: center;
             max-width: 400px;
             margin: 20px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.18);
         `;
-        
         content.querySelector('button').style.cssText = `
             background: var(--color-primary, #20cfcf);
             color: white;
@@ -3811,9 +3811,13 @@ class BiometricDataCollector {
             cursor: pointer;
             margin-top: 15px;
         `;
-        
         document.body.appendChild(notification);
-        
+        // Add dark mode support
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            notification.style.setProperty('--inact-bg', 'rgba(0,0,0,0.92)');
+            content.style.setProperty('--inact-content-bg', '#232323');
+            content.style.setProperty('--inact-content-text', '#ffe58f');
+        }
         // Auto-remove after 10 seconds
         setTimeout(() => {
             if (notification.parentElement) {
@@ -4156,7 +4160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             symbolRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
         }
     }
-    
+
     customKeyboard.addEventListener('touchstart', (e) => {
         const target = e.target.closest('.key');
         if (!target) return;
