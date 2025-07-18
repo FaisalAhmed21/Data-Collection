@@ -3962,7 +3962,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Check for double shift within 0.5s
             if (
                 collector.shiftTimestamps.length >= 2 &&
-                (collector.shiftTimestamps[collector.shiftTimestamps.length - 1] - collector.shiftTimestamps[collector.shiftTimestamps.length - 2] < 500)
+                (collector.shiftTimestamps[collector.shiftTimestamps.length - 1] - collector.shiftTimestamps[collector.shiftTimestamps.length - 2] < 350)
             ) {
                 // Toggle Caps Lock
                 collector.capsLockEnabled = !collector.capsLockEnabled;
@@ -4038,7 +4038,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const removeActive = () => e.target.classList.remove('active');
         e.target.addEventListener('mouseup', removeActive, { once: true });
         e.target.addEventListener('mouseleave', removeActive, { once: true });
-        setTimeout(removeActive, 250);
+        setTimeout(removeActive, 150); // Remove after 150ms for instant feedback
         // --- End active class logic ---
         // Record keystroke for shift key separately (outside handled block)
         if (key === 'shift') {
@@ -4063,12 +4063,15 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Handling input (click):', insertChar, 'newValue:', newValue);
             isProgrammaticInput = true;
             typingInput.value = newValue;
-            typingInput.setSelectionRange(newCaret, newCaret);
+            // Only set focus if not already focused
             if (document.activeElement !== typingInput) {
                 typingInput.focus();
-                typingInput.setSelectionRange(newCaret, newCaret);
             }
-            setTimeout(() => { isProgrammaticInput = false; }, 0);
+            // Always set caret position after value update, using setTimeout to avoid iOS jump
+            setTimeout(() => {
+                typingInput.setSelectionRange(newCaret, newCaret);
+                isProgrammaticInput = false;
+            }, 0);
             const timestamp = performance.now();
             let actualChar = insertChar;
             let refChar = insertChar;
@@ -4098,6 +4101,10 @@ document.addEventListener('DOMContentLoaded', () => {
             collector.updateTypingFeedback();
             setTimeout(() => collector.updateAutoCapState(), 0);
         }
+        // As a safety net, remove .active from all keys after 300ms
+        setTimeout(() => {
+            customKeyboard.querySelectorAll('.key.active').forEach(key => key.classList.remove('active'));
+        }, 300);
     });
 
     function updateKeyboardCase() {
@@ -4201,7 +4208,7 @@ document.addEventListener('DOMContentLoaded', () => {
         target.classList.add('active');
         setTimeout(() => {
             target.classList.remove('active');
-        }, 250);
+        }, 150); // Remove after 150ms for instant feedback
         // Simulate click logic
         const key = target.getAttribute('data-key');
         let value = typingInput.value;
@@ -4250,7 +4257,7 @@ document.addEventListener('DOMContentLoaded', () => {
             collector.shiftTimestamps.push(now);
             if (
                 collector.shiftTimestamps.length >= 2 &&
-                (collector.shiftTimestamps[collector.shiftTimestamps.length - 1] - collector.shiftTimestamps[collector.shiftTimestamps.length - 2] < 500)
+                (collector.shiftTimestamps[collector.shiftTimestamps.length - 1] - collector.shiftTimestamps[collector.shiftTimestamps.length - 2] < 350)
             ) {
                 collector.capsLockEnabled = !collector.capsLockEnabled;
                 collector.userShiftOverride = false;
@@ -4345,12 +4352,15 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Handling input (touch):', insertChar, 'newValue:', newValue);
             isProgrammaticInput = true;
             typingInput.value = newValue;
-            typingInput.setSelectionRange(newCaret, newCaret);
+            // Only set focus if not already focused
             if (document.activeElement !== typingInput) {
                 typingInput.focus();
-                typingInput.setSelectionRange(newCaret, newCaret);
             }
-            setTimeout(() => { isProgrammaticInput = false; }, 0);
+            // Always set caret position after value update, using setTimeout to avoid iOS jump
+            setTimeout(() => {
+                typingInput.setSelectionRange(newCaret, newCaret);
+                isProgrammaticInput = false;
+            }, 0);
             const timestamp = performance.now();
             let actualChar = insertChar;
             let refChar = insertChar;
@@ -4380,6 +4390,10 @@ document.addEventListener('DOMContentLoaded', () => {
             collector.updateTypingFeedback();
             setTimeout(() => collector.updateAutoCapState(), 0);
         }
+        // As a safety net, remove .active from all keys after 300ms
+        setTimeout(() => {
+            customKeyboard.querySelectorAll('.key.active').forEach(key => key.classList.remove('active'));
+        }, 300);
     }, { passive: true });                      
 });
 
