@@ -3523,7 +3523,14 @@ html, body {
   min-height: 62px;
   padding-top: 14px;
   padding-bottom: 14px;
-  font-size: 1.18em;
+  font-size: clamp(1.2rem, 2.8vw, 2rem) !important;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  /* Ensure text stays centered and doesn't overflow */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border-radius: clamp(6px, 2vw, 20px);
   background: linear-gradient(180deg, #fafdff 80%, #e6f7fa 100%);
   border: none;
@@ -3601,7 +3608,7 @@ html, body {
   }
   .custom-keyboard .key {
     min-height: 70px;
-    font-size: 1.22em;
+    font-size: clamp(1.1rem, 4vw, 1.6rem) !important;
     padding-top: 18px;
     padding-bottom: 18px;
   }
@@ -3625,7 +3632,7 @@ html, body {
   }
   .custom-keyboard .key {
     min-height: 58px;
-    font-size: 1.13em;
+    font-size: clamp(1rem, 5vw, 1.3rem) !important;
     padding-top: 12px;
     padding-bottom: 12px;
   }
@@ -3830,7 +3837,7 @@ html, body {
   }
   .custom-keyboard .key {
     min-height: 70px;
-    font-size: 1.22em;
+    font-size: clamp(1.1rem, 4vw, 1.6rem) !important;
     padding-top: 18px;
     padding-bottom: 18px;
   }
@@ -3854,7 +3861,7 @@ html, body {
   }
   .custom-keyboard .key {
     min-height: 58px;
-    font-size: 1.13em;
+    font-size: clamp(1rem, 5vw, 1.3rem) !important;
     padding-top: 12px;
     padding-bottom: 12px;
   }
