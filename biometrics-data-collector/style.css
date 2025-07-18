@@ -4043,36 +4043,114 @@ html, body {
 
 .inactivity-warning {
   background: #fffbe6;
-  border: 1.5px solid #ffe58f;
+  border: 2px solid #ffb300;
   color: #ad6800;
-  padding: 18px 20px;
-  border-radius: 10px;
-  margin-bottom: 22px;
-  font-size: 1.13em;
-  max-width: 650px;
+  padding: 20px 22px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  font-size: 1.15em;
+  max-width: 700px;
   margin-left: auto;
   margin-right: auto;
   text-align: center;
-  font-weight: 600;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  font-weight: 700;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.10);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  letter-spacing: 0.01em;
+  z-index: 1000;
 }
 .inactivity-warning .warn-icon {
-  font-size: 1.7em;
-  margin-right: 8px;
+  font-size: 1.8em;
+  margin-right: 10px;
   flex-shrink: 0;
   filter: drop-shadow(0 0 2px #ffb300);
 }
 @media (prefers-color-scheme: dark) {
   .inactivity-warning {
-    background: #2a2320 !important;
-    border: 1.5px solid #ffb300 !important;
-    color: #ffd666 !important;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+    background: #2a2320;
+    border: 2px solid #ffb300;
+    color: #fff9e3;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.35);
+    text-shadow: 0 1px 4px #000, 0 0 2px #fff;
   }
   .inactivity-warning .warn-icon {
     filter: drop-shadow(0 0 2px #ffd666);
+  }
+}
+@media (forced-colors: active) {
+  .inactivity-warning {
+    background: Window;
+    color: WindowText;
+    border: 2px solid Highlight;
+  }
+}
+
+.inactivity-notification {
+  background: #fffbe6;
+  border: 2px solid #ffb300;
+  color: #ad6800;
+  padding: 28px 24px;
+  border-radius: 14px;
+  font-size: 1.18em;
+  max-width: 420px;
+  margin: 40px auto;
+  text-align: center;
+  font-weight: 700;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.18);
+  z-index: 10001;
+  position: relative;
+}
+.inactivity-notification .notification-content {
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.inactivity-notification button {
+  background: #20cfcf;
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 18px;
+  font-size: 1em;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  transition: background 0.2s;
+}
+.inactivity-notification button:hover {
+  background: #179e9e;
+}
+@media (prefers-color-scheme: dark) {
+  .inactivity-notification {
+    background: #2a2320;
+    border: 2px solid #ffb300;
+    color: #fff9e3;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.45);
+    text-shadow: 0 1px 4px #000, 0 0 2px #fff;
+  }
+  .inactivity-notification button {
+    background: #20cfcf;
+    color: #222;
+  }
+  .inactivity-notification button:hover {
+    background: #179e9e;
+    color: #fff;
+  }
+}
+@media (forced-colors: active) {
+  .inactivity-notification {
+    background: Window;
+    color: WindowText;
+    border: 2px solid Highlight;
+  }
+  .inactivity-notification button {
+    background: Highlight;
+    color: HighlightText;
   }
 }
