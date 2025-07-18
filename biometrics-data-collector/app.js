@@ -131,6 +131,9 @@ class BiometricDataCollector {
             facetSequence: []
         };
         
+        // Touch tracking for scroll detection
+        this.crystalTouchStart = null;
+        
         // Generate 20 unique random images for each session
         const randomSeeds = Array.from({length: 20}, () => Math.floor(Math.random() * 1000000));
         this.galleryImages = randomSeeds.map(seed => `https://picsum.photos/seed/${seed}/800/600`);
@@ -1547,6 +1550,8 @@ class BiometricDataCollector {
         nextBtn.style.display = 'inline-flex';
         nextBtn.style.backgroundColor = 'var(--color-secondary)';
         nextBtn.style.opacity = '0.5';
+        // Reset button text to original state
+        nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
         this.updateTypingFeedback();
     }
     
@@ -1636,12 +1641,16 @@ class BiometricDataCollector {
             } else {
                 nextBtn.disabled = false;
                 nextBtn.classList.add('next-task-btn--deep');
+                // Change button text to clearly indicate it's active
+                nextBtn.textContent = '✅ Next Sentence - Ready!';
             }
 
         } else {
             nextBtn.disabled = true;
             nextBtn.classList.remove('next-task-btn--deep');
             nextBtn.style.display = 'inline-flex';
+            // Reset button text to original
+            nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
         }
     }
     
@@ -1653,7 +1662,70 @@ class BiometricDataCollector {
         } else {
             this.displayCurrentSentence();
             this.updateTypingProgress();
+            // Reset keyboard state for new sentence
+            this.resetKeyboardState();
         }
+    }
+    
+    resetKeyboardState() {
+        // Reset all keyboard-related state variables
+        this.capsLockEnabled = false;
+        this.userShiftOverride = false;
+        this.autoCapitalizeNext = true; // Reset to true for new sentence
+        this.shiftTimestamps = [];
+        
+        // Reset global keyboard variables (from DOMContentLoaded)
+        if (typeof isShift !== 'undefined') {
+            window.isShift = false;
+        }
+        if (typeof isSymbols !== 'undefined') {
+            window.isSymbols = false;
+        }
+        
+        // Update keyboard display to reflect reset state
+        this.updateKeyboardDisplay();
+        
+        // Reset custom keyboard visual state
+        const customKeyboard = document.getElementById('custom-keyboard');
+        if (customKeyboard) {
+            // Remove active states from all keys
+            customKeyboard.querySelectorAll('.key.active').forEach(key => key.classList.remove('active'));
+            
+            // Reset keyboard layout to letters (not symbols)
+            const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
+            const symbolRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-symbols');
+            letterRows.forEach(r => r.style.setProperty('display', 'flex', 'important'));
+            symbolRows.forEach(r => r.style.setProperty('display', 'none', 'important'));
+            
+            // Update keyboard case display
+            this.updateKeyboardCase();
+        }
+        
+        console.log('🔄 Keyboard state reset for new sentence');
+    }
+    
+    updateKeyboardCase() {
+        const customKeyboard = document.getElementById('custom-keyboard');
+        if (!customKeyboard) return;
+        
+        const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
+        let showUppercase;
+        if (this.capsLockEnabled) {
+            showUppercase = true;
+        } else if (this.autoCapitalizeNext) {
+            showUppercase = !this.userShiftOverride;
+        } else {
+            showUppercase = false;
+        }
+        
+        keys.forEach(btn => {
+            const key = btn.getAttribute('data-key');
+            if (key && key.length === 1 && /[a-z]/.test(key)) {
+                btn.textContent = showUppercase ? key.toUpperCase() : key;
+            }
+        });
+        
+        console.log('Class updateKeyboardCase called - showUppercase:', showUppercase, 'autoCapitalizeNext:', this.autoCapitalizeNext, 'userShiftOverride:', this.userShiftOverride, 'capsLockEnabled:', this.capsLockEnabled);
     }
     
     updateTypingProgress() {
@@ -2220,11 +2292,15 @@ class BiometricDataCollector {
     }
     
     handleCrystalTouchStart(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
+        
+        // Store initial touch position for scroll detection
+        this.crystalTouchStart = {
+            x: touches[0].clientX,
+            y: touches[0].clientY,
+            time: timestamp
+        };
         
         // ULTRA-RELIABLE touch data collection for all mobile devices
         this.recordTouchEvent({
@@ -2256,11 +2332,25 @@ class BiometricDataCollector {
     }
     
     handleCrystalTouchMove(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
         const timestamp = performance.now();
         const touches = Array.from(e.touches);
+        
+        // Check if this is a scroll gesture (vertical movement > horizontal movement)
+        if (this.crystalTouchStart && touches.length === 1) {
+            const deltaX = Math.abs(touches[0].clientX - this.crystalTouchStart.x);
+            const deltaY = Math.abs(touches[0].clientY - this.crystalTouchStart.y);
+            const timeDelta = timestamp - this.crystalTouchStart.time;
+            
+            // If vertical movement is significantly more than horizontal movement, allow scrolling
+            if (deltaY > deltaX * 1.5 && deltaY > 10 && timeDelta > 50) {
+                // This is likely a scroll gesture, don't prevent default
+                return;
+            }
+        }
+        
+        // Prevent default only for crystal interactions
+        e.preventDefault();
+        e.stopPropagation();
         
         // ULTRA-RELIABLE touch data collection for all mobile devices
         this.recordTouchEvent({
@@ -2288,11 +2378,26 @@ class BiometricDataCollector {
     }
     
     handleCrystalTouchEnd(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
         const timestamp = performance.now();
         const touches = Array.from(e.changedTouches);
+        
+        // Check if this was a scroll gesture
+        if (this.crystalTouchStart && touches.length === 1) {
+            const deltaX = Math.abs(touches[0].clientX - this.crystalTouchStart.x);
+            const deltaY = Math.abs(touches[0].clientY - this.crystalTouchStart.y);
+            const timeDelta = timestamp - this.crystalTouchStart.time;
+            
+            // If vertical movement is significantly more than horizontal movement, allow scrolling
+            if (deltaY > deltaX * 1.5 && deltaY > 10 && timeDelta > 50) {
+                // This was a scroll gesture, don't prevent default
+                this.crystalTouchStart = null;
+                return;
+            }
+        }
+        
+        // Prevent default only for crystal interactions
+        e.preventDefault();
+        e.stopPropagation();
         
         // ULTRA-RELIABLE touch data collection for all mobile devices
         this.recordTouchEvent({
@@ -2321,6 +2426,9 @@ class BiometricDataCollector {
         } catch (error) {
             console.error('Error in crystal touch end:', error);
         }
+        
+        // Clear touch start data
+        this.crystalTouchStart = null;
     }
     
     handleCrystalMouseDown(e) {
