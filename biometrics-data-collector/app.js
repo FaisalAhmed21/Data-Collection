@@ -18,9 +18,7 @@ class BiometricDataCollector {
         this.inactivityTimeout = 3 * 60 * 1000; // 3 minutes in milliseconds
         this.lastActivityTime = Date.now();
         this.autoCapitalizeNext = false;
-        this.userShiftOverride = false; // new: track if user toggled shift at auto-cap moment
-        this.capsLockEnabled = false;
-        this.lastShiftTapTime = 0;
+        this.userShiftOverride = false; // track if user toggled shift
 
 
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
@@ -1150,35 +1148,7 @@ class BiometricDataCollector {
         this.updateAutoCapState();
     }
 
-    handleShiftKey() {
-        const currentTime = performance.now();
-        const timeSinceLastShift = currentTime - this.lastShiftTapTime;
-        
-        // Check if this is a double-tap within 350ms
-        if (timeSinceLastShift < 350 && this.lastShiftTapTime > 0) {
-            // Double-tap detected - toggle caps lock
-            this.capsLockEnabled = !this.capsLockEnabled;
-            console.log(`Caps lock ${this.capsLockEnabled ? 'enabled' : 'disabled'}`);
-            
-            // Update keyboard display
-            this.updateKeyboardDisplay();
-            
-            // Add visual feedback for caps lock state
-            this.showCapsLockFeedback();
-            
-            // Reset shift tap time to prevent triple-tap issues
-            this.lastShiftTapTime = 0;
-        } else {
-            // Single tap - just update last tap time
-            this.lastShiftTapTime = currentTime;
-            
-            // If caps lock is not enabled, handle normal shift behavior
-            if (!this.capsLockEnabled) {
-                this.userShiftOverride = !this.userShiftOverride;
-                this.updateKeyboardDisplay();
-            }
-        }
-    }
+
 
 
     setKeyboardCaps(isCaps) {
@@ -1189,24 +1159,12 @@ class BiometricDataCollector {
                 key.textContent = isCaps ? keyValue.toUpperCase() : keyValue.toLowerCase();
             }
         });
-        
-        // Update shift key appearance based on caps lock state
-        const shiftKey = document.querySelector('.key[data-key="shift"]');
-        if (shiftKey) {
-            if (this.capsLockEnabled) {
-                shiftKey.classList.add('caps-lock-active');
-            } else {
-                shiftKey.classList.remove('caps-lock-active');
-            }
-        }
     }
 
 
 
     updateKeyboardDisplay() {
-        if (this.capsLockEnabled) {
-            this.setKeyboardCaps(true);
-        } else if (this.autoCapitalizeNext && !this.userShiftOverride) {
+        if (this.autoCapitalizeNext && !this.userShiftOverride) {
             this.setKeyboardCaps(true);
         } else if (this.userShiftOverride) {
             // If user shift override is active, show caps
@@ -3901,8 +3859,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const customKeyboard = document.getElementById('custom-keyboard');
     let isShift = false;
     let isSymbols = false;
-    let isCapsLock = false;
-    let lastShiftClickTime = 0;
+    
     const CAPSLOCK_WINDOW = 350; // ms
 
     // Prevent native keyboard by setting inputmode and tabindex
@@ -4008,9 +3965,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Normal character
             let char = key;
             // --- AUTO-CAPITALIZATION FOR CUSTOM KEYBOARD ---
-            if (isCapsLock && char.length === 1 && /[a-z]/.test(char)) {
-                char = char.toUpperCase();
-            } else if ((collector.autoCapitalizeNext && !collector.userShiftOverride) && char.length === 1 && /[a-z]/.test(char)) {
+            if ((collector.autoCapitalizeNext && !collector.userShiftOverride) && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
                 collector.autoCapitalizeNext = false;
                 collector.updateKeyboardDisplay();
@@ -4023,15 +3978,14 @@ document.addEventListener('DOMContentLoaded', () => {
             newCaret = caret + 1;
             insertChar = char;
             handled = true;
-            // If shift is active and caps lock is off, turn off shift after one letter
-            if (isShift && !isCapsLock) {
+            // If shift is active, turn off shift after one letter (like standard keyboard)
+            if (isShift) {
                 isShift = false;
                 collector.userShiftOverride = false;
                 updateKeyboardCase();
-                updateKeyboardCapsLock();
                 collector.updateKeyboardDisplay();
             }
-            console.log('Character processed:', char, 'shift:', isShift, 'capsLock:', isCapsLock);
+            console.log('Character processed:', char, 'shift:', isShift);
         }
         // --- Add active class for 0.25s visual feedback ---
         e.target.classList.add('active');
@@ -4107,12 +4061,12 @@ document.addEventListener('DOMContentLoaded', () => {
         keys.forEach(btn => {
             const key = btn.getAttribute('data-key');
             if (key && key.length === 1 && /[a-z]/.test(key)) {
-                // Show uppercase if caps lock is on OR if shift is active
-                const shouldShowUppercase = isCapsLock || isShift;
+                // Show uppercase if shift is active
+                const shouldShowUppercase = isShift;
                 btn.textContent = shouldShowUppercase ? key.toUpperCase() : key;
             }
         });
-        console.log('updateKeyboardCase called - isCapsLock:', isCapsLock, 'isShift:', isShift);
+        console.log('updateKeyboardCase called - isShift:', isShift);
     }
     function updateKeyboardLayout() {
         const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
@@ -4225,22 +4179,10 @@ document.addEventListener('DOMContentLoaded', () => {
             insertChar = '\n';
             handled = true;
         } else if (key?.toLowerCase?.() === 'shift') {
-            const now = Date.now();
-            
-            // If caps lock is enabled, clicking shift should turn it off
-            if (isCapsLock) {
-                isCapsLock = false;
-                isShift = false;
-                collector.capsLockEnabled = false;
-                collector.userShiftOverride = false;
-                lastShiftClickTime = 0;
-                console.log('Caps lock turned OFF by shift touch');
-            } else {
-                // Simple toggle shift state
-                isShift = !isShift;
-                collector.userShiftOverride = isShift;
-                console.log('Shift toggled:', isShift ? 'ON' : 'OFF');
-            }
+            // Simple shift toggle - like a standard keyboard
+            isShift = !isShift;
+            collector.userShiftOverride = isShift;
+            console.log('Shift toggled:', isShift ? 'ON' : 'OFF');
             
             // Update keyboard display immediately
             updateKeyboardCase();
@@ -4260,9 +4202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Normal character
             let char = key;
             // --- AUTO-CAPITALIZATION FOR CUSTOM KEYBOARD ---
-            if (isCapsLock && char.length === 1 && /[a-z]/.test(char)) {
-                char = char.toUpperCase();
-            } else if ((collector.autoCapitalizeNext && !collector.userShiftOverride) && char.length === 1 && /[a-z]/.test(char)) {
+            if ((collector.autoCapitalizeNext && !collector.userShiftOverride) && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
                 collector.autoCapitalizeNext = false;
                 collector.userShiftOverride = false;
@@ -4276,15 +4216,14 @@ document.addEventListener('DOMContentLoaded', () => {
             newCaret = caret + 1;
             insertChar = char;
             handled = true;
-            // If shift is active and caps lock is off, turn off shift after one letter
-            if (isShift && !isCapsLock) {
+            // If shift is active, turn off shift after one letter (like standard keyboard)
+            if (isShift) {
                 isShift = false;
                 collector.userShiftOverride = false;
                 updateKeyboardCase();
-                updateKeyboardCapsLock();
                 collector.updateKeyboardDisplay();
             }
-            console.log('Character processed (touch):', char, 'shift:', isShift, 'capsLock:', isCapsLock);
+            console.log('Character processed (touch):', char, 'shift:', isShift);
         }
         
         // Record keystroke for shift key separately (outside handled block)
@@ -4356,37 +4295,18 @@ document.addEventListener('touchcancel', function() {
     document.querySelectorAll('#custom-keyboard .key.active').forEach(key => key.classList.remove('active'));
 }, { passive: true });
 
-function updateKeyboardCapsLock() {
-    // Add a visual indicator for caps lock (e.g., highlight shift key)
-    const shiftKey = customKeyboard.querySelector('.key[data-key="shift"]');
-    if (shiftKey) {
-        if (isCapsLock) {
-            shiftKey.classList.add('capslock');
-            shiftKey.style.backgroundColor = '#20cfcf'; // Highlight when caps lock is on
-        } else {
-            shiftKey.classList.remove('capslock');
-            shiftKey.style.backgroundColor = ''; // Reset to default
-        }
-    }
-}
 
-// Fix updateKeyboardCase to always use isCapsLock and isShift:
+
+// Global updateKeyboardCase function
 function updateKeyboardCase() {
     const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
     keys.forEach(btn => {
         const key = btn.getAttribute('data-key');
         if (key && key.length === 1 && /[a-z]/.test(key)) {
-            // Show uppercase if caps lock is on OR if shift is active
-            const shouldShowUppercase = isCapsLock || isShift;
+            // Show uppercase if shift is active
+            const shouldShowUppercase = isShift;
             btn.textContent = shouldShowUppercase ? key.toUpperCase() : key;
         }
     });
-    console.log('Global updateKeyboardCase called - isCapsLock:', isCapsLock, 'isShift:', isShift);
+    console.log('Global updateKeyboardCase called - isShift:', isShift);
 }
-
-// After any change to caps lock or shift, call both updateKeyboardCapsLock() and updateKeyboardCase():
-// In both click and touchend handlers for shift key, after changing isCapsLock or isShift:
-// ...
-updateKeyboardCapsLock();
-updateKeyboardCase();
-// ... existing code ...
