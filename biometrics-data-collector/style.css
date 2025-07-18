@@ -940,17 +940,23 @@ select.form-control {
 }
 
 .typing-feedback-display .typed-correct {
-  background: linear-gradient(transparent 60%, rgba(32, 207, 207, 0.6) 60%, rgba(32, 207, 207, 0.6) 90%, transparent 90%);
-  color: inherit;
-  border-radius: 2px;
-  padding: 0 1px;
+  background: rgba(32, 207, 207, 0.15);
+  color: var(--color-success);
+  padding: 2px 1px;
+  border-radius: 3px;
+  font-weight: var(--font-weight-medium);
+  border-bottom: 2px solid rgba(32, 207, 207, 0.3);
 }
 
 .typing-feedback-display .typed-incorrect {
-  background: linear-gradient(transparent 60%, rgba(255, 79, 100, 0.6) 60%, rgba(255, 79, 100, 0.6) 90%, transparent 90%);
-  color: inherit;
-  border-radius: 2px;
-  padding: 0 1px;
+  background: rgba(255, 79, 100, 0.15);
+  color: var(--color-error);
+  padding: 2px 1px;
+  border-radius: 3px;
+  font-weight: var(--font-weight-medium);
+  border-bottom: 2px solid rgba(255, 79, 100, 0.4);
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 79, 100, 0.6);
 }
 
 .typing-feedback-display .to-type {
@@ -4035,23 +4041,38 @@ html, body {
   caret-color: #fff !important;
 }
 
-#inactivity-warning {
-  background: #fffbe6;
-  border: 1px solid #ffe58f;
-  color: #ad6800;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  font-size: 1.1em;
-  max-width: 600px;
+.inactivity-warning {
+  background: var(--warn-bg, #fffbe6);
+  border: 1.5px solid var(--warn-border, #ffe58f);
+  color: var(--warn-text, #ad6800);
+  padding: 18px 20px;
+  border-radius: 10px;
+  margin-bottom: 22px;
+  font-size: 1.13em;
+  max-width: 650px;
   margin-left: auto;
   margin-right: auto;
   text-align: center;
+  font-weight: 600;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.inactivity-warning .warn-icon {
+  font-size: 1.7em;
+  margin-right: 8px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 2px #ffb300);
 }
 @media (prefers-color-scheme: dark) {
-  #inactivity-warning {
-    background: #2d2612;
-    border: 1px solid #ad6800;
-    color: #ffe58f;
+  .inactivity-warning {
+    --warn-bg: #2a2320;
+    --warn-border: #ffb300;
+    --warn-text: #ffd666;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+  }
+  .inactivity-warning .warn-icon {
+    filter: drop-shadow(0 0 2px #ffd666);
   }
 }
