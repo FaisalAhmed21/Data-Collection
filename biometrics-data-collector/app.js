@@ -880,7 +880,7 @@ class BiometricDataCollector {
                 } else if (char === '#') {
                     refChar = '#'; // Hash
                 } else if (char === '$' || char === '€' || char === '£' || char === '¥') {
-                    refChar = '$'; // Dollar/currency
+                    refChar = char; // Store as-is for $, €, £, ¥
                 } else if (char === '%') {
                     refChar = '%'; // Percent
                 } else if (char === '&') {
@@ -1020,7 +1020,7 @@ class BiometricDataCollector {
             } else if (data === '¿') {
                 refChar = '?'; // Inverted question
             } else if (data === '€' || data === '£' || data === '¥') {
-                refChar = '$'; // Other currency symbols
+                refChar = char; // Store as-is for $, €, £, ¥
             } else if (data === '±') {
                 refChar = '+'; // Plus-minus
             } else if (data === '≠') {
@@ -1223,7 +1223,7 @@ class BiometricDataCollector {
         } else if (char === '#') {
             return '#';
         } else if (char === '$' || char === '€' || char === '£' || char === '¥') {
-            return '$';
+            return char; // Store as-is for $, €, £, ¥
         } else if (char === '%') {
             return '%';
         } else if (char === '&') {
