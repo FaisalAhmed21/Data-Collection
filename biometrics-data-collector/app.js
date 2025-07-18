@@ -3902,7 +3902,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Keyboard key press handler
     customKeyboard.addEventListener('click', (e) => {
-        removeAllActiveKeys(); // Remove at the very start
         if (!e.target.classList.contains('key')) return;
         // Remove .active from all keys at the start (iOS fix)
         removeAllActiveKeys();
@@ -3916,8 +3915,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // As a safety net, remove .active from all keys after 10ms
         setTimeout(removeAllActiveKeys, 10);
         // ... existing code ...
-        // Remove .active from all keys at the end
-        removeAllActiveKeys();
         const key = e.target.getAttribute('data-key');
         let value = typingInput.value;
         let caret = typingInput.selectionStart;
@@ -4172,21 +4169,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, { passive: true });
     customKeyboard.addEventListener('touchend', (e) => {
-        removeAllActiveKeys(); // Remove at the very start
         const target = e.target.closest('.key');
         if (!target) return;
-        // Remove .active from all keys at the start (iOS fix)
-        removeAllActiveKeys();
-        target.classList.add('active');
-        setTimeout(() => {
-            target.classList.remove('active');
-        }, 10); // Remove after 10ms for instant feedback
-        // ... existing code ...
-        // As a safety net, remove .active from all keys after 10ms
-        setTimeout(removeAllActiveKeys, 10);
-        // ... existing code ...
-        // Remove .active from all keys at the end
-        removeAllActiveKeys();
         const key = target.getAttribute('data-key');
         const touch = e.changedTouches[0];
         if (key && touch) {
@@ -4221,14 +4205,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Fix for sticky .active on touch devices ---
     customKeyboard.addEventListener('touchstart', (e) => {
-        removeAllActiveKeys(); // Remove at the very start
         const target = e.target.closest('.key');
         if (!target) return;
         // Remove .active from all keys before adding to current
         removeAllActiveKeys();
         target.classList.add('active');
         e.preventDefault();
-        setTimeout(removeAllActiveKeys, 10); // Remove at the end
     }, { passive: false });
 
     // Remove .active from all keys on touchcancel (iOS fix)
@@ -4239,7 +4221,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add this improved touchend handler:
     customKeyboard.addEventListener('touchend', (e) => {
-        removeAllActiveKeys(); // Remove at the very start
         const target = e.target.closest('.key');
         if (!target) return;
         // Remove .active from all keys at the start (iOS fix)
@@ -4252,8 +4233,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // As a safety net, remove .active from all keys after 10ms
         setTimeout(removeAllActiveKeys, 10);
         // ... existing code ...
-        // Remove .active from all keys at the end
-        removeAllActiveKeys();
         // Simulate click logic
         const key = target.getAttribute('data-key');
         let value = typingInput.value;
