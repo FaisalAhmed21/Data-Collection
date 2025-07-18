@@ -17,7 +17,12 @@ class BiometricDataCollector {
         this.inactivityTimer = null;
         this.inactivityTimeout = 3 * 60 * 1000; // 3 minutes in milliseconds
         this.lastActivityTime = Date.now();
-        
+        this.autoCapitalizeNext = false;
+        this.userShiftOverride = false; // new: track if user toggled shift at auto-cap moment
+        this.capsLockEnabled = false;
+        this.lastShiftTapTime = 0;
+
+
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         this.isAndroid = /Android/.test(navigator.userAgent);
@@ -493,6 +498,16 @@ class BiometricDataCollector {
         });
         typingInput.addEventListener('input', (e) => {
             this.handleTypingInput(e);
+            setTimeout(() => this.updateAutoCapState(), 0);
+        });
+        typingInput.addEventListener('keyup', (e) => {
+            setTimeout(() => this.updateAutoCapState(), 0);
+        });
+        typingInput.addEventListener('click', (e) => {
+            setTimeout(() => this.updateAutoCapState(), 0);
+        });
+        typingInput.addEventListener('focus', (e) => {
+            setTimeout(() => this.updateAutoCapState(), 0);
         });
         
         // Remove keydown and keyup handlers to prevent duplicate recording
@@ -504,6 +519,7 @@ class BiometricDataCollector {
             this.currentPointerY = rect.top + rect.height / 2;
             this.pointerTracking.x = this.currentPointerX;
             this.pointerTracking.y = this.currentPointerY;
+            this.updateAutoCapState();
         });
         typingInput.addEventListener('click', (e) => {
             // Modern cursor logic from provided code
@@ -511,6 +527,7 @@ class BiometricDataCollector {
             this.currentPointerY = e.clientY;
             this.pointerTracking.x = e.clientX;
             this.pointerTracking.y = e.clientY;
+            this.updateAutoCapState();
         });
         typingInput.addEventListener('paste', (e) => {
             e.preventDefault();
@@ -680,11 +697,9 @@ class BiometricDataCollector {
         const currentTime = performance.now();
         
         const eventSignature = `${inputType}-${data}-${value.length}-${pos}`;
-        
-        if (this.compositionActive && inputType === 'insertText') {
-            console.log('🔄 Composition active, skipping insertText');
-            return;
-        }
+
+        const inputValue = e.target.value;
+        const caretPos = e.target.selectionStart;
         
         // iOS: Early duplicate detection before processing
         if (this.isIOS && data && inputType === 'insertText') {
@@ -749,6 +764,22 @@ class BiometricDataCollector {
         this.lastInputEvent = eventSignature;
         this.lastInputEventTime = currentTime;
         this.inputEventCount++;
+
+                // Check for . + space sequence to set autoCapitalizeNext flag
+        const lastTwo = inputValue.slice(-2);
+        if (lastTwo === '. ') {
+            this.autoCapitalizeNext = true;
+        }
+        
+        // Capitalize just the next letter after ". " unless shift was clicked
+        if (this.autoCapitalizeNext && data && inputType === 'insertText' && data.length === 1 && data.match(/[a-z]/)) {
+            const before = inputValue.substring(0, caretPos - 1);
+            const after = inputValue.substring(caretPos);
+            e.target.value = before + data.toUpperCase() + after;
+            this.autoCapitalizeNext = false;
+            return;
+        }
+
         
         if (data && inputType === 'insertText') {
             console.log(`📱 Mobile input event: "${data}" | Event #${this.inputEventCount} | Platform: ${this.isIOS ? 'iOS' : this.isAndroid ? 'Android' : 'Desktop'}`);
@@ -793,6 +824,7 @@ class BiometricDataCollector {
             this.calculateAccuracy();
             this.checkSentenceCompletion();
             this.updateTypingFeedback();
+            this.updateAutoCapState();
             return;
         }
 
@@ -1072,6 +1104,22 @@ class BiometricDataCollector {
                         // Check if character should be recorded (simplified deduplication)
             // For quotes, use more lenient deduplication
             const isQuote = refChar === "'" || refChar === '"';
+            // In your character processing loop:
+            if (char.match(/[a-z]/)) {
+                if (this.capsLockEnabled) {
+                    // Caps lock is on - make uppercase
+                    char = char.toUpperCase();
+                } else if (this.autoCapitalizeNext && !this.userShiftOverride) {
+                    // Auto-capitalize after period
+                    char = char.toUpperCase();
+                    this.autoCapitalizeNext = false;
+                } else if (this.userShiftOverride) {
+                    // User pressed shift once
+                    char = char.toUpperCase();
+                    this.userShiftOverride = false; // Reset after use
+                }
+            }
+
             if (this.shouldRecordChar(refChar, timestamp, isQuote)) {
                 
                 console.log('📝 Recording keystroke (other input):', refChar, 'type:', inputType, 'timestamp:', timestamp);
@@ -1098,7 +1146,77 @@ class BiometricDataCollector {
         this.calculateAccuracy();
         this.checkSentenceCompletion();
         this.updateTypingFeedback();
+        // Always update auto-cap state after any input
+        this.updateAutoCapState();
     }
+
+    handleShiftKey() {
+        const currentTime = performance.now();
+        const timeSinceLastShift = currentTime - this.lastShiftTapTime;
+        
+        // Check if this is a double-tap within 350ms
+        if (timeSinceLastShift < 350 && this.lastShiftTapTime > 0) {
+            // Double-tap detected - toggle caps lock
+            this.capsLockEnabled = !this.capsLockEnabled;
+            console.log(`Caps lock ${this.capsLockEnabled ? 'enabled' : 'disabled'}`);
+            
+            // Update keyboard display
+            this.updateKeyboardDisplay();
+            
+            // Add visual feedback for caps lock state
+            this.showCapsLockFeedback();
+            
+            // Reset shift tap time to prevent triple-tap issues
+            this.lastShiftTapTime = 0;
+        } else {
+            // Single tap - just update last tap time
+            this.lastShiftTapTime = currentTime;
+            
+            // If caps lock is not enabled, handle normal shift behavior
+            if (!this.capsLockEnabled) {
+                this.userShiftOverride = !this.userShiftOverride;
+                this.updateKeyboardDisplay();
+            }
+        }
+    }
+
+
+    setKeyboardCaps(isCaps) {
+        const keys = document.querySelectorAll('.key[data-key]');
+        keys.forEach(key => {
+            const keyValue = key.getAttribute('data-key');
+            if (keyValue && keyValue.length === 1 && /[a-z]/i.test(keyValue)) {
+                key.textContent = isCaps ? keyValue.toUpperCase() : keyValue.toLowerCase();
+            }
+        });
+        
+        // Update shift key appearance based on caps lock state
+        const shiftKey = document.querySelector('.key[data-key="shift"]');
+        if (shiftKey) {
+            if (this.capsLockEnabled) {
+                shiftKey.classList.add('caps-lock-active');
+            } else {
+                shiftKey.classList.remove('caps-lock-active');
+            }
+        }
+    }
+
+
+
+    updateKeyboardDisplay() {
+        if (this.capsLockEnabled) {
+            this.setKeyboardCaps(true);
+        } else if (this.autoCapitalizeNext && !this.userShiftOverride) {
+            this.setKeyboardCaps(true);
+        } else if (this.userShiftOverride) {
+            // If user shift override is active, show caps
+            this.setKeyboardCaps(true);
+        } else {
+            this.setKeyboardCaps(false);
+        }
+    }
+
+
     
     updateTypingFeedback() {
         // Feedback system logic from provided code
@@ -3742,6 +3860,27 @@ class BiometricDataCollector {
             }
         }, 10000);
     }
+
+    // Add this method to BiometricDataCollector:
+    updateAutoCapState() {
+        const input = document.getElementById('typing-input');
+        if (!input) return;
+        const value = input.value;
+        const caret = input.selectionStart;
+        // If caret at position 0, always auto-cap
+        if (caret === 0) {
+            this.autoCapitalizeNext = true;
+        } else {
+            // Check for . + space sequence just before caret
+            const before = value.substring(0, caret);
+            if (/\. $/.test(before)) {
+                this.autoCapitalizeNext = true;
+            } else {
+                this.autoCapitalizeNext = false;
+            }
+        }
+        this.updateKeyboardDisplay();
+    }
 }
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
@@ -3762,6 +3901,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const customKeyboard = document.getElementById('custom-keyboard');
     let isShift = false;
     let isSymbols = false;
+    let isCapsLock = false;
+    let lastShiftClickTime = 0;
+    const CAPSLOCK_WINDOW = 350; // ms
 
     // Prevent native keyboard by setting inputmode and tabindex
     typingInput.setAttribute('inputmode', 'none');
@@ -3798,6 +3940,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Keyboard key press handler
     customKeyboard.addEventListener('click', (e) => {
         if (!e.target.classList.contains('key')) return;
+        // Remove .active from all keys before adding to current
+        customKeyboard.querySelectorAll('.key.active').forEach(key => key.classList.remove('active'));
         const key = e.target.getAttribute('data-key');
         let value = typingInput.value;
         let caret = typingInput.selectionStart;
@@ -3834,12 +3978,25 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (key === 'enter') {
             insertChar = '\n';
             handled = true;
-        } else if (key === 'shift') {
-            insertChar = 'SHIFT';
-            handled = true;
-            isShift = !isShift; // Toggle shift on each press
+        } 
+        // --- Standard shift logic ---
+        else if (key === 'shift') {
+            e.preventDefault();
+            
+            // Simple toggle shift state
+            isShift = !isShift;
+            collector.userShiftOverride = isShift;
+            console.log('Shift toggled:', isShift ? 'ON' : 'OFF');
+            
+            // Update keyboard display immediately
             updateKeyboardCase();
-        } else if (key === '?123') {
+            collector.updateKeyboardDisplay();
+            
+            // Shift key should not update the input field, only change keyboard state
+            handled = false;
+            console.log('Shift key handled - isShift:', isShift);
+        }
+        else if (key === '?123') {
             isSymbols = true;
             updateKeyboardLayout();
             return;
@@ -3850,28 +4007,60 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Normal character
             let char = key;
-            if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
+            // --- AUTO-CAPITALIZATION FOR CUSTOM KEYBOARD ---
+            if (isCapsLock && char.length === 1 && /[a-z]/.test(char)) {
+                char = char.toUpperCase();
+            } else if ((collector.autoCapitalizeNext && !collector.userShiftOverride) && char.length === 1 && /[a-z]/.test(char)) {
+                char = char.toUpperCase();
+                collector.autoCapitalizeNext = false;
+                collector.updateKeyboardDisplay();
+            } else if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
             newCaret = caret + 1;
             insertChar = char;
             handled = true;
-            // If shift is active, turn it off after any key except shift
-            if (isShift) {
+            // If shift is active and caps lock is off, turn off shift after one letter
+            if (isShift && !isCapsLock) {
                 isShift = false;
+                collector.userShiftOverride = false;
                 updateKeyboardCase();
+                updateKeyboardCapsLock();
+                collector.updateKeyboardDisplay();
             }
+            console.log('Character processed:', char, 'shift:', isShift, 'capsLock:', isCapsLock);
         }
         // --- Add active class for 0.25s visual feedback ---
         e.target.classList.add('active');
-        // Remove .active on mouseup/mouseleave to prevent sticky state
+        // Remove .active from all keys before adding to current
+        customKeyboard.querySelectorAll('.key.active').forEach(key => key.classList.remove('active'));
         const removeActive = () => e.target.classList.remove('active');
         e.target.addEventListener('mouseup', removeActive, { once: true });
         e.target.addEventListener('mouseleave', removeActive, { once: true });
         setTimeout(removeActive, 250);
         // --- End active class logic ---
+        // Record keystroke for shift key separately (outside handled block)
+        if (key === 'shift') {
+            const timestamp = performance.now();
+            collector.recordKeystroke({
+                timestamp,
+                actualChar: 'SHIFT',
+                refChar: 'SHIFT',
+                keyCode: 16,
+                type: 'custom-keyboard',
+                sentence: collector.currentSentence,
+                position: caret,
+                clientX: Math.round(touchX),
+                clientY: Math.round(touchY),
+                key_x: Math.round(keyX),
+                key_y: Math.round(keyY),
+                dwell_time_ms: ''
+            });
+        }
+        
         if (handled) {
+            console.log('Handling input (click):', insertChar, 'newValue:', newValue);
             isProgrammaticInput = true;
             typingInput.value = newValue;
             typingInput.setSelectionRange(newCaret, newCaret);
@@ -3887,23 +4076,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 actualChar = 'SPACE';
                 refChar = 'SPACE';
             }
-            collector.recordKeystroke({
-                timestamp,
-                actualChar: actualChar,
-                refChar: refChar,
-                keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === 'SHIFT' ? 16 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
-                type: 'custom-keyboard',
-                sentence: collector.currentSentence,
-                position: newCaret,
-                clientX: Math.round(touchX),
-                clientY: Math.round(touchY),
-                key_x: Math.round(keyX),
-                key_y: Math.round(keyY),
-                dwell_time_ms: ''
-            });
+            // Only record keystroke if there's an actual character to insert
+            if (insertChar && insertChar !== 'SHIFT') {
+                collector.recordKeystroke({
+                    timestamp,
+                    actualChar: actualChar,
+                    refChar: refChar,
+                    keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
+                    type: 'custom-keyboard',
+                    sentence: collector.currentSentence,
+                    position: newCaret,
+                    clientX: Math.round(touchX),
+                    clientY: Math.round(touchY),
+                    key_x: Math.round(keyX),
+                    key_y: Math.round(keyY),
+                    dwell_time_ms: ''
+                });
+            }
             collector.calculateAccuracy();
             collector.checkSentenceCompletion();
             collector.updateTypingFeedback();
+            setTimeout(() => collector.updateAutoCapState(), 0);
         }
     });
 
@@ -3912,9 +4105,12 @@ document.addEventListener('DOMContentLoaded', () => {
         keys.forEach(btn => {
             const key = btn.getAttribute('data-key');
             if (key && key.length === 1 && /[a-z]/.test(key)) {
-                btn.textContent = isShift ? key.toUpperCase() : key;
+                // Show uppercase if caps lock is on OR if shift is active
+                const shouldShowUppercase = isCapsLock || isShift;
+                btn.textContent = shouldShowUppercase ? key.toUpperCase() : key;
             }
         });
+        console.log('updateKeyboardCase called - isCapsLock:', isCapsLock, 'isShift:', isShift);
     }
     function updateKeyboardLayout() {
         const letterRows = customKeyboard.querySelectorAll('.keyboard-row.keyboard-letters');
@@ -4026,11 +4222,30 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (key === 'enter') {
             insertChar = '\n';
             handled = true;
-        } else if (key === 'shift') {
-            insertChar = 'SHIFT';
-            handled = true;
-            isShift = !isShift; // Toggle shift on each press
+        } else if (key?.toLowerCase?.() === 'shift') {
+            const now = Date.now();
+            
+            // If caps lock is enabled, clicking shift should turn it off
+            if (isCapsLock) {
+                isCapsLock = false;
+                isShift = false;
+                collector.capsLockEnabled = false;
+                collector.userShiftOverride = false;
+                lastShiftClickTime = 0;
+                console.log('Caps lock turned OFF by shift touch');
+            } else {
+                // Simple toggle shift state
+                isShift = !isShift;
+                collector.userShiftOverride = isShift;
+                console.log('Shift toggled:', isShift ? 'ON' : 'OFF');
+            }
+            
+            // Update keyboard display immediately
             updateKeyboardCase();
+            collector.updateKeyboardDisplay();
+            
+            // Shift key should not update the input field, only change keyboard state
+            handled = false;
         } else if (key === '?123') {
             isSymbols = true;
             updateKeyboardLayout();
@@ -4042,20 +4257,53 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Normal character
             let char = key;
-            if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
+            // --- AUTO-CAPITALIZATION FOR CUSTOM KEYBOARD ---
+            if (isCapsLock && char.length === 1 && /[a-z]/.test(char)) {
+                char = char.toUpperCase();
+            } else if ((collector.autoCapitalizeNext && !collector.userShiftOverride) && char.length === 1 && /[a-z]/.test(char)) {
+                char = char.toUpperCase();
+                collector.autoCapitalizeNext = false;
+                collector.userShiftOverride = false;
+                collector.updateKeyboardDisplay();
+            } else if (isShift && !isSymbols && char.length === 1 && /[a-z]/.test(char)) {
                 char = char.toUpperCase();
             }
             newValue = value.slice(0, caret) + char + value.slice(caret);
             newCaret = caret + 1;
             insertChar = char;
             handled = true;
-            // If shift is active, turn it off after any key except shift
-            if (isShift) {
+            // If shift is active and caps lock is off, turn off shift after one letter
+            if (isShift && !isCapsLock) {
                 isShift = false;
+                collector.userShiftOverride = false;
                 updateKeyboardCase();
+                updateKeyboardCapsLock();
+                collector.updateKeyboardDisplay();
             }
+            console.log('Character processed (touch):', char, 'shift:', isShift, 'capsLock:', isCapsLock);
         }
+        
+        // Record keystroke for shift key separately (outside handled block)
+        if (key === 'shift') {
+            const timestamp = performance.now();
+            collector.recordKeystroke({
+                timestamp,
+                actualChar: 'SHIFT',
+                refChar: 'SHIFT',
+                keyCode: 16,
+                type: 'custom-keyboard',
+                sentence: collector.currentSentence,
+                position: caret,
+                clientX: Math.round(keyX),
+                clientY: Math.round(keyY),
+                key_x: Math.round(keyX),
+                key_y: Math.round(keyY),
+                dwell_time_ms: ''
+            });
+        }
+        
         if (handled) {
+            console.log('Handling input (touch):', insertChar, 'newValue:', newValue);
             isProgrammaticInput = true;
             typingInput.value = newValue;
             typingInput.setSelectionRange(newCaret, newCaret);
@@ -4071,23 +4319,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 actualChar = 'SPACE';
                 refChar = 'SPACE';
             }
-            collector.recordKeystroke({
-                timestamp,
-                actualChar: actualChar,
-                refChar: refChar,
-                keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === 'SHIFT' ? 16 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
-                type: 'custom-keyboard',
-                sentence: collector.currentSentence,
-                position: newCaret,
-                clientX: Math.round(keyX),
-                clientY: Math.round(keyY),
-                key_x: Math.round(keyX),
-                key_y: Math.round(keyY),
-                dwell_time_ms: ''
-            });
+            // Only record keystroke if there's an actual character to insert
+            if (insertChar && insertChar !== 'SHIFT') {
+                collector.recordKeystroke({
+                    timestamp,
+                    actualChar: actualChar,
+                    refChar: refChar,
+                    keyCode: insertChar === 'BACKSPACE' ? 8 : insertChar === ' ' ? 32 : (insertChar.charCodeAt ? insertChar.charCodeAt(0) : 0),
+                    type: 'custom-keyboard',
+                    sentence: collector.currentSentence,
+                    position: newCaret,
+                    clientX: Math.round(keyX),
+                    clientY: Math.round(keyY),
+                    key_x: Math.round(keyX),
+                    key_y: Math.round(keyY),
+                    dwell_time_ms: ''
+                });
+            }
             collector.calculateAccuracy();
             collector.checkSentenceCompletion();
             collector.updateTypingFeedback();
+            setTimeout(() => collector.updateAutoCapState(), 0);
         }
     }, { passive: true });                      
 });
@@ -4099,3 +4351,38 @@ document.addEventListener('touchend', function() {
 document.addEventListener('touchcancel', function() {
     document.querySelectorAll('#custom-keyboard .key.active').forEach(key => key.classList.remove('active'));
 }, { passive: true });
+
+function updateKeyboardCapsLock() {
+    // Add a visual indicator for caps lock (e.g., highlight shift key)
+    const shiftKey = customKeyboard.querySelector('.key[data-key="shift"]');
+    if (shiftKey) {
+        if (isCapsLock) {
+            shiftKey.classList.add('capslock');
+            shiftKey.style.backgroundColor = '#20cfcf'; // Highlight when caps lock is on
+        } else {
+            shiftKey.classList.remove('capslock');
+            shiftKey.style.backgroundColor = ''; // Reset to default
+        }
+    }
+}
+
+// Fix updateKeyboardCase to always use isCapsLock and isShift:
+function updateKeyboardCase() {
+    const keys = customKeyboard.querySelectorAll('.keyboard-letters .key');
+    keys.forEach(btn => {
+        const key = btn.getAttribute('data-key');
+        if (key && key.length === 1 && /[a-z]/.test(key)) {
+            // Show uppercase if caps lock is on OR if shift is active
+            const shouldShowUppercase = isCapsLock || isShift;
+            btn.textContent = shouldShowUppercase ? key.toUpperCase() : key;
+        }
+    });
+    console.log('Global updateKeyboardCase called - isCapsLock:', isCapsLock, 'isShift:', isShift);
+}
+
+// After any change to caps lock or shift, call both updateKeyboardCapsLock() and updateKeyboardCase():
+// In both click and touchend handlers for shift key, after changing isCapsLock or isShift:
+// ...
+updateKeyboardCapsLock();
+updateKeyboardCase();
+// ... existing code ...
