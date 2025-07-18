@@ -2832,7 +2832,17 @@ class BiometricDataCollector {
         document.getElementById('step-progress').textContent = this.getInitialProgress(step.type);
     
         const nextCrystalBtn = document.getElementById('next-crystal-btn');
-        if (nextCrystalBtn) {
+        if (this.currentCrystalStep === 5) {
+            // Remove the next step button entirely in step 5
+            if (nextCrystalBtn) {
+                nextCrystalBtn.remove();
+            }
+            // Add delay to ensure DOM is fully rendered for facets
+            setTimeout(() => {
+                this.crystalState.facets = this.generateFacets();
+                this.renderFacets();
+            }, 100);
+        } else if (nextCrystalBtn) {
             nextCrystalBtn.style.display = 'inline-flex';
             nextCrystalBtn.disabled = true;
             nextCrystalBtn.style.opacity = '0.5';
