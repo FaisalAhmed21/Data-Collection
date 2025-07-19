@@ -4208,3 +4208,12 @@ html, body {
     border: 2px solid #7DD3FC !important; /* Light soothing blue border */
   }
 }
+
+#next-sentence-btn.activated {
+  background-color: #ffffff !important; /* White background */
+  color: var(--color-primary) !important; /* Teal text */
+  border: 2px solid var(--color-primary);
+  font-weight: bold;
+  box-shadow: 0 0 8px rgba(32, 207, 207, 0.4);
+  transition: all 0.3s ease-in-out;
+}
