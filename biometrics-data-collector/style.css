@@ -3985,8 +3985,8 @@ html, body {
   max-width: 100%;
   margin: 0;
   box-sizing: border-box;
-  padding: clamp(20px, 3vw, 44px) clamp(0.2em, 1vw, 1.2em);
-  font-size: clamp(1.4rem, 4vw, 3rem);
+  padding: clamp(12px, 1.7vw, 26px) clamp(0.2em, 1vw, 1.2em);
+  font-size: clamp(1.18rem, 2.8vw, 2.3rem);
   border: none;
   border-radius: clamp(6px, 2vw, 20px);
   background: linear-gradient(180deg, #fafdff 80%, #e6f7fa 100%);
@@ -4216,4 +4216,38 @@ html, body {
   font-weight: bold;
   box-shadow: 0 0 8px rgba(32, 207, 207, 0.4);
   transition: all 0.3s ease-in-out;
+}
+
+@media (max-width: 600px) {
+  .custom-keyboard .key {
+    min-height: 48px;
+    font-size: clamp(1rem, 3vw, 1.3rem) !important;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
+@media (max-width: 400px) {
+  .custom-keyboard .key {
+    min-height: 38px;
+    font-size: clamp(0.95rem, 4vw, 1.1rem) !important;
+    padding-top: 7px;
+    padding-bottom: 7px;
+  }
+}
+
+@media (max-width: 600px) {
+  .custom-keyboard .key {
+    min-height: 58px;
+    font-size: clamp(1.08rem, 3.3vw, 1.5rem) !important;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+}
+@media (max-width: 400px) {
+  .custom-keyboard .key {
+    min-height: 44px;
+    font-size: clamp(1rem, 4.2vw, 1.18rem) !important;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
 }
