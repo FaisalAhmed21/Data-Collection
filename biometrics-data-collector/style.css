@@ -4206,6 +4206,6 @@ html, body {
 }
 @media (prefers-color-scheme: dark) {
   .custom-keyboard .key {
-    border: 1.5px solid #32B8C6 !important; /* Teal accent border for dark mode */
+    border: 2px solid #7DD3FC !important; /* Light soothing blue border */
   }
 }
