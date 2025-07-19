@@ -3774,8 +3774,8 @@ html, body {
   flex: 1 1 0;
   min-width: 0;
   margin: 0.08em;
-  padding: clamp(16px, 2.5vw, 36px) clamp(0.2em, 1vw, 1.2em);
-  font-size: clamp(1.2rem, 3.5vw, 2.6rem);
+  padding: clamp(20px, 3vw, 44px) clamp(0.2em, 1vw, 1.2em);
+  font-size: clamp(1.4rem, 4vw, 3rem);
   border: none;
   border-radius: clamp(6px, 2vw, 20px);
   background: linear-gradient(180deg, #fafdff 80%, #e6f7fa 100%);
@@ -3852,10 +3852,10 @@ html, body {
     margin-bottom: 0px !important; /* No space between rows */
   }
   .custom-keyboard .key {
-    min-height: 80px;
-    font-size: clamp(1.3rem, 4.5vw, 1.8rem) !important;
-    padding-top: 22px;
-    padding-bottom: 22px;
+    min-height: 90px;
+    font-size: clamp(1.5rem, 5vw, 2.2rem) !important;
+    padding-top: 26px;
+    padding-bottom: 26px;
   }
   .custom-keyboard .keyboard-actions .key {
     min-width: clamp(24px, 6vw, 80px);
@@ -3985,8 +3985,8 @@ html, body {
   max-width: 100%;
   margin: 0;
   box-sizing: border-box;
-  padding: clamp(16px, 2.5vw, 36px) clamp(0.2em, 1vw, 1.2em);
-  font-size: clamp(1.2rem, 3.5vw, 2.6rem);
+  padding: clamp(20px, 3vw, 44px) clamp(0.2em, 1vw, 1.2em);
+  font-size: clamp(1.4rem, 4vw, 3rem);
   border: none;
   border-radius: clamp(6px, 2vw, 20px);
   background: linear-gradient(180deg, #fafdff 80%, #e6f7fa 100%);
