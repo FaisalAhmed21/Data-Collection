@@ -4320,12 +4320,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (key && touch) {
             const dwellStart = collector.keyDwellStartTimes[key];
             const dwellTime = dwellStart ? Math.round(performance.now() - dwellStart) : '';
-            // Fix: Match both 'space' and 'SPACE' for dwell time assignment
+            // Find the last keystroke for this key and add dwell_time_ms (match by actualChar and key_x/key_y)
             for (let i = collector.keystrokeData.length - 1; i >= 0; i--) {
                 const k = collector.keystrokeData[i];
-                if (((k.actualChar && k.actualChar.toLowerCase() === key.toLowerCase()) ||
-                     (key === 'backspace' && k.actualChar === 'BACKSPACE') ||
-                     (key === 'shift' && k.actualChar === 'SHIFT')) &&
+                if ((k.actualChar === key || (key === 'backspace' && k.actualChar === 'BACKSPACE') || (key === 'shift' && k.actualChar === 'SHIFT')) &&
                     k.key_x !== undefined && k.key_y !== undefined && k.dwell_time_ms === '') {
                     k.dwell_time_ms = dwellTime;
                     break;
