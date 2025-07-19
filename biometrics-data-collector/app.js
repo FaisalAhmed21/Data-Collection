@@ -1209,6 +1209,15 @@ class BiometricDataCollector {
             feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
         }
         feedbackDisplay.innerHTML = feedbackHTML;
+        // Always update feedback container activation
+        const feedbackContainer = document.querySelector('.typing-feedback-container');
+        if (feedbackContainer) {
+            if (typed === target && this.calculateAccuracy() === 100) {
+                feedbackContainer.classList.add('activated');
+            } else {
+                feedbackContainer.classList.remove('activated');
+            }
+        }
     }
     escapeHtml(text) {
         // Helper from provided code
@@ -1653,18 +1662,22 @@ class BiometricDataCollector {
             if (this.currentSentence === this.sentences.length - 1) {
                 // Only remove the button, do not show next task here
                 if (nextBtn) nextBtn.remove();
+                // Always show Next Task button for Crystal Forge Game when 4th sentence is complete
+                this.showNextTaskButton('crystal', 'Crystal Forge Game');
             } else {
                 nextBtn.disabled = false;
                 nextBtn.classList.add('next-task-btn--deep');
                 nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
             }
         } else {
-            nextBtn.disabled = true;
-            nextBtn.classList.remove('next-task-btn--deep');
-            nextBtn.classList.remove('btn--disabled');
-            nextBtn.classList.add('btn--primary');
-            nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
-            nextBtn.style.display = 'inline-flex';
+            if (nextBtn) {
+                nextBtn.disabled = true;
+                nextBtn.classList.remove('next-task-btn--deep');
+                nextBtn.classList.remove('btn--disabled');
+                nextBtn.classList.add('btn--primary');
+                nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
+                nextBtn.style.display = 'inline-flex';
+            }
         }
     }
     
