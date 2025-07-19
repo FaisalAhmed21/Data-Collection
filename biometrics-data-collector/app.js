@@ -1585,16 +1585,21 @@ class BiometricDataCollector {
         }
     
         const nextButton = document.getElementById('next-sentence-btn');
-        if (nextButton) {
+        const feedbackContainer = document.querySelector('.typing-feedback-container');
+        
+        if (nextButton && feedbackContainer) {
             if (accuracy === 100) {
                 nextButton.disabled = false;
                 nextButton.classList.remove('btn--disabled');
+                nextButton.classList.add('activated');
+                feedbackContainer.classList.add('activated');
             } else {
                 nextButton.disabled = true;
                 nextButton.classList.add('btn--disabled');
+                nextButton.classList.remove('activated');
+                feedbackContainer.classList.remove('activated');
             }
         }
-    
         const accuracyRing = document.getElementById('accuracy-ring');
         const accuracyValue = document.getElementById('accuracy');
         const encourage = document.querySelector('.accuracy-encourage');
