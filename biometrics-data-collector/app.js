@@ -1544,11 +1544,16 @@ class BiometricDataCollector {
         input.setSelectionRange(0, 0);
         input.focus();
         document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
-        this.calculateAccuracy();
         const nextBtn = document.getElementById('next-sentence-btn');
         if (this.currentSentence === this.sentences.length - 1) {
             // Remove the button from the DOM entirely on the fourth sentence page
             if (nextBtn) nextBtn.remove();
+            // If the fourth sentence is already completed with 100% accuracy, show the Next Task button
+            const typed = document.getElementById('typing-input').value;
+            const target = this.sentences[this.currentSentence];
+            if (typed === target && this.calculateAccuracy() === 100) {
+                this.showNextTaskButton('crystal', 'Crystal Forge Game');
+            }
         } else {
             if (nextBtn) {
                 nextBtn.disabled = true;
@@ -1646,8 +1651,8 @@ class BiometricDataCollector {
         const accuracy = this.calculateAccuracy();
         if (typed === target && accuracy === 100) {
             if (this.currentSentence === this.sentences.length - 1) {
-                nextBtn.style.display = 'none';
-                this.showNextTaskButton('crystal', 'Crystal Forge Game');
+                // Only remove the button, do not show next task here
+                if (nextBtn) nextBtn.remove();
             } else {
                 nextBtn.disabled = false;
                 nextBtn.classList.add('next-task-btn--deep');
