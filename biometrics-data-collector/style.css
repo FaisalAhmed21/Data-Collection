@@ -4163,7 +4163,7 @@ html, body {
 .keyboard-row,
 .custom-keyboard .keyboard-row {
     margin: 0 !important;
-    margin-bottom: 0 !important;
+    margin-bottom: 8px !important;
     padding: 0 !important;
     gap: 0 !important;
     row-gap: 0 !important;
@@ -4183,7 +4183,7 @@ html, body {
   .keyboard-row,
   .custom-keyboard .keyboard-row {
     margin: 0 !important;
-    margin-bottom: 0 !important;
+    margin-bottom: 8px !important;
     padding: 0 !important;
     gap: 0 !important;
     row-gap: 0 !important;
