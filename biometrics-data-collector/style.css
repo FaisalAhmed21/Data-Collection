@@ -3763,9 +3763,9 @@ html, body {
   justify-content: center;
   align-items: stretch;
   gap: 1px !important; /* Further reduce vertical gap between keys */
-  margin-bottom: 1px !important; /* Further reduce space between rows */
+  margin-bottom: 8px !important; /* Add slight gap between rows */
   width: 100%;
-  margin: 0.1em 0;
+  margin: 0.1em 0 8px 0;
   flex-wrap: nowrap;
   box-sizing: border-box;
   padding: 0;
