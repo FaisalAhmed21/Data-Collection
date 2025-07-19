@@ -1546,10 +1546,17 @@ class BiometricDataCollector {
         document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
         this.calculateAccuracy();
         const nextBtn = document.getElementById('next-sentence-btn');
-        nextBtn.disabled = true;
-        nextBtn.style.display = 'inline-flex';
-        nextBtn.style.backgroundColor = 'var(--color-secondary)';
-        nextBtn.style.opacity = '0.5';
+        if (this.currentSentence === this.sentences.length - 1) {
+            // Remove the button from the DOM entirely on the fourth sentence page
+            if (nextBtn) nextBtn.remove();
+        } else {
+            if (nextBtn) {
+                nextBtn.disabled = true;
+                nextBtn.style.display = 'inline-flex';
+                nextBtn.style.backgroundColor = 'var(--color-secondary)';
+                nextBtn.style.opacity = '0.5';
+            }
+        }
         this.updateTypingFeedback();
     }
     
@@ -1644,11 +1651,14 @@ class BiometricDataCollector {
             } else {
                 nextBtn.disabled = false;
                 nextBtn.classList.add('next-task-btn--deep');
+                nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
             }
-
         } else {
             nextBtn.disabled = true;
             nextBtn.classList.remove('next-task-btn--deep');
+            nextBtn.classList.remove('btn--disabled');
+            nextBtn.classList.add('btn--primary');
+            nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
             nextBtn.style.display = 'inline-flex';
         }
     }
