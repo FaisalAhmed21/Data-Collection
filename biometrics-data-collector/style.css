@@ -4200,7 +4200,6 @@ html, body {
     gap: 0 !important;
   }
 }
-
 .custom-keyboard .key {
     border: 1.5px solid rgba(32, 207, 207, 0.35); /* More visible teal border for light mode */
 }
