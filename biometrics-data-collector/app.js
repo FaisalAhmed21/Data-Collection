@@ -1682,23 +1682,18 @@ class BiometricDataCollector {
 
     
     checkSentenceCompletion() {
+        const typed = document.getElementById('typing-input').value;
+        const target = this.sentences[this.currentSentence];
+        const nextBtn = document.getElementById('next-sentence-btn');
+        const nextTaskBtn = document.getElementById('next-task-btn');
+        const accuracy = this.calculateAccuracy();
+    
         if (this.currentSentence < 4) {
-            // Usual logic for first four sentences
-            const typed = document.getElementById('typing-input').value;
-            const target = this.sentences[this.currentSentence];
-            const nextBtn = document.getElementById('next-sentence-btn');
-            const accuracy = this.calculateAccuracy();
+            // First four sentences
             if (typed === target && accuracy === 100) {
-                if (this.currentSentence === this.sentences.length - 1) {
-                    // Only remove the button, do not show next task here
-                    if (nextBtn) nextBtn.remove();
-                    // Always show Next Task button for Crystal Forge Game when 4th sentence is complete
-                    this.showNextTaskButton('crystal', 'Crystal Forge Game');
-                } else {
-                    nextBtn.disabled = false;
-                    nextBtn.classList.add('next-task-btn--deep');
-                    nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
-                }
+                nextBtn.disabled = false;
+                nextBtn.classList.add('next-task-btn--deep');
+                nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
             } else {
                 if (nextBtn) {
                     nextBtn.disabled = true;
@@ -1710,20 +1705,31 @@ class BiometricDataCollector {
                 }
             }
         } else if (this.currentSentence === 4) {
-            // After fourth sentence, show Next Sentence button
-            const nextBtn = document.getElementById('next-sentence-btn');
-            if (nextBtn) {
-                nextBtn.style.display = 'inline-block';
-                nextBtn.disabled = false;
-            }
-            // Hide Next Task button
-            const nextTaskBtn = document.getElementById('next-task-btn');
-            if (nextTaskBtn) {
-                nextTaskBtn.style.display = 'none';
-                nextTaskBtn.disabled = true;
+            // Fifth sentence
+            if (typed === target && accuracy === 100) {
+                // Hide next sentence button (we're done typing)
+                if (nextBtn) {
+                    nextBtn.style.display = 'none';
+                    nextBtn.disabled = true;
+                }
+    
+                // Show Crystal Forge button
+                this.taskState.typingCompleted = true;
+                this.showNextTaskButton('crystal', 'Crystal Forge Game');
+            } else {
+                if (nextBtn) {
+                    nextBtn.style.display = 'inline-block';
+                    nextBtn.disabled = true;
+                }
+                // Hide next task button in case shown prematurely
+                if (nextTaskBtn) {
+                    nextTaskBtn.style.display = 'none';
+                    nextTaskBtn.disabled = true;
+                }
             }
         }
     }
+
     
     nextSentence() {
         if (this.currentSentence < 4) {
