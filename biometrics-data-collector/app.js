@@ -1546,6 +1546,7 @@ class BiometricDataCollector {
     
     displayCurrentSentence() {
         const typingContent = document.querySelector('.typing-content');
+        const typingSection = document.querySelector('.typing-section');
         document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/5`;
         const nextBtn = document.getElementById('next-sentence-btn');
         const feedbackContainer = document.querySelector('.typing-feedback-container');
@@ -1578,7 +1579,16 @@ class BiometricDataCollector {
                 nextTaskBtn.textContent = 'Next Task: Crystal Forge Game';
                 nextTaskBtn.style.display = 'none';
                 nextTaskBtn.disabled = true;
-                typingContent.appendChild(nextTaskBtn);
+                nextTaskBtn.style.position = 'relative';
+                nextTaskBtn.style.marginTop = '18px';
+                nextTaskBtn.style.zIndex = '1000';
+                if (typingSection) {
+                    typingSection.appendChild(nextTaskBtn);
+                    console.log('[DEBUG] Next Task button appended to .typing-section');
+                } else {
+                    typingContent.appendChild(nextTaskBtn);
+                    console.log('[DEBUG] Next Task button appended to .typing-content');
+                }
                 nextTaskBtn.addEventListener('click', () => {
                     this.taskState.typingCompleted = true;
                     this.taskState.crystalCompleted = false;
@@ -1626,9 +1636,14 @@ class BiometricDataCollector {
                 if (typed.length >= 25) {
                     nextTaskBtn.style.display = 'inline-block';
                     nextTaskBtn.disabled = false;
+                    nextTaskBtn.style.visibility = 'visible';
+                    nextTaskBtn.style.opacity = '1';
+                    console.log('[DEBUG] Next Task button shown and enabled');
                 } else {
                     nextTaskBtn.style.display = 'none';
                     nextTaskBtn.disabled = true;
+                    nextTaskBtn.style.visibility = 'hidden';
+                    nextTaskBtn.style.opacity = '0.5';
                 }
             }
             return acc;
