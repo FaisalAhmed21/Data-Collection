@@ -1558,33 +1558,35 @@ class BiometricDataCollector {
 
         // Fifth sentence page (custom free-typing)
         if (this.currentSentence === 4) {
-            // Remove feedback and next sentence button
+            // Remove feedback and next sentence button completely from DOM
             if (feedbackContainer) feedbackContainer.style.display = 'none';
-            if (nextBtn) nextBtn.style.display = 'none';
+            if (nextBtn && nextBtn.parentNode) nextBtn.parentNode.removeChild(nextBtn);
             // Show custom instruction
             targetSentence.textContent = 'Type anything meaningful you want (Minimum of 25 characters)';
             input.placeholder = 'Type at least 25 characters...';
             // Show/enable Next Task button only if 25+ chars
             const nextTaskBtn = document.getElementById('next-task-btn');
-            if (nextTaskBtn) {
-                nextTaskBtn.style.display = input.value.length >= 25 ? 'inline-block' : 'none';
-                nextTaskBtn.disabled = input.value.length < 25;
-            }
-            // Remove feedback system for this page
-            if (feedbackDisplay) feedbackDisplay.innerHTML = '';
-            // Custom accuracy calculation
-            this.calculateAccuracy = () => {
+            // Remove any previous input event listeners for accuracy
+            input.oninput = null;
+            // Custom accuracy calculation and Next Task button logic
+            const updateFreeTypingAccuracy = () => {
                 const typed = input.value;
                 let acc = Math.min(100, Math.round((typed.length / 25) * 100));
                 document.getElementById('accuracy').textContent = `${acc}%`;
-                // Show/enable Next Task button if 25+ chars
                 if (nextTaskBtn) {
-                    nextTaskBtn.style.display = typed.length >= 25 ? 'inline-block' : 'none';
-                    nextTaskBtn.disabled = typed.length < 25;
+                    if (typed.length >= 25) {
+                        nextTaskBtn.style.display = 'inline-block';
+                        nextTaskBtn.disabled = false;
+                    } else {
+                        nextTaskBtn.style.display = 'none';
+                        nextTaskBtn.disabled = true;
+                    }
                 }
             };
-            input.addEventListener('input', this.calculateAccuracy);
-            this.calculateAccuracy();
+            input.addEventListener('input', updateFreeTypingAccuracy);
+            updateFreeTypingAccuracy();
+            // Remove feedback system for this page
+            if (feedbackDisplay) feedbackDisplay.innerHTML = '';
             return;
         } else {
             // Restore feedback and next sentence button for other sentences
