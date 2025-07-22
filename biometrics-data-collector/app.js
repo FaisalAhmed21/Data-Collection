@@ -93,7 +93,7 @@ class BiometricDataCollector {
             "The CEO's Q3 report showed $2.8M profit and 15% growth across all divisions.",
             "Agent X-007 decoded the message: 'Meet @ Pier 9 on July 4th at 3:30 PM.'",
             "Tesla's Model S hit 0-60 mph in 2.1 seconds - breaking the previous record!",
-            "Type anything meaningful you want (minimum of 25 characters)"
+            "Type anything meaningful you want (Minimum of 25 characters)"
         ];
         
         this.crystalSteps = [
@@ -1190,7 +1190,6 @@ class BiometricDataCollector {
     
     updateTypingFeedback() {
         // Feedback system logic from provided code
-        if (this.currentSentence === 4) return; // No feedback on fifth page
         const typed = document.getElementById('typing-input').value;
         const target = this.sentences[this.currentSentence];
         const feedbackDisplay = document.getElementById('typing-feedback-display');
@@ -1199,16 +1198,16 @@ class BiometricDataCollector {
         for (let i = 0; i < target.length; i++) {
             if (i < typed.length) {
                 if (typed[i] === target[i]) {
-                    feedbackHTML += `<span class=\"typed-correct\">${this.escapeHtml(target[i])}</span>`;
+                    feedbackHTML += `<span class="typed-correct">${this.escapeHtml(target[i])}</span>`;
                 } else {
-                    feedbackHTML += `<span class=\"typed-incorrect\">${this.escapeHtml(target[i])}</span>`;
+                    feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(target[i])}</span>`;
                 }
             } else {
-                feedbackHTML += `<span class=\"to-type\">${this.escapeHtml(target[i])}</span>`;
+                feedbackHTML += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
             }
         }
         for (let i = target.length; i < typed.length; i++) {
-            feedbackHTML += `<span class=\"typed-incorrect\">${this.escapeHtml(typed[i])}</span>`;
+            feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
         }
         feedbackDisplay.innerHTML = feedbackHTML;
         // Always update feedback container activation
@@ -1559,130 +1558,182 @@ class BiometricDataCollector {
 
         // Fifth sentence page (custom free-typing)
         if (this.currentSentence === 4) {
-            if (nextBtn) nextBtn.remove();
-            if (feedbackContainer) feedbackContainer.remove();
-            if (feedbackDisplay) feedbackDisplay.remove();
-            targetSentence.textContent = 'Type anything you want (minimum of 25 characters)';
-            input.value = '';
-            input.setAttribute('placeholder', 'Type at least 25 characters...');
-            // Show/hide Next Task button based on input length
+            // Remove feedback and next sentence button
+            if (feedbackContainer) feedbackContainer.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'none';
+            // Show custom instruction
+            targetSentence.textContent = 'Type anything meaningful you want (Minimum of 25 characters)';
+            input.placeholder = 'Type at least 25 characters...';
+            // Show/enable Next Task button only if 25+ chars
             const nextTaskBtn = document.getElementById('next-task-btn');
-            // Add or update accuracy display for the fifth task
-            let accuracyDisplay = document.getElementById('free-typing-accuracy');
-            if (!accuracyDisplay) {
-                accuracyDisplay = document.createElement('div');
-                accuracyDisplay.id = 'free-typing-accuracy';
-                accuracyDisplay.style.marginTop = '10px';
-                accuracyDisplay.style.fontWeight = 'bold';
-                input.parentNode.insertBefore(accuracyDisplay, input.nextSibling);
+            if (nextTaskBtn) {
+                nextTaskBtn.style.display = input.value.length >= 25 ? 'inline-block' : 'none';
+                nextTaskBtn.disabled = input.value.length < 25;
             }
-            // Set initial accuracy to 0%
-            accuracyDisplay.textContent = 'Accuracy: 0%';
-            input.oninput = () => {
+            // Remove feedback system for this page
+            if (feedbackDisplay) feedbackDisplay.innerHTML = '';
+            // Custom accuracy calculation
+            this.calculateAccuracy = () => {
                 const typed = input.value;
-                this.ref_char = typed;
-                // Calculate accuracy based on 25 characters
-                let accuracy = Math.min(100, Math.round((typed.length / 25) * 100));
-                accuracyDisplay.textContent = `Accuracy: ${accuracy}%`;
+                let acc = Math.min(100, Math.round((typed.length / 25) * 100));
+                document.getElementById('accuracy').textContent = `${acc}%`;
+                // Show/enable Next Task button if 25+ chars
                 if (nextTaskBtn) {
-                    if (typed.length >= 25) {
-                        nextTaskBtn.disabled = false;
-                        nextTaskBtn.classList.add('active');
-                    } else {
-                        nextTaskBtn.disabled = true;
-                        nextTaskBtn.classList.remove('active');
-                    }
+                    nextTaskBtn.style.display = typed.length >= 25 ? 'inline-block' : 'none';
+                    nextTaskBtn.disabled = typed.length < 25;
                 }
             };
-            // Initial state
-            if (nextTaskBtn) {
-                nextTaskBtn.disabled = true;
-                nextTaskBtn.classList.remove('active');
-            }
-            // Ensure accuracy display is reset to 0% on page load
-            if (accuracyDisplay) accuracyDisplay.textContent = 'Accuracy: 0%';
+            input.addEventListener('input', this.calculateAccuracy);
+            this.calculateAccuracy();
             return;
-        }
-
-        // Normal sentences (1-4)
-        if (this.sentences[this.currentSentence]) {
+        } else {
+            // Restore feedback and next sentence button for other sentences
+            if (feedbackContainer) feedbackContainer.style.display = '';
+            if (nextBtn) nextBtn.style.display = '';
+            if (feedbackDisplay) feedbackDisplay.innerHTML = '';
+            // Show the target sentence as usual
             targetSentence.textContent = this.sentences[this.currentSentence];
+            input.placeholder = '';
+            // Hide Next Task button
+            const nextTaskBtn = document.getElementById('next-task-btn');
+            if (nextTaskBtn) {
+                nextTaskBtn.style.display = 'none';
+                nextTaskBtn.disabled = true;
+            }
         }
-        if (nextBtn) {
-            nextBtn.disabled = true;
-            nextBtn.style.display = 'inline-flex';
-            nextBtn.style.backgroundColor = 'var(--color-secondary)';
-            nextBtn.style.opacity = '0.5';
-        }
-        if (feedbackContainer && feedbackDisplay) {
-            feedbackDisplay.innerHTML = '';
-            feedbackContainer.classList.remove('activated');
-        }
-        this.updateTypingFeedback();
     }
     
     calculateAccuracy() {
         const typed = document.getElementById('typing-input').value;
-        if (this.currentSentence === 4) {
-            // Fifth page: accuracy is based on length
-            return Math.min(typed.length / 20, 1) * 100;
-        }
         const target = this.sentences[this.currentSentence];
+        
+        console.log('🔍 Accuracy calculation:', {
+            typed: `"${typed}"`,
+            target: `"${target}"`,
+            typedLength: typed.length,
+            targetLength: target.length
+        });
+        
         let accuracy = 0;
         if (typed === target) {
+            document.getElementById('accuracy').textContent = '100%';
             accuracy = 100;
+            console.log('✅ Perfect match - 100% accuracy');
         } else {
             let correct = 0;
             const minLength = Math.min(typed.length, target.length);
+            
             for (let i = 0; i < minLength; i++) {
                 if (typed[i] === target[i]) {
                     correct++;
                 }
             }
+            
             accuracy = Math.round((correct / target.length) * 100);
+            document.getElementById('accuracy').textContent = `${accuracy}%`;
+            console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
         }
+    
+        const nextButton = document.getElementById('next-sentence-btn');
+        const feedbackContainer = document.querySelector('.typing-feedback-container');
+        
+        if (nextButton && feedbackContainer) {
+            if (accuracy === 100) {
+                nextButton.disabled = false;
+                nextButton.classList.remove('btn--disabled');
+                nextButton.classList.add('activated');
+                feedbackContainer.classList.add('activated');
+            } else {
+                nextButton.disabled = true;
+                nextButton.classList.add('btn--disabled');
+                nextButton.classList.remove('activated');
+                feedbackContainer.classList.remove('activated');
+            }
+        }
+        const accuracyRing = document.getElementById('accuracy-ring');
+        const accuracyValue = document.getElementById('accuracy');
+        const encourage = document.querySelector('.accuracy-encourage');
+    
+        if (accuracyRing && accuracyValue) {
+            let percent = Math.max(0, Math.min(accuracy, 100));
+            const circumference = 2 * Math.PI * 26;
+            const offset = circumference * (1 - percent / 100);
+            accuracyRing.setAttribute('stroke-dasharray', circumference);
+            accuracyRing.setAttribute('stroke-dashoffset', offset);
+    
+            if (encourage) {
+                if (percent === 100) {
+                    encourage.textContent = 'Perfect! 🎉';
+                    encourage.style.color = 'var(--color-success)';
+                } else if (percent >= 80) {
+                    encourage.textContent = 'Great job! Almost there!';
+                    encourage.style.color = 'var(--color-primary)';
+                } else if (percent >= 50) {
+                    encourage.textContent = 'Keep going! 💪';
+                    encourage.style.color = 'var(--color-warning)';
+                } else {
+                    encourage.textContent = 'You can do it!';
+                    encourage.style.color = 'var(--color-error)';
+                }
+            }
+        }
+    
         return accuracy;
     }
 
     
     checkSentenceCompletion() {
-        const typed = document.getElementById('typing-input').value;
-        const target = this.sentences[this.currentSentence];
-        const nextBtn = document.getElementById('next-sentence-btn');
-        const accuracy = this.calculateAccuracy();
-        if (this.currentSentence === 4) {
-            // Fifth page: Next Task button logic handled in input.oninput
-            return;
-        }
-        if (typed === target && accuracy === 100) {
-            if (this.currentSentence === this.sentences.length - 1) {
-                if (nextBtn) nextBtn.remove();
-                this.showNextTaskButton('crystal', 'Crystal Forge Game');
+        if (this.currentSentence < 4) {
+            // Usual logic for first four sentences
+            const typed = document.getElementById('typing-input').value;
+            const target = this.sentences[this.currentSentence];
+            const nextBtn = document.getElementById('next-sentence-btn');
+            const accuracy = this.calculateAccuracy();
+            if (typed === target && accuracy === 100) {
+                if (this.currentSentence === this.sentences.length - 1) {
+                    // Only remove the button, do not show next task here
+                    if (nextBtn) nextBtn.remove();
+                    // Always show Next Task button for Crystal Forge Game when 4th sentence is complete
+                    this.showNextTaskButton('crystal', 'Crystal Forge Game');
+                } else {
+                    nextBtn.disabled = false;
+                    nextBtn.classList.add('next-task-btn--deep');
+                    nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
+                }
             } else {
-                nextBtn.disabled = false;
-                nextBtn.classList.add('next-task-btn--deep');
-                nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
+                if (nextBtn) {
+                    nextBtn.disabled = true;
+                    nextBtn.classList.remove('next-task-btn--deep');
+                    nextBtn.classList.remove('btn--disabled');
+                    nextBtn.classList.add('btn--primary');
+                    nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
+                    nextBtn.style.display = 'inline-flex';
+                }
             }
-        } else {
+        } else if (this.currentSentence === 4) {
+            // After fourth sentence, show Next Sentence button
+            const nextBtn = document.getElementById('next-sentence-btn');
             if (nextBtn) {
-                nextBtn.disabled = true;
-                nextBtn.classList.remove('next-task-btn--deep');
-                nextBtn.classList.remove('btn--disabled');
-                nextBtn.classList.add('btn--primary');
-                nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
-                nextBtn.style.display = 'inline-flex';
+                nextBtn.style.display = 'inline-block';
+                nextBtn.disabled = false;
+            }
+            // Hide Next Task button
+            const nextTaskBtn = document.getElementById('next-task-btn');
+            if (nextTaskBtn) {
+                nextTaskBtn.style.display = 'none';
+                nextTaskBtn.disabled = true;
             }
         }
     }
     
     nextSentence() {
-        this.currentSentence++;
-        if (this.currentSentence >= this.sentences.length) {
-            this.showNextTaskButton('crystal', 'Crystal Forge Game');
-            this.updateTaskLocks();
-        } else {
+        if (this.currentSentence < 4) {
+            this.currentSentence++;
             this.displayCurrentSentence();
-            this.updateTypingProgress();
+        } else if (this.currentSentence === 4) {
+            // Go to fifth page (free typing)
+            this.currentSentence++;
+            this.displayCurrentSentence();
         }
     }
     
@@ -3023,33 +3074,29 @@ class BiometricDataCollector {
         // Add trial information for crystal game
         if (data.taskId === 2) { // Crystal game
             data.trial = this.crystalState.currentTrial;
+            // Enhanced debug logging for trial tracking
             if (data.type === 'touchstart') {
                 console.log(`📊 Touch event recorded - Step: ${data.step}, Trial: ${data.trial}, Current Trial State: ${this.crystalState.currentTrial}`);
             }
         } else {
             data.trial = 1; // Default trial for other tasks
         }
-        // Improved: Track gesture path and length per touch identifier
+        
+        // In recordTouchEvent, update gesturePath and gesturePathLength
         const trialStep = `${data.trial || 1}_${data.step || 1}`;
-        if (!this.gesturePath[trialStep]) this.gesturePath[trialStep] = {};
-        if (!this.gesturePathLength[trialStep]) this.gesturePathLength[trialStep] = {};
-        // For each touch point, update its path and length
-        (data.touches || []).forEach(t => {
-            const id = t.identifier || 0;
-            if (!this.gesturePath[trialStep][id]) {
-                this.gesturePath[trialStep][id] = [];
-                this.gesturePathLength[trialStep][id] = 0;
-            }
-            const x = Math.round(t.clientX || 0);
-            const y = Math.round(t.clientY || 0);
-            const last = this.gesturePath[trialStep][id][this.gesturePath[trialStep][id].length - 1];
-            if (last) {
-                const dx = x - last.x;
-                const dy = y - last.y;
-                this.gesturePathLength[trialStep][id] += Math.sqrt(dx * dx + dy * dy);
-            }
-            this.gesturePath[trialStep][id].push({ x, y });
-        });
+        if (!this.gesturePath[trialStep]) {
+            this.gesturePath[trialStep] = [];
+            this.gesturePathLength[trialStep] = 0;
+        }
+        const x = Math.round(data.touches[0]?.clientX || 0);
+        const y = Math.round(data.touches[0]?.clientY || 0);
+        const last = this.gesturePath[trialStep][this.gesturePath[trialStep].length - 1];
+        if (last) {
+            const dx = x - last.x;
+            const dy = y - last.y;
+            this.gesturePathLength[trialStep] += Math.sqrt(dx * dx + dy * dy);
+        }
+        this.gesturePath[trialStep].push({ x, y });
         this.touchData.push(data);
     }
     
@@ -3575,23 +3622,8 @@ class BiometricDataCollector {
     // RELIABLE: Touch feature extraction with device model and browser name as separate columns
     extractTouchFeatures() {
         const features = [];
-        // Helper: Find previous event for same trial, step, and identifier
-        function findPrevEvent(touchData, idx, trial, step, identifier) {
-            for (let i = idx - 1; i >= 0; i--) {
-                const prev = touchData[i];
-                if ((prev.trial || 1) === (trial || 1) && (prev.step || 1) === (step || 1)) {
-                    // Find matching identifier in touches
-                    if (Array.isArray(prev.touches)) {
-                        for (const t of prev.touches) {
-                            if ((t.identifier || 0) === (identifier || 0)) {
-                                return prev;
-                            }
-                        }
-                    }
-                }
-            }
-            return null;
-        }
+        let lastTimestamp = null;
+        let lastTrialStep = null;
         this.touchData.forEach((touch, index) => {
             let task_step_label = '';
             if (touch.taskId === 2) {
@@ -3601,44 +3633,27 @@ class BiometricDataCollector {
             } else {
                 task_step_label = '';
             }
-            // For each touch point in this event, create a feature row
-            (touch.touches || []).forEach(t => {
-                const id = t.identifier || 0;
-                // Improved: Only calculate inter_touch_timing for same trial/step/id
-                const prev = findPrevEvent(this.touchData, index, touch.trial, touch.step, id);
-                let interTouchTiming = null;
-                if (prev) {
-                    // Find matching touch in prev event
-                    const prevTouch = (prev.touches || []).find(pt => (pt.identifier || 0) === id);
-                    if (prevTouch) {
-                        interTouchTiming = Math.round(touch.timestamp - prev.timestamp);
-                    }
-                }
-                // Sum all path lengths for this trial/step
-                const trialStep = `${touch.trial || 1}_${touch.step || 1}`;
-                let pathLength = 0;
-                if (this.gesturePathLength[trialStep]) {
-                    // If per-identifier, sum all
-                    if (typeof this.gesturePathLength[trialStep] === 'object') {
-                        pathLength = Object.values(this.gesturePathLength[trialStep]).reduce((a, b) => a + b, 0);
-                    } else {
-                        pathLength = this.gesturePathLength[trialStep];
-                    }
-                }
-                const baseFeature = {
-                    participant_id: this.participantId,
-                    task_id: task_step_label,
-                    trial: touch.trial || 1,
-                    timestamp_ms: Math.round(touch.timestamp),
-                    touch_x: Math.round(t.clientX || 0),
-                    touch_y: Math.round(t.clientY || 0),
-                    btn_touch_state: touch.type,
-                    inter_touch_timing: interTouchTiming,
-                    num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
-                    path_length_px: pathLength
-                };
-                features.push(baseFeature);
-            });
+            const trialStep = `${touch.trial || 1}_${touch.step || 1}`;
+            // Set inter_touch_timing to null for the first event of each gesture/trial/step
+            let interTouchTiming = null;
+            if (lastTrialStep === trialStep && lastTimestamp !== null) {
+                interTouchTiming = Math.round(touch.timestamp - lastTimestamp);
+            }
+            lastTimestamp = touch.timestamp;
+            lastTrialStep = trialStep;
+            const baseFeature = {
+                participant_id: this.participantId,
+                task_id: task_step_label,
+                trial: touch.trial || 1,
+                timestamp_ms: Math.round(touch.timestamp),
+                touch_x: Math.round(touch.touches[0]?.clientX || 0),
+                touch_y: Math.round(touch.touches[0]?.clientY || 0),
+                btn_touch_state: touch.type,
+                inter_touch_timing: interTouchTiming,
+                num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
+                path_length_px: this.gesturePathLength[trialStep] || 0
+            };
+            features.push(baseFeature);
         });
         return features;
     }
