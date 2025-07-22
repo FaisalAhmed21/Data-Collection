@@ -92,7 +92,8 @@ class BiometricDataCollector {
             "Dr. Smith's Lab-42 discovered H2O molecules can freeze at -5 degree Celsius under pressure.",
             "The CEO's Q3 report showed $2.8M profit and 15% growth across all divisions.",
             "Agent X-007 decoded the message: 'Meet @ Pier 9 on July 4th at 3:30 PM.'",
-            "Tesla's Model S hit 0-60 mph in 2.1 seconds - breaking the previous record!"
+            "Tesla's Model S hit 0-60 mph in 2.1 seconds - breaking the previous record!",
+            "Type anything meaningful you want (minimum of 25 characters)"
         ];
         
         this.crystalSteps = [
@@ -1189,6 +1190,7 @@ class BiometricDataCollector {
     
     updateTypingFeedback() {
         // Feedback system logic from provided code
+        if (this.currentSentence === 4) return; // No feedback on fifth page
         const typed = document.getElementById('typing-input').value;
         const target = this.sentences[this.currentSentence];
         const feedbackDisplay = document.getElementById('typing-feedback-display');
@@ -1197,16 +1199,16 @@ class BiometricDataCollector {
         for (let i = 0; i < target.length; i++) {
             if (i < typed.length) {
                 if (typed[i] === target[i]) {
-                    feedbackHTML += `<span class="typed-correct">${this.escapeHtml(target[i])}</span>`;
+                    feedbackHTML += `<span class=\"typed-correct\">${this.escapeHtml(target[i])}</span>`;
                 } else {
-                    feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(target[i])}</span>`;
+                    feedbackHTML += `<span class=\"typed-incorrect\">${this.escapeHtml(target[i])}</span>`;
                 }
             } else {
-                feedbackHTML += `<span class="to-type">${this.escapeHtml(target[i])}</span>`;
+                feedbackHTML += `<span class=\"to-type\">${this.escapeHtml(target[i])}</span>`;
             }
         }
         for (let i = target.length; i < typed.length; i++) {
-            feedbackHTML += `<span class="typed-incorrect">${this.escapeHtml(typed[i])}</span>`;
+            feedbackHTML += `<span class=\"typed-incorrect\">${this.escapeHtml(typed[i])}</span>`;
         }
         feedbackDisplay.innerHTML = feedbackHTML;
         // Always update feedback container activation
@@ -1544,111 +1546,88 @@ class BiometricDataCollector {
     }
     
     displayCurrentSentence() {
-        document.getElementById('target-sentence').textContent = this.sentences[this.currentSentence];
+        const typingContent = document.querySelector('.typing-content');
+        document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/5`;
+        const nextBtn = document.getElementById('next-sentence-btn');
+        const feedbackContainer = document.querySelector('.typing-feedback-container');
+        const feedbackDisplay = document.getElementById('typing-feedback-display');
+        const targetSentence = document.getElementById('target-sentence');
         const input = document.getElementById('typing-input');
-        // Save caret position before clearing value
-        const caretPos = input.selectionStart;
         input.value = '';
-        // Restore caret to start (0) after clearing
         input.setSelectionRange(0, 0);
         input.focus();
-        document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
-        const nextBtn = document.getElementById('next-sentence-btn');
-        if (this.currentSentence === this.sentences.length - 1) {
-            // Remove the button from the DOM entirely on the fourth sentence page
+
+        // Fifth sentence page (custom free-typing)
+        if (this.currentSentence === 4) {
             if (nextBtn) nextBtn.remove();
-            // If the fourth sentence is already completed with 100% accuracy, show the Next Task button
-            const typed = document.getElementById('typing-input').value;
-            const target = this.sentences[this.currentSentence];
-            if (typed === target && this.calculateAccuracy() === 100) {
-                this.showNextTaskButton('crystal', 'Crystal Forge Game');
+            if (feedbackContainer) feedbackContainer.remove();
+            if (feedbackDisplay) feedbackDisplay.remove();
+            targetSentence.textContent = 'Type anything you want (minimum of 25 characters)';
+            input.value = '';
+            input.setAttribute('placeholder', 'Type at least 25 characters...');
+            // Show/hide Next Task button based on input length
+            const nextTaskBtn = document.getElementById('next-task-btn');
+            input.oninput = () => {
+                const typed = input.value;
+                // Store all typed characters as ref_char
+                this.ref_char = typed;
+                // Calculate accuracy based on 25 characters
+                let accuracy = Math.min(100, Math.round((typed.length / 25) * 100));
+                if (nextTaskBtn) {
+                    if (typed.length >= 25) {
+                        nextTaskBtn.disabled = false;
+                        nextTaskBtn.classList.add('active');
+                    } else {
+                        nextTaskBtn.disabled = true;
+                        nextTaskBtn.classList.remove('active');
+                    }
+                }
+            };
+            // Initial state
+            if (nextTaskBtn) {
+                nextTaskBtn.disabled = true;
+                nextTaskBtn.classList.remove('active');
             }
-        } else {
-            if (nextBtn) {
-                nextBtn.disabled = true;
-                nextBtn.style.display = 'inline-flex';
-                nextBtn.style.backgroundColor = 'var(--color-secondary)';
-                nextBtn.style.opacity = '0.5';
-            }
+            return;
+        }
+
+        // Normal sentences (1-4)
+        if (this.sentences[this.currentSentence]) {
+            targetSentence.textContent = this.sentences[this.currentSentence];
+        }
+        if (nextBtn) {
+            nextBtn.disabled = true;
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.style.backgroundColor = 'var(--color-secondary)';
+            nextBtn.style.opacity = '0.5';
+        }
+        if (feedbackContainer && feedbackDisplay) {
+            feedbackDisplay.innerHTML = '';
+            feedbackContainer.classList.remove('activated');
         }
         this.updateTypingFeedback();
     }
     
     calculateAccuracy() {
         const typed = document.getElementById('typing-input').value;
+        if (this.currentSentence === 4) {
+            // Fifth page: accuracy is based on length
+            return Math.min(typed.length / 20, 1) * 100;
+        }
         const target = this.sentences[this.currentSentence];
-        
-        console.log('🔍 Accuracy calculation:', {
-            typed: `"${typed}"`,
-            target: `"${target}"`,
-            typedLength: typed.length,
-            targetLength: target.length
-        });
-        
         let accuracy = 0;
         if (typed === target) {
-            document.getElementById('accuracy').textContent = '100%';
             accuracy = 100;
-            console.log('✅ Perfect match - 100% accuracy');
         } else {
             let correct = 0;
             const minLength = Math.min(typed.length, target.length);
-            
             for (let i = 0; i < minLength; i++) {
                 if (typed[i] === target[i]) {
                     correct++;
                 }
             }
-            
             accuracy = Math.round((correct / target.length) * 100);
-            document.getElementById('accuracy').textContent = `${accuracy}%`;
-            console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
         }
-    
-        const nextButton = document.getElementById('next-sentence-btn');
-        const feedbackContainer = document.querySelector('.typing-feedback-container');
-        
-        if (nextButton && feedbackContainer) {
-            if (accuracy === 100) {
-                nextButton.disabled = false;
-                nextButton.classList.remove('btn--disabled');
-                nextButton.classList.add('activated');
-                feedbackContainer.classList.add('activated');
-            } else {
-                nextButton.disabled = true;
-                nextButton.classList.add('btn--disabled');
-                nextButton.classList.remove('activated');
-                feedbackContainer.classList.remove('activated');
-            }
-        }
-        const accuracyRing = document.getElementById('accuracy-ring');
-        const accuracyValue = document.getElementById('accuracy');
-        const encourage = document.querySelector('.accuracy-encourage');
-    
-        if (accuracyRing && accuracyValue) {
-            let percent = Math.max(0, Math.min(accuracy, 100));
-            const circumference = 2 * Math.PI * 26;
-            const offset = circumference * (1 - percent / 100);
-            accuracyRing.setAttribute('stroke-dasharray', circumference);
-            accuracyRing.setAttribute('stroke-dashoffset', offset);
-    
-            if (encourage) {
-                if (percent === 100) {
-                    encourage.textContent = 'Perfect! 🎉';
-                    encourage.style.color = 'var(--color-success)';
-                } else if (percent >= 80) {
-                    encourage.textContent = 'Great job! Almost there!';
-                    encourage.style.color = 'var(--color-primary)';
-                } else if (percent >= 50) {
-                    encourage.textContent = 'Keep going! 💪';
-                    encourage.style.color = 'var(--color-warning)';
-                } else {
-                    encourage.textContent = 'You can do it!';
-                    encourage.style.color = 'var(--color-error)';
-                }
-            }
-        }
-    
         return accuracy;
     }
 
@@ -1658,11 +1637,13 @@ class BiometricDataCollector {
         const target = this.sentences[this.currentSentence];
         const nextBtn = document.getElementById('next-sentence-btn');
         const accuracy = this.calculateAccuracy();
+        if (this.currentSentence === 4) {
+            // Fifth page: Next Task button logic handled in input.oninput
+            return;
+        }
         if (typed === target && accuracy === 100) {
             if (this.currentSentence === this.sentences.length - 1) {
-                // Only remove the button, do not show next task here
                 if (nextBtn) nextBtn.remove();
-                // Always show Next Task button for Crystal Forge Game when 4th sentence is complete
                 this.showNextTaskButton('crystal', 'Crystal Forge Game');
             } else {
                 nextBtn.disabled = false;
@@ -1700,95 +1681,74 @@ class BiometricDataCollector {
 
     
     recordKeystroke(data) {
-        // Enhanced iOS deduplication - check against actual recorded data
         const currentTime = performance.now();
-        
         if (this.isIOS) {
-            // Skip deduplication for BACKSPACE
             if (data.actualChar === 'BACKSPACE') {
                 console.log(`✅ iOS: BACKSPACE bypassing deduplication (always record)`);
             } else {
-                // Check for duplicates in the last 10 keystrokes with a 200ms window
                 const recentKeystrokes = this.keystrokeData.slice(-10);
                 const duplicateFound = recentKeystrokes.some(ks => {
                     const timeDiff = currentTime - ks.timestamp;
                     return ks.actualChar === data.actualChar && 
-                           ks.type === data.type && 
-                           timeDiff < 200; // 200ms window for iOS
+                        ks.type === data.type && 
+                        timeDiff < 200;
                 });
-                
                 if (duplicateFound) {
                     console.log(`🚫 iOS FINAL CHECK: Duplicate keystroke BLOCKED: ${data.actualChar} (type: ${data.type})`);
                     return;
                 }
             }
         } else {
-            // Original deduplication for Android/Desktop
             if (this.lastRecordedKeystroke) {
                 const timeDiff = currentTime - this.lastRecordedKeystroke.timestamp;
                 const charDiff = data.actualChar === this.lastRecordedKeystroke.actualChar;
                 const typeDiff = data.type === this.lastRecordedKeystroke.type;
-                
-                // If same character, same type, and within 50ms, it's likely a duplicate
                 if (charDiff && typeDiff && timeDiff < 50) {
                     console.log(`🚫 Duplicate keystroke BLOCKED: ${data.actualChar} (${timeDiff}ms since last)`);
                     return;
                 }
             }
         }
-        
-        if (['BACKSPACE', 'SPACE', 'ENTER', 'TAB', 'escape', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'delete', 'home', 'end'].includes(data.actualChar)) {
+        if ([
+            'BACKSPACE', 'SPACE', 'ENTER', 'TAB', 'escape', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'delete', 'home', 'end'
+        ].includes(data.actualChar)) {
             console.log(`[DEBUG] Special key recorded:`, data);
         }
-        
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('[QUOTE] Keystroke captured:', data);
         }
-        
-        // Prevent recording synthetic events (no longer needed since we removed SHIFT/†)
         if (data.isSynthetic) {
             console.log('🚫 Synthetic event skipped:', data.actualChar);
             return;
         }
-        // Enhanced flight time calculation
+        // --- IMPROVED FLIGHT TIME LOGIC ---
         let flightTime = 0;
-        if (this.lastKeystrokeTime > 0) {
-            flightTime = currentTime - this.lastKeystrokeTime;
-            // Ensure flight time is not negative
+        if (this.keystrokeData.length > 0) {
+            const prev = this.keystrokeData[this.keystrokeData.length - 1];
+            flightTime = data.timestamp - prev.timestamp;
             if (flightTime < 0) {
                 console.warn(`⚠️ Negative flight time detected: ${flightTime}ms, setting to 0`);
                 flightTime = 0;
             }
+            if (flightTime < 5) {
+                console.warn(`⚠️ Very short flight time detected: ${flightTime}ms between "${prev.actualChar}" and "${data.actualChar}". Possible duplicate?`);
+            }
         }
-
-        // Add flight time to the data
         data.flightTime = Math.round(flightTime);
-        
-        // Log flight time for debugging
         if (flightTime > 0) {
             console.log(`⏱️ Flight time: ${flightTime}ms from "${this.lastChar || 'start'}" to "${data.actualChar}"`);
         }
-
-        // Handle character case data
         if (data.actualChar && data.actualChar !== 'BACKSPACE') {
             data.characterCase = this.getCharacterCase(data.actualChar);
         }
-
-        // Update last keystroke time
         this.lastKeystrokeTime = currentTime;
-
-        // Log specific events
         if (data.actualChar === "'" || data.actualChar === '"') {
             console.log('Recording keystroke with quote:', data.actualChar, 'type:', data.type);
         }
         if (data.actualChar === 'BACKSPACE') {
             console.log('Recording backspace keystroke:', data.type, 'timestamp:', data.timestamp);
         }
-
-
         this.keystrokeData.push(data);
-        
-        // Track this keystroke to prevent duplicates
         this.lastRecordedKeystroke = {
             timestamp: data.timestamp,
             actualChar: data.actualChar,
@@ -3029,15 +2989,19 @@ class BiometricDataCollector {
         // Add trial information for crystal game
         if (data.taskId === 2) { // Crystal game
             data.trial = this.crystalState.currentTrial;
-            // Enhanced debug logging for trial tracking
+            if (data.type === 'touchstart') {
+                // Reset gesture path and length at the start of each step
+                const trialStep = `${data.trial || 1}_${data.step || 1}`;
+                this.gesturePath[trialStep] = [];
+                this.gesturePathLength[trialStep] = 0;
+            }
             if (data.type === 'touchstart') {
                 console.log(`📊 Touch event recorded - Step: ${data.step}, Trial: ${data.trial}, Current Trial State: ${this.crystalState.currentTrial}`);
             }
         } else {
             data.trial = 1; // Default trial for other tasks
         }
-        
-        // In recordTouchEvent, update gesturePath and gesturePathLength
+        // Only increment path length for touchmove events
         const trialStep = `${data.trial || 1}_${data.step || 1}`;
         if (!this.gesturePath[trialStep]) {
             this.gesturePath[trialStep] = [];
@@ -3046,7 +3010,7 @@ class BiometricDataCollector {
         const x = Math.round(data.touches[0]?.clientX || 0);
         const y = Math.round(data.touches[0]?.clientY || 0);
         const last = this.gesturePath[trialStep][this.gesturePath[trialStep].length - 1];
-        if (last) {
+        if (last && data.type === 'touchmove') {
             const dx = x - last.x;
             const dy = y - last.y;
             this.gesturePathLength[trialStep] += Math.sqrt(dx * dx + dy * dy);
@@ -3577,6 +3541,7 @@ class BiometricDataCollector {
     // RELIABLE: Touch feature extraction with device model and browser name as separate columns
     extractTouchFeatures() {
         const features = [];
+        let lastInterTouchTiming = null;
         this.touchData.forEach((touch, index) => {
             let task_step_label = '';
             if (touch.taskId === 2) {
@@ -3586,6 +3551,11 @@ class BiometricDataCollector {
             } else {
                 task_step_label = '';
             }
+            const inter_touch_timing = index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0;
+            if (index > 1 && inter_touch_timing === 0 && lastInterTouchTiming === 0) {
+                console.warn(`⚠️ Consecutive inter_touch_timing values of 0 detected at index ${index}. Possible duplicate or redundant touch events?`);
+            }
+            lastInterTouchTiming = inter_touch_timing;
             const baseFeature = {
                 participant_id: this.participantId,
                 task_id: task_step_label,
@@ -3594,10 +3564,9 @@ class BiometricDataCollector {
                 touch_x: Math.round(touch.touches[0]?.clientX || 0),
                 touch_y: Math.round(touch.touches[0]?.clientY || 0),
                 btn_touch_state: touch.type,
-                inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0,
+                inter_touch_timing,
                 num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
                 path_length_px: this.gesturePathLength[`${touch.trial || 1}_${touch.step || 1}`] || 0
-                // browser_name removed
             };
             features.push(baseFeature);
         });
