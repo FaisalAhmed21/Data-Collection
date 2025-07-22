@@ -1569,12 +1569,29 @@ class BiometricDataCollector {
             input.placeholder = 'Type at least 25 characters...';
             // Hide feedback system for this page
             if (feedbackDisplay) feedbackDisplay.innerHTML = '';
-            // Hide Next Task button initially
-            const nextTaskBtn = document.getElementById('next-task-btn');
-            if (nextTaskBtn) {
+            // Ensure Next Task button exists and is appended to typing section
+            let nextTaskBtn = document.getElementById('next-task-btn');
+            if (!nextTaskBtn) {
+                nextTaskBtn = document.createElement('button');
+                nextTaskBtn.id = 'next-task-btn';
+                nextTaskBtn.className = 'btn btn--primary';
+                nextTaskBtn.textContent = 'Next Task: Crystal Forge Game';
                 nextTaskBtn.style.display = 'none';
                 nextTaskBtn.disabled = true;
+                typingContent.appendChild(nextTaskBtn);
+                nextTaskBtn.addEventListener('click', () => {
+                    this.taskState.typingCompleted = true;
+                    this.taskState.crystalCompleted = false;
+                    this.taskState.galleryCompleted = false;
+                    this.updateTaskLocks();
+                    this.switchScreen('crystal');
+                    this.startCrystalGame();
+                    nextTaskBtn.remove();
+                });
             }
+            // Hide Next Task button initially
+            nextTaskBtn.style.display = 'none';
+            nextTaskBtn.disabled = true;
             // Always use main calculateAccuracy for input
             input.addEventListener('input', () => this.calculateAccuracy());
             this.calculateAccuracy();
@@ -1600,7 +1617,7 @@ class BiometricDataCollector {
     
     calculateAccuracy() {
         const typed = document.getElementById('typing-input').value;
-        const nextTaskBtn = document.getElementById('next-task-btn');
+        let nextTaskBtn = document.getElementById('next-task-btn');
         if (this.currentSentence === 4) {
             // Free typing page: accuracy by length
             let acc = Math.min(100, Math.round((typed.length / 25) * 100));
