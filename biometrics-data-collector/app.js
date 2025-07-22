@@ -1556,6 +1556,9 @@ class BiometricDataCollector {
         input.setSelectionRange(0, 0);
         input.focus();
 
+        // Remove any previous input event listeners for accuracy
+        input.oninput = null;
+        input.removeEventListener('input', this.calculateAccuracy);
         // Fifth sentence page (custom free-typing)
         if (this.currentSentence === 4) {
             // Remove feedback and next sentence button completely from DOM
@@ -1564,29 +1567,17 @@ class BiometricDataCollector {
             // Show custom instruction
             targetSentence.textContent = 'Type anything meaningful you want (Minimum of 25 characters)';
             input.placeholder = 'Type at least 25 characters...';
-            // Show/enable Next Task button only if 25+ chars
-            const nextTaskBtn = document.getElementById('next-task-btn');
-            // Remove any previous input event listeners for accuracy
-            input.oninput = null;
-            // Custom accuracy calculation and Next Task button logic
-            const updateFreeTypingAccuracy = () => {
-                const typed = input.value;
-                let acc = Math.min(100, Math.round((typed.length / 25) * 100));
-                document.getElementById('accuracy').textContent = `${acc}%`;
-                if (nextTaskBtn) {
-                    if (typed.length >= 25) {
-                        nextTaskBtn.style.display = 'inline-block';
-                        nextTaskBtn.disabled = false;
-                    } else {
-                        nextTaskBtn.style.display = 'none';
-                        nextTaskBtn.disabled = true;
-                    }
-                }
-            };
-            input.addEventListener('input', updateFreeTypingAccuracy);
-            updateFreeTypingAccuracy();
-            // Remove feedback system for this page
+            // Hide feedback system for this page
             if (feedbackDisplay) feedbackDisplay.innerHTML = '';
+            // Hide Next Task button initially
+            const nextTaskBtn = document.getElementById('next-task-btn');
+            if (nextTaskBtn) {
+                nextTaskBtn.style.display = 'none';
+                nextTaskBtn.disabled = true;
+            }
+            // Always use main calculateAccuracy for input
+            input.addEventListener('input', () => this.calculateAccuracy());
+            this.calculateAccuracy();
             return;
         } else {
             // Restore feedback and next sentence button for other sentences
@@ -1602,84 +1593,58 @@ class BiometricDataCollector {
                 nextTaskBtn.style.display = 'none';
                 nextTaskBtn.disabled = true;
             }
+            input.addEventListener('input', () => this.calculateAccuracy());
+            this.calculateAccuracy();
         }
     }
     
     calculateAccuracy() {
         const typed = document.getElementById('typing-input').value;
+        const nextTaskBtn = document.getElementById('next-task-btn');
+        if (this.currentSentence === 4) {
+            // Free typing page: accuracy by length
+            let acc = Math.min(100, Math.round((typed.length / 25) * 100));
+            document.getElementById('accuracy').textContent = `${acc}%`;
+            if (nextTaskBtn) {
+                if (typed.length >= 25) {
+                    nextTaskBtn.style.display = 'inline-block';
+                    nextTaskBtn.disabled = false;
+                } else {
+                    nextTaskBtn.style.display = 'none';
+                    nextTaskBtn.disabled = true;
+                }
+            }
+            return acc;
+        }
+        // Default logic for other sentences
         const target = this.sentences[this.currentSentence];
-        
-        console.log('🔍 Accuracy calculation:', {
-            typed: `"${typed}"`,
-            target: `"${target}"`,
-            typedLength: typed.length,
-            targetLength: target.length
-        });
-        
         let accuracy = 0;
         if (typed === target) {
             document.getElementById('accuracy').textContent = '100%';
             accuracy = 100;
-            console.log('✅ Perfect match - 100% accuracy');
         } else {
             let correct = 0;
             const minLength = Math.min(typed.length, target.length);
-            
             for (let i = 0; i < minLength; i++) {
                 if (typed[i] === target[i]) {
                     correct++;
                 }
             }
-            
             accuracy = Math.round((correct / target.length) * 100);
             document.getElementById('accuracy').textContent = `${accuracy}%`;
-            console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
         }
-    
+        // Usual next sentence button logic (not for page 5)
         const nextButton = document.getElementById('next-sentence-btn');
         const feedbackContainer = document.querySelector('.typing-feedback-container');
-        
         if (nextButton && feedbackContainer) {
             if (accuracy === 100) {
                 nextButton.disabled = false;
                 nextButton.classList.remove('btn--disabled');
-                nextButton.classList.add('activated');
-                feedbackContainer.classList.add('activated');
             } else {
                 nextButton.disabled = true;
                 nextButton.classList.add('btn--disabled');
-                nextButton.classList.remove('activated');
-                feedbackContainer.classList.remove('activated');
             }
         }
-        const accuracyRing = document.getElementById('accuracy-ring');
-        const accuracyValue = document.getElementById('accuracy');
-        const encourage = document.querySelector('.accuracy-encourage');
-    
-        if (accuracyRing && accuracyValue) {
-            let percent = Math.max(0, Math.min(accuracy, 100));
-            const circumference = 2 * Math.PI * 26;
-            const offset = circumference * (1 - percent / 100);
-            accuracyRing.setAttribute('stroke-dasharray', circumference);
-            accuracyRing.setAttribute('stroke-dashoffset', offset);
-    
-            if (encourage) {
-                if (percent === 100) {
-                    encourage.textContent = 'Perfect! 🎉';
-                    encourage.style.color = 'var(--color-success)';
-                } else if (percent >= 80) {
-                    encourage.textContent = 'Great job! Almost there!';
-                    encourage.style.color = 'var(--color-primary)';
-                } else if (percent >= 50) {
-                    encourage.textContent = 'Keep going! 💪';
-                    encourage.style.color = 'var(--color-warning)';
-                } else {
-                    encourage.textContent = 'You can do it!';
-                    encourage.style.color = 'var(--color-error)';
-                }
-            }
-        }
-    
         return accuracy;
     }
 
