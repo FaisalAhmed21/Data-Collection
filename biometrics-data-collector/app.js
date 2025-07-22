@@ -3010,33 +3010,29 @@ class BiometricDataCollector {
         // Add trial information for crystal game
         if (data.taskId === 2) { // Crystal game
             data.trial = this.crystalState.currentTrial;
+            // Enhanced debug logging for trial tracking
             if (data.type === 'touchstart') {
                 console.log(`📊 Touch event recorded - Step: ${data.step}, Trial: ${data.trial}, Current Trial State: ${this.crystalState.currentTrial}`);
             }
         } else {
             data.trial = 1; // Default trial for other tasks
         }
-        // Improved: Track gesture path and length per touch identifier
+        
+        // In recordTouchEvent, update gesturePath and gesturePathLength
         const trialStep = `${data.trial || 1}_${data.step || 1}`;
-        if (!this.gesturePath[trialStep]) this.gesturePath[trialStep] = {};
-        if (!this.gesturePathLength[trialStep]) this.gesturePathLength[trialStep] = {};
-        // For each touch point, update its path and length
-        (data.touches || []).forEach(t => {
-            const id = t.identifier || 0;
-            if (!this.gesturePath[trialStep][id]) {
-                this.gesturePath[trialStep][id] = [];
-                this.gesturePathLength[trialStep][id] = 0;
-            }
-            const x = Math.round(t.clientX || 0);
-            const y = Math.round(t.clientY || 0);
-            const last = this.gesturePath[trialStep][id][this.gesturePath[trialStep][id].length - 1];
-            if (last) {
-                const dx = x - last.x;
-                const dy = y - last.y;
-                this.gesturePathLength[trialStep][id] += Math.sqrt(dx * dx + dy * dy);
-            }
-            this.gesturePath[trialStep][id].push({ x, y });
-        });
+        if (!this.gesturePath[trialStep]) {
+            this.gesturePath[trialStep] = [];
+            this.gesturePathLength[trialStep] = 0;
+        }
+        const x = Math.round(data.touches[0]?.clientX || 0);
+        const y = Math.round(data.touches[0]?.clientY || 0);
+        const last = this.gesturePath[trialStep][this.gesturePath[trialStep].length - 1];
+        if (last) {
+            const dx = x - last.x;
+            const dy = y - last.y;
+            this.gesturePathLength[trialStep] += Math.sqrt(dx * dx + dy * dy);
+        }
+        this.gesturePath[trialStep].push({ x, y });
         this.touchData.push(data);
     }
     
@@ -3562,23 +3558,6 @@ class BiometricDataCollector {
     // RELIABLE: Touch feature extraction with device model and browser name as separate columns
     extractTouchFeatures() {
         const features = [];
-        // Helper: Find previous event for same trial, step, and identifier
-        function findPrevEvent(touchData, idx, trial, step, identifier) {
-            for (let i = idx - 1; i >= 0; i--) {
-                const prev = touchData[i];
-                if ((prev.trial || 1) === (trial || 1) && (prev.step || 1) === (step || 1)) {
-                    // Find matching identifier in touches
-                    if (Array.isArray(prev.touches)) {
-                        for (const t of prev.touches) {
-                            if ((t.identifier || 0) === (identifier || 0)) {
-                                return prev;
-                            }
-                        }
-                    }
-                }
-            }
-            return null;
-        }
         this.touchData.forEach((touch, index) => {
             let task_step_label = '';
             if (touch.taskId === 2) {
@@ -3588,44 +3567,20 @@ class BiometricDataCollector {
             } else {
                 task_step_label = '';
             }
-            // For each touch point in this event, create a feature row
-            (touch.touches || []).forEach(t => {
-                const id = t.identifier || 0;
-                // Improved: Only calculate inter_touch_timing for same trial/step/id
-                const prev = findPrevEvent(this.touchData, index, touch.trial, touch.step, id);
-                let interTouchTiming = null;
-                if (prev) {
-                    // Find matching touch in prev event
-                    const prevTouch = (prev.touches || []).find(pt => (pt.identifier || 0) === id);
-                    if (prevTouch) {
-                        interTouchTiming = Math.round(touch.timestamp - prev.timestamp);
-                    }
-                }
-                // Sum all path lengths for this trial/step
-                const trialStep = `${touch.trial || 1}_${touch.step || 1}`;
-                let pathLength = 0;
-                if (this.gesturePathLength[trialStep]) {
-                    // If per-identifier, sum all
-                    if (typeof this.gesturePathLength[trialStep] === 'object') {
-                        pathLength = Object.values(this.gesturePathLength[trialStep]).reduce((a, b) => a + b, 0);
-                    } else {
-                        pathLength = this.gesturePathLength[trialStep];
-                    }
-                }
-                const baseFeature = {
-                    participant_id: this.participantId,
-                    task_id: task_step_label,
-                    trial: touch.trial || 1,
-                    timestamp_ms: Math.round(touch.timestamp),
-                    touch_x: Math.round(t.clientX || 0),
-                    touch_y: Math.round(t.clientY || 0),
-                    btn_touch_state: touch.type,
-                    inter_touch_timing: interTouchTiming,
-                    num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
-                    path_length_px: pathLength
-                };
-                features.push(baseFeature);
-            });
+            const baseFeature = {
+                participant_id: this.participantId,
+                task_id: task_step_label,
+                trial: touch.trial || 1,
+                timestamp_ms: Math.round(touch.timestamp),
+                touch_x: Math.round(touch.touches[0]?.clientX || 0),
+                touch_y: Math.round(touch.touches[0]?.clientY || 0),
+                btn_touch_state: touch.type,
+                inter_touch_timing: index > 0 ? Math.round(touch.timestamp - this.touchData[index - 1].timestamp) : 0,
+                num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
+                path_length_px: this.gesturePathLength[`${touch.trial || 1}_${touch.step || 1}`] || 0
+                // browser_name removed
+            };
+            features.push(baseFeature);
         });
         return features;
     }
