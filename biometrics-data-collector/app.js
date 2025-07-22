@@ -92,8 +92,7 @@ class BiometricDataCollector {
             "Dr. Smith's Lab-42 discovered H2O molecules can freeze at -5 degree Celsius under pressure.",
             "The CEO's Q3 report showed $2.8M profit and 15% growth across all divisions.",
             "Agent X-007 decoded the message: 'Meet @ Pier 9 on July 4th at 3:30 PM.'",
-            "Tesla's Model S hit 0-60 mph in 2.1 seconds - breaking the previous record!",
-            "Type anything meaningful you want (Minimum of 25 characters)"
+            "Tesla's Model S hit 0-60 mph in 2.1 seconds - breaking the previous record!"
         ];
         
         this.crystalSteps = [
@@ -1545,138 +1544,111 @@ class BiometricDataCollector {
     }
     
     displayCurrentSentence() {
-        const typingContent = document.querySelector('.typing-content');
-        const typingSection = document.querySelector('.typing-section');
-        document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/5`;
-        const nextBtn = document.getElementById('next-sentence-btn');
-        const feedbackContainer = document.querySelector('.typing-feedback-container');
-        const feedbackDisplay = document.getElementById('typing-feedback-display');
-        const targetSentence = document.getElementById('target-sentence');
+        document.getElementById('target-sentence').textContent = this.sentences[this.currentSentence];
         const input = document.getElementById('typing-input');
+        // Save caret position before clearing value
+        const caretPos = input.selectionStart;
         input.value = '';
+        // Restore caret to start (0) after clearing
         input.setSelectionRange(0, 0);
         input.focus();
-
-        // Remove any previous input event listeners for accuracy
-        input.oninput = null;
-        input.removeEventListener('input', this.calculateAccuracy);
-        // Fifth sentence page (custom free-typing)
-        if (this.currentSentence === 4) {
-            // Remove feedback and next sentence button completely from DOM
-            if (feedbackContainer) feedbackContainer.style.display = 'none';
-            if (nextBtn && nextBtn.parentNode) nextBtn.parentNode.removeChild(nextBtn);
-            // Show custom instruction
-            targetSentence.textContent = 'Type anything meaningful you want (Minimum of 25 characters)';
-            input.placeholder = 'Type at least 25 characters...';
-            // Hide feedback system for this page
-            if (feedbackDisplay) feedbackDisplay.innerHTML = '';
-            // Ensure Next Task button exists and is appended to typing section
-            let nextTaskBtn = document.getElementById('next-task-btn');
-            if (!nextTaskBtn) {
-                nextTaskBtn = document.createElement('button');
-                nextTaskBtn.id = 'next-task-btn';
-                nextTaskBtn.className = 'btn btn--primary';
-                nextTaskBtn.textContent = 'Next Task: Crystal Forge Game';
-                nextTaskBtn.style.display = 'none';
-                nextTaskBtn.disabled = true;
-                nextTaskBtn.style.position = 'relative';
-                nextTaskBtn.style.marginTop = '18px';
-                nextTaskBtn.style.zIndex = '1000';
-                if (typingSection) {
-                    typingSection.appendChild(nextTaskBtn);
-                    console.log('[DEBUG] Next Task button appended to .typing-section');
-                } else {
-                    typingContent.appendChild(nextTaskBtn);
-                    console.log('[DEBUG] Next Task button appended to .typing-content');
-                }
-                nextTaskBtn.addEventListener('click', () => {
-                    this.taskState.typingCompleted = true;
-                    this.taskState.crystalCompleted = false;
-                    this.taskState.galleryCompleted = false;
-                    this.updateTaskLocks();
-                    this.switchScreen('crystal');
-                    this.startCrystalGame();
-                    nextTaskBtn.remove();
-                });
+        document.getElementById('sentence-progress').textContent = `${this.currentSentence + 1}/4`;
+        const nextBtn = document.getElementById('next-sentence-btn');
+        if (this.currentSentence === this.sentences.length - 1) {
+            // Remove the button from the DOM entirely on the fourth sentence page
+            if (nextBtn) nextBtn.remove();
+            // If the fourth sentence is already completed with 100% accuracy, show the Next Task button
+            const typed = document.getElementById('typing-input').value;
+            const target = this.sentences[this.currentSentence];
+            if (typed === target && this.calculateAccuracy() === 100) {
+                this.showNextTaskButton('crystal', 'Crystal Forge Game');
             }
-            // Hide Next Task button initially
-            nextTaskBtn.style.display = 'none';
-            nextTaskBtn.disabled = true;
-            // Always use main calculateAccuracy for input
-            input.addEventListener('input', () => this.calculateAccuracy());
-            this.calculateAccuracy();
-            return;
         } else {
-            // Restore feedback and next sentence button for other sentences
-            if (feedbackContainer) feedbackContainer.style.display = '';
-            if (nextBtn) nextBtn.style.display = '';
-            if (feedbackDisplay) feedbackDisplay.innerHTML = '';
-            // Show the target sentence as usual
-            targetSentence.textContent = this.sentences[this.currentSentence];
-            input.placeholder = '';
-            // Hide Next Task button
-            const nextTaskBtn = document.getElementById('next-task-btn');
-            if (nextTaskBtn) {
-                nextTaskBtn.style.display = 'none';
-                nextTaskBtn.disabled = true;
+            if (nextBtn) {
+                nextBtn.disabled = true;
+                nextBtn.style.display = 'inline-flex';
+                nextBtn.style.backgroundColor = 'var(--color-secondary)';
+                nextBtn.style.opacity = '0.5';
             }
-            input.addEventListener('input', () => this.calculateAccuracy());
-            this.calculateAccuracy();
         }
+        this.updateTypingFeedback();
     }
     
     calculateAccuracy() {
         const typed = document.getElementById('typing-input').value;
-        let nextTaskBtn = document.getElementById('next-task-btn');
-        if (this.currentSentence === 4) {
-            // Free typing page: accuracy by length
-            let acc = Math.min(100, Math.round((typed.length / 25) * 100));
-            document.getElementById('accuracy').textContent = `${acc}%`;
-            if (nextTaskBtn) {
-                if (typed.length >= 25) {
-                    nextTaskBtn.style.display = 'inline-block';
-                    nextTaskBtn.disabled = false;
-                    nextTaskBtn.style.visibility = 'visible';
-                    nextTaskBtn.style.opacity = '1';
-                    console.log('[DEBUG] Next Task button shown and enabled');
-                } else {
-                    nextTaskBtn.style.display = 'none';
-                    nextTaskBtn.disabled = true;
-                    nextTaskBtn.style.visibility = 'hidden';
-                    nextTaskBtn.style.opacity = '0.5';
-                }
-            }
-            return acc;
-        }
-        // Default logic for other sentences
         const target = this.sentences[this.currentSentence];
+        
+        console.log('🔍 Accuracy calculation:', {
+            typed: `"${typed}"`,
+            target: `"${target}"`,
+            typedLength: typed.length,
+            targetLength: target.length
+        });
+        
         let accuracy = 0;
         if (typed === target) {
             document.getElementById('accuracy').textContent = '100%';
             accuracy = 100;
+            console.log('✅ Perfect match - 100% accuracy');
         } else {
             let correct = 0;
             const minLength = Math.min(typed.length, target.length);
+            
             for (let i = 0; i < minLength; i++) {
                 if (typed[i] === target[i]) {
                     correct++;
                 }
             }
+            
             accuracy = Math.round((correct / target.length) * 100);
             document.getElementById('accuracy').textContent = `${accuracy}%`;
+            console.log(`📊 Accuracy: ${correct}/${target.length} = ${accuracy}%`);
         }
-        // Usual next sentence button logic (not for page 5)
+    
         const nextButton = document.getElementById('next-sentence-btn');
         const feedbackContainer = document.querySelector('.typing-feedback-container');
+        
         if (nextButton && feedbackContainer) {
             if (accuracy === 100) {
                 nextButton.disabled = false;
                 nextButton.classList.remove('btn--disabled');
+                nextButton.classList.add('activated');
+                feedbackContainer.classList.add('activated');
             } else {
                 nextButton.disabled = true;
                 nextButton.classList.add('btn--disabled');
+                nextButton.classList.remove('activated');
+                feedbackContainer.classList.remove('activated');
             }
         }
+        const accuracyRing = document.getElementById('accuracy-ring');
+        const accuracyValue = document.getElementById('accuracy');
+        const encourage = document.querySelector('.accuracy-encourage');
+    
+        if (accuracyRing && accuracyValue) {
+            let percent = Math.max(0, Math.min(accuracy, 100));
+            const circumference = 2 * Math.PI * 26;
+            const offset = circumference * (1 - percent / 100);
+            accuracyRing.setAttribute('stroke-dasharray', circumference);
+            accuracyRing.setAttribute('stroke-dashoffset', offset);
+    
+            if (encourage) {
+                if (percent === 100) {
+                    encourage.textContent = 'Perfect! 🎉';
+                    encourage.style.color = 'var(--color-success)';
+                } else if (percent >= 80) {
+                    encourage.textContent = 'Great job! Almost there!';
+                    encourage.style.color = 'var(--color-primary)';
+                } else if (percent >= 50) {
+                    encourage.textContent = 'Keep going! 💪';
+                    encourage.style.color = 'var(--color-warning)';
+                } else {
+                    encourage.textContent = 'You can do it!';
+                    encourage.style.color = 'var(--color-error)';
+                }
+            }
+        }
+    
         return accuracy;
     }
 
@@ -1685,60 +1657,38 @@ class BiometricDataCollector {
         const typed = document.getElementById('typing-input').value;
         const target = this.sentences[this.currentSentence];
         const nextBtn = document.getElementById('next-sentence-btn');
-        const nextTaskBtn = document.getElementById('next-task-btn');
         const accuracy = this.calculateAccuracy();
-    
-        if (this.currentSentence < 4) {
-            // First four sentences
-            if (typed === target && accuracy === 100) {
+        if (typed === target && accuracy === 100) {
+            if (this.currentSentence === this.sentences.length - 1) {
+                // Only remove the button, do not show next task here
+                if (nextBtn) nextBtn.remove();
+                // Always show Next Task button for Crystal Forge Game when 4th sentence is complete
+                this.showNextTaskButton('crystal', 'Crystal Forge Game');
+            } else {
                 nextBtn.disabled = false;
                 nextBtn.classList.add('next-task-btn--deep');
                 nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
-            } else {
-                if (nextBtn) {
-                    nextBtn.disabled = true;
-                    nextBtn.classList.remove('next-task-btn--deep');
-                    nextBtn.classList.remove('btn--disabled');
-                    nextBtn.classList.add('btn--primary');
-                    nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
-                    nextBtn.style.display = 'inline-flex';
-                }
             }
-        } else if (this.currentSentence === 4) {
-            // Fifth sentence
-            if (typed === target && accuracy === 100) {
-                // Hide next sentence button (we're done typing)
-                if (nextBtn) {
-                    nextBtn.style.display = 'none';
-                    nextBtn.disabled = true;
-                }
-    
-                // Show Crystal Forge button
-                this.taskState.typingCompleted = true;
-                this.showNextTaskButton('crystal', 'Crystal Forge Game');
-            } else {
-                if (nextBtn) {
-                    nextBtn.style.display = 'inline-block';
-                    nextBtn.disabled = true;
-                }
-                // Hide next task button in case shown prematurely
-                if (nextTaskBtn) {
-                    nextTaskBtn.style.display = 'none';
-                    nextTaskBtn.disabled = true;
-                }
+        } else {
+            if (nextBtn) {
+                nextBtn.disabled = true;
+                nextBtn.classList.remove('next-task-btn--deep');
+                nextBtn.classList.remove('btn--disabled');
+                nextBtn.classList.add('btn--primary');
+                nextBtn.textContent = 'Next Sentence (100% Accuracy Required)';
+                nextBtn.style.display = 'inline-flex';
             }
         }
     }
-
     
     nextSentence() {
-        if (this.currentSentence < 4) {
-            this.currentSentence++;
+        this.currentSentence++;
+        if (this.currentSentence >= this.sentences.length) {
+            this.showNextTaskButton('crystal', 'Crystal Forge Game');
+            this.updateTaskLocks();
+        } else {
             this.displayCurrentSentence();
-        } else if (this.currentSentence === 4) {
-            // Go to fifth page (free typing)
-            this.currentSentence++;
-            this.displayCurrentSentence();
+            this.updateTypingProgress();
         }
     }
     
@@ -3657,6 +3607,7 @@ class BiometricDataCollector {
                 inter_touch_timing: interTouchTiming,
                 num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
                 path_length_px: this.gesturePathLength[trialStep] || 0
+                // browser_name removed
             };
             features.push(baseFeature);
         });
