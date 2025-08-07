@@ -152,6 +152,10 @@ class BiometricDataCollector {
         this.firstFrameOverlapVectors = [];
         // 1. In the BiometricDataCollector constructor, add dwell tracking:
         this.keyDwellStartTimes = {};
+        // In constructor, add state for cursor movement tracking
+        this.lastCaretPos = 0;
+        this.lastCaretMoveTime = 0;
+        this.pendingCursorMoveTime = 0;
     }
     
     // Update detectDeviceInfo to be async and use Client Hints if available
@@ -804,7 +808,8 @@ class BiometricDataCollector {
                         sentence: this.currentSentence,
                 position: pos - 1,
                         clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
-                        clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
+                        clientY: Math.round(this.pointerTracking.y || this.currentPointerY),
+                        cursor_move_time_ms: this.pendingCursorMoveTime || 0
                     });
             this.lastChar = 'SPACE';
             this.lastCharTime = timestamp;
@@ -812,6 +817,7 @@ class BiometricDataCollector {
             this.calculateAccuracy();
             this.checkSentenceCompletion();
             this.updateTypingFeedback();
+            this.pendingCursorMoveTime = 0;
             return;
         }
     
@@ -825,13 +831,15 @@ class BiometricDataCollector {
                 sentence: this.currentSentence,
                 position: pos,
                 clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
-                clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
+                clientY: Math.round(this.pointerTracking.y || this.currentPointerY),
+                cursor_move_time_ms: this.pendingCursorMoveTime || 0
             });
             console.log('✅ Backspace recorded (every press)');
             this.calculateAccuracy();
             this.checkSentenceCompletion();
             this.updateTypingFeedback();
             this.updateAutoCapState();
+            this.pendingCursorMoveTime = 0;
             return;
         }
 
@@ -849,13 +857,15 @@ class BiometricDataCollector {
                 sentence: this.currentSentence,
                 position: pos - 1,
                 clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
-                clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
+                clientY: Math.round(this.pointerTracking.y || this.currentPointerY),
+                cursor_move_time_ms: this.pendingCursorMoveTime || 0
             });
             this.lastChar = data;
             this.lastKeystrokeTime = timestamp;
             this.calculateAccuracy();
             this.checkSentenceCompletion();
             this.updateTypingFeedback();
+            this.pendingCursorMoveTime = 0;
             return;
         }
 
@@ -995,12 +1005,14 @@ class BiometricDataCollector {
                             sentence: this.currentSentence,
                         position: pos - data.length + i,
                             clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
-                            clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
+                            clientY: Math.round(this.pointerTracking.y || this.currentPointerY),
+                            cursor_move_time_ms: this.pendingCursorMoveTime || 0
                         });
                         
                     // Update last character and time for mobile deduplication
                         this.lastChar = refChar;
                     this.lastCharTime = timestamp + i;
+                    this.pendingCursorMoveTime = 0;
                 } else {
                     console.log('❌ Character duplicate ignored:', refChar);
                 }
@@ -1138,12 +1150,14 @@ class BiometricDataCollector {
                         sentence: this.currentSentence,
                         position: pos - 1,
                         clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
-                        clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
+                        clientY: Math.round(this.pointerTracking.y || this.currentPointerY),
+                        cursor_move_time_ms: this.pendingCursorMoveTime || 0
                     });
                     
                 // Update last character and time for mobile deduplication
                     this.lastChar = refChar;
                     this.lastCharTime = timestamp;
+                    this.pendingCursorMoveTime = 0;
                 } else {
                 console.log('❌ Character duplicate ignored (other input):', refChar);
             }
@@ -1155,6 +1169,20 @@ class BiometricDataCollector {
         this.updateTypingFeedback();
         // Always update auto-cap state after any input
         this.updateAutoCapState();
+        const prevCaretPos = this.lastCaretPos || 0;
+        const prevCaretMoveTime = this.lastCaretMoveTime || 0;
+        if (caretPos !== prevCaretPos) {
+            // Caret moved
+            if (caretPos < prevCaretPos) {
+                // Cursor moved back
+                this.pendingCursorMoveTime = performance.now() - prevCaretMoveTime;
+            } else {
+                // Cursor moved forward or to same place
+                this.pendingCursorMoveTime = 0;
+            }
+            this.lastCaretMoveTime = performance.now();
+            this.lastCaretPos = caretPos;
+        }
     }
 
 
@@ -3567,7 +3595,8 @@ class BiometricDataCollector {
                     key_y: keystroke.key_y || '',
                     was_deleted: wasDeleted,
                     flight_time_ms: flightTime, // Use the flight time as recorded
-                    dwell_time_ms: keystroke.dwell_time_ms || ''
+                    dwell_time_ms: keystroke.dwell_time_ms || '',
+                    cursor_move_time_ms: keystroke.cursor_move_time_ms || 0
                 });
             }
         });
@@ -3604,7 +3633,6 @@ class BiometricDataCollector {
                 touch_x: Math.round(touch.touches[0]?.clientX || 0),
                 touch_y: Math.round(touch.touches[0]?.clientY || 0),
                 btn_touch_state: touch.type,
-                inter_touch_timing: interTouchTiming,
                 num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
                 path_length_px: this.gesturePathLength[trialStep] || 0
                 // browser_name removed
