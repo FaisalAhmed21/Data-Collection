@@ -153,6 +153,16 @@ class BiometricDataCollector {
         // 1. In the BiometricDataCollector constructor, add dwell tracking:
         this.keyDwellStartTimes = {};
 
+        // In constructor, add hand detection state:
+        this.handDetectionData = {
+            leftHandKeys: ['q', 'w', 'e', 'r', 't', 'a', 's', 'd', 'f', 'g', 'z', 'x', 'c', 'v', 'b'],
+            rightHandKeys: ['y', 'u', 'i', 'o', 'p', 'h', 'j', 'k', 'l', 'n', 'm'],
+            centerKeys: ['space', 'backspace', 'shift'],
+            recentKeyPresses: [],
+            recentTouchPositions: [],
+            handUsageHistory: [],
+            currentHandPrediction: 'unknown'
+        };
 
     }
     
@@ -1157,6 +1167,9 @@ class BiometricDataCollector {
         this.updateTypingFeedback();
         // Always update auto-cap state after any input
         this.updateAutoCapState();
+        
+        // Update hand usage display
+        this.updateHandUsageDisplay();
     }
 
 
@@ -1704,6 +1717,10 @@ class BiometricDataCollector {
     recordKeystroke(data) {
         // Enhanced iOS deduplication - check against actual recorded data
         const currentTime = performance.now();
+        
+        // Analyze hand usage for this keystroke
+        const handUsage = this.analyzeHandUsage(data);
+        data.handUsage = handUsage;
         
         if (this.isIOS) {
             // Skip deduplication for BACKSPACE
@@ -3569,7 +3586,9 @@ class BiometricDataCollector {
                     key_y: keystroke.key_y || '',
                     was_deleted: wasDeleted,
                     flight_time_ms: flightTime, // Use the flight time as recorded
-                    dwell_time_ms: keystroke.dwell_time_ms || ''
+                    dwell_time_ms: keystroke.dwell_time_ms || '',
+                    hand_usage: keystroke.handUsage || 'unknown',
+                    hand_confidence: this.calculateHandConfidence()
                 });
             }
         });
@@ -4000,6 +4019,246 @@ class BiometricDataCollector {
         this.updateKeyboardDisplay();
     }
 
+    // Add hand detection methods:
+    analyzeHandUsage(keystrokeData) {
+        const { actualChar, clientX, clientY, timestamp } = keystrokeData;
+        
+        // Skip if no position data
+        if (!clientX || !clientY) return 'unknown';
+        
+        // Add to recent data
+        this.handDetectionData.recentKeyPresses.push({
+            char: actualChar.toLowerCase(),
+            x: clientX,
+            y: clientY,
+            timestamp
+        });
+        
+        // Keep only last 20 key presses
+        if (this.handDetectionData.recentKeyPresses.length > 20) {
+            this.handDetectionData.recentKeyPresses.shift();
+        }
+        
+        // Analyze based on key location and touch patterns
+        const handPrediction = this.predictHandFromPatterns();
+        
+        // Update history
+        this.handDetectionData.handUsageHistory.push({
+            timestamp,
+            prediction: handPrediction,
+            confidence: this.calculateHandConfidence()
+        });
+        
+        // Keep only last 100 predictions
+        if (this.handDetectionData.handUsageHistory.length > 100) {
+            this.handDetectionData.handUsageHistory.shift();
+        }
+        
+        this.handDetectionData.currentHandPrediction = handPrediction;
+        return handPrediction;
+    }
+
+    predictHandFromPatterns() {
+        const recent = this.handDetectionData.recentKeyPresses;
+        if (recent.length < 5) return 'unknown';
+        
+        // Method 1: Key-based analysis
+        const keyBasedPrediction = this.analyzeKeysByHand();
+        
+        // Method 2: Position-based analysis
+        const positionBasedPrediction = this.analyzeTouchPositions();
+        
+        // Method 3: Timing pattern analysis
+        const timingBasedPrediction = this.analyzeTimingPatterns();
+        
+        // Combine predictions with weights
+        const predictions = [
+            { method: 'key', prediction: keyBasedPrediction, weight: 0.4 },
+            { method: 'position', prediction: positionBasedPrediction, weight: 0.4 },
+            { method: 'timing', prediction: timingBasedPrediction, weight: 0.2 }
+        ];
+        
+        return this.combinePredictions(predictions);
+    }
+
+    analyzeKeysByHand() {
+        const recent = this.handDetectionData.recentKeyPresses;
+        let leftHandCount = 0;
+        let rightHandCount = 0;
+        let centerCount = 0;
+        
+        recent.forEach(press => {
+            const char = press.char;
+            if (this.handDetectionData.leftHandKeys.includes(char)) {
+                leftHandCount++;
+            } else if (this.handDetectionData.rightHandKeys.includes(char)) {
+                rightHandCount++;
+            } else if (this.handDetectionData.centerKeys.includes(char)) {
+                centerCount++;
+            }
+        });
+        
+        const total = leftHandCount + rightHandCount + centerCount;
+        if (total === 0) return 'unknown';
+        
+        const leftRatio = leftHandCount / total;
+        const rightRatio = rightHandCount / total;
+        
+        if (leftRatio > 0.6) return 'left';
+        if (rightRatio > 0.6) return 'right';
+        if (leftRatio > 0.3 && rightRatio > 0.3) return 'both';
+        return 'unknown';
+    }
+
+    analyzeTouchPositions() {
+        const recent = this.handDetectionData.recentKeyPresses;
+        if (recent.length < 3) return 'unknown';
+        
+        // Get screen dimensions
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        
+        // Calculate average touch position
+        const avgX = recent.reduce((sum, press) => sum + press.x, 0) / recent.length;
+        const avgY = recent.reduce((sum, press) => sum + press.y, 0) / recent.length;
+        
+        // Analyze position relative to screen
+        const leftSide = avgX < screenWidth * 0.4;
+        const rightSide = avgX > screenWidth * 0.6;
+        const centerSide = avgX >= screenWidth * 0.4 && avgX <= screenWidth * 0.6;
+        
+        // Check for two-handed pattern (wide spread)
+        const xSpread = Math.max(...recent.map(p => p.x)) - Math.min(...recent.map(p => p.x));
+        const wideSpread = xSpread > screenWidth * 0.5;
+        
+        if (wideSpread) return 'both';
+        if (leftSide) return 'left';
+        if (rightSide) return 'right';
+        if (centerSide) return 'unknown';
+        
+        return 'unknown';
+    }
+
+    analyzeTimingPatterns() {
+        const recent = this.handDetectionData.recentKeyPresses;
+        if (recent.length < 5) return 'unknown';
+        
+        // Calculate timing patterns
+        const intervals = [];
+        for (let i = 1; i < recent.length; i++) {
+            intervals.push(recent[i].timestamp - recent[i-1].timestamp);
+        }
+        
+        // Analyze timing consistency
+        const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+        const variance = intervals.reduce((sum, interval) => sum + Math.pow(interval - avgInterval, 2), 0) / intervals.length;
+        const stdDev = Math.sqrt(variance);
+        
+        // Two-handed typing tends to be more consistent (lower variance)
+        // Single-handed typing may have more variation
+        const consistencyRatio = stdDev / avgInterval;
+        
+        if (consistencyRatio < 0.3) return 'both';
+        if (consistencyRatio > 0.6) return 'left'; // Assuming left hand is less practiced
+        return 'right';
+    }
+
+    combinePredictions(predictions) {
+        const scores = { left: 0, right: 0, both: 0, unknown: 0 };
+        
+        predictions.forEach(({ prediction, weight }) => {
+            if (prediction in scores) {
+                scores[prediction] += weight;
+            }
+        });
+        
+        // Find the prediction with highest score
+        const maxScore = Math.max(...Object.values(scores));
+        const bestPrediction = Object.keys(scores).find(key => scores[key] === maxScore);
+        
+        return bestPrediction || 'unknown';
+    }
+
+    calculateHandConfidence() {
+        const recent = this.handDetectionData.recentKeyPresses;
+        if (recent.length < 5) return 0;
+        
+        // Calculate confidence based on consistency of predictions
+        const predictions = recent.map(() => this.predictHandFromPatterns());
+        const mostCommon = predictions.reduce((acc, pred) => {
+            acc[pred] = (acc[pred] || 0) + 1;
+            return acc;
+        }, {});
+        
+        const maxCount = Math.max(...Object.values(mostCommon));
+        return maxCount / predictions.length;
+    }
+
+    getCurrentHandUsage() {
+        return {
+            hand: this.handDetectionData.currentHandPrediction,
+            confidence: this.calculateHandConfidence(),
+            recentPatterns: this.handDetectionData.recentKeyPresses.slice(-5)
+        };
+    }
+
+    getHandUsageStats() {
+        const history = this.handDetectionData.handUsageHistory;
+        if (history.length === 0) return { left: 0, right: 0, both: 0, unknown: 0 };
+        
+        const stats = { left: 0, right: 0, both: 0, unknown: 0 };
+        history.forEach(entry => {
+            if (entry.prediction in stats) {
+                stats[entry.prediction]++;
+            }
+        });
+        
+        const total = history.length;
+        Object.keys(stats).forEach(key => {
+            stats[key] = Math.round((stats[key] / total) * 100);
+        });
+        
+        return stats;
+    }
+
+    updateHandUsageDisplay() {
+        const currentUsage = this.getCurrentHandUsage();
+        const stats = this.getHandUsageStats();
+        
+        // Create or update hand usage display
+        let handDisplay = document.getElementById('hand-usage-display');
+        if (!handDisplay) {
+            handDisplay = document.createElement('div');
+            handDisplay.id = 'hand-usage-display';
+            handDisplay.style.cssText = `
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+                font-size: 12px;
+                z-index: 1000;
+                font-family: monospace;
+            `;
+            document.body.appendChild(handDisplay);
+        }
+        
+        const handEmoji = {
+            'left': '👈',
+            'right': '👉',
+            'both': '🤲',
+            'unknown': '❓'
+        };
+        
+        handDisplay.innerHTML = `
+            <div><strong>Hand Detection:</strong></div>
+            <div>${handEmoji[currentUsage.hand]} ${currentUsage.hand.toUpperCase()} (${Math.round(currentUsage.confidence * 100)}%)</div>
+            <div><strong>Stats:</strong></div>
+            <div>Left: ${stats.left}% | Right: ${stats.right}% | Both: ${stats.both}%</div>
+        `;
+    }
 
 }
 // Initialize the application
