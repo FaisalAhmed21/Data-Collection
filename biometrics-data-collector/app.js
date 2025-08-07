@@ -152,12 +152,8 @@ class BiometricDataCollector {
         this.firstFrameOverlapVectors = [];
         // 1. In the BiometricDataCollector constructor, add dwell tracking:
         this.keyDwellStartTimes = {};
-        // In constructor, add state for cursor movement tracking
-        this.lastCaretPos = 0;
-        this.lastCaretMoveTime = 0;
-        this.pendingCursorMoveTime = 0;
-        // In constructor, add:
-        this.lastKeystrokeTimestamp = 0; // Track last keystroke time for cursor move
+
+
     }
     
     // Update detectDeviceInfo to be async and use Client Hints if available
@@ -595,19 +591,7 @@ class BiometricDataCollector {
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
 
-        // Listen for caret movement by click, input, and arrow keys
-        typingInput.addEventListener('click', (e) => this.trackCaretMove(e));
-        typingInput.addEventListener('keyup', (e) => {
-            if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
-                this.trackCaretMove(e);
-            }
-        });
-        typingInput.addEventListener('input', (e) => {
-            // Only track caret move if inputType is not insertText or delete (i.e., not a keystroke)
-            if (e.inputType && !e.inputType.startsWith('insert') && !e.inputType.startsWith('delete')) {
-                this.trackCaretMove(e);
-            }
-        });
+
     }
     
     switchScreen(screenName) {
@@ -822,8 +806,7 @@ class BiometricDataCollector {
                         sentence: this.currentSentence,
                 position: pos - 1,
                         clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
-                        clientY: Math.round(this.pointerTracking.y || this.currentPointerY),
-                        cursor_move_time_ms: this.pendingCursorMoveTime || 0
+                        clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
                     });
             this.lastChar = 'SPACE';
             this.lastCharTime = timestamp;
@@ -831,7 +814,6 @@ class BiometricDataCollector {
             this.calculateAccuracy();
             this.checkSentenceCompletion();
             this.updateTypingFeedback();
-            this.pendingCursorMoveTime = 0;
             return;
         }
     
@@ -845,15 +827,13 @@ class BiometricDataCollector {
                 sentence: this.currentSentence,
                 position: pos,
                 clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
-                clientY: Math.round(this.pointerTracking.y || this.currentPointerY),
-                cursor_move_time_ms: this.pendingCursorMoveTime || 0
+                clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
             });
             console.log('✅ Backspace recorded (every press)');
             this.calculateAccuracy();
             this.checkSentenceCompletion();
             this.updateTypingFeedback();
             this.updateAutoCapState();
-            this.pendingCursorMoveTime = 0;
             return;
         }
 
@@ -871,15 +851,13 @@ class BiometricDataCollector {
                 sentence: this.currentSentence,
                 position: pos - 1,
                 clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
-                clientY: Math.round(this.pointerTracking.y || this.currentPointerY),
-                cursor_move_time_ms: this.pendingCursorMoveTime || 0
+                clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
             });
             this.lastChar = data;
             this.lastKeystrokeTime = timestamp;
             this.calculateAccuracy();
             this.checkSentenceCompletion();
             this.updateTypingFeedback();
-            this.pendingCursorMoveTime = 0;
             return;
         }
 
@@ -1019,14 +997,12 @@ class BiometricDataCollector {
                             sentence: this.currentSentence,
                         position: pos - data.length + i,
                             clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
-                            clientY: Math.round(this.pointerTracking.y || this.currentPointerY),
-                            cursor_move_time_ms: this.pendingCursorMoveTime || 0
+                            clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
                         });
                         
                     // Update last character and time for mobile deduplication
                         this.lastChar = refChar;
                     this.lastCharTime = timestamp + i;
-                    this.pendingCursorMoveTime = 0;
                 } else {
                     console.log('❌ Character duplicate ignored:', refChar);
                 }
@@ -1164,14 +1140,12 @@ class BiometricDataCollector {
                         sentence: this.currentSentence,
                         position: pos - 1,
                         clientX: Math.round(this.pointerTracking.x || this.currentPointerX),
-                        clientY: Math.round(this.pointerTracking.y || this.currentPointerY),
-                        cursor_move_time_ms: this.pendingCursorMoveTime || 0
+                        clientY: Math.round(this.pointerTracking.y || this.currentPointerY)
                     });
                     
                 // Update last character and time for mobile deduplication
                     this.lastChar = refChar;
                     this.lastCharTime = timestamp;
-                    this.pendingCursorMoveTime = 0;
                 } else {
                 console.log('❌ Character duplicate ignored (other input):', refChar);
             }
@@ -1183,20 +1157,6 @@ class BiometricDataCollector {
         this.updateTypingFeedback();
         // Always update auto-cap state after any input
         this.updateAutoCapState();
-        const prevCaretPos = this.lastCaretPos || 0;
-        const prevCaretMoveTime = this.lastCaretMoveTime || 0;
-        if (caretPos !== prevCaretPos) {
-            // Caret moved
-            if (caretPos < prevCaretPos) {
-                // Cursor moved back
-                this.pendingCursorMoveTime = performance.now() - prevCaretMoveTime;
-            } else {
-                // Cursor moved forward or to same place
-                this.pendingCursorMoveTime = 0;
-            }
-            this.lastCaretMoveTime = performance.now();
-            this.lastCaretPos = caretPos;
-        }
     }
 
 
@@ -3609,8 +3569,7 @@ class BiometricDataCollector {
                     key_y: keystroke.key_y || '',
                     was_deleted: wasDeleted,
                     flight_time_ms: flightTime, // Use the flight time as recorded
-                    dwell_time_ms: keystroke.dwell_time_ms || '',
-                    cursor_move_time_ms: keystroke.cursor_move_time_ms || 0
+                    dwell_time_ms: keystroke.dwell_time_ms || ''
                 });
             }
         });
@@ -4041,21 +4000,7 @@ class BiometricDataCollector {
         this.updateKeyboardDisplay();
     }
 
-    // Add this method to the class:
-    trackCaretMove(e) {
-        const input = e.target;
-        const caret = input.selectionStart;
-        if (typeof this.lastCaretPos === 'number' && caret < this.lastCaretPos) {
-            // Only track backward movement
-            const now = performance.now();
-            if (this.lastKeystrokeTimestamp) {
-                this.pendingCursorMoveTime = now - this.lastKeystrokeTimestamp;
-            } else {
-                this.pendingCursorMoveTime = 0;
-            }
-        }
-        this.lastCaretPos = caret;
-    }
+
 }
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
