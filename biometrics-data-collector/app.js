@@ -4049,6 +4049,14 @@ class BiometricDataCollector {
         // Use sliding window analysis for better real-time detection
         const handPrediction = this.analyzeSlidingWindow();
         
+        // Debug logging
+        if (this.handDetectionData.recentKeyPresses.length % 5 === 0) {
+            const recent = this.handDetectionData.recentKeyPresses.slice(-5);
+            const avgX = recent.reduce((sum, press) => sum + press.x, 0) / recent.length;
+            const screenWidth = window.innerWidth;
+            console.log(`🔍 Hand Debug: avgX=${Math.round(avgX)}, screenWidth=${screenWidth}, prediction=${handPrediction}`);
+        }
+        
         // Update history
         this.handDetectionData.handUsageHistory.push({
             timestamp,
@@ -4066,44 +4074,45 @@ class BiometricDataCollector {
 
     analyzeSlidingWindow() {
         const recent = this.handDetectionData.recentKeyPresses;
-        if (recent.length < 5) return 'unknown';
+        if (recent.length < 3) return 'unknown';
         
         // Get screen dimensions
         const screenWidth = window.innerWidth;
         
-        // Analyze the most recent 5-8 keystrokes for immediate detection
-        const windowSize = Math.min(8, recent.length);
+        // Analyze the most recent 3-5 keystrokes for immediate detection
+        const windowSize = Math.min(5, recent.length);
         const recentWindow = recent.slice(-windowSize);
         
         // Calculate average position of recent touches
         const avgX = recentWindow.reduce((sum, press) => sum + press.x, 0) / recentWindow.length;
         
-        // More aggressive thresholds for immediate detection
-        const leftThreshold = screenWidth * 0.4;   // Left 40% of screen
-        const rightThreshold = screenWidth * 0.6;  // Right 40% of screen
+        // Simple and clear thresholds
+        const leftThreshold = screenWidth * 0.45;   // Left 45% of screen
+        const rightThreshold = screenWidth * 0.55;  // Right 45% of screen
         
-        // Check for clear left/right usage
+        // Check for clear left/right usage first
         if (avgX < leftThreshold) {
             return 'left';
         } else if (avgX > rightThreshold) {
             return 'right';
         }
         
-        // If in center, check for two-handed pattern
+        // Only check for both if there's a very wide spread
         const xSpread = Math.max(...recentWindow.map(p => p.x)) - Math.min(...recentWindow.map(p => p.x));
-        const wideSpread = xSpread > screenWidth * 0.4; // More sensitive to spread
+        const veryWideSpread = xSpread > screenWidth * 0.7; // Much higher threshold for "both"
         
-        if (wideSpread) {
+        if (veryWideSpread) {
             return 'both';
         }
         
-        // Fallback: analyze key usage for center touches
+        // If in center with moderate spread, use key analysis
         const leftKeys = recentWindow.filter(p => this.handDetectionData.leftHandKeys.includes(p.char)).length;
         const rightKeys = recentWindow.filter(p => this.handDetectionData.rightHandKeys.includes(p.char)).length;
         
-        if (leftKeys > rightKeys && leftKeys >= 2) return 'left';
-        if (rightKeys > leftKeys && rightKeys >= 2) return 'right';
+        if (leftKeys > rightKeys) return 'left';
+        if (rightKeys > leftKeys) return 'right';
         
+        // Default to unknown if unclear
         return 'unknown';
     }
 
@@ -4162,38 +4171,37 @@ class BiometricDataCollector {
 
     analyzeTouchPositions() {
         const recent = this.handDetectionData.recentKeyPresses;
-        if (recent.length < 5) return 'unknown';
+        if (recent.length < 3) return 'unknown';
         
         // Get screen dimensions
         const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
         
         // Calculate average touch position
         const avgX = recent.reduce((sum, press) => sum + press.x, 0) / recent.length;
-        const avgY = recent.reduce((sum, press) => sum + press.y, 0) / recent.length;
         
-        // More sensitive thresholds for better detection
-        const leftThreshold = screenWidth * 0.4;   // Left 40% of screen
-        const rightThreshold = screenWidth * 0.6;  // Right 40% of screen
+        // Simple thresholds - prioritize left/right over both
+        const leftThreshold = screenWidth * 0.45;   // Left 45% of screen
+        const rightThreshold = screenWidth * 0.55;  // Right 45% of screen
         
         // Analyze position relative to screen
         const leftSide = avgX < leftThreshold;
         const rightSide = avgX > rightThreshold;
         
-        // Check for two-handed pattern (more sensitive)
+        // Check for two-handed pattern (very conservative)
         const xSpread = Math.max(...recent.map(p => p.x)) - Math.min(...recent.map(p => p.x));
-        const wideSpread = xSpread > screenWidth * 0.5; // More sensitive threshold
+        const veryWideSpread = xSpread > screenWidth * 0.7; // Much higher threshold
         
-        // Additional check: if touches are spread across both sides
+        // Additional check: if touches are spread across both sides (very conservative)
         const leftTouches = recent.filter(p => p.x < leftThreshold).length;
         const rightTouches = recent.filter(p => p.x > rightThreshold).length;
-        const bothSidesUsed = leftTouches >= 2 && rightTouches >= 2; // Lower threshold
+        const bothSidesUsed = leftTouches >= 3 && rightTouches >= 3; // Higher threshold
         
-        if (wideSpread || bothSidesUsed) return 'both';
+        // Only return 'both' if very clear evidence
+        if (veryWideSpread && bothSidesUsed) return 'both';
         if (leftSide) return 'left';
         if (rightSide) return 'right';
         
-        // If in center, use key analysis as fallback
+        // If unclear, default to unknown
         return 'unknown';
     }
 
@@ -4385,6 +4393,11 @@ class BiometricDataCollector {
         const sessionConfidence = this.getSessionHandConfidence();
         const dominantHand = Object.keys(stats).reduce((a, b) => stats[a] > stats[b] ? a : b);
         
+        // Add detailed analysis for debugging
+        const recent = this.handDetectionData.recentKeyPresses.slice(-10);
+        const avgX = recent.reduce((sum, press) => sum + press.x, 0) / recent.length;
+        const screenWidth = window.innerWidth;
+        
         const summary = [{
             participant_id: this.participantId,
             session_timestamp: Date.now(),
@@ -4395,7 +4408,11 @@ class BiometricDataCollector {
             both_hands_percentage: stats.both,
             unknown_percentage: stats.unknown,
             total_keystrokes: this.handDetectionData.recentKeyPresses.length,
-            total_predictions: this.handDetectionData.handUsageHistory.length
+            total_predictions: this.handDetectionData.handUsageHistory.length,
+            debug_avg_x: Math.round(avgX),
+            debug_screen_width: screenWidth,
+            debug_left_threshold: Math.round(screenWidth * 0.45),
+            debug_right_threshold: Math.round(screenWidth * 0.55)
         }];
         
         const csv = this.convertToCSV(summary);
@@ -4403,6 +4420,12 @@ class BiometricDataCollector {
         this.uploadCSVToGoogleDrive(csv, filename);
         
         console.log('📊 Hand Usage Summary Exported:', summary[0]);
+        console.log('🔍 Debug Info:', {
+            avgX: Math.round(avgX),
+            screenWidth,
+            leftThreshold: Math.round(screenWidth * 0.45),
+            rightThreshold: Math.round(screenWidth * 0.55)
+        });
     }
 
 }
