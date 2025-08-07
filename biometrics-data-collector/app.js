@@ -156,6 +156,8 @@ class BiometricDataCollector {
         this.lastCaretPos = 0;
         this.lastCaretMoveTime = 0;
         this.pendingCursorMoveTime = 0;
+        // In constructor, add:
+        this.lastKeystrokeTimestamp = 0; // Track last keystroke time for cursor move
     }
     
     // Update detectDeviceInfo to be async and use Client Hints if available
@@ -593,7 +595,19 @@ class BiometricDataCollector {
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
 
-
+        // Listen for caret movement by click, input, and arrow keys
+        typingInput.addEventListener('click', (e) => this.trackCaretMove(e));
+        typingInput.addEventListener('keyup', (e) => {
+            if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
+                this.trackCaretMove(e);
+            }
+        });
+        typingInput.addEventListener('input', (e) => {
+            // Only track caret move if inputType is not insertText or delete (i.e., not a keystroke)
+            if (e.inputType && !e.inputType.startsWith('insert') && !e.inputType.startsWith('delete')) {
+                this.trackCaretMove(e);
+            }
+        });
     }
     
     switchScreen(screenName) {
@@ -4025,6 +4039,22 @@ class BiometricDataCollector {
             }
         }
         this.updateKeyboardDisplay();
+    }
+
+    // Add this method to the class:
+    trackCaretMove(e) {
+        const input = e.target;
+        const caret = input.selectionStart;
+        if (typeof this.lastCaretPos === 'number' && caret < this.lastCaretPos) {
+            // Only track backward movement
+            const now = performance.now();
+            if (this.lastKeystrokeTimestamp) {
+                this.pendingCursorMoveTime = now - this.lastKeystrokeTimestamp;
+            } else {
+                this.pendingCursorMoveTime = 0;
+            }
+        }
+        this.lastCaretPos = caret;
     }
 }
 // Initialize the application
