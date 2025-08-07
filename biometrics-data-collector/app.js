@@ -153,16 +153,7 @@ class BiometricDataCollector {
         // 1. In the BiometricDataCollector constructor, add dwell tracking:
         this.keyDwellStartTimes = {};
 
-        // In constructor, add hand detection state:
-        this.handDetectionData = {
-            leftHandKeys: ['q', 'w', 'e', 'r', 't', 'a', 's', 'd', 'f', 'g', 'z', 'x', 'c', 'v', 'b'],
-            rightHandKeys: ['y', 'u', 'i', 'o', 'p', 'h', 'j', 'k', 'l', 'n', 'm'],
-            centerKeys: ['space', 'backspace', 'shift'],
-            recentKeyPresses: [],
-            recentTouchPositions: [],
-            handUsageHistory: [],
-            currentHandPrediction: 'unknown'
-        };
+
 
     }
     
@@ -1168,8 +1159,7 @@ class BiometricDataCollector {
         // Always update auto-cap state after any input
         this.updateAutoCapState();
         
-        // Update hand usage display
-        this.updateHandUsageDisplay();
+
     }
 
 
@@ -1718,9 +1708,7 @@ class BiometricDataCollector {
         // Enhanced iOS deduplication - check against actual recorded data
         const currentTime = performance.now();
         
-        // Analyze hand usage for this keystroke
-        const handUsage = this.analyzeHandUsage(data);
-        data.handUsage = handUsage;
+
         
         if (this.isIOS) {
             // Skip deduplication for BACKSPACE
@@ -3529,8 +3517,7 @@ class BiometricDataCollector {
     
         this.uploadCSVToGoogleDrive(csv, filename);
         
-        // Also export hand usage summary
-        this.exportHandUsageSummary();
+
     
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
         // Dynamically set feature count and list
@@ -3590,7 +3577,7 @@ class BiometricDataCollector {
                     was_deleted: wasDeleted,
                     flight_time_ms: flightTime, // Use the flight time as recorded
                     dwell_time_ms: keystroke.dwell_time_ms || '',
-                    hand_usage: keystroke.handUsage || 'unknown'
+
                 });
             }
         });
@@ -4021,369 +4008,11 @@ class BiometricDataCollector {
         this.updateKeyboardDisplay();
     }
 
-    // Add hand detection methods:
-    analyzeHandUsage(keystrokeData) {
-        const { actualChar, clientX, clientY, timestamp } = keystrokeData;
-        
-        // Skip if no position data
-        if (!clientX || !clientY) return 'unknown';
-        
-        // Add to recent data
-        this.handDetectionData.recentKeyPresses.push({
-            char: actualChar.toLowerCase(),
-            x: clientX,
-            y: clientY,
-            timestamp
-        });
-        
-        // Keep only last 15 key presses for faster adaptation
-        if (this.handDetectionData.recentKeyPresses.length > 15) {
-            this.handDetectionData.recentKeyPresses.shift();
-        }
-        
-        // Analyze the recent data (keystrokes and touch positions)
-        if (this.handDetectionData.recentKeyPresses.length < 5) {
-            return 'unknown';
-        }
 
-        // Use sliding window for better prediction
-        const handPrediction = this.analyzeSlidingWindow();
-        
-        // Update hand usage history
-        this.handDetectionData.handUsageHistory.push({
-            timestamp,
-            prediction: handPrediction
-        });
-        
-        // Keep only last 50 predictions
-        if (this.handDetectionData.handUsageHistory.length > 50) {
-            this.handDetectionData.handUsageHistory.shift();
-        }
-        
-        this.handDetectionData.currentHandPrediction = handPrediction;
-        return handPrediction;
-    }
 
-    // Sliding window analysis for better hand detection
-    analyzeSlidingWindow() {
-        const recent = this.handDetectionData.recentKeyPresses;
-        if (recent.length < 3) return 'unknown';
 
-        // Get screen dimensions
-        const screenWidth = window.innerWidth;
 
-        // Analyze the most recent 3-5 keystrokes or touch positions
-        const windowSize = Math.min(5, recent.length);
-        const recentWindow = recent.slice(-windowSize);
 
-        // Calculate average position of recent touches/key presses
-        const avgX = recentWindow.reduce((sum, press) => sum + press.x, 0) / recentWindow.length;
-
-        // Simple thresholds - prioritize left/right over both
-        const leftThreshold = screenWidth * 0.45;   // Left 45% of screen
-        const rightThreshold = screenWidth * 0.55;  // Right 45% of screen
-
-        // Analyze position relative to screen
-        const leftSide = avgX < leftThreshold;
-        const rightSide = avgX > rightThreshold;
-
-        // Check for two-handed pattern (very conservative)
-        const xSpread = Math.max(...recentWindow.map(p => p.x)) - Math.min(...recentWindow.map(p => p.x));
-        const veryWideSpread = xSpread > screenWidth * 0.7; // Much higher threshold for "both"
-
-        // Additional check: if touches are spread across both sides (very conservative)
-        const leftTouches = recentWindow.filter(p => p.x < leftThreshold).length;
-        const rightTouches = recentWindow.filter(p => p.x > rightThreshold).length;
-        const bothSidesUsed = leftTouches >= 3 && rightTouches >= 3; // Higher threshold for "both"
-
-        // Only return 'both' if very clear evidence
-        if (veryWideSpread && bothSidesUsed) return 'both';
-        if (leftSide) return 'left';
-        if (rightSide) return 'right';
-
-        // If unclear, default to unknown
-        return 'unknown';
-    }
-
-    // Analyze which hand is being used based on key history
-    analyzeKeysByHand() {
-        const recent = this.handDetectionData.recentKeyPresses;
-        let leftHandCount = 0;
-        let rightHandCount = 0;
-        let centerCount = 0;
-
-        recent.forEach(press => {
-            const char = press.char;
-            if (this.handDetectionData.leftHandKeys.includes(char)) {
-                leftHandCount++;
-            } else if (this.handDetectionData.rightHandKeys.includes(char)) {
-                rightHandCount++;
-            } else if (this.handDetectionData.centerKeys.includes(char)) {
-                centerCount++;
-            }
-        });
-
-        const total = leftHandCount + rightHandCount + centerCount;
-        if (total === 0) return 'unknown';
-
-        const leftRatio = leftHandCount / total;
-        const rightRatio = rightHandCount / total;
-
-        // More conservative thresholds
-        if (leftRatio > 0.7) return 'left';
-        if (rightRatio > 0.7) return 'right';
-        if (leftRatio > 0.4 && rightRatio > 0.4) return 'both';
-        return 'unknown';
-    }
-
-    // Update hand usage history for further analysis
-    getHandUsageStats() {
-        const history = this.handDetectionData.handUsageHistory;
-        if (history.length === 0) return { left: 0, right: 0, both: 0, unknown: 0 };
-
-        const stats = { left: 0, right: 0, both: 0, unknown: 0 };
-        history.forEach(entry => {
-            if (entry.prediction in stats) {
-                stats[entry.prediction]++;
-            }
-        });
-
-        const total = history.length;
-        Object.keys(stats).forEach(key => {
-            stats[key] = Math.round((stats[key] / total) * 100);
-        });
-
-        return stats;
-    }
-
-    // Update hand usage display with statistics
-    updateHandUsageDisplay() {
-        const currentUsage = this.getCurrentHandUsage();
-        const stats = this.getHandUsageStats();
-        const sessionConfidence = this.getSessionHandConfidence();
-
-        let handDisplay = document.getElementById('hand-usage-display');
-        if (!handDisplay) {
-            handDisplay = document.createElement('div');
-            handDisplay.id = 'hand-usage-display';
-            handDisplay.style.cssText = `
-                position: fixed;
-                top: 10px;
-                right: 10px;
-                background: rgba(0,0,0,0.8);
-                color: white;
-                padding: 10px;
-                border-radius: 5px;
-                font-size: 12px;
-                z-index: 1000;
-                font-family: monospace;
-                min-width: 200px;
-            `;
-            document.body.appendChild(handDisplay);
-        }
-
-        const handEmoji = {
-            'left': '👈',
-            'right': '👉',
-            'both': '🤲',
-            'unknown': '❓'
-        };
-
-        // Determine dominant hand
-        const dominantHand = Object.keys(stats).reduce((a, b) => stats[a] > stats[b] ? a : b);
-
-        const transitionEmoji = {
-            'stable': '🟢',
-            'transitioning': '🟡',
-            'mixed': '🔴'
-        };
-
-        handDisplay.innerHTML = `
-            <div><strong>Hand Detection:</strong></div>
-            <div>${handEmoji[currentUsage.hand]} Current: ${currentUsage.hand.toUpperCase()}</div>
-            <div>🏆 Dominant: ${handEmoji[dominantHand]} ${dominantHand.toUpperCase()}</div>
-            <div>📊 Confidence: ${sessionConfidence}%</div>
-            <div>${transitionEmoji[currentUsage.handTransition]} ${currentUsage.handTransition.toUpperCase()}</div>
-            <div><strong>Session Stats:</strong></div>
-            <div>Left: ${stats.left}% | Right: ${stats.right}% | Both: ${stats.both}%</div>
-            <div>Data points: ${this.handDetectionData.recentKeyPresses.length}</div>
-        `;
-    }
-
-    // Session confidence based on hand usage
-    getSessionHandConfidence() {
-        const history = this.handDetectionData.handUsageHistory;
-        if (history.length < 10) return 0;
-
-        const predictions = history.map(entry => entry.prediction);
-        const mostCommon = predictions.reduce((acc, pred) => {
-            acc[pred] = (acc[pred] || 0) + 1;
-            return acc;
-        }, {});
-
-        const maxPrediction = Math.max(...Object.values(mostCommon));
-        return Math.round((maxPrediction / predictions.length) * 100);
-    }
-
-    // Get current hand usage
-    getCurrentHandUsage() {
-        const lastPrediction = this.handDetectionData.handUsageHistory.slice(-1)[0];
-        return lastPrediction ? lastPrediction : { hand: 'unknown', handTransition: 'stable' };
-    }
-
-    predictHandFromPatterns() {
-        const recent = this.handDetectionData.recentKeyPresses;
-        if (recent.length < 10) return 'unknown';
-        
-        // Primary method: Position-based analysis (most reliable for mobile)
-        const positionBasedPrediction = this.analyzeTouchPositions();
-        
-        // Secondary method: Key-based analysis (for validation)
-        const keyBasedPrediction = this.analyzeKeysByHand();
-        
-        // Tertiary method: Timing pattern analysis
-        const timingBasedPrediction = this.analyzeTimingPatterns();
-        
-        // Weighted combination with position as primary
-        const predictions = [
-            { method: 'position', prediction: positionBasedPrediction, weight: 0.6 },
-            { method: 'key', prediction: keyBasedPrediction, weight: 0.3 },
-            { method: 'timing', prediction: timingBasedPrediction, weight: 0.1 }
-        ];
-        
-        return this.combinePredictions(predictions);
-    }
-
-    analyzeTouchPositions() {
-        const recent = this.handDetectionData.recentKeyPresses;
-        if (recent.length < 3) return 'unknown';
-        
-        // Get screen dimensions
-        const screenWidth = window.innerWidth;
-        
-        // Calculate average touch position
-        const avgX = recent.reduce((sum, press) => sum + press.x, 0) / recent.length;
-        
-        // Simple thresholds - prioritize left/right over both
-        const leftThreshold = screenWidth * 0.45;   // Left 45% of screen
-        const rightThreshold = screenWidth * 0.55;  // Right 45% of screen
-        
-        // Analyze position relative to screen
-        const leftSide = avgX < leftThreshold;
-        const rightSide = avgX > rightThreshold;
-        
-        // Check for two-handed pattern (very conservative)
-        const xSpread = Math.max(...recent.map(p => p.x)) - Math.min(...recent.map(p => p.x));
-        const veryWideSpread = xSpread > screenWidth * 0.7; // Much higher threshold
-        
-        // Additional check: if touches are spread across both sides (very conservative)
-        const leftTouches = recent.filter(p => p.x < leftThreshold).length;
-        const rightTouches = recent.filter(p => p.x > rightThreshold).length;
-        const bothSidesUsed = leftTouches >= 3 && rightTouches >= 3; // Higher threshold
-        
-        // Only return 'both' if very clear evidence
-        if (veryWideSpread && bothSidesUsed) return 'both';
-        if (leftSide) return 'left';
-        if (rightSide) return 'right';
-        
-        // If unclear, default to unknown
-        return 'unknown';
-    }
-
-    analyzeTimingPatterns() {
-        const recent = this.handDetectionData.recentKeyPresses;
-        if (recent.length < 5) return 'unknown';
-        
-        // Calculate timing patterns
-        const intervals = [];
-        for (let i = 1; i < recent.length; i++) {
-            intervals.push(recent[i].timestamp - recent[i-1].timestamp);
-        }
-        
-        // Analyze timing consistency
-        const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
-        const variance = intervals.reduce((sum, interval) => sum + Math.pow(interval - avgInterval, 2), 0) / intervals.length;
-        const stdDev = Math.sqrt(variance);
-        
-        // Two-handed typing tends to be more consistent (lower variance)
-        // Single-handed typing may have more variation
-        const consistencyRatio = stdDev / avgInterval;
-        
-        if (consistencyRatio < 0.3) return 'both';
-        if (consistencyRatio > 0.6) return 'left'; // Assuming left hand is less practiced
-        return 'right';
-    }
-
-    combinePredictions(predictions) {
-        const scores = { left: 0, right: 0, both: 0, unknown: 0 };
-        
-        predictions.forEach(({ prediction, weight }) => {
-            if (prediction in scores) {
-                scores[prediction] += weight;
-            }
-        });
-        
-        // Find the prediction with highest score
-        const maxScore = Math.max(...Object.values(scores));
-        const bestPrediction = Object.keys(scores).find(key => scores[key] === maxScore);
-        
-        return bestPrediction || 'unknown';
-    }
-
-    calculateHandConfidence() {
-        const recent = this.handDetectionData.recentKeyPresses;
-        if (recent.length < 10) return 0;
-        
-        // Calculate confidence based on multiple factors:
-        
-        // 1. Position consistency (how clustered the touches are)
-        const avgX = recent.reduce((sum, press) => sum + press.x, 0) / recent.length;
-        const xVariance = recent.reduce((sum, press) => sum + Math.pow(press.x - avgX, 2), 0) / recent.length;
-        const xStdDev = Math.sqrt(xVariance);
-        const screenWidth = window.innerWidth;
-        const positionConsistency = Math.max(0, 1 - (xStdDev / (screenWidth * 0.3))); // Normalize to 0-1
-        
-        // 2. Key usage consistency (how strongly one hand dominates)
-        const keyAnalysis = this.analyzeKeysByHand();
-        const leftCount = recent.filter(p => this.handDetectionData.leftHandKeys.includes(p.char)).length;
-        const rightCount = recent.filter(p => this.handDetectionData.rightHandKeys.includes(p.char)).length;
-        const total = leftCount + rightCount;
-        const keyConsistency = total > 0 ? Math.abs(leftCount - rightCount) / total : 0;
-        
-        // 3. Data sufficiency (more data = higher confidence)
-        const dataSufficiency = Math.min(1, recent.length / 20);
-        
-        // Combine factors with weights
-        const confidence = (positionConsistency * 0.5) + (keyConsistency * 0.3) + (dataSufficiency * 0.2);
-        
-        return Math.min(1, Math.max(0, confidence)); // Ensure 0-1 range
-    }
-
-    getCurrentHandUsage() {
-        return {
-            hand: this.handDetectionData.currentHandPrediction,
-            confidence: this.calculateHandConfidence(),
-            recentPatterns: this.handDetectionData.recentKeyPresses.slice(-5),
-            handTransition: this.detectHandTransition()
-        };
-    }
-
-    detectHandTransition() {
-        const history = this.handDetectionData.handUsageHistory;
-        if (history.length < 10) return 'stable';
-        
-        // Look at last 10 predictions to detect transitions
-        const recentPredictions = history.slice(-10).map(h => h.prediction);
-        const uniquePredictions = [...new Set(recentPredictions)];
-        
-        if (uniquePredictions.length > 2) {
-            return 'mixed';
-        } else if (uniquePredictions.length === 2) {
-            return 'transitioning';
-        } else {
-            return 'stable';
-        }
-    }
 
 }
 // Initialize the application
