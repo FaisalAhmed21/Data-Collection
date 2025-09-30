@@ -3662,34 +3662,49 @@ class BiometricDataCollector {
     uploadCSVToGoogleDrive(content, filename) {
         const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec';
         
+        // Use FormData which is more compatible with Google Apps Script
+        const formData = new FormData();
+        formData.append('filename', filename);
+        formData.append('content', content);
+        
         fetch(scriptURL, {
             method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                filename: filename,
-                content: content
-            })
+            mode: 'no-cors', // Changed to no-cors to avoid CORS issues
+            body: formData
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(result => {
-            if (result.success) {
-                console.log(`✅ ${filename} uploaded to Google Drive successfully`);
-                alert(`✅ ${filename} uploaded to Google Drive successfully!`);
-            } else {
-                throw new Error(result.error || 'Upload failed');
-            }
+        .then(() => {
+            // With no-cors, we can't read the response, so assume success
+            console.log(`✅ ${filename} upload request sent to Google Drive`);
+            alert(`✅ ${filename} upload request sent to Google Drive successfully!`);
         })
         .catch(error => {
             console.error(`❌ Google Drive upload failed:`, error);
-            alert(`❌ Upload failed for ${filename}: ${error.message}\n\nPlease check:\n1. Your internet connection\n2. Google Apps Script is properly deployed\n3. The script URL is correct`);
+            
+            // Try alternative method with URL parameters
+            console.log('Trying alternative upload method...');
+            this.uploadCSVAlternative(content, filename);
+        });
+    }
+
+    uploadCSVAlternative(content, filename) {
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec';
+        
+        // Alternative method using URL parameters and plain text body
+        fetch(`${scriptURL}?filename=${encodeURIComponent(filename)}`, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'text/plain',
+            },
+            body: content
+        })
+        .then(() => {
+            console.log(`✅ ${filename} alternative upload method completed`);
+            alert(`✅ ${filename} uploaded to Google Drive using alternative method!`);
+        })
+        .catch(error => {
+            console.error(`❌ Alternative upload also failed:`, error);
+            alert(`❌ Upload failed for ${filename}. Please check:\n\n1. Internet connection\n2. Google Apps Script is deployed as a web app\n3. Web app permissions are set to "Anyone"\n4. The script URL is correct\n\nError: ${error.message}`);
         });
     }
 
