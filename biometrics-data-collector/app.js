@@ -3660,51 +3660,51 @@ class BiometricDataCollector {
     // https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec
 
     uploadCSVToGoogleDrive(content, filename) {
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxo2vNB8VVdD01OeWNQVUNnB-1VIFv6wAREt31Ibr49OFXIfC2yiGzE8WJu-vURV8Jw/exec';
         
-        // Use FormData which is more compatible with Google Apps Script
-        const formData = new FormData();
-        formData.append('filename', filename);
-        formData.append('content', content);
-        
+        // First try with CORS to get proper response
         fetch(scriptURL, {
             method: 'POST',
-            mode: 'no-cors', // Changed to no-cors to avoid CORS issues
-            body: formData
-        })
-        .then(() => {
-            // With no-cors, we can't read the response, so assume success
-            console.log(`✅ ${filename} upload request sent to Google Drive`);
-            alert(`✅ ${filename} upload request sent to Google Drive successfully!`);
-        })
-        .catch(error => {
-            console.error(`❌ Google Drive upload failed:`, error);
-            
-            // Try alternative method with URL parameters
-            console.log('Trying alternative upload method...');
-            this.uploadCSVAlternative(content, filename);
-        });
-    }
-
-    uploadCSVAlternative(content, filename) {
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec';
-        
-        // Alternative method using URL parameters and plain text body
-        fetch(`${scriptURL}?filename=${encodeURIComponent(filename)}`, {
-            method: 'POST',
-            mode: 'no-cors',
+            mode: 'cors',
             headers: {
-                'Content-Type': 'text/plain',
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: content
+            body: `filename=${encodeURIComponent(filename)}&content=${encodeURIComponent(content)}`
         })
-        .then(() => {
-            console.log(`✅ ${filename} alternative upload method completed`);
-            alert(`✅ ${filename} uploaded to Google Drive using alternative method!`);
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(result => {
+            console.log(`✅ ${filename} uploaded to Google Drive:`, result);
+            if (result.includes('success') || result.includes('uploaded')) {
+                alert(`✅ ${filename} successfully uploaded to Google Drive!`);
+            } else {
+                throw new Error('Upload may have failed - check Google Drive');
+            }
         })
         .catch(error => {
-            console.error(`❌ Alternative upload also failed:`, error);
-            alert(`❌ Upload failed for ${filename}. Please check:\n\n1. Internet connection\n2. Google Apps Script is deployed as a web app\n3. Web app permissions are set to "Anyone"\n4. The script URL is correct\n\nError: ${error.message}`);
+            console.error(`❌ CORS upload failed:`, error);
+            console.log('Trying no-cors fallback...');
+            
+            // Fallback with no-cors
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `filename=${encodeURIComponent(filename)}&content=${encodeURIComponent(content)}`
+            })
+            .then(() => {
+                alert(`⚠️ Upload request sent for ${filename}, but verification failed.\n\n🔧 SETUP REQUIRED:\n\n1. Go to https://script.google.com\n2. Create a new project\n3. Paste this code:\n\nfunction doPost(e) {\n  try {\n    const filename = e.parameter.filename;\n    const content = e.parameter.content;\n    \n    const blob = Utilities.newBlob(content, 'text/csv', filename);\n    const file = DriveApp.createFile(blob);\n    \n    return ContentService.createTextOutput('success: ' + file.getId());\n  } catch (error) {\n    return ContentService.createTextOutput('error: ' + error.toString());\n  }\n}\n\n4. Deploy as Web App\n5. Set permissions to 'Anyone'\n6. Copy the new URL and replace it in the code\n\nCurrent URL may be incorrect or script not deployed.`);
+            })
+            .catch(fallbackError => {
+                console.error(`❌ All upload methods failed:`, fallbackError);
+                alert(`❌ Upload failed for ${filename}.\n\n🔧 GOOGLE APPS SCRIPT SETUP NEEDED:\n\n1. The current script URL may be incorrect\n2. Google Apps Script may not be properly deployed\n3. Check script permissions\n\nError: ${error.message}`);
+            });
         });
     }
 
