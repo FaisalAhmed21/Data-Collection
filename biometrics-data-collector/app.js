@@ -123,7 +123,6 @@ class BiometricDataCollector {
             rotationSequence: [],
             rotationCompleted: false,
             wrongDirectionStarted: false,
-            currentTrial: 1,
             stepStartTime: null,
             facets: [],
             currentFacetIndex: 0,
@@ -146,12 +145,9 @@ class BiometricDataCollector {
         
         this.init();
 
-        // In the BiometricDataCollector class constructor, add:
         this.firstFrameTouches = [];
         this.firstFrameHeatmap = [];
         this.firstFrameOverlapVectors = [];
-        // 1. In the BiometricDataCollector constructor, add dwell tracking:
-        this.keyDwellStartTimes = {};
 
 
 
@@ -2079,8 +2075,7 @@ class BiometricDataCollector {
         this.updateCrystalDisplay();
         
         // ULTRA-RELIABLE mobile device detection and setup
-        console.log('🎮 Crystal game started - Trial tracking initialized');
-        console.log('Initial trial state:', this.crystalState.currentTrial);
+        console.log('🎮 Crystal game started');
         console.log('Device info:', {
             userAgent: navigator.userAgent,
             platform: navigator.platform,
@@ -2848,18 +2843,13 @@ class BiometricDataCollector {
     }
     
     resetCrystalStep() {
-        // Increment trial counter when user resets the step
-        this.crystalState.currentTrial++;
-        console.log(`Step ${this.currentCrystalStep} reset - Trial ${this.crystalState.currentTrial}`);
+        console.log(`Step ${this.currentCrystalStep} reset`);
         
         this.resetCrystalState();
         this.updateCrystalDisplay();
     }
     
     resetCrystalState() {
-        // Preserve trial counter when resetting state
-        const currentTrial = this.crystalState.currentTrial;
-        
         console.log(`🔄 Resetting crystal state - Progress will be reset to 0/3`);
         
         this.crystalState = {
@@ -2882,7 +2872,6 @@ class BiometricDataCollector {
             rotationSequence: [],
             rotationCompleted: false,
             wrongDirectionStarted: false,
-            currentTrial: currentTrial,
             stepStartTime: null,
             // Facet tapping state
             facets: [],
@@ -3035,30 +3024,27 @@ class BiometricDataCollector {
     recordTouchEvent(data) {
         // Add trial information for crystal game
         if (data.taskId === 2) { // Crystal game
-            data.trial = this.crystalState.currentTrial;
-            // Enhanced debug logging for trial tracking
+            data.step = this.currentCrystalStep;
             if (data.type === 'touchstart') {
-                console.log(`📊 Touch event recorded - Step: ${data.step}, Trial: ${data.trial}, Current Trial State: ${this.crystalState.currentTrial}`);
+                console.log(`📊 Touch event recorded - Step: ${data.step}`);
             }
-        } else {
-            data.trial = 1; // Default trial for other tasks
         }
         
         // In recordTouchEvent, update gesturePath and gesturePathLength
-        const trialStep = `${data.trial || 1}_${data.step || 1}`;
-        if (!this.gesturePath[trialStep]) {
-            this.gesturePath[trialStep] = [];
-            this.gesturePathLength[trialStep] = 0;
+        const stepKey = `${data.step || 1}`;
+        if (!this.gesturePath[stepKey]) {
+            this.gesturePath[stepKey] = [];
+            this.gesturePathLength[stepKey] = 0;
         }
         const x = Math.round(data.touches[0]?.clientX || 0);
         const y = Math.round(data.touches[0]?.clientY || 0);
-        const last = this.gesturePath[trialStep][this.gesturePath[trialStep].length - 1];
+        const last = this.gesturePath[stepKey][this.gesturePath[stepKey].length - 1];
         if (last) {
             const dx = x - last.x;
             const dy = y - last.y;
-            this.gesturePathLength[trialStep] += Math.sqrt(dx * dx + dy * dy);
+            this.gesturePathLength[stepKey] += Math.sqrt(dx * dx + dy * dy);
         }
-        this.gesturePath[trialStep].push({ x, y });
+        this.gesturePath[stepKey].push({ x, y });
         this.touchData.push(data);
     }
     
@@ -3582,7 +3568,6 @@ class BiometricDataCollector {
                 if (keystroke.actualChar && keystroke.actualChar.length === 1) {
                     refChar = keystroke.actualChar;
                 }
-                // Remove browser_name from features
                 features.push({
                     participant_id: this.participantId,
                     task_id: 1,
@@ -3593,20 +3578,17 @@ class BiometricDataCollector {
                     key_x: keystroke.key_x || '',
                     key_y: keystroke.key_y || '',
                     was_deleted: wasDeleted,
-                    flight_time_ms: flightTime, // Use the flight time as recorded
-                    dwell_time_ms: keystroke.dwell_time_ms || '',
-
+                    flight_time_ms: flightTime
                 });
             }
         });
         return features;
     }
 
-    // RELIABLE: Touch feature extraction with device model and browser name as separate columns
+    // Touch feature extraction without trial features
     extractTouchFeatures() {
         const features = [];
         let lastTimestamp = null;
-        let lastTrialStep = null;
         this.touchData.forEach((touch, index) => {
             let task_step_label = '';
             if (touch.taskId === 2) {
@@ -3616,25 +3598,17 @@ class BiometricDataCollector {
             } else {
                 task_step_label = '';
             }
-            const trialStep = `${touch.trial || 1}_${touch.step || 1}`;
-            // Set inter_touch_timing to null for the first event of each gesture/trial/step
-            let interTouchTiming = null;
-            if (lastTrialStep === trialStep && lastTimestamp !== null) {
-                interTouchTiming = Math.round(touch.timestamp - lastTimestamp);
-            }
-            lastTimestamp = touch.timestamp;
-            lastTrialStep = trialStep;
+            const stepKey = `${touch.step || 1}`;
+            
             const baseFeature = {
                 participant_id: this.participantId,
                 task_id: task_step_label,
-                trial: touch.trial || 1,
                 timestamp_ms: Math.round(touch.timestamp),
                 touch_x: Math.round(touch.touches[0]?.clientX || 0),
                 touch_y: Math.round(touch.touches[0]?.clientY || 0),
                 btn_touch_state: touch.type,
                 num_touch_points: Array.isArray(touch.touches) ? touch.touches.length : 1,
-                path_length_px: this.gesturePathLength[trialStep] || 0
-                // browser_name removed
+                path_length_px: this.gesturePathLength[stepKey] || 0
             };
             features.push(baseFeature);
         });
@@ -3656,19 +3630,12 @@ class BiometricDataCollector {
             return value;
         };
     
-        // Add device and browser info as a comment line at the top
-        let deviceInfoLine = '';
-        if (this.deviceInfo) {
-            deviceInfoLine = `Device: ${this.deviceInfo.device_model} | Browser: ${this.deviceInfo.browser_name} ${this.deviceInfo.browser_version}`;
-        }
-    
         const csvContent = [
-            deviceInfoLine,
             headers.join(','), // header row
             ...data.map(row => 
                 headers.map(header => escapeCsv(row[header])).join(',')
             )
-        ].filter(Boolean).join('\n');
+        ].join('\n');
     
         // Add UTF-8 BOM to ensure Excel and others recognize encoding
         return '\uFEFF' + csvContent;
