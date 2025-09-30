@@ -3660,22 +3660,36 @@ class BiometricDataCollector {
     // https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec
 
     uploadCSVToGoogleDrive(content, filename) {
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec'; // 🔁 Replace with your actual Apps Script Web App URL
-        fetch(`${scriptURL}?filename=${encodeURIComponent(filename)}`, {
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec';
+        
+        fetch(scriptURL, {
             method: 'POST',
+            mode: 'cors',
             headers: {
-                'Content-Type': 'text/plain'
+                'Content-Type': 'application/json',
             },
-            body: content
+            body: JSON.stringify({
+                filename: filename,
+                content: content
+            })
         })
-        .then(res => res.text())
         .then(response => {
-            console.log(`✅ ${filename} uploaded:`, response);
-            alert(`✅ ${filename} uploaded to Drive.`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+                console.log(`✅ ${filename} uploaded to Google Drive successfully`);
+                alert(`✅ ${filename} uploaded to Google Drive successfully!`);
+            } else {
+                throw new Error(result.error || 'Upload failed');
+            }
         })
         .catch(error => {
-            console.error(`❌ Upload failed:`, error);
-            alert(`❌ Upload failed for ${filename}: ` + error.message);
+            console.error(`❌ Google Drive upload failed:`, error);
+            alert(`❌ Upload failed for ${filename}: ${error.message}\n\nPlease check:\n1. Your internet connection\n2. Google Apps Script is properly deployed\n3. The script URL is correct`);
         });
     }
 
