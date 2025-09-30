@@ -3511,14 +3511,22 @@ class BiometricDataCollector {
 
     // Export Methods
     exportKeystrokeData() {
+        // Prevent double clicks
+        const btn = document.getElementById('export-keystroke-btn');
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = 'Uploading...';
+        
         const features = this.extractKeystrokeFeatures();
         const csv = this.convertToCSV(features);
         const filename = `${this.participantId}_keystroke.csv`;
     
-        this.uploadCSVToGoogleDrive(csv, filename);
+        this.uploadCSVToGoogleDrive(csv, filename, () => {
+            // Re-enable button after upload
+            btn.disabled = false;
+            btn.textContent = 'Export Keystroke Data';
+        });
         
-
-    
         document.getElementById('keystroke-count').textContent = this.keystrokeData.length;
         // Dynamically set feature count and list
         const featureNames = features.length > 0 ? Object.keys(features[0]) : [];
@@ -3528,11 +3536,21 @@ class BiometricDataCollector {
 
     
     exportTouchData() {
+        // Prevent double clicks
+        const btn = document.getElementById('export-touch-btn');
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = 'Uploading...';
+        
         const features = this.extractTouchFeatures();
         const csv = this.convertToCSV(features);
         const filename = `${this.participantId}_touch.csv`;
 
-        this.uploadCSVToGoogleDrive(csv, filename);
+        this.uploadCSVToGoogleDrive(csv, filename, () => {
+            // Re-enable button after upload
+            btn.disabled = false;
+            btn.textContent = 'Export Touch Data';
+        });
     
         document.getElementById('touch-count').textContent = this.touchData.length;
         // Dynamically set feature count and list
@@ -3659,10 +3677,10 @@ class BiometricDataCollector {
 
     // https://script.google.com/macros/s/AKfycbzWMLzj7CBpeRDI9eLbndoYv72iEhZR1ZRccBs6LVHoskYaT3Udltcy9wDL1DjaHJfX/exec
 
-    uploadCSVToGoogleDrive(content, filename) {
+    uploadCSVToGoogleDrive(content, filename, callback) {
         const scriptURL = 'https://script.google.com/macros/s/AKfycbxo2vNB8VVdD01OeWNQVUNnB-1VIFv6wAREt31Ibr49OFXIfC2yiGzE8WJu-vURV8Jw/exec';
         
-        // First try with CORS to get proper response
+        // Only try one method to prevent duplicates
         fetch(scriptURL, {
             method: 'POST',
             mode: 'cors',
@@ -3679,32 +3697,13 @@ class BiometricDataCollector {
         })
         .then(result => {
             console.log(`✅ ${filename} uploaded to Google Drive:`, result);
-            if (result.includes('success') || result.includes('uploaded')) {
-                alert(`✅ ${filename} successfully uploaded to Google Drive!`);
-            } else {
-                throw new Error('Upload may have failed - check Google Drive');
-            }
+            alert(`✅ ${filename} successfully uploaded to Google Drive!`);
+            if (callback) callback();
         })
         .catch(error => {
-            console.error(`❌ CORS upload failed:`, error);
-            console.log('Trying no-cors fallback...');
-            
-            // Fallback with no-cors
-            fetch(scriptURL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `filename=${encodeURIComponent(filename)}&content=${encodeURIComponent(content)}`
-            })
-            .then(() => {
-                alert(`⚠️ Upload request sent for ${filename}, but verification failed.\n\n🔧 SETUP REQUIRED:\n\n1. Go to https://script.google.com\n2. Create a new project\n3. Paste this code:\n\nfunction doPost(e) {\n  try {\n    const filename = e.parameter.filename;\n    const content = e.parameter.content;\n    \n    const blob = Utilities.newBlob(content, 'text/csv', filename);\n    const file = DriveApp.createFile(blob);\n    \n    return ContentService.createTextOutput('success: ' + file.getId());\n  } catch (error) {\n    return ContentService.createTextOutput('error: ' + error.toString());\n  }\n}\n\n4. Deploy as Web App\n5. Set permissions to 'Anyone'\n6. Copy the new URL and replace it in the code\n\nCurrent URL may be incorrect or script not deployed.`);
-            })
-            .catch(fallbackError => {
-                console.error(`❌ All upload methods failed:`, fallbackError);
-                alert(`❌ Upload failed for ${filename}.\n\n🔧 GOOGLE APPS SCRIPT SETUP NEEDED:\n\n1. The current script URL may be incorrect\n2. Google Apps Script may not be properly deployed\n3. Check script permissions\n\nError: ${error.message}`);
-            });
+            console.error(`❌ Upload failed:`, error);
+            alert(`❌ Upload failed for ${filename}: ${error.message}\n\nPlease check your internet connection and try again.`);
+            if (callback) callback();
         });
     }
 
