@@ -382,16 +382,53 @@ class BiometricDataCollector {
             this.startTypingTask();
             this.startInactivityTimer(); // Start inactivity timer when study begins
         });
-        // Consent checkbox logic
+        // Consent checkbox logic with nickname and session validation
         const consentCheckbox = document.getElementById('consent-checkbox');
         const startBtn = document.getElementById('start-btn');
-        if (consentCheckbox && startBtn) {
-            consentCheckbox.addEventListener('change', function() {
-                startBtn.disabled = !this.checked;
-                if (this.checked) {
-                    startBtn.classList.remove('btn--disabled');
-                } else {
-                    startBtn.classList.add('btn--disabled');
+        const nicknameInput = document.getElementById('user-nickname');
+        const sessionSelected = document.getElementById('selected-session-text');
+        
+        const validateForm = () => {
+            const hasConsent = consentCheckbox.checked;
+            const hasNickname = nicknameInput.value.trim().length > 0;
+            const hasSession = sessionSelected.textContent !== 'Select Session';
+            
+            const isValid = hasConsent && hasNickname && hasSession;
+            startBtn.disabled = !isValid;
+            
+            if (isValid) {
+                startBtn.classList.remove('btn--disabled');
+            } else {
+                startBtn.classList.add('btn--disabled');
+            }
+        };
+        
+        if (consentCheckbox && startBtn && nicknameInput && sessionSelected) {
+            consentCheckbox.addEventListener('change', validateForm);
+            nicknameInput.addEventListener('input', validateForm);
+            
+            // Session dropdown functionality
+            const sessionDropdown = document.getElementById('session-selected');
+            const sessionOptions = document.getElementById('session-options');
+            
+            sessionDropdown.addEventListener('click', function() {
+                sessionOptions.style.display = sessionOptions.style.display === 'block' ? 'none' : 'block';
+            });
+            
+            // Handle session option selection
+            document.querySelectorAll('.session-option').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    sessionSelected.textContent = this.textContent;
+                    sessionOptions.style.display = 'none';
+                    validateForm();
+                });
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!sessionDropdown.contains(e.target)) {
+                    sessionOptions.style.display = 'none';
                 }
             });
         }
@@ -3505,7 +3542,12 @@ class BiometricDataCollector {
         
         const features = this.extractKeystrokeFeatures();
         const csv = this.convertToCSV(features);
-        const filename = `${this.participantId}_keystroke.csv`;
+        
+        // Get user nickname and session
+        const nickname = document.getElementById('user-nickname').value || 'User';
+        const sessionText = document.getElementById('selected-session-text').textContent;
+        const sessionNumber = sessionText.includes('Session') ? sessionText.replace('Session ', '') : '01';
+        const filename = `${nickname.toLowerCase()}-session${sessionNumber.padStart(2, '0')}-keystroke.csv`;
     
         this.uploadCSVToGoogleDrive(csv, filename, () => {
             // Re-enable button after upload
@@ -3530,7 +3572,12 @@ class BiometricDataCollector {
         
         const features = this.extractTouchFeatures();
         const csv = this.convertToCSV(features);
-        const filename = `${this.participantId}_touch.csv`;
+        
+        // Get user nickname and session
+        const nickname = document.getElementById('user-nickname').value || 'User';
+        const sessionText = document.getElementById('selected-session-text').textContent;
+        const sessionNumber = sessionText.includes('Session') ? sessionText.replace('Session ', '') : '01';
+        const filename = `${nickname.toLowerCase()}-session${sessionNumber.padStart(2, '0')}-touch.csv`;
 
         this.uploadCSVToGoogleDrive(csv, filename, () => {
             // Re-enable button after upload
