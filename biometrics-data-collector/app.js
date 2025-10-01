@@ -133,8 +133,8 @@ class BiometricDataCollector {
         // Touch tracking for scroll detection
         this.crystalTouchStart = null;
         
-        // Generate 20 unique random images for each session
-        const randomSeeds = Array.from({length: 20}, () => Math.floor(Math.random() * 1000000));
+        // Generate 10 unique random images for each session
+        const randomSeeds = Array.from({length: 10}, () => Math.floor(Math.random() * 1000000));
         this.galleryImages = randomSeeds.map(seed => `https://picsum.photos/seed/${seed}/800/600`);
         
 
