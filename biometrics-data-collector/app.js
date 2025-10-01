@@ -97,7 +97,7 @@ class BiometricDataCollector {
         
         this.crystalSteps = [
             { id: 1, instruction: "Tap the crystal exactly 3 times with your finger. Each tap will make the crystal glow. Complete all 3 taps to proceed.", target: 3, type: 'tap' },
-            { id: 2, instruction: "Touch the crystal, then rotate your finger CLOCKWISE in a complete circle. After the teal glow, rotate COUNTER-CLOCKWISE in a complete circle. After the second teal glow, rotate CLOCKWISE again in a complete circle. Complete all 3 rotations to proceed.", target: 3, type: 'rotate' },
+            { id: 2, instruction: "Touch and hold the crystal. Rotate clockwise → counter-clockwise → clockwise (3 full rotations). Don't lift your finger until 3 complete rotations.", target: 3, type: 'rotate' },
             { id: 3, instruction: "Place two fingers on the crystal and pinch them together to shrink the crystal to 50% of its original size. The crystal will glow when you reach the target size.", target: 0.5, type: 'pinch' },
             { id: 4, instruction: "Place two fingers on the crystal and spread them apart to enlarge the crystal to 150% of its original size. The crystal will glow when you reach the target size.", target: 1.5, type: 'spread' },
             { id: 5, instruction: "Tap the crystal facets in the exact order they light up (green dots). Follow the sequence carefully to activate all 10 facets. Each correct tap will make the facet glow blue.", target: 10, type: 'facet_tap' }
@@ -133,8 +133,8 @@ class BiometricDataCollector {
         // Touch tracking for scroll detection
         this.crystalTouchStart = null;
         
-        // Generate 10 unique random images for each session
-        const randomSeeds = Array.from({length: 10}, () => Math.floor(Math.random() * 1000000));
+        // Generate 20 unique random images for each session
+        const randomSeeds = Array.from({length: 20}, () => Math.floor(Math.random() * 1000000));
         this.galleryImages = randomSeeds.map(seed => `https://picsum.photos/seed/${seed}/800/600`);
         
 
