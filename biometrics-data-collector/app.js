@@ -3639,9 +3639,11 @@ class BiometricDataCollector {
         this.touchData.forEach((touch, index) => {
             let task_step_label = '';
             if (touch.taskId === 2) {
-                task_step_label = `1(${touch.step || 1})`;
+                // Crystal game steps: convert to simple numbers 1-5
+                task_step_label = `${touch.step || 1}`;
             } else if (touch.taskId === 3) {
-                task_step_label = '2';
+                // Gallery task: assign as step 6
+                task_step_label = '6';
             } else {
                 task_step_label = '';
             }
