@@ -3623,6 +3623,7 @@ class BiometricDataCollector {
                 features.push({
                     participant_id: this.participantId,
                     task_id: 1,
+                    sentence_number: keystroke.sentence + 1, // Convert 0-based to 1-based numbering
                     timestamp_ms: Math.round(keystroke.timestamp),
                     ref_char: refChar,
                     touch_x: Math.round(keystroke.clientX || this.currentPointerX),
