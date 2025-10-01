@@ -1201,6 +1201,7 @@ select.form-control {
   color: var(--color-warning);
   font-weight: var(--font-weight-medium);
   font-style: italic;
+  margin-bottom: 30px;
 }
 
 .typing-stats {
@@ -4383,4 +4384,18 @@ html, body {
     padding: 14px 16px;
     font-size: var(--font-size-lg);
   }
+}
+
+/* Sentence Counter Styles */
+.sentence-counter {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.sentence-counter #sentence-counter-text {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-medium);
+  font-style: italic;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-lg);
 }
