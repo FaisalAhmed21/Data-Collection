@@ -1582,6 +1582,11 @@ class BiometricDataCollector {
     }
     
     displayCurrentSentence() {
+        // Update sentence counter with ordinal numbers
+        const ordinals = ['1st', '2nd', '3rd', '4th'];
+        const currentOrdinal = ordinals[this.currentSentence] || `${this.currentSentence + 1}th`;
+        document.getElementById('sentence-counter-text').textContent = `${currentOrdinal} sentence of 4 sentences`;
+        
         document.getElementById('target-sentence').textContent = this.sentences[this.currentSentence];
         const input = document.getElementById('typing-input');
         // Save caret position before clearing value
