@@ -26,6 +26,30 @@
                         <div class="consent-body">
                             <p class="consent-summary"><b>Before you begin, please review and provide your consent:</b></p>
                             <p class="consent-main"><b>By participating, you allow us to collect your typing and touch interaction data anonymously for research purposes. Your privacy will be fully respected, and your information will be securely protected.</b></p>
+                            
+                            <div class="user-info-section">
+                                <div class="nickname-section">
+                                    <label for="user-nickname" class="input-label">Please type the same name along all the sessions</label>
+                                    <input type="text" id="user-nickname" class="nickname-input" placeholder="Enter your nickname" maxlength="20">
+                                </div>
+                                
+                                <div class="session-section">
+                                    <label class="input-label">Session</label>
+                                    <div class="session-dropdown">
+                                        <div class="session-selected" id="session-selected">
+                                            <span id="selected-session-text">Select Session</span>
+                                            <span class="dropdown-arrow">▼</span>
+                                        </div>
+                                        <div class="session-options" id="session-options">
+                                            <div class="session-option" data-value="01">Session 1</div>
+                                            <div class="session-option" data-value="02">Session 2</div>
+                                            <div class="session-option" data-value="03">Session 3</div>
+                                            <div class="session-option" data-value="04">Session 4</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="consent-checkbox-center">
                                 <label class="consent-label">
                                     <input type="checkbox" id="consent-checkbox">
