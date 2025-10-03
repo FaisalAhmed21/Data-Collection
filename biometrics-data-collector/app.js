@@ -625,7 +625,91 @@ class BiometricDataCollector {
         document.getElementById('export-keystroke-btn').addEventListener('click', () => this.exportKeystrokeData());
         document.getElementById('export-touch-btn').addEventListener('click', () => this.exportTouchData());
 
+        // Navigation button handlers
+        this.bindNavigationButtons();
+    }
 
+    bindNavigationButtons() {
+        // Typing task navigation buttons
+        const typingNavBtns = ['typing-nav-btn', 'typing-nav-btn2', 'typing-nav-btn3'];
+        typingNavBtns.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    if (this.taskState.studyStarted) {
+                        this.switchScreen('typing');
+                        this.updateNavigationButtons('typing');
+                    }
+                });
+            }
+        });
+
+        // Crystal task navigation buttons
+        const crystalNavBtns = ['crystal-nav-btn', 'crystal-nav-btn2', 'crystal-nav-btn3'];
+        crystalNavBtns.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    if (this.taskState.studyStarted) {
+                        this.switchScreen('crystal');
+                        this.updateNavigationButtons('crystal');
+                    }
+                });
+            }
+        });
+
+        // Gallery navigation buttons
+        const galleryNavBtns = ['gallery-nav-btn', 'gallery-nav-btn2', 'gallery-nav-btn3'];
+        galleryNavBtns.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    if (this.taskState.crystalCompleted) {
+                        this.switchScreen('gallery');
+                        this.updateNavigationButtons('gallery');
+                    }
+                });
+            }
+        });
+    }
+
+    updateNavigationButtons(activeScreen) {
+        // Update all navigation buttons across screens
+        const navButtons = {
+            typing: ['typing-nav-btn', 'typing-nav-btn2', 'typing-nav-btn3'],
+            crystal: ['crystal-nav-btn', 'crystal-nav-btn2', 'crystal-nav-btn3'],
+            gallery: ['gallery-nav-btn', 'gallery-nav-btn2', 'gallery-nav-btn3']
+        };
+
+        // Remove active class from all buttons
+        Object.values(navButtons).flat().forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Add active class to current screen buttons
+        navButtons[activeScreen]?.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Update gallery button states based on crystal completion
+        navButtons.gallery.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                if (this.taskState.crystalCompleted) {
+                    btn.disabled = false;
+                    btn.textContent = 'Gallery';
+                } else {
+                    btn.disabled = true;
+                    btn.textContent = 'Gallery (Locked)';
+                }
+            }
+        });
     }
     
     switchScreen(screenName) {
@@ -637,6 +721,9 @@ class BiometricDataCollector {
             
             // Smooth scroll to the target screen
             this.smoothScrollToScreen(targetScreen);
+            
+            // Update navigation buttons
+            this.updateNavigationButtons(screenName);
         }
         if (screenName === 'export') {
             const keystrokeFeatures = this.extractKeystrokeFeatures();
@@ -3749,7 +3836,7 @@ class BiometricDataCollector {
     }
     
     updateTaskLocks() {
-        // Typing
+        // Typing - unlocked once study starts
         const typingInput = document.getElementById('typing-input');
         const nextSentenceBtn = document.getElementById('next-sentence-btn');
         if (typingInput && nextSentenceBtn) {
@@ -3766,11 +3853,11 @@ class BiometricDataCollector {
             }
         }
 
-        // Crystal
+        // Crystal - unlocked once study starts (no longer requires typing completion)
         const crystalArea = document.getElementById('crystal-area');
         const nextCrystalBtn = document.getElementById('next-crystal-btn');
         if (crystalArea && nextCrystalBtn) {
-            if (this.taskState.typingCompleted && !this.taskState.crystalCompleted) {
+            if (this.taskState.studyStarted && !this.taskState.crystalCompleted) {
                 crystalArea.style.pointerEvents = 'auto';
                 crystalArea.style.opacity = '1';
                 nextCrystalBtn.disabled = false;
@@ -3783,7 +3870,7 @@ class BiometricDataCollector {
             }
         }
 
-        // Gallery
+        // Gallery - only unlocked after crystal task is completed
         const galleryGrid = document.getElementById('gallery-grid');
         if (galleryGrid) {
             if (this.taskState.crystalCompleted && !this.taskState.galleryCompleted) {
@@ -3794,6 +3881,9 @@ class BiometricDataCollector {
                 galleryGrid.style.opacity = '0.5';
             }
         }
+
+        // Update navigation buttons
+        this.updateNavigationButtons(this.currentScreen);
     }
 
     // Facet tapping helper methods
